@@ -44,7 +44,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_DEPLOY_TOKEN }}@github.com/${{ github.repository }}
           git add public/gameVersion.json
-          git commit -m "Update gameVersion.json with latest commit hash" || echo "No changes to commit"
+          git commit -m "Update gameVersion to ${{ steps.get_hash.outputs.COMMIT_HASH }}" || echo "No changes to commit"
           git push origin main
 
       - name: Debugging List files in public after update
