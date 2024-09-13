@@ -6,7 +6,9 @@ import * as THREE from './js/three.module.js';
 
 
 let localPlayer = {
-    object3d : new THREE.Object3D()
+    position : new THREE.Vector3(),
+    velocity : new THREE.Vector3(),
+    quaternion : new THREE.Quaternion()
 };
 
 
