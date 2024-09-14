@@ -21,7 +21,7 @@ try {
     const jsonData = JSON.parse(readFileSync('public/gameVersion.json', 'utf8'));
     if(jsonData.version !== undefined){
         SERVER_VERSION = jsonData.version.toString();
-        console.log('🐙 Server version initialized to \'' + SERVER_VERSION + '\'');
+        console.log('🐙 Server version initialized to ' + SERVER_VERSION);
     }
 } catch (error) {console.error('error getting server version:', error);}
 

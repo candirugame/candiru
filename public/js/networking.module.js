@@ -9,9 +9,10 @@ async function fetchVersion(){
 let gameVersion = '';
 fetchVersion().then(r => gameVersion = (r['version']));
 
+let remotePlayers = [];
 
 let lastUploadTime = 0;
-const uploadWait = 1; // 1/10 is 10 updates per second
+const uploadWait = 1/15; // 1/10 is 10 updates per second
 export function updatePlayerData(localPlayer){
     let currentTime = Date.now()/1000;
     localPlayer.gameVersion = gameVersion;
@@ -21,11 +22,16 @@ export function updatePlayerData(localPlayer){
     if(localPlayer.gameVersion === '')
         return;
 
-
-    console.log(gameVersion);
     socket.emit('playerData', localPlayer);
-
 
     lastUploadTime = currentTime;
 
+}
+
+socket.on('remotePlayerData',(data) => {
+    remotePlayers = data;
+});
+
+export function getRemotePlayerData(){
+    return remotePlayers;
 }
