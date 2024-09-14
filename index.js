@@ -14,11 +14,15 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+const playerKickTime = 5; //kick players after 5 seconds of no ping
+
 let SERVER_VERSION = ''
 try {
     const jsonData = JSON.parse(readFileSync('public/gameVersion.json', 'utf8'));
-    if(jsonData.version !== undefined)
-        SERVER_VERSION = jsonData.version;
+    if(jsonData.version !== undefined){
+        SERVER_VERSION = jsonData.version.toString();
+        console.log('🐙 Server version initialized to \'' + SERVER_VERSION + '\'');
+    }
 } catch (error) {console.error('error getting server version:', error);}
 
 app.use(express.static(join(__dirname, 'public')));
@@ -32,20 +36,27 @@ function serverTick(){
 }
 serverTick();
 
-function doSlowCleanup(){
+function periodicCleanup(){
+    let currentTime = Date.now() / 1000;
+    for(let i = 0; i<playerData.length; i++){
+        if(playerData[i]['updateTimestamp'] + playerKickTime < currentTime){
+            console.log('🔴 '+playerData[i]['name'] +'('+ playerData[i].id +') left');
+            playerData.splice(i, 1);
+        }
+    }
 
-
+    setTimeout(periodicCleanup, 5000, '');
 }
+periodicCleanup();
 
 
 
 io.on('connection', (socket) => {
-    console.log('a user connected 🐙');
     socket.on('playerData',(data) => {
         addPlayerToDataSafe(data)
     });
     socket.on('disconnect', () => {
-        console.log('user disconnected 🐙');
+        //console.log('browser disconnected 🐙');
     });
 });
 
@@ -53,7 +64,8 @@ function addPlayerToDataSafe(data){
     let dataError = playerDataSchema.validate(data).error;
     let dataIsValid = dataError === undefined;
     if(!dataIsValid) {
-        console.log(dataError)
+        //console.log(dataError)
+        console.log("⚠️ invalid player data received");
         return;
     }
 
@@ -65,8 +77,8 @@ function addPlayerToDataSafe(data){
         }
 
     //at this point the player data is valid but not already in the list (new player join)
-
     playerData.push(data);
+    console.log('🟢 '+data['name'] +'('+ data.id +') joined')
     //TODO: send player join message to chat
 
 }
@@ -86,8 +98,8 @@ const quaternionSchema = Joi.object({
 
 const playerDataSchema = Joi.object({
     id: Joi.number().required(),
-    name: Joi.string().allow(''),
-    gameVersion: Joi.string().required(),
+    name: Joi.string().required().allow(''),
+    gameVersion: Joi.string().required().valid(SERVER_VERSION),
     position: vector3Schema.required(),
     velocity: vector3Schema.required(),
     //quaternion: quaternionSchema.required(),
@@ -99,5 +111,5 @@ const playerDataSchema = Joi.object({
 
 
 server.listen(3000, () => {
-    console.log('server running at http://localhost:3000 🐙');
+    console.log('🐙 server running at http://localhost:3000');
 });
