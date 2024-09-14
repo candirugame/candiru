@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^5.0.0",
+    "joi": "^17.13.3",
     "socket.io": "^4.7.5",
     "three": "^0.168.0"
   }

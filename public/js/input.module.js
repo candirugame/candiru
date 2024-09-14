@@ -17,6 +17,8 @@ export function handleInputs (localPlayer) {
      if (keys.s) localPlayer.object3d.position.z += movementDistance;
      if (keys.a) localPlayer.object3d.position.x -= movementDistance;
      if (keys.d) localPlayer.object3d.position.x += movementDistance;
+
+     localPlayer.height
 }
 
 function onKeyDown(event) {
