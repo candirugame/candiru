@@ -36,17 +36,17 @@ function serverTick(){
 }
 serverTick();
 
-function periodicCleanup(){
+function periodicCleanup() {
     let currentTime = Date.now() / 1000;
-    for(let i = 0; i<playerData.length; i++){
-        if(playerData[i]['updateTimestamp'] + playerKickTime < currentTime){
-            console.log('🔴 '+playerData[i]['name'] +'('+ playerData[i].id +') left');
+    for (let i = playerData.length - 1; i >= 0; i--) {
+        if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
+            console.log('🔴 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
             playerData.splice(i, 1);
         }
     }
-
-    setTimeout(periodicCleanup, 5000, '');
+    setTimeout(() => periodicCleanup(), 5000);
 }
+
 periodicCleanup();
 
 
@@ -69,16 +69,18 @@ function addPlayerToDataSafe(data){
         return;
     }
 
+    data['updateTimestamp'] = Date.now() / 1000;
+
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
             playerData[i] = data;
-            playerData[i]['updateTimestamp'] = Date.now() / 1000;
             return;
         }
 
     //at this point the player data is valid but not already in the list (new player join)
     playerData.push(data);
-    console.log('🟢 '+data['name'] +'('+ data.id +') joined')
+
+    console.log('🟢 '+data['name'] +'('+ data.id +') joined');
     //TODO: send player join message to chat
 
 }

@@ -14,14 +14,18 @@ let lastUploadTime = 0;
 const uploadWait = 1; // 1/10 is 10 updates per second
 export function updatePlayerData(localPlayer){
     let currentTime = Date.now()/1000;
-    if(currentTime - lastUploadTime > uploadWait){
-        localPlayer.gameVersion = gameVersion;
+    localPlayer.gameVersion = gameVersion;
+    if(currentTime - lastUploadTime < uploadWait)
+        return;
+
+    if(localPlayer.gameVersion === '')
+        return;
 
 
-        console.log(gameVersion);
-        socket.emit('playerData', localPlayer);
+    console.log(gameVersion);
+    socket.emit('playerData', localPlayer);
 
 
-        lastUploadTime = currentTime;
-    }
+    lastUploadTime = currentTime;
+
 }

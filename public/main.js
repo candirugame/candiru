@@ -9,7 +9,7 @@ let localPlayer = {
     velocity : new THREE.Vector3(),
     quaternion : new THREE.Quaternion(),
     id : Math.floor(Math.random() * 10000),
-    gameVersion : 'unknown',
+    gameVersion : '',
     name: ''
 };
 
