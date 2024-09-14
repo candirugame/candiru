@@ -8,6 +8,7 @@ const playerMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 32));
 
 const cube = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( { color: 0x0000ff } ));
 const wall1 = new THREE.Mesh( new THREE.BoxGeometry( 1, 5, 5), new THREE.MeshBasicMaterial( { color: 0xff0000 } ))
+const wall2 = new THREE.Mesh( new THREE.BoxGeometry( 5, 5, 1), new THREE.MeshBasicMaterial( { color: 0xff0000 } ))
 
 export function collisionPeriodic(localPlayer) {
     const deltaTime = clock.getDelta();
@@ -23,12 +24,14 @@ export function collisionPeriodic(localPlayer) {
 
     const intersects = raycaster.intersectObject(scene, true);
     if(intersects.length > 0) {
-        const distance = intersects[0].distance;
-        if (distance < .5) {
-            const wallNormal = new THREE.Vector3();
-            wallNormal.copy(intersects[0].face.normal);
+        for (let i = 0; i < intersects.length; i++) {
+            const distance = intersects[i].distance;
+            if (distance < .5) {
+                const wallNormal = new THREE.Vector3();
+                wallNormal.copy(intersects[i].face.normal);
 
-            localPlayer.velocity = localPlayer.velocity.projectOnPlane(wallNormal);
+                localPlayer.velocity = localPlayer.velocity.projectOnPlane(wallNormal);
+            }
         }
     }
 
@@ -38,8 +41,10 @@ export function collisionPeriodic(localPlayer) {
 export function collisionInit() {
     const scene = RENDERER.getScene();
 
-    wall1.position.set(5, 2.5, 5);
+    wall1.position.set(5, 0, 5);
+    wall2.position.set(7.5, 0, 5);
     scene.add( wall1 );
+    scene.add( wall2 );
     scene.add( cube );
 
 }
