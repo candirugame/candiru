@@ -33,7 +33,6 @@ export function handleInputs (localPlayer) {
     let movementDistance = localPlayerSpeed;
     let camera = RENDERER.getCamera();
 
-    // TODO make movement go in direction of mouse
     if (keys.w) localPlayer.velocity.z -= movementDistance;
     if (keys.s) localPlayer.velocity.z += movementDistance;
     if (keys.a) localPlayer.velocity.x -= movementDistance;
