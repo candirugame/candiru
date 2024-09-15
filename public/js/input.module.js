@@ -24,19 +24,33 @@ mouse.addEventListener('unlock', () => {
     console.log('Pointer unlocked');
 });
 
-const localPlayerSpeed = 5;
 
-const keys = { w: false, a: false, s: false, d: false };
+const keys = {};
 
 export function handleInputs (localPlayer) {
     let deltaTime = clock.getDelta();
-    let movementDistance = localPlayerSpeed;
     let camera = RENDERER.getCamera();
 
-    if (keys.w) localPlayer.velocity.z -= movementDistance;
-    if (keys.s) localPlayer.velocity.z += movementDistance;
-    if (keys.a) localPlayer.velocity.x -= movementDistance;
-    if (keys.d) localPlayer.velocity.x += movementDistance;
+
+    let inputX = 0;
+    let inputZ = 0;
+    let dist = 0;
+    let dir = 0;
+
+
+    if (getKey('w')) inputX -= 1;
+    if (getKey('s')) inputX += 1;
+    if (getKey('a')) inputZ -= 1;
+    if (getKey('d')) inputZ += 1;
+
+    if(getKeyArray(['w','s','a','d']))
+        dist = 5; //replace with vel if acceleration is added
+
+    dir = Math.atan2(inputZ,inputX);
+    //do this to ensure the magnitude is always 5 regardless of direction
+    localPlayer.velocity.z = localPlayer.speed * dist * Math.cos(dir);
+    localPlayer.velocity.x = localPlayer.speed * dist * Math.sin(dir);
+
 
     camera.getWorldDirection(direction);
     direction.y = 0;
@@ -45,12 +59,22 @@ export function handleInputs (localPlayer) {
     localPlayer.velocity.applyQuaternion(localPlayer.quaternion);
 }
 
+function getKey(key){
+    return keys[key] !== undefined && keys[key] !== null && !!keys[key];
+}
+function getKeyArray(keys){ //returns true if any key in array is pressed
+    for(let i = 0; i<keys.length; i++)
+        if(getKey(keys[i]))
+            return true
+    return false;
+}
+
 function onKeyDown(event) {
     const key = event.key.toLowerCase();
-    if (key in keys) keys[key] = true;
+    keys[key] = true;
 }
 
 function onKeyUp(event) {
     const key = event.key.toLowerCase();
-    if (key in keys) keys[key] = false;
+    keys[key] = false;
 }

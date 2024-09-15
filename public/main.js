@@ -12,7 +12,8 @@ let localPlayer = {
     quaternion : new THREE.Quaternion(),
     id : Math.floor(Math.random() * 10000),
     gameVersion : '',
-    name: ''
+    name: '',
+    speed: 1,
 };
 
 function init() {
