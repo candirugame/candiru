@@ -45,6 +45,5 @@ export function collisionInit() {
     wall2.position.set(7.5, 0, 5);
     scene.add( wall1 );
     scene.add( wall2 );
-    scene.add( cube );
 
 }

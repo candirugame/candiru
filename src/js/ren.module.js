@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import * as NETWORKING  from './networking.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import {DRACOLoader} from "three/addons/loaders/DRACOLoader.js";
+
 
 const scene = new THREE.Scene();
 
@@ -12,6 +14,36 @@ const renderer = new THREE.WebGLRenderer();
 document.body.appendChild( renderer.domElement );
 renderer.domElement.style.imageRendering = 'pixelated';
 renderer.setAnimationLoop(null);
+
+const loader = new GLTFLoader();
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('/draco/');
+loader.setDRACOLoader( dracoLoader );
+
+
+// Load a glTF resource
+loader.load(
+    // resource URL
+    'models/simplified_possum.glb',
+    // called when the resource is loaded
+    function ( gltf ) {
+        scene.add( gltf.scene );
+        gltf.animations; // Array<THREE.AnimationClip>
+        gltf.scene; // THREE.Group
+        gltf.scenes; // Array<THREE.Group>
+        gltf.cameras; // Array<THREE.Camera>
+        gltf.asset; // Object
+        },
+    function ( xhr ) {},
+    function ( error ) {console.log( 'An error happened' );}
+);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+
+
+
 
 onWindowResize();
 
