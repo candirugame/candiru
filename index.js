@@ -40,7 +40,7 @@ function periodicCleanup() {
     let currentTime = Date.now() / 1000;
     for (let i = playerData.length - 1; i >= 0; i--) {
         if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
-            console.log('🔴 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
+            console.log('🟠 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
             playerData.splice(i, 1);
         }
     }
@@ -60,12 +60,16 @@ io.on('connection', (socket) => {
     });
 });
 
+let lastInvalidMessageTime = 0;
 function addPlayerToDataSafe(data){
     let dataError = playerDataSchema.validate(data).error;
     let dataIsValid = dataError === undefined;
     if(!dataIsValid) {
-        //console.log(dataError)
-        console.log("⚠️ invalid player data received");
+        if(lastInvalidMessageTime + 10 < Date.now()/1000){
+            console.log("⚠️ invalid player data received");
+            lastInvalidMessageTime = Date.now()/1000;
+        }
+
         return;
     }
 
