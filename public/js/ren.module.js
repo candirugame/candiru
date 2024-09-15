@@ -4,25 +4,32 @@ const scene = new THREE.Scene();
 
 const clock = new THREE.Clock();
 
-const camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.01, 1000 );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight);
 document.body.appendChild( renderer.domElement );
 
-const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const material = new THREE.MeshBasicMaterial( { color: 0x0000ff } );
-const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
+window.addEventListener('resize', onWindowResize, false);
 
-camera.position.z = 5;
-
-export function doFrame(){
+export function doFrame(localPlayer){
     let deltaTime = clock.getDelta();
-
-    cube.rotation.x += 2 * deltaTime ;
-    cube.rotation.y += 2 * deltaTime;
 
     renderer.render( scene, camera );
 
+    camera.position.copy(localPlayer.position)
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+export function getScene() {
+    return scene;
+}
+
+export function  getCamera() {
+    return camera
 }
