@@ -25,7 +25,7 @@ try {
     }
 } catch (error) {console.error('error getting server version:', error);}
 
-app.use(express.static(join(__dirname, 'public')));
+app.use(express.static(join(__dirname, 'dist')));
 
 let playerData = [];
 
