@@ -10,6 +10,8 @@ const camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.inner
 const renderer = new THREE.WebGLRenderer();
 document.body.appendChild( renderer.domElement );
 renderer.domElement.style.imageRendering = 'pixelated';
+renderer.setAnimationLoop(null);
+
 onWindowResize();
 
 window.addEventListener('resize', onWindowResize, false);
