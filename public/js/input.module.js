@@ -17,11 +17,11 @@ document.addEventListener('click', () => {
 });
 
 mouse.addEventListener('lock', () => {
-    console.log('Pointer locked');
+    //console.log('Pointer locked');
 });
 
 mouse.addEventListener('unlock', () => {
-    console.log('Pointer unlocked');
+    //console.log('Pointer unlocked');
 });
 
 
