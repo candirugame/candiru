@@ -8,7 +8,7 @@ import * as COLLISION from './collision.module.js'
 
 
 let localPlayer = {
-    position : new THREE.Vector3(),
+    position : new THREE.Vector3(6,0,12),
     velocity : new THREE.Vector3(),
     quaternion : new THREE.Quaternion(),
     id : Math.floor(Math.random() * 10000),
@@ -28,6 +28,7 @@ function animate() {
     remotePlayerData = NETWORKING.getRemotePlayerData();
     COLLISION.collisionPeriodic(localPlayer)
     RENDERER.doFrame(localPlayer);
+
 
     requestAnimationFrame(animate)
 }

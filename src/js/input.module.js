@@ -43,7 +43,7 @@ export function handleInputs (localPlayer) {
     if (getKey('a')) inputZ -= 1;
     if (getKey('d')) inputZ += 1;
 
-    if(getKeyArray(['w','s','a','d']))
+    if(inputX !== 0 || inputZ !== 0)
         dist = 5; //replace with vel if acceleration is added
 
     dir = Math.atan2(inputZ,inputX);
