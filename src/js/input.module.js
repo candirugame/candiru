@@ -1,4 +1,4 @@
-import * as THREE from './three.module.js';
+import * as THREE from 'three';
 import * as RENDERER from './ren.module.js'
 import { PointerLockControls } from './PointerLockControls.js'
 

@@ -1,5 +1,6 @@
-import * as THREE from './three.module.js';
+import * as THREE from 'three';
 import * as NETWORKING  from './networking.module.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
 
