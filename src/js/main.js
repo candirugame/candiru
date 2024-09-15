@@ -1,8 +1,9 @@
-import * as RENDERER from '/js/ren.module.js';
-import * as INPUTS from '/js/input.module.js';
-import * as NETWORKING from '/js/networking.module.js'
-import * as THREE from './js/three.module.js';
-import * as COLLISION from './js/collision.module.js'
+import * as RENDERER from './ren.module.js';
+import * as INPUTS from './input.module.js';
+import * as NETWORKING from './networking.module.js'
+import * as THREE from './three.module.js';
+import * as COLLISION from './collision.module.js'
+
 
 
 

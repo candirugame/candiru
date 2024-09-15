@@ -1,3 +1,4 @@
+import { io } from 'socket.io-client';
 const socket = io();
 async function fetchVersion(){
     try{
