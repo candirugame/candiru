@@ -47,6 +47,7 @@ export function doFrame(localPlayer){
     renderer.render( scene, camera );
 
     camera.position.copy(localPlayer.position)
+    camera.position.add(new THREE.Vector3(0, 0.1016, 0)) //4 inches tall?
 
     updateRemotePlayers();
 
@@ -56,70 +57,68 @@ export function doFrame(localPlayer){
 function updateRemotePlayers() {
     if (possumGLTFScene === undefined) return;
 
-    let remotePlayerData = NETWORKING.getRemotePlayerData();
+    const remotePlayerData = NETWORKING.getRemotePlayerData();
+    const localPlayerId = MAIN.getLocalPlayerData()['id'];
 
     // Update existing players and add new players
-    for (let i = 0; i < remotePlayerData.length; i++) {
-        //skip localPlayer
-        if(remotePlayerData[i]['id'] === MAIN.getLocalPlayerData()['id'])
-            continue;
+    remotePlayerData.forEach(remotePlayer => {
+        if (remotePlayer.id === localPlayerId) return; // Skip local player
 
-        let playerFound = false;
+        const existingPlayer = playersToRender.find(player => player.id === remotePlayer.id);
 
-        for (let j = 0; j < playersToRender.length; j++) {
-            if (remotePlayerData[i]['id'] === playersToRender[j]['id']) {
-                // Update player position
-                playersToRender[j]['object'].position.set(
-                    remotePlayerData[i]['position'].x,
-                    remotePlayerData[i]['position'].y,
-                    remotePlayerData[i]['position'].z
-                );
-                playersToRender[j]['object'].quaternion.set(
-                    remotePlayerData[i]['quaternion'][0],
-                    remotePlayerData[i]['quaternion'][1],
-                    remotePlayerData[i]['quaternion'][2],
-                    remotePlayerData[i]['quaternion'][3]
-                )
-                let rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
-                playersToRender[j]['object'].quaternion.multiply(rotationQuaternion);
-                console.log(remotePlayerData[i])
-                playerFound = true;
-                break;
-            }
+        if (existingPlayer) {
+            updatePlayerPosition(existingPlayer.object, remotePlayer);
+        } else {
+            addNewPlayer(remotePlayer);
         }
-
-        if (!playerFound) {
-            // Add new player
-            let newPlayer = {
-                id: remotePlayerData[i]['id'],
-                object: possumGLTFScene.clone() // Clone the GLTF scene for the new player
-            };
-            newPlayer.object.position.set(
-                remotePlayerData[i]['position'].x,
-                remotePlayerData[i]['position'].y,
-                remotePlayerData[i]['position'].z
-            );
-            playersToRender.push(newPlayer);
-            scene.add(newPlayer.object);
-        }
-    }
+    });
 
     // Remove players that are no longer in remotePlayerData
-    for (let i = playersToRender.length - 1; i >= 0; i--) {
-        let playerFound = false;
+    removeInactivePlayers(remotePlayerData);
+}
 
-        for (let j = 0; j < remotePlayerData.length; j++) {
-            if (remotePlayerData[j]['id'] === playersToRender[i]['id']) {
-                playerFound = true;
-                break;
-            }
-        }
+function updatePlayerPosition(playerObject, remotePlayerData) {
+    playerObject.position.set(
+        remotePlayerData.position.x,
+        remotePlayerData.position.y,
+        remotePlayerData.position.z
+    );
 
-        if (!playerFound) {
-            scene.remove(playersToRender[i]['object']);
-            playersToRender.splice(i, 1);
+    playerObject.quaternion.set(
+        remotePlayerData.quaternion[0],
+        remotePlayerData.quaternion[1],
+        remotePlayerData.quaternion[2],
+        remotePlayerData.quaternion[3]
+    );
+
+    let velocity = Math.sqrt(Math.pow(remotePlayerData.velocity.x,2) + Math.pow(remotePlayerData.velocity.y,2) + Math.pow(remotePlayerData.velocity.z,2));
+    if(velocity>0)
+        playerObject.position.add(new THREE.Vector3(0,0.2*Math.sin(Date.now()/1000*20),0));
+
+    // Apply additional rotation
+    const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+    playerObject.quaternion.multiply(rotationQuaternion);
+
+
+}
+
+function addNewPlayer(remotePlayerData) {
+    const newPlayer = {
+        id: remotePlayerData.id,
+        object: possumGLTFScene.clone() // Clone the GLTF scene for the new player
+    };
+    playersToRender.push(newPlayer);
+    scene.add(newPlayer.object);
+}
+
+function removeInactivePlayers(remotePlayerData) {
+    playersToRender = playersToRender.filter(player => {
+        const isActive = remotePlayerData.some(remotePlayer => remotePlayer.id === player.id);
+        if (!isActive) {
+            scene.remove(player.object);
         }
-    }
+        return isActive;
+    });
 }
 
 
