@@ -41,8 +41,10 @@ export function collisionPeriodic(localPlayer) {
 export function collisionInit() {
     const scene = RENDERER.getScene();
 
-    wall1.position.set(5, 0, 5);
-    wall2.position.set(7.5, 0, 5);
+    wall1.position.set(5, 2.5, 5);
+    wall2.position.set(7.5, 2.5, 5);
+    cube.position.set(0,2,0);
+    scene.add(cube);
     scene.add( wall1 );
     scene.add( wall2 );
 
