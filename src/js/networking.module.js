@@ -36,3 +36,4 @@ socket.on('remotePlayerData',(data) => {
 export function getRemotePlayerData(){
     return remotePlayers;
 }
+

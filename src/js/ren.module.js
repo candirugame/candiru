@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import * as NETWORKING  from './networking.module.js';
+import * as MAIN from './main.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from "three/addons/loaders/DRACOLoader.js";
 
@@ -29,7 +30,6 @@ loader.load(
     // called when the resource is loaded
     function ( gltf ) {
         possumGLTFScene = gltf.scene;
-        console.log( possumGLTFScene );
         },
     function ( xhr ) {},
     function ( error ) {console.log( 'possum loading error' );}
@@ -56,12 +56,14 @@ export function doFrame(localPlayer){
 function updateRemotePlayers() {
     if (possumGLTFScene === undefined) return;
 
-    console.log(playersToRender);
-
     let remotePlayerData = NETWORKING.getRemotePlayerData();
 
     // Update existing players and add new players
     for (let i = 0; i < remotePlayerData.length; i++) {
+        //skip localPlayer
+        if(remotePlayerData[i]['id'] === MAIN.getLocalPlayerData()['id'])
+            continue;
+
         let playerFound = false;
 
         for (let j = 0; j < playersToRender.length; j++) {
@@ -72,6 +74,15 @@ function updateRemotePlayers() {
                     remotePlayerData[i]['position'].y,
                     remotePlayerData[i]['position'].z
                 );
+                playersToRender[j]['object'].quaternion.set(
+                    remotePlayerData[i]['quaternion'][0],
+                    remotePlayerData[i]['quaternion'][1],
+                    remotePlayerData[i]['quaternion'][2],
+                    remotePlayerData[i]['quaternion'][3]
+                )
+                let rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+                playersToRender[j]['object'].quaternion.multiply(rotationQuaternion);
+                console.log(remotePlayerData[i])
                 playerFound = true;
                 break;
             }
