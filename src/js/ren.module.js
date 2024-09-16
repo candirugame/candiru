@@ -91,11 +91,15 @@ function updatePlayerPosition(playerObject, remotePlayerData) {
         remotePlayerData.quaternion[3]
     );
 
+    let velocity = Math.sqrt(Math.pow(remotePlayerData.velocity.x,2) + Math.pow(remotePlayerData.velocity.y,2) + Math.pow(remotePlayerData.velocity.z,2));
+    if(velocity>0)
+        playerObject.position.add(new THREE.Vector3(0,0.2*Math.sin(Date.now()/1000*20),0));
+
     // Apply additional rotation
     const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
     playerObject.quaternion.multiply(rotationQuaternion);
 
-    console.log(remotePlayerData);
+
 }
 
 function addNewPlayer(remotePlayerData) {
