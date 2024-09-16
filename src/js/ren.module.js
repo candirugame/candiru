@@ -47,7 +47,6 @@ export function doFrame(localPlayer){
     renderer.render( scene, camera );
 
     camera.position.copy(localPlayer.position)
-    camera.position.add(new THREE.Vector3(0, 0.1016, 0)) //4 inches tall?
 
     updateRemotePlayers();
 
