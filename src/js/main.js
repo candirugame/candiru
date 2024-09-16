@@ -33,5 +33,9 @@ function animate() {
     requestAnimationFrame(animate)
 }
 
+export function getLocalPlayerData(){
+return localPlayer;
+}
+
 init();
 animate();
