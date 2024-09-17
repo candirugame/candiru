@@ -1,8 +1,8 @@
 import * as RENDERER from './ren.module.js';
 import * as THREE from 'three';
 
-const scene = RENDERER.getScene();
-const camera = RENDERER.getCamera();
+
+let scene = new THREE.Scene();
 
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
@@ -31,20 +31,29 @@ const plane = new THREE.Mesh(geometry, material);
 const scaleFactor = 0.001; // Adjust this value as needed
 plane.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-// Add the plane to the scene
-scene.add(plane);
+// Add the plane to the RENDERER.getScene()
 
 // Set the plane's position right in front of the camera
 const distanceFromCamera = 0.1; // Closest depth (near plane)
 
 
 // Calculate the new position in front of the camera
+let addedToScene = false;
 
 export function onFrame() {
+    if(!addedToScene){
+        scene.add(plane);
+        addedToScene = true;
+    }
+
     const vector = new THREE.Vector3(0, 0, -distanceFromCamera);
-    vector.applyMatrix4(camera.matrixWorld);
+    vector.applyMatrix4(RENDERER.getCamera().matrixWorld);
     plane.position.set(vector.x, vector.y, vector.z);
 
 // Align the plane to face the camera
-    plane.quaternion.copy(camera.quaternion);
+    plane.quaternion.copy(RENDERER.getCamera().quaternion);
+}
+
+export function getScene(){
+    return scene;
 }
