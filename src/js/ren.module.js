@@ -4,6 +4,7 @@ import * as MAIN from './main.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from "three/addons/loaders/DRACOLoader.js";
 
+
 const scene = new THREE.Scene();
 
 const clock = new THREE.Clock();
@@ -45,6 +46,7 @@ export function doFrame(localPlayer){
     let deltaTime = clock.getDelta();
 
     renderer.render( scene, camera );
+  //  renderer.render( CHAT)
 
     camera.position.copy(localPlayer.position)
 
@@ -140,3 +142,4 @@ export function getScene() {
 export function  getCamera() {
     return camera
 }
+

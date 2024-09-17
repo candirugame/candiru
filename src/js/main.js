@@ -1,4 +1,5 @@
 import * as RENDERER from './ren.module.js';
+import * as CHAT from './chat.module.js'
 import * as INPUTS from './input.module.js';
 import * as NETWORKING from './networking.module.js'
 import * as THREE from 'three';
@@ -27,7 +28,10 @@ function animate() {
     NETWORKING.updatePlayerData(localPlayer);
     remotePlayerData = NETWORKING.getRemotePlayerData();
     COLLISION.collisionPeriodic(localPlayer)
+    CHAT.onFrame()
+
     RENDERER.doFrame(localPlayer);
+
 
 
     requestAnimationFrame(animate)

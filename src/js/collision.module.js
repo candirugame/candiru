@@ -43,7 +43,7 @@ export function collisionInit() {
 
     wall1.position.set(5, 2.5, 5);
     wall2.position.set(7.5, 2.5, 5);
-    cube.position.set(0,2,0);
+    cube.position.set(0,2,-4);
     scene.add(cube);
     scene.add( wall1 );
     scene.add( wall2 );
