@@ -1,5 +1,7 @@
 import * as RENDERER from './ren.module.js';
 import * as THREE from 'three';
+if (import.meta.hot) {import.meta.hot.accept(() => {});}
+
 
 let scene = new THREE.Scene();
 
@@ -10,9 +12,11 @@ canvas.width = 512;
 canvas.height = 200; // Update canvas height to 200px
 
 // Ensure the canvas background is transparent by not filling it with any color
-context.font = '48px Silkscreen';
+context.font = '8px Comic Sans MS';
 context.fillStyle = 'white'; // Set the text color to white
-context.fillText('test', 256, 100); // Adjust text position for new canvas height
+context.fillText(' test7', 256, 100); // Adjust text position for new canvas height
+
+
 
 // Create a texture from the canvas
 const texture = new THREE.CanvasTexture(canvas);

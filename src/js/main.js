@@ -7,7 +7,6 @@ import * as COLLISION from './collision.module.js'
 
 
 
-
 let localPlayer = {
     position : new THREE.Vector3(6,0.1016,12),
     velocity : new THREE.Vector3(),
