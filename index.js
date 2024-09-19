@@ -47,8 +47,6 @@ function periodicCleanup() {
         if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
             console.log('🟠 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
             let nameToSend = playerData[i]['name'];
-            if(nameToSend.length <1)
-                nameToSend = 'possum' + playerData[i]['id'];
             sendChatMessage(nameToSend+' left');
             playerData.splice(i, 1);
         }
@@ -102,6 +100,9 @@ function addPlayerToDataSafe(data){
     updateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
+    if(data['name'].length<1)
+        data['name'] = 'possum' + data['id'];
+
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
             playerData[i] = data;
@@ -114,8 +115,6 @@ function addPlayerToDataSafe(data){
 
     console.log('🟢 '+data['name'] +'('+ data.id +') joined');
     let nameToSend = data['name'];
-    if(nameToSend.length <1)
-        nameToSend = 'possum' + data['id'];
     sendChatMessage(nameToSend + ' joined');
     //TODO: send player join message to chat
 
