@@ -29,11 +29,16 @@ app.use(express.static(join(__dirname, 'dist')));
 
 let playerData = [];
 
-
+let updateSinceLastEmit = false;
+let lastUpdateSent = 0;
 function serverTick(){
-    io.emit('remotePlayerData',playerData);
-
     setTimeout(serverTick, 1000/15, '');
+    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 5) return;
+
+    io.emit('remotePlayerData',playerData);
+    updateSinceLastEmit = false;
+    lastUpdateSent = Date.now()/1000;
+
 }
 serverTick();
 
@@ -73,7 +78,7 @@ function addPlayerToDataSafe(data){
 
         return;
     }
-
+    updateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
     for(let i = 0; i<playerData.length; i++)
