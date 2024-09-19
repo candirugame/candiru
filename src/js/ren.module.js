@@ -3,6 +3,7 @@ import * as NETWORKING  from './networking.module.js';
 import * as MAIN from './main.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from "three/addons/loaders/DRACOLoader.js";
+import * as CHAT from './chat.module.js'
 
 const scene = new THREE.Scene();
 
@@ -45,6 +46,9 @@ export function doFrame(localPlayer){
     let deltaTime = clock.getDelta();
 
     renderer.render( scene, camera );
+    renderer.autoClear = false;
+    renderer.render( CHAT.getScene(), camera)
+    renderer.autoClear = true;
 
     camera.position.copy(localPlayer.position)
 
@@ -140,3 +144,4 @@ export function getScene() {
 export function  getCamera() {
     return camera
 }
+

@@ -29,10 +29,16 @@ app.use(express.static(join(__dirname, 'dist')));
 
 let playerData = [];
 
+let updateSinceLastEmit = false;
+let lastUpdateSent = 0;
 function serverTick(){
-    io.emit('remotePlayerData',playerData);
-
     setTimeout(serverTick, 1000/15, '');
+    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 5) return;
+
+    io.emit('remotePlayerData',playerData);
+    updateSinceLastEmit = false;
+    lastUpdateSent = Date.now()/1000;
+
 }
 serverTick();
 
@@ -55,10 +61,27 @@ io.on('connection', (socket) => {
     socket.on('playerData',(data) => {
         addPlayerToDataSafe(data)
     });
+
+    socket.on('chatMsg',(data) => {
+        addChatMessageSafe(data)
+    })
     socket.on('disconnect', () => {
         //console.log('browser disconnected 🐙');
     });
 });
+
+function addChatMessageSafe(data){
+    let dataError = chatMsgSchema.validate(data).error;
+    let dataIsValid = dataError === undefined;
+    if(!dataIsValid){
+        console.log("⚠️ invalid message data received");
+        //console.log(dataError)
+        return;
+    }
+    //TODO: verify ID is in player list
+    console.log('💬 ' +data.name +':'+ data.message)
+    io.emit('chatMsg',data);
+}
 
 let lastInvalidMessageTime = 0;
 function addPlayerToDataSafe(data){
@@ -67,12 +90,13 @@ function addPlayerToDataSafe(data){
     if(!dataIsValid) {
         if(lastInvalidMessageTime + 10 < Date.now()/1000){
             console.log("⚠️ invalid player data received");
+            //console.log(dataError)
             lastInvalidMessageTime = Date.now()/1000;
         }
 
         return;
     }
-
+    updateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
     for(let i = 0; i<playerData.length; i++)
@@ -109,10 +133,16 @@ const playerDataSchema = Joi.object({
     gameVersion: Joi.string().required().valid(SERVER_VERSION),
     position: vector3Schema.required(),
     velocity: vector3Schema.required(),
-    //quaternion: quaternionSchema.required(),
     quaternion: Joi.array().items(Joi.number()).length(4).required(),
+    chatActive: Joi.boolean().required(),
+    chatMsg: Joi.string().required().allow(''),
 });
 
+const chatMsgSchema = Joi.object({
+    id: Joi.number().required(),
+    name: Joi.string().required().allow(''),
+    message: Joi.string().required().allow(''),
+})
 
 
 
