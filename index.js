@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {readFileSync} from 'fs';
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -47,6 +46,10 @@ function periodicCleanup() {
     for (let i = playerData.length - 1; i >= 0; i--) {
         if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
             console.log('🟠 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
+            let nameToSend = playerData[i]['name'];
+            if(nameToSend.length <1)
+                nameToSend = 'possum' + playerData[i]['id'];
+            sendChatMessage(nameToSend+' left');
             playerData.splice(i, 1);
         }
     }
@@ -108,7 +111,12 @@ function addPlayerToDataSafe(data){
     //at this point the player data is valid but not already in the list (new player join)
     playerData.push(data);
 
+
     console.log('🟢 '+data['name'] +'('+ data.id +') joined');
+    let nameToSend = data['name'];
+    if(nameToSend.length <1)
+        nameToSend = 'possum' + data['id'];
+    sendChatMessage(nameToSend + ' joined');
     //TODO: send player join message to chat
 
 }
@@ -150,3 +158,12 @@ const chatMsgSchema = Joi.object({
 server.listen(3000, () => {
     console.log('🐙 server running at http://localhost:3000');
 });
+
+function sendChatMessage(msg){
+    let chatMessage = {
+        message: msg,
+        id: -1,
+        name: '',
+    };
+    io.emit('chatMsg',chatMessage);
+}

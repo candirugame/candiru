@@ -13,7 +13,7 @@ const ctx = canvas.getContext('2d');
 document.addEventListener('keydown', onKeyDown);
 
 let chatMessages = [];
-let chatMessageLifespan = 20; // 20 seconds
+let chatMessageLifespan = 40; // 20 seconds
 let charsToRemovePerSecond = 30;
 
 function renderChatMessages(){
