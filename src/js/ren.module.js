@@ -41,9 +41,11 @@ scene.add(ambientLight);
 scene.fog = new THREE.FogExp2('#111111',0.1)
 
 let playersToRender = [];
+let deltaTime = 1;
+
 
 export function doFrame(localPlayer){
-    let deltaTime = clock.getDelta();
+    deltaTime = clock.getDelta();
 
     renderer.render( scene, camera );
     renderer.autoClear = false;
@@ -53,8 +55,28 @@ export function doFrame(localPlayer){
     camera.position.copy(localPlayer.position)
 
     updateRemotePlayers();
+    updateFramerate();
 
 }
+
+let framerate = 0;
+let framesInFramerateSample = 100;
+let sampleOn = 0;
+let lastFramerateCalculation = 0;
+function updateFramerate(){
+    sampleOn++;
+    if(sampleOn>=framesInFramerateSample){
+        framerate = framesInFramerateSample / (Date.now()/1000 - lastFramerateCalculation);
+
+        sampleOn = 0;
+        lastFramerateCalculation = Date.now()/1000;
+    }
+}
+
+export function getFramerate(){
+    return framerate;
+}
+
 
 
 function updateRemotePlayers() {

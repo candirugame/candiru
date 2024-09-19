@@ -2,6 +2,7 @@ import * as RENDERER from './ren.module.js';
 import * as THREE from 'three';
 import * as MAIN from './main.js'
 import * as NETWORKING from './networking.module.js'
+import {getRemotePlayerData} from "./networking.module.js";
 
 if (import.meta.hot) {import.meta.hot.accept(() => {});}
 
@@ -20,7 +21,6 @@ let maxMessagesOnScreen = 12;
 function renderChatMessages(){
     ctx.font = '8px Tiny5';
     ctx.fillStyle = 'white';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let usermsg = MAIN.getLocalPlayerData().chatMsg;
     let cursor = '';
@@ -82,9 +82,23 @@ if(!duplicateFromPlayerData){
         ctx.fillRect(256+2,200-40-7,width+1,9)
     }
 
-    // Update the texture
-    texture.needsUpdate = true;
-    clearOldMessages();
+}
+
+function renderDebugText(){
+    ctx.font = '8px Tiny5';
+    ctx.fillStyle = 'teal';
+
+    let linesToRender = [];
+
+    let framerate = RENDERER.getFramerate();
+    let playerCount = getRemotePlayerData().length;
+
+    linesToRender.push(Math.floor(framerate)+'FPS, ' + playerCount + ' online')
+
+    for(let i = 0; i < linesToRender.length; i++)
+        ctx.fillText(linesToRender[i], 256 +2, 7 + 7*i);
+
+
 }
 
 let nameSettingActive = false;
@@ -178,8 +192,16 @@ export function onFrame() {
         scene.add(plane);
         addedToScene = true;
     }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    renderChatMessages();
+    renderDebugText()
 
-renderChatMessages();
+
+    // Update the texture
+    texture.needsUpdate = true;
+
+
+    clearOldMessages();
 
     const camera = RENDERER.getCamera();
     const distanceFromCamera = 0.1; // Distance in front of the camera

@@ -16,7 +16,7 @@ let localPlayer = {
     name: '',
     speed: 1,
     chatActive: false,
-    chatMsg: ''
+    chatMsg: '',
 };
 
 function init() {
