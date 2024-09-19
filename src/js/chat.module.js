@@ -13,10 +13,14 @@ const ctx = canvas.getContext('2d');
 document.addEventListener('keydown', onKeyDown);
 
 let chatMessages = [];
-let chatMessageLifespan = 5; // 20 seconds
+let chatMessageLifespan = 20; // 20 seconds
 let charsToRemovePerSecond = 30;
 
 function renderChatMessages(){
+    ctx.font = '8px Tiny5';
+    ctx.fillStyle = 'white';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     let usermsg = MAIN.getLocalPlayerData().chatMsg;
     let cursor = '';
     if(Date.now()/1000 % 0.7 < 0.7/2 && MAIN.getLocalPlayerData().chatActive) cursor = '|';
@@ -37,26 +41,33 @@ function renderChatMessages(){
         pixOffsets.push(0);
     }
 
-
     for(let i = chatMessages.length-1; i>=0; i--){
         let msg = chatMessages[i]['message'];
         let name = chatMessages[i]['name'];
         if(name.length > 0)
             msg = name + ': ' + msg;
+
+        let duplicateFromPlayerData = false;
+        for(let i = 0; i<messagesBeingTyped.length; i++)
+            if(messagesBeingTyped[i] === msg)
+                duplicateFromPlayerData = true;
+
         let charsToRemove = Date.now()/1000 - chatMessages[i]['timestamp'] - chatMessageLifespan;
         if(charsToRemove<0) charsToRemove = 0;
         charsToRemove *= charsToRemovePerSecond;
         charsToRemove = Math.floor(charsToRemove);
         let removedSubstring = msg.substring(0,charsToRemove);
         msg = msg.substring(charsToRemove);
-        linesToRender.push(msg);
-        pixOffsets.push(ctx.measureText(removedSubstring).width);
+
+
+if(!duplicateFromPlayerData){
+    linesToRender.push(msg);
+    pixOffsets.push(ctx.measureText(removedSubstring).width);
+
+}
 
     }
 
-    ctx.font = '8px Tiny5';
-    ctx.fillStyle = 'white';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for(let i = 0; i < linesToRender.length; i++)
         ctx.fillText(linesToRender[i], 256 + 3 + pixOffsets[i], 200 - 40 - 8*i);
@@ -72,6 +83,7 @@ function renderChatMessages(){
 
     // Update the texture
     texture.needsUpdate = true;
+    clearOldMessages();
 }
 
 let nameSettingActive = false;
@@ -177,4 +189,10 @@ renderChatMessages();
 
 export function getScene() {
     return scene;
+}
+
+function clearOldMessages() {
+    for(let i = 0; i<chatMessages.length; i++)
+        if(Date.now()/1000 - chatMessages[i]['timestamp'] > chatMessageLifespan + 5)
+            chatMessages.splice(i, 1);
 }
