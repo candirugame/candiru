@@ -60,7 +60,7 @@ periodicCleanup();
 
 io.on('connection', (socket) => {
     socket.on('playerData',(data) => {
-        addPlayerToDataSafe(data)
+        addPlayerToDataSafe(data,socket)
     });
 
     socket.on('chatMsg',(data) => {
@@ -85,12 +85,18 @@ function addChatMessageSafe(data){
 }
 
 let lastInvalidMessageTime = 0;
-function addPlayerToDataSafe(data){
+function addPlayerToDataSafe(data,socket){
     let dataError = playerDataSchema.validate(data).error;
     let dataIsValid = dataError === undefined;
     if(!dataIsValid) {
         if(lastInvalidMessageTime + 10 < Date.now()/1000){
             console.log("⚠️ invalid player data received");
+            let chatMessage = {
+                message: '⚠️ Your client is sending invalid data. Try a hard refresh.',
+                id: -1,
+                name: '',
+            };
+            socket.emit('chatMsg',chatMessage);
             //console.log(dataError)
             lastInvalidMessageTime = Date.now()/1000;
         }
