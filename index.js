@@ -29,6 +29,7 @@ app.use(express.static(join(__dirname, 'dist')));
 
 let playerData = [];
 
+
 function serverTick(){
     io.emit('remotePlayerData',playerData);
 
