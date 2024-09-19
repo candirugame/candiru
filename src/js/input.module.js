@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import * as RENDERER from './ren.module.js'
 import { PointerLockControls } from './PointerLockControls.js'
+import * as CHAT from './chat.module.js'
 
 let mouse = new PointerLockControls(RENDERER.getCamera(), document.body);
 
@@ -31,6 +32,8 @@ export function handleInputs (localPlayer) {
     let deltaTime = clock.getDelta();
     let camera = RENDERER.getCamera();
 
+    if(CHAT.isChatActive())
+        return;
 
     let inputX = 0;
     let inputZ = 0;

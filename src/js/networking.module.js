@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { io } from 'socket.io-client';
+import {getLocalPlayerData} from "./main.js";
 const socket = io();
 async function fetchVersion(){
     try{
@@ -59,3 +60,11 @@ export function getRemotePlayerData(){
     return remotePlayers;
 }
 
+export function updateUserMessage(msg){
+    let userMessage = {
+        text: msg,
+        playerId: getLocalPlayerData().id,
+        name: getLocalPlayerData().name,
+    }
+socket.emit('updateUserMessage',msg);
+}

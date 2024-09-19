@@ -6,28 +6,54 @@ if (import.meta.hot) {import.meta.hot.accept(() => {});}
 let scene = new THREE.Scene();
 
 const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-
+const ctx = canvas.getContext('2d');
+document.addEventListener('keydown', onKeyDown);
 
 let chatMessages = [];
 
-
+let usermsg = '';
 function renderChatMessages(){
-    let linesToRender = ['test','test2'];
+    let cursor = '';
+    if(Date.now()/1000 % 0.7 < 0.7/2 && isChatActive()) cursor = '|';
+    let linesToRender = [usermsg+cursor,];
 
-    context.font = '8px Tiny5';
-    context.fillStyle = 'white';
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '8px Tiny5';
+    ctx.fillStyle = 'white';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for(let i = 0; i < linesToRender.length; i++)
-        context.fillText(linesToRender[i], 256 + 3, 200 - 40 - 8*i);
+        ctx.fillText(linesToRender[i], 256 + 3, 200 - 40 - 8*i);
 
+
+    if(usermsg !== ''){
+        ctx.fillStyle = 'rgba(145,142,118,0.3)';
+        let width = ctx.measureText(usermsg).width;
+        ctx.fillRect(256+2,200-40-7,width+1,9)
+    }
 
     // Update the texture
     texture.needsUpdate = true;
 }
 
+let chatActive = false;
+function onKeyDown(e) {
+    if(e.key === 'Backspace' && chatActive){
+        usermsg = usermsg.slice(0, -1);
+        return;
+    }
+    if(e.key === "Escape" || e.key === "Enter")
+        chatActive=false;
 
+    if(chatActive && e.key.length<3)
+        usermsg += e.key;
+
+    if(e.key.toLowerCase()==="t")
+        chatActive = true;
+}
+
+export function isChatActive(){
+    return chatActive;
+}
 
 
 canvas.width = 512;
