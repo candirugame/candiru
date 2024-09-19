@@ -46,7 +46,8 @@ socket.on('remotePlayerData',(data) => {
 });
 
 socket.on('chatMsg', (data) => {
-    CHAT.addChatMessage(data);
+    if(data.id !== getLocalPlayerData().id)
+        CHAT.addChatMessage(data);
 })
 
 
@@ -70,7 +71,8 @@ export function sendMessage(msg){
         id: getLocalPlayerData().id,
         name: getLocalPlayerData().name,
     };
-socket.emit('chatMsg', chatMessage);
+    socket.emit('chatMsg', chatMessage);
+    CHAT.addChatMessage(chatMessage);
 }
 
 
