@@ -13,29 +13,45 @@ const ctx = canvas.getContext('2d');
 document.addEventListener('keydown', onKeyDown);
 
 let chatMessages = [];
-
-
+let chatMessageLifespan = 5; // 20 seconds
+let charsToRemovePerSecond = 30;
 
 function renderChatMessages(){
     let usermsg = MAIN.getLocalPlayerData().chatMsg;
     let cursor = '';
     if(Date.now()/1000 % 0.7 < 0.7/2 && MAIN.getLocalPlayerData().chatActive) cursor = '|';
     let linesToRender = [];
-    if(MAIN.getLocalPlayerData().chatActive)
+    let pixOffsets = [];
+    if(MAIN.getLocalPlayerData().chatActive){
         linesToRender.push(usermsg+cursor)
-    if(nameSettingActive)
+        pixOffsets.push(0)
+    }
+    if(nameSettingActive){
         linesToRender.push('Enter your name: '+usermsg+cursor);
+        pixOffsets.push(0)
+    }
 
     let messagesBeingTyped = NETWORKING.getMessagesBeingTyped();
-    for(let i = 0; i<messagesBeingTyped.length; i++)
+    for(let i = 0; i<messagesBeingTyped.length; i++){
         linesToRender.push(messagesBeingTyped[i]);
+        pixOffsets.push(0);
+    }
+
 
     for(let i = chatMessages.length-1; i>=0; i--){
         let msg = chatMessages[i]['message'];
         let name = chatMessages[i]['name'];
         if(name.length > 0)
             msg = name + ': ' + msg;
+        let charsToRemove = Date.now()/1000 - chatMessages[i]['timestamp'] - chatMessageLifespan;
+        if(charsToRemove<0) charsToRemove = 0;
+        charsToRemove *= charsToRemovePerSecond;
+        charsToRemove = Math.floor(charsToRemove);
+        let removedSubstring = msg.substring(0,charsToRemove);
+        msg = msg.substring(charsToRemove);
         linesToRender.push(msg);
+        pixOffsets.push(ctx.measureText(removedSubstring).width);
+
     }
 
     ctx.font = '8px Tiny5';
@@ -43,7 +59,7 @@ function renderChatMessages(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for(let i = 0; i < linesToRender.length; i++)
-        ctx.fillText(linesToRender[i], 256 + 3, 200 - 40 - 8*i);
+        ctx.fillText(linesToRender[i], 256 + 3 + pixOffsets[i], 200 - 40 - 8*i);
 
 
     if((usermsg !== '' && MAIN.getLocalPlayerData().chatActive) || nameSettingActive){
