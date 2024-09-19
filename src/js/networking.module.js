@@ -43,6 +43,7 @@ export function updatePlayerData(localPlayer){
 
 socket.on('remotePlayerData',(data) => {
     remotePlayers = data;
+    processRemoteData();
 });
 
 socket.on('chatMsg', (data) => {
@@ -50,6 +51,21 @@ socket.on('chatMsg', (data) => {
         CHAT.addChatMessage(data);
 })
 
+function processRemoteData(){
+    messagesBeingTyped = [];
+    for(let i = 0; i < remotePlayers.length; i++){
+        if(remotePlayers[i]['id'] === getLocalPlayerData().id)
+            continue;
+        if(remotePlayers[i]['chatActive'])
+            messagesBeingTyped.push(remotePlayers[i]['name'] + ': ' + remotePlayers[i]['chatMsg']);
+    }
+}
+
+let messagesBeingTyped = [];
+
+export function getMessagesBeingTyped(){
+    return messagesBeingTyped;
+}
 
 function playersAreEqualEnough(player1, player2){
     if(player1 === null || player2 === null)
@@ -57,6 +73,7 @@ function playersAreEqualEnough(player1, player2){
     let out=true;
     out = out && player1.position.equals(player2.position);
     out = out && player1.quaternion.equals(player2.quaternion);
+    out = out && player1.chatMsg === player2.chatMsg;
 
     return out;
 }

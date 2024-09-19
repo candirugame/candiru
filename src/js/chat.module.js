@@ -26,6 +26,10 @@ function renderChatMessages(){
     if(nameSettingActive)
         linesToRender.push('Enter your name: '+usermsg+cursor);
 
+    let messagesBeingTyped = NETWORKING.getMessagesBeingTyped();
+    for(let i = 0; i<messagesBeingTyped.length; i++)
+        linesToRender.push(messagesBeingTyped[i]);
+
     for(let i = chatMessages.length-1; i>=0; i--){
         let msg = chatMessages[i]['message'];
         let name = chatMessages[i]['name'];
