@@ -90,6 +90,8 @@ export function sendMessage(msg){
     };
     if(msg.length<1) return;
     socket.emit('chatMsg', chatMessage);
+    if(msg.charAt(0) === '/')
+        return;
     CHAT.addChatMessage(chatMessage);
 }
 

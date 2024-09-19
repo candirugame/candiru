@@ -61,17 +61,21 @@ periodicCleanup();
 io.on('connection', (socket) => {
     socket.on('playerData',(data) => {
         addPlayerToDataSafe(data,socket)
+        if(updateLastInvalidMessageTime){
+            lastInvalidMessageTime = Date.now()/1000;
+            updateLastInvalidMessageTime = false;
+        }
     });
 
     socket.on('chatMsg',(data) => {
-        addChatMessageSafe(data)
+        addChatMessageSafe(data,socket)
     })
     socket.on('disconnect', () => {
         //console.log('browser disconnected 🐙');
     });
 });
 
-function addChatMessageSafe(data){
+function addChatMessageSafe(data,socket){
     let dataError = chatMsgSchema.validate(data).error;
     let dataIsValid = dataError === undefined;
     if(!dataIsValid){
@@ -80,25 +84,40 @@ function addChatMessageSafe(data){
         return;
     }
     //TODO: verify ID is in player list
-    console.log('💬 ' +data.name +':'+ data.message)
-    io.emit('chatMsg',data);
+    let isCommand = parseForCommand(data.message,socket);
+
+    if(!isCommand){
+        console.log('💬 ' +data.name +':'+ data.message)
+        io.emit('chatMsg',data);
+    }
 }
 
+function parseForCommand(msg,socket){
+    if(msg.charAt(0) !== '/')
+        return false;
+
+    switch (msg) {
+        case '/help':
+            whisperChatMessage(msg + ' -> nah i\'m good', socket);
+            break;
+        default:
+            whisperChatMessage(msg + ' -> unknown command.', socket);
+    }
+
+
+    return true;
+}
+let updateLastInvalidMessageTime = false;
 let lastInvalidMessageTime = 0;
 function addPlayerToDataSafe(data,socket){
     let dataError = playerDataSchema.validate(data).error;
     let dataIsValid = dataError === undefined;
     if(!dataIsValid) {
-        if(lastInvalidMessageTime + 10 < Date.now()/1000){
-            console.log("⚠️ invalid player data received");
-            let chatMessage = {
-                message: '⚠️ Your client is sending invalid data. Try a hard refresh.',
-                id: -1,
-                name: '',
-            };
-            socket.emit('chatMsg',chatMessage);
+        if(lastInvalidMessageTime + 2 < Date.now()/1000){
+            whisperChatMessage('⚠️ Your client is sending invalid data. Try a hard refresh.',socket)
             //console.log(dataError)
-            lastInvalidMessageTime = Date.now()/1000;
+            console.log("⚠️ invalid player data received");
+            updateLastInvalidMessageTime = true;
         }
 
         return;
@@ -171,4 +190,13 @@ function sendChatMessage(msg){
         name: '',
     };
     io.emit('chatMsg',chatMessage);
+}
+
+function whisperChatMessage(msg,socket){
+    let chatMessage = {
+        message: msg,
+        id: -1,
+        name: '',
+    };
+    socket.emit('chatMsg',chatMessage);
 }

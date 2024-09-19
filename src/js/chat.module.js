@@ -24,7 +24,7 @@ function renderChatMessages(){
 
     let usermsg = MAIN.getLocalPlayerData().chatMsg;
     let cursor = '';
-    if(Date.now()/1000 % 0.7 < 0.7/2 && MAIN.getLocalPlayerData().chatActive) cursor = '|';
+    if(Date.now()/1000 % 0.7 < 0.7/2 ) cursor = '|';
     let linesToRender = [];
     let pixOffsets = [];
     if(MAIN.getLocalPlayerData().chatActive){
@@ -38,7 +38,7 @@ function renderChatMessages(){
 
     let messagesBeingTyped = NETWORKING.getMessagesBeingTyped();
     for(let i = 0; i<messagesBeingTyped.length; i++){
-        linesToRender.push(messagesBeingTyped[i]);
+        linesToRender.push(messagesBeingTyped[i] + cursor);
         pixOffsets.push(0);
     }
 
@@ -122,6 +122,18 @@ function onKeyDown(e) {
             MAIN.getLocalPlayerData().chatActive = true;
         else
             nameSettingActive = true;
+    }
+
+    if(e.key === '/' && !nameSettingActive && !MAIN.getLocalPlayerData().chatActive){
+        if(MAIN.getLocalPlayerData().name.length>0){
+            MAIN.getLocalPlayerData().chatActive = true;
+            MAIN.getLocalPlayerData().chatMsg = '/';
+        }
+        else{
+            nameSettingActive = true;
+        }
+
+
     }
 
     if(e.key.toLowerCase()==="n" && !MAIN.getLocalPlayerData().chatActive)
