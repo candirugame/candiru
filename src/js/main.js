@@ -17,6 +17,7 @@ let localPlayer = {
     speed: 1,
     chatActive: false,
     chatMsg: '',
+    latency: 1000,
 };
 
 function init() {

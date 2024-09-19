@@ -70,6 +70,11 @@ io.on('connection', (socket) => {
     socket.on('chatMsg',(data) => {
         addChatMessageSafe(data,socket)
     })
+
+    socket.on('latencyTest',(data) => {
+        socket.emit('latencyTest','response :)')
+    })
+
     socket.on('disconnect', () => {
         //console.log('browser disconnected 🐙');
     });
@@ -115,7 +120,7 @@ function addPlayerToDataSafe(data,socket){
     if(!dataIsValid) {
         if(lastInvalidMessageTime + 2 < Date.now()/1000){
             whisperChatMessage('⚠️ Your client is sending invalid data. Try a hard refresh.',socket)
-            //console.log(dataError)
+            console.log(dataError)
             console.log("⚠️ invalid player data received");
             updateLastInvalidMessageTime = true;
         }
@@ -168,6 +173,7 @@ const playerDataSchema = Joi.object({
     quaternion: Joi.array().items(Joi.number()).length(4).required(),
     chatActive: Joi.boolean().required(),
     chatMsg: Joi.string().required().allow(''),
+    latency: Joi.number().required(),
 });
 
 const chatMsgSchema = Joi.object({

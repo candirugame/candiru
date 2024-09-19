@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import * as MAIN from './main.js'
 import * as NETWORKING from './networking.module.js'
 import {getRemotePlayerData} from "./networking.module.js";
+import {getLocalPlayerData} from "./main.js";
 
 if (import.meta.hot) {import.meta.hot.accept(() => {});}
 
@@ -92,8 +93,10 @@ function renderDebugText(){
 
     let framerate = RENDERER.getFramerate();
     let playerCount = getRemotePlayerData().length;
+    let latency = getLocalPlayerData().latency;
 
     linesToRender.push(Math.floor(framerate)+'FPS, ' + playerCount + ' online')
+    linesToRender.push(Math.floor(latency) + 'ms')
 
     for(let i = 0; i < linesToRender.length; i++)
         ctx.fillText(linesToRender[i], 256 +2, 7 + 7*i);

@@ -1,7 +1,7 @@
-import * as THREE from 'three';
-import { io } from 'socket.io-client';
+import {io} from 'socket.io-client';
 import {getLocalPlayerData} from "./main.js";
 import * as CHAT from './chat.module.js'
+
 const socket = io();
 async function fetchVersion(){
     try{
@@ -18,6 +18,9 @@ let lastUploadedLocalPlayer = null;
 
 let lastUploadTime = 0;
 const uploadWait = 1/15; // 1/10 is 10 updates per second
+let lastLatencyTestEmit = 0;
+const latencyTestWait = 5;
+
 
 export function updatePlayerData(localPlayer){
     let currentTime = Date.now()/1000;
@@ -39,7 +42,15 @@ export function updatePlayerData(localPlayer){
 
     lastUploadTime = currentTime;
 
+    if(Date.now()/1000 - lastLatencyTestEmit > latencyTestWait){
+        socket.emit('latencyTest');
+        lastLatencyTestEmit = Date.now()/1000;
+    }
 }
+
+socket.on('latencyTest',(data)=>{
+    getLocalPlayerData().latency = (Date.now() / 1000 - lastLatencyTestEmit) * 1000;
+});
 
 socket.on('remotePlayerData',(data) => {
     remotePlayers = data;
