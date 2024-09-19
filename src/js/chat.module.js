@@ -15,6 +15,7 @@ document.addEventListener('keydown', onKeyDown);
 let chatMessages = [];
 let chatMessageLifespan = 40; // 20 seconds
 let charsToRemovePerSecond = 30;
+let maxMessagesOnScreen = 12;
 
 function renderChatMessages(){
     ctx.font = '8px Tiny5';
@@ -195,4 +196,9 @@ function clearOldMessages() {
     for(let i = 0; i<chatMessages.length; i++)
         if(Date.now()/1000 - chatMessages[i]['timestamp'] > chatMessageLifespan + 5)
             chatMessages.splice(i, 1);
+
+    for(let i = chatMessages.length - 1; i >= 0; i--){
+        if(i<chatMessages.length - maxMessagesOnScreen)
+            chatMessages[i]['timestamp'] = Math.min(Date.now()/1000 - chatMessageLifespan,chatMessages[i]['timestamp']);
+    }
 }

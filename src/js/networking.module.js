@@ -88,6 +88,7 @@ export function sendMessage(msg){
         id: getLocalPlayerData().id,
         name: getLocalPlayerData().name,
     };
+    if(msg.length<1) return;
     socket.emit('chatMsg', chatMessage);
     CHAT.addChatMessage(chatMessage);
 }
