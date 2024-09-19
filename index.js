@@ -95,9 +95,16 @@ function addChatMessageSafe(data,socket){
 function parseForCommand(msg,socket){
     if(msg.charAt(0) !== '/')
         return false;
-    if(msg === '/help'){
-        whisperChatMessage('/help -> nah i\'m good', socket)
+
+    switch (msg) {
+        case '/help':
+            whisperChatMessage(msg + ' -> nah i\'m good', socket);
+            break;
+        default:
+            whisperChatMessage(msg + ' -> unknown command.', socket);
     }
+
+
     return true;
 }
 let updateLastInvalidMessageTime = false;
