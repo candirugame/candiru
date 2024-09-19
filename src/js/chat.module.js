@@ -124,6 +124,11 @@ function onKeyDown(e) {
             nameSettingActive = true;
     }
 
+    if(e.key === '/' && !nameSettingActive && !MAIN.getLocalPlayerData().chatActive){
+        MAIN.getLocalPlayerData().chatActive = true;
+        MAIN.getLocalPlayerData().chatMsg = '/';
+    }
+
     if(e.key.toLowerCase()==="n" && !MAIN.getLocalPlayerData().chatActive)
         nameSettingActive = true;
 
