@@ -68,6 +68,7 @@ function onKeyDown(e) {
             NETWORKING.sendMessage(MAIN.getLocalPlayerData().chatMsg);
         if(nameSettingActive){
             MAIN.getLocalPlayerData().name = MAIN.getLocalPlayerData().chatMsg.toString();
+            localStorage.setItem('name', MAIN.getLocalPlayerData().name);
         }
     }
 

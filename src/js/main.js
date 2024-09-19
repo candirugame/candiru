@@ -44,3 +44,8 @@ return localPlayer;
 
 init();
 animate();
+
+if(localPlayer.name === ''){
+    if(localStorage.getItem('name')!=null)
+        localPlayer.name = localStorage.getItem('name');
+}
