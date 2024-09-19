@@ -79,7 +79,7 @@ function addChatMessageSafe(data){
         return;
     }
     //TODO: verify ID is in player list
-    console.log('💬 ' + data.message)
+    console.log('💬 ' +data.name +':'+ data.message)
     io.emit('chatMsg',data);
 }
 

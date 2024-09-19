@@ -2,6 +2,7 @@ import * as RENDERER from './ren.module.js';
 import * as THREE from 'three';
 import * as MAIN from './main.js'
 import * as NETWORKING from './networking.module.js'
+
 if (import.meta.hot) {import.meta.hot.accept(() => {});}
 
 
@@ -22,9 +23,15 @@ function renderChatMessages(){
     let linesToRender = [];
     if(MAIN.getLocalPlayerData().chatActive)
         linesToRender.push(usermsg+cursor)
+    if(nameSettingActive)
+        linesToRender.push('Enter your name: '+usermsg+cursor);
 
     for(let i = chatMessages.length-1; i>=0; i--){
-        linesToRender.push(chatMessages[i]['message']);
+        let msg = chatMessages[i]['message'];
+        let name = chatMessages[i]['name'];
+        if(name.length > 0)
+            msg = name + ': ' + msg;
+        linesToRender.push(msg);
     }
 
     ctx.font = '8px Tiny5';
@@ -35,9 +42,11 @@ function renderChatMessages(){
         ctx.fillText(linesToRender[i], 256 + 3, 200 - 40 - 8*i);
 
 
-    if(usermsg !== ''){
+    if((usermsg !== '' && MAIN.getLocalPlayerData().chatActive) || nameSettingActive){
         ctx.fillStyle = 'rgba(145,142,118,0.3)';
         let width = ctx.measureText(usermsg).width;
+        if(nameSettingActive)
+            width = ctx.measureText(usermsg + "Enter your name: ").width;
         ctx.fillRect(256+2,200-40-7,width+1,9)
     }
 
@@ -45,29 +54,45 @@ function renderChatMessages(){
     texture.needsUpdate = true;
 }
 
-
+let nameSettingActive = false;
 
 function onKeyDown(e) {
 
-    if(e.key === 'Backspace' && MAIN.getLocalPlayerData().chatActive){
+    if(e.key === 'Backspace' && (MAIN.getLocalPlayerData().chatActive || nameSettingActive)) {
         MAIN.getLocalPlayerData().chatMsg = MAIN.getLocalPlayerData().chatMsg.slice(0, -1);
         return;
     }
 
-    if(e.key === "Enter")
-        NETWORKING.sendMessage(MAIN.getLocalPlayerData().chatMsg);
+    if(e.key === "Enter"){
+        if(MAIN.getLocalPlayerData().chatActive)
+            NETWORKING.sendMessage(MAIN.getLocalPlayerData().chatMsg);
+        if(nameSettingActive){
+            MAIN.getLocalPlayerData().name = MAIN.getLocalPlayerData().chatMsg.toString();
+        }
+    }
+
+
 
     if(e.key === "Escape" || e.key === "Enter"){
         MAIN.getLocalPlayerData().chatMsg = ''
         MAIN.getLocalPlayerData().chatActive=false;
+        nameSettingActive = false;
     }
-    
 
-    if(MAIN.getLocalPlayerData().chatActive && e.key.length<3)
+
+    if((MAIN.getLocalPlayerData().chatActive || nameSettingActive) && e.key.length<3)
         MAIN.getLocalPlayerData().chatMsg += e.key;
 
-    if(e.key.toLowerCase()==="t")
-        MAIN.getLocalPlayerData().chatActive = true;
+    if(e.key.toLowerCase()==="t" && !nameSettingActive){
+        if(MAIN.getLocalPlayerData().name.length>0)
+            MAIN.getLocalPlayerData().chatActive = true;
+        else
+            nameSettingActive = true;
+    }
+
+    if(e.key.toLowerCase()==="n" && !MAIN.getLocalPlayerData().chatActive)
+        nameSettingActive = true;
+
 }
 
 export function addChatMessage(msg){
