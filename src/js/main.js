@@ -15,6 +15,8 @@ let localPlayer = {
     gameVersion : '',
     name: '',
     speed: 1,
+    chatActive: false,
+    chatMsg: ''
 };
 
 function init() {

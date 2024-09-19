@@ -1,5 +1,7 @@
 import * as RENDERER from './ren.module.js';
 import * as THREE from 'three';
+import * as MAIN from './main.js'
+import * as NETWORKING from './networking.module.js'
 if (import.meta.hot) {import.meta.hot.accept(() => {});}
 
 
@@ -11,11 +13,19 @@ document.addEventListener('keydown', onKeyDown);
 
 let chatMessages = [];
 
-let usermsg = '';
+
+
 function renderChatMessages(){
+    let usermsg = MAIN.getLocalPlayerData().chatMsg;
     let cursor = '';
-    if(Date.now()/1000 % 0.7 < 0.7/2 && isChatActive()) cursor = '|';
-    let linesToRender = [usermsg+cursor,];
+    if(Date.now()/1000 % 0.7 < 0.7/2 && MAIN.getLocalPlayerData().chatActive) cursor = '|';
+    let linesToRender = [];
+    if(MAIN.getLocalPlayerData().chatActive)
+        linesToRender.push(usermsg+cursor)
+
+    for(let i = chatMessages.length-1; i>=0; i--){
+        linesToRender.push(chatMessages[i]['message']);
+    }
 
     ctx.font = '8px Tiny5';
     ctx.fillStyle = 'white';
@@ -35,25 +45,36 @@ function renderChatMessages(){
     texture.needsUpdate = true;
 }
 
-let chatActive = false;
+
+
 function onKeyDown(e) {
-    if(e.key === 'Backspace' && chatActive){
-        usermsg = usermsg.slice(0, -1);
+
+    if(e.key === 'Backspace' && MAIN.getLocalPlayerData().chatActive){
+        MAIN.getLocalPlayerData().chatMsg = MAIN.getLocalPlayerData().chatMsg.slice(0, -1);
         return;
     }
-    if(e.key === "Escape" || e.key === "Enter")
-        chatActive=false;
 
-    if(chatActive && e.key.length<3)
-        usermsg += e.key;
+    if(e.key === "Enter")
+        NETWORKING.sendMessage(MAIN.getLocalPlayerData().chatMsg);
+
+    if(e.key === "Escape" || e.key === "Enter"){
+        MAIN.getLocalPlayerData().chatMsg = ''
+        MAIN.getLocalPlayerData().chatActive=false;
+    }
+    
+
+    if(MAIN.getLocalPlayerData().chatActive && e.key.length<3)
+        MAIN.getLocalPlayerData().chatMsg += e.key;
 
     if(e.key.toLowerCase()==="t")
-        chatActive = true;
+        MAIN.getLocalPlayerData().chatActive = true;
 }
 
-export function isChatActive(){
-    return chatActive;
+export function addChatMessage(msg){
+    msg['timestamp'] = Date.now()/1000;
+    chatMessages.push(msg);
 }
+
 
 
 canvas.width = 512;

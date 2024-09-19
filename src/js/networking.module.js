@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { io } from 'socket.io-client';
 import {getLocalPlayerData} from "./main.js";
+import * as CHAT from './chat.module.js'
 const socket = io();
 async function fetchVersion(){
     try{
@@ -35,7 +36,6 @@ export function updatePlayerData(localPlayer){
         position: localPlayer.position.clone(),
         quaternion: localPlayer.quaternion.clone(),
     };
-    console.log('uploading!!')
 
     lastUploadTime = currentTime;
 
@@ -44,6 +44,10 @@ export function updatePlayerData(localPlayer){
 socket.on('remotePlayerData',(data) => {
     remotePlayers = data;
 });
+
+socket.on('chatMsg', (data) => {
+    CHAT.addChatMessage(data);
+})
 
 
 function playersAreEqualEnough(player1, player2){
@@ -60,11 +64,13 @@ export function getRemotePlayerData(){
     return remotePlayers;
 }
 
-export function updateUserMessage(msg){
-    let userMessage = {
-        text: msg,
-        playerId: getLocalPlayerData().id,
+export function sendMessage(msg){
+    let chatMessage = {
+        message: msg,
+        id: getLocalPlayerData().id,
         name: getLocalPlayerData().name,
-    }
-socket.emit('updateUserMessage',msg);
+    };
+socket.emit('chatMsg', chatMessage);
 }
+
+
