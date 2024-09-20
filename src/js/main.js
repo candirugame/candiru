@@ -1,9 +1,9 @@
 import * as RENDERER from './ren.module.js';
+import * as CHAT from './chat.module.js'
 import * as INPUTS from './input.module.js';
 import * as NETWORKING from './networking.module.js'
 import * as THREE from 'three';
 import * as COLLISION from './collision.module.js'
-
 
 
 
@@ -15,6 +15,9 @@ let localPlayer = {
     gameVersion : '',
     name: '',
     speed: 1,
+    chatActive: false,
+    chatMsg: '',
+    latency: 1000,
 };
 
 function init() {
@@ -27,7 +30,10 @@ function animate() {
     NETWORKING.updatePlayerData(localPlayer);
     remotePlayerData = NETWORKING.getRemotePlayerData();
     COLLISION.collisionPeriodic(localPlayer)
+    CHAT.onFrame()
+
     RENDERER.doFrame(localPlayer);
+
 
 
     requestAnimationFrame(animate)
@@ -39,3 +45,8 @@ return localPlayer;
 
 init();
 animate();
+
+if(localPlayer.name === ''){
+    if(localStorage.getItem('name')!=null)
+        localPlayer.name = localStorage.getItem('name');
+}

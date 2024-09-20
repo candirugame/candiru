@@ -3,6 +3,7 @@ import {
 	Euler,
 	Vector3
 } from 'three';
+import {getLocalPlayerData} from "./main.js";
 
 const _euler = new Euler( 0, 0, 0, 'YXZ' );
 const _vector = new Vector3();
@@ -64,48 +65,6 @@ class PointerLockControls extends Controls {
 
 	}
 
-	getObject() {
-
-		console.warn( 'THREE.PointerLockControls: getObject() has been deprecated. Use controls.object instead.' ); // @deprecated r169
-
-		return this.object;
-
-	}
-
-	getDirection( v ) {
-
-		return v.set( 0, 0, - 1 ).applyQuaternion( this.object.quaternion );
-
-	}
-
-	moveForward( distance ) {
-
-		if ( this.enabled === false ) return;
-
-		// move forward parallel to the xz-plane
-		// assumes camera.up is y-up
-
-		const camera = this.object;
-
-		_vector.setFromMatrixColumn( camera.matrix, 0 );
-
-		_vector.crossVectors( camera.up, _vector );
-
-		camera.position.addScaledVector( _vector, distance );
-
-	}
-
-	moveRight( distance ) {
-
-		if ( this.enabled === false ) return;
-
-		const camera = this.object;
-
-		_vector.setFromMatrixColumn( camera.matrix, 0 );
-
-		camera.position.addScaledVector( _vector, distance );
-
-	}
 
 	lock() {
 
@@ -155,7 +114,7 @@ function onPointerlockChange() {
 	} else {
 
 		this.dispatchEvent( _unlockEvent );
-
+		getLocalPlayerData().chatActive = false;
 		this.isLocked = false;
 
 	}

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import * as RENDERER from './ren.module.js'
 import { PointerLockControls } from './PointerLockControls.js'
+import * as MAIN from './main.js'
+
 
 let mouse = new PointerLockControls(RENDERER.getCamera(), document.body);
 
@@ -31,6 +33,8 @@ export function handleInputs (localPlayer) {
     let deltaTime = clock.getDelta();
     let camera = RENDERER.getCamera();
 
+    if(MAIN.getLocalPlayerData().chatActive)
+        return;
 
     let inputX = 0;
     let inputZ = 0;

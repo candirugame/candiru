@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import { resolve } from 'path'
-import fs from 'fs'
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+import fs from 'fs';
 
 export default defineConfig({
     root: '.',
@@ -21,20 +21,6 @@ export default defineConfig({
         },
     },
     plugins: [
-        {
-            name: 'copy-draco-files',
-            generateBundle() {
-                this.emitFile({
-                    type: 'asset',
-                    fileName: 'draco/draco_decoder.wasm',
-                    source: fs.readFileSync('node_modules/three/examples/jsm/libs/draco/draco_decoder.wasm'),
-                });
-                this.emitFile({
-                    type: 'asset',
-                    fileName: 'draco/draco_wasm_wrapper.js',
-                    source: fs.readFileSync('node_modules/three/examples/jsm/libs/draco/draco_wasm_wrapper.js'),
-                });
-            },
-        },
+        // Add framework-specific plugins here if needed
     ],
-})
+});
