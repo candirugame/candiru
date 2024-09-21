@@ -23,12 +23,12 @@ jobs:
       - name: Build project
         run: npm run build
       - name: List build directory contents
-        run: ls -la ./dist # Verify the build output path
+        run: ls -la ./dist
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: build-artifacts
-          path: ./dist # Adjusted to the Vite default output directory
+          path: ./dist
 
   lint:
     runs-on: ubuntu-latest
@@ -44,7 +44,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-artifacts
-          path: ./dist # Adjusted to match the upload path
+          path: ./dist
       - name: Install dependencies
         run: npm install
       - name: Run lint
@@ -60,11 +60,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '22.7'
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: build-artifacts
-          path: ./dist
       - name: Install dependencies
         run: npm install
       - name: Start server
