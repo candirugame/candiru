@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node index.js",
-    "prestart": "npm run build"
+    "prestart": "npm run build",
+    "lint": "npx eslint"
   },
   "author": "",
   "license": "ISC",
