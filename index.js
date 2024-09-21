@@ -120,7 +120,7 @@ function addPlayerToDataSafe(data,socket){
     if(!dataIsValid) {
         if(lastInvalidMessageTime + 2 < Date.now()/1000){
             whisperChatMessage('⚠️ Your client is sending invalid data. Try a hard refresh.',socket)
-            console.log(dataError)
+            //console.log(dataError)
             console.log("⚠️ invalid player data received");
             updateLastInvalidMessageTime = true;
         }
