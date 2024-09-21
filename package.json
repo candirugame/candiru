@@ -18,6 +18,10 @@
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "three": "^0.168.0",
+    "typescript": "^5.6.2",
     "vite": "^5.4.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.4"
   }
 }

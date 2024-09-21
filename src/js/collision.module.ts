@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import * as RENDERER from './ren.module.js'
+import * as RENDERER from './ren.module.ts'
 
 const clock = new THREE.Clock();
 

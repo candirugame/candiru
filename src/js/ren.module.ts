@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import * as NETWORKING  from './networking.module.js';
-import * as MAIN from './main.js';
+import * as NETWORKING  from './networking.module.ts';
+import * as MAIN from './main.ts';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from "three/addons/loaders/DRACOLoader.js";
-import * as CHAT from './chat.module.js'
+import * as CHAT from './chat.module.ts'
 
 const scene = new THREE.Scene();
 

@@ -1,9 +1,9 @@
-import * as RENDERER from './ren.module.js';
-import * as CHAT from './chat.module.js'
-import * as INPUTS from './input.module.js';
-import * as NETWORKING from './networking.module.js'
+import * as RENDERER from './ren.module.ts';
+import * as CHAT from './chat.module.ts'
+import * as INPUTS from './input.module.ts';
+import * as NETWORKING from './networking.module.ts'
 import * as THREE from 'three';
-import * as COLLISION from './collision.module.js'
+import * as COLLISION from './collision.module.ts'
 
 
 
