@@ -20,6 +20,10 @@ const localPlayer = {
     latency: 1000,
 };
 
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let remotePlayerData = [];
+
 function init() {
     COLLISION.collisionInit();
 }
