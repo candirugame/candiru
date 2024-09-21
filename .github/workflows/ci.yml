@@ -11,25 +11,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22.7'
-
       - name: Install dependencies
         run: npm install
-
       - name: Build project
         run: npm run build
-
       - name: List build directory contents
         run: ls -la ./dist # Verify the build output path
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -39,24 +33,43 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22.7'
-
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
           name: build-artifacts
           path: ./dist # Adjusted to match the upload path
-
       - name: Install dependencies
         run: npm install
-
       - name: Run lint
         run: npm run lint
+
+  healthcheck:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.7'
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: ./dist
+      - name: Install dependencies
+        run: npm install
+      - name: Start server
+        run: npm start &
+      - name: Wait for server to start
+        run: sleep 30
+      - name: Health check
+        run: curl -f http://localhost:3000 || exit 1
