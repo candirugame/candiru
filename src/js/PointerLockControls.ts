@@ -1,12 +1,11 @@
 import {
 	Controls,
 	Euler,
-	Vector3
 } from 'three';
 import {getLocalPlayerData} from "./main.ts";
 
 const _euler = new Euler( 0, 0, 0, 'YXZ' );
-const _vector = new Vector3();
+
 
 const _changeEvent = { type: 'change' };
 const _lockEvent = { type: 'lock' };

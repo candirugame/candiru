@@ -23,7 +23,7 @@ const latencyTestWait = 5;
 
 
 export function updatePlayerData(localPlayer){
-    let currentTime = Date.now()/1000;
+    const currentTime = Date.now()/1000;
     localPlayer.gameVersion = gameVersion;
     if(currentTime - lastUploadTime < uploadWait)
         return;
@@ -48,7 +48,7 @@ export function updatePlayerData(localPlayer){
     }
 }
 
-socket.on('latencyTest',(data)=>{
+socket.on('latencyTest',()=>{
     getLocalPlayerData().latency = (Date.now() / 1000 - lastLatencyTestEmit) * 1000;
 });
 
@@ -94,7 +94,7 @@ export function getRemotePlayerData(){
 }
 
 export function sendMessage(msg){
-    let chatMessage = {
+    const chatMessage = {
         message: msg,
         id: getLocalPlayerData().id,
         name: getLocalPlayerData().name,

@@ -4,12 +4,10 @@ import { PointerLockControls } from './PointerLockControls.ts'
 import * as MAIN from './main.ts'
 
 
-let mouse = new PointerLockControls(RENDERER.getCamera(), document.body);
-
-let clock = new THREE.Clock();
+const mouse = new PointerLockControls(RENDERER.getCamera(), document.body);
 
 const forward = new THREE.Vector3(0, 0, -1);
-let direction = new THREE.Vector3;
+const direction = new THREE.Vector3;
 
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp);
@@ -30,8 +28,8 @@ mouse.addEventListener('unlock', () => {
 const keys = {};
 
 export function handleInputs (localPlayer) {
-    let deltaTime = clock.getDelta();
-    let camera = RENDERER.getCamera();
+
+    const camera = RENDERER.getCamera();
 
     if(MAIN.getLocalPlayerData().chatActive)
         return;
@@ -65,12 +63,6 @@ export function handleInputs (localPlayer) {
 
 function getKey(key){
     return keys[key] !== undefined && keys[key] !== null && !!keys[key];
-}
-function getKeyArray(keys){ //returns true if any key in array is pressed
-    for(let i = 0; i<keys.length; i++)
-        if(getKey(keys[i]))
-            return true
-    return false;
 }
 
 function onKeyDown(event) {

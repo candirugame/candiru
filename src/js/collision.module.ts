@@ -4,7 +4,6 @@ import * as RENDERER from './ren.module.ts'
 const clock = new THREE.Clock();
 
 const raycaster = new THREE.Raycaster();
-const playerMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 32));
 
 const cube = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( { color: 0x0000ff } ));
 const wall1 = new THREE.Mesh( new THREE.BoxGeometry( 1, 5, 5), new THREE.MeshBasicMaterial( { color: 0xff0000 } ))
@@ -17,7 +16,7 @@ export function collisionPeriodic(localPlayer) {
     cube.rotation.x += 2 * deltaTime ;
     cube.rotation.y += 2 * deltaTime;
 
-    let direction = new THREE.Vector3()
+    const direction = new THREE.Vector3()
     direction.copy(localPlayer.velocity)
     direction.normalize()
     raycaster.set(localPlayer.position, direction);

@@ -7,7 +7,6 @@ import * as CHAT from './chat.module.ts'
 
 const scene = new THREE.Scene();
 
-const clock = new THREE.Clock();
 
 const camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.01, 1000 );
 
@@ -32,8 +31,8 @@ loader.load(
     function ( gltf ) {
         possumGLTFScene = gltf.scene;
         },
-    function ( xhr ) {},
-    function ( error ) {console.log( 'possum loading error' );}
+    function () {},
+    function () {console.log( 'possum loading error' );}
 );
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -41,11 +40,8 @@ scene.add(ambientLight);
 scene.fog = new THREE.FogExp2('#111111',0.1)
 
 let playersToRender = [];
-let deltaTime = 1;
-
 
 export function doFrame(localPlayer){
-    deltaTime = clock.getDelta();
 
     renderer.render( scene, camera );
     renderer.autoClear = false;
@@ -60,7 +56,7 @@ export function doFrame(localPlayer){
 }
 
 let framerate = 0;
-let framesInFramerateSample = 100;
+const framesInFramerateSample = 100;
 let sampleOn = 0;
 let lastFramerateCalculation = 0;
 function updateFramerate(){
@@ -116,7 +112,7 @@ function updatePlayerPosition(playerObject, remotePlayerData) {
         remotePlayerData.quaternion[3]
     );
 
-    let velocity = Math.sqrt(Math.pow(remotePlayerData.velocity.x,2) + Math.pow(remotePlayerData.velocity.y,2) + Math.pow(remotePlayerData.velocity.z,2));
+    const velocity = Math.sqrt(Math.pow(remotePlayerData.velocity.x,2) + Math.pow(remotePlayerData.velocity.y,2) + Math.pow(remotePlayerData.velocity.z,2));
     if(velocity>0)
         playerObject.position.add(new THREE.Vector3(0,0.2*(0.5+Math.sin(Date.now()/1000*20)),0));
 

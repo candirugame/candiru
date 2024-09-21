@@ -7,7 +7,7 @@ import * as COLLISION from './collision.module.ts'
 
 
 
-let localPlayer = {
+const localPlayer = {
     position : new THREE.Vector3(6,0.1016,12),
     velocity : new THREE.Vector3(),
     quaternion : new THREE.Quaternion(),
@@ -23,7 +23,7 @@ let localPlayer = {
 function init() {
     COLLISION.collisionInit();
 }
-let remotePlayerData = [];
+
 
 function animate() {
     INPUTS.handleInputs(localPlayer);
