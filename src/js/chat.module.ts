@@ -1,33 +1,33 @@
-import * as RENDERER from './ren.module.js';
+import * as RENDERER from './ren.module.ts';
 import * as THREE from 'three';
-import * as MAIN from './main.js'
-import * as NETWORKING from './networking.module.js'
-import {getRemotePlayerData} from "./networking.module.js";
-import {getLocalPlayerData} from "./main.js";
+import * as MAIN from './main.ts'
+import * as NETWORKING from './networking.module.ts'
+import {getRemotePlayerData} from "./networking.module.ts";
+import {getLocalPlayerData} from "./main.ts";
 
 if (import.meta.hot) {import.meta.hot.accept(() => {});}
 
 
-let scene = new THREE.Scene();
+const scene = new THREE.Scene();
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
 document.addEventListener('keydown', onKeyDown);
 
-let chatMessages = [];
-let chatMessageLifespan = 40; // 20 seconds
-let charsToRemovePerSecond = 30;
-let maxMessagesOnScreen = 12;
+const chatMessages = [];
+const chatMessageLifespan = 40; // 20 seconds
+const charsToRemovePerSecond = 30;
+const maxMessagesOnScreen = 12;
 
 function renderChatMessages(){
     ctx.font = '8px Tiny5';
     ctx.fillStyle = 'white';
 
-    let usermsg = MAIN.getLocalPlayerData().chatMsg;
+    const usermsg = MAIN.getLocalPlayerData().chatMsg;
     let cursor = '';
     if(Date.now()/1000 % 0.7 < 0.7/2 ) cursor = '|';
-    let linesToRender = [];
-    let pixOffsets = [];
+    const linesToRender = [];
+    const pixOffsets = [];
     if(MAIN.getLocalPlayerData().chatActive){
         linesToRender.push(usermsg+cursor)
         pixOffsets.push(0)
@@ -37,7 +37,7 @@ function renderChatMessages(){
         pixOffsets.push(0)
     }
 
-    let messagesBeingTyped = NETWORKING.getMessagesBeingTyped();
+    const messagesBeingTyped = NETWORKING.getMessagesBeingTyped();
     for(let i = 0; i<messagesBeingTyped.length; i++){
         linesToRender.push(messagesBeingTyped[i] + cursor);
         pixOffsets.push(0);
@@ -45,7 +45,7 @@ function renderChatMessages(){
 
     for(let i = chatMessages.length-1; i>=0; i--){
         let msg = chatMessages[i]['message'];
-        let name = chatMessages[i]['name'];
+        const name = chatMessages[i]['name'];
         if(name.length > 0)
             msg = name + ': ' + msg;
 
@@ -58,7 +58,7 @@ function renderChatMessages(){
         if(charsToRemove<0) charsToRemove = 0;
         charsToRemove *= charsToRemovePerSecond;
         charsToRemove = Math.floor(charsToRemove);
-        let removedSubstring = msg.substring(0,charsToRemove);
+        const removedSubstring = msg.substring(0,charsToRemove);
         msg = msg.substring(charsToRemove);
 
 
@@ -89,11 +89,11 @@ function renderDebugText(){
     ctx.font = '8px Tiny5';
     ctx.fillStyle = 'teal';
 
-    let linesToRender = [];
+    const linesToRender = [];
 
-    let framerate = RENDERER.getFramerate();
-    let playerCount = getRemotePlayerData().length;
-    let latency = getLocalPlayerData().latency;
+    const framerate = RENDERER.getFramerate();
+    const playerCount = getRemotePlayerData().length;
+    const latency = getLocalPlayerData().latency;
 
     linesToRender.push(Math.floor(framerate)+'FPS, ' + playerCount + ' online')
     linesToRender.push(Math.floor(latency) + 'ms')

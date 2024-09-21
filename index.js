@@ -71,7 +71,7 @@ io.on('connection', (socket) => {
         addChatMessageSafe(data,socket)
     })
 
-    socket.on('latencyTest',(data) => {
+    socket.on('latencyTest',() => {
         socket.emit('latencyTest','response :)')
     })
 
@@ -156,12 +156,6 @@ const vector3Schema = Joi.object({
     z: Joi.number().required(),
 });
 
-const quaternionSchema = Joi.object({
-    _w: Joi.number().required(),
-    _x: Joi.number().required(),
-    _y: Joi.number().required(),
-    _z: Joi.number().required(),
-});
 
 const playerDataSchema = Joi.object({
     id: Joi.number().required(),
