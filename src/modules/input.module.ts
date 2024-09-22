@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as RENDERER from './ren.module.ts'
 import { PointerLockControls } from './PointerLockControls.ts'
-import * as MAIN from './main.ts'
+import * as MAIN from '../main.ts'
 
 
 const mouse = new PointerLockControls(RENDERER.getCamera(), document.body);

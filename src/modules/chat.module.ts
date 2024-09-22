@@ -1,9 +1,9 @@
 import * as RENDERER from './ren.module.ts';
 import * as THREE from 'three';
-import * as MAIN from './main.ts'
+import * as MAIN from '../main.ts'
 import * as NETWORKING from './networking.module.ts'
 import {getRemotePlayerData} from "./networking.module.ts";
-import {getLocalPlayerData} from "./main.ts";
+import {getLocalPlayerData} from "../main.ts";
 
 if (import.meta.hot) {import.meta.hot.accept(() => {});}
 
