@@ -1,4 +1,4 @@
-class HeldItemInput {
+export class HeldItemInput {
     public leftClick:boolean = false;
     public rightClick:boolean = false;
     public shiftKey:boolean = false;

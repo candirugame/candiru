@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-abstract class HeldItem{
+export abstract class HeldItem{
     constructor(scene:THREE.Scene);
     abstract init():void;
     abstract onFrame(input:HeldItemInput):void;

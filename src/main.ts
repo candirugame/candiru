@@ -4,6 +4,7 @@ import * as INPUTS from './modules/input.module.ts';
 import * as NETWORKING from './modules/networking.module.ts'
 import * as THREE from 'three';
 import * as COLLISION from './modules/collision.module.ts'
+import * as INVENTORY from './modules/inventory.module.ts'
 
 
 
@@ -26,6 +27,7 @@ let remotePlayerData = [];
 
 function init() {
     COLLISION.collisionInit();
+    INVENTORY.init();
 }
 
 
@@ -35,6 +37,7 @@ function animate() {
     remotePlayerData = NETWORKING.getRemotePlayerData();
     COLLISION.collisionPeriodic(localPlayer)
     CHAT.onFrame()
+    INVENTORY.onFrame()
 
     RENDERER.doFrame(localPlayer);
 

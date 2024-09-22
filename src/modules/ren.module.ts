@@ -29,9 +29,6 @@ loader.load(
     function () { console.log('possum loading error'); }
 );
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
-scene.fog = new THREE.FogExp2('#111111', 0.1);
 
 let playersToRender = [];
 
@@ -45,12 +42,26 @@ heldItemCamera.lookAt(0, 0, 0); // Ensure the camera is looking at the origin wh
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const cube = new THREE.Mesh(geometry, material);
-cube.position.set(0, 0, 0); // Ensure the cube is at the origin
-heldItemScene.add(cube);
+cube.position.set(1, 1, 1); // Ensure the cube is at the origin
+// heldItemScene.add(cube);
+
+export function getHeldItemScene(){
+    return heldItemScene;
+}
 
 // Disable depth testing for the held item
 cube.renderOrder = 999;
 cube.material.depthTest = false;
+
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+heldItemScene.add(ambientLight);
+
+heldItemScene.fog = new THREE.FogExp2('#111111',0.1)
+scene.fog = new THREE.FogExp2('#111111', 0.1);
+
+
 
 export function doFrame(localPlayer) {
     // Render the main scene
