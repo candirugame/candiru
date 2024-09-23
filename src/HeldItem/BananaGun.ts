@@ -39,29 +39,31 @@ export class BananaGun extends HeldItem {
     sceneAdded = false;
 
     onFrame(input: HeldItemInput) {
-        if (!this.sceneAdded && this.bananaObject !== null) {
+        if(this.bananaObject === null) return;
+        if (!this.sceneAdded) {
             this.scene.add(this.bananaObject);
             this.sceneAdded = true;
-            this.bananaObject.position.set(0,-0.6,3)
-
-
-            // Create a quaternion for a 90-degree rotation around the Y-axis
-            const angle = Math.PI / 2; // 90 degrees in radians
-            const axis = new THREE.Vector3(0, -1, 0); // Y-axis
-            const quaternion = new THREE.Quaternion();
-            quaternion.setFromAxisAngle(axis, angle);
-            this.bananaObject.quaternion.multiplyQuaternions(quaternion, this.bananaObject.quaternion)
-
-            const angle2 = 3.8; // 90 degrees in radians
-            const axis2 = new THREE.Vector3(1, 0, -0.03); // Y-axis
-            const quaternion2 = new THREE.Quaternion();
-            quaternion2.setFromAxisAngle(axis2, angle2);
-            this.bananaObject.quaternion.multiplyQuaternions(quaternion2, this.bananaObject.quaternion)
         }
 
-        // if (input.leftClick) {
-        // console.log('banana gun shoots!');
-        // }
+        this.bananaObject.position.set(0,-0.6,3 + 0.1*Math.sin(Date.now()/1000))
+
+
+        // Create a quaternion for a 90-degree rotation around the Y-axis
+        const angle = Math.PI / 2; // 90 degrees in radians
+        const axis = new THREE.Vector3(0, -1, 0); // Y-axis
+        const quaternion = new THREE.Quaternion();
+        quaternion.setFromAxisAngle(axis, angle);
+        this.bananaObject.quaternion.multiplyQuaternions(quaternion, this.bananaObject.quaternion)
+
+        const angle2 = 3.8; // 90 degrees in radians
+        const axis2 = new THREE.Vector3(1, 0, -0.03); // Y-axis
+        const quaternion2 = new THREE.Quaternion();
+        quaternion2.setFromAxisAngle(axis2, angle2);
+        this.bananaObject.quaternion.multiplyQuaternions(quaternion2, this.bananaObject.quaternion)
+
+        if (input.leftClick) {
+        console.log('banana gun shoots!');
+        }
     }
 
 }
