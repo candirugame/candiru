@@ -56,13 +56,13 @@ export class BananaGun extends HeldItem {
         const axis = new THREE.Vector3(0, -1, 0); // Y-axis
         const quaternion = new THREE.Quaternion();
         quaternion.setFromAxisAngle(axis, angle);
-        this.bananaObject.quaternion.multiplyQuaternions(quaternion, this.bananaObject.quaternion)
+        this.bananaObject.quaternion.multiplyQuaternions(quaternion, this.bananaObject.quaternion);
 
         const angle2 = 3.8; // 90 degrees in radians
         const axis2 = new THREE.Vector3(1, 0, -0.03); // Y-axis
         const quaternion2 = new THREE.Quaternion();
         quaternion2.setFromAxisAngle(axis2, angle2);
-        this.bananaObject.quaternion.multiplyQuaternions(quaternion2, this.bananaObject.quaternion)
+        this.bananaObject.quaternion.multiplyQuaternions(quaternion2, this.bananaObject.quaternion);
 
         if (input.rightClick)
             moveTowards(this.bananaObject.position, scopedPosition, 0.2);

@@ -1,13 +1,13 @@
 import {io} from 'socket.io-client';
 import {getLocalPlayerData} from "../main.ts";
-import * as CHAT from './chat.module.ts'
+import * as CHAT from './chat.module.ts';
 
 const socket = io();
 async function fetchVersion(){
     try{
-        const response = await fetch("gameVersion.json")
+        const response = await fetch("gameVersion.json");
         return await response.json();
-    }catch(e){console.error(e)}
+    }catch(e){console.error(e);}
 }
 
 let gameVersion = '';
@@ -60,7 +60,7 @@ socket.on('remotePlayerData',(data) => {
 socket.on('chatMsg', (data) => {
     if(data.id !== getLocalPlayerData().id)
         CHAT.addChatMessage(data);
-})
+});
 
 function processRemoteData(){
     messagesBeingTyped = [];

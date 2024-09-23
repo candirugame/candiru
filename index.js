@@ -15,7 +15,7 @@ const io = new Server(server);
 
 const playerKickTime = 5; //kick players after 5 seconds of no ping
 
-let SERVER_VERSION = ''
+let SERVER_VERSION = '';
 try {
     const jsonData = JSON.parse(readFileSync('public/gameVersion.json', 'utf8'));
     if(jsonData.version !== undefined){
@@ -60,7 +60,7 @@ periodicCleanup();
 
 io.on('connection', (socket) => {
     socket.on('playerData',(data) => {
-        addPlayerToDataSafe(data,socket)
+        addPlayerToDataSafe(data,socket);
         if(updateLastInvalidMessageTime){
             lastInvalidMessageTime = Date.now()/1000;
             updateLastInvalidMessageTime = false;
@@ -68,12 +68,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chatMsg',(data) => {
-        addChatMessageSafe(data,socket)
-    })
+        addChatMessageSafe(data,socket);
+    });
 
     socket.on('latencyTest',() => {
-        socket.emit('latencyTest','response :)')
-    })
+        socket.emit('latencyTest','response :)');
+    });
 
     socket.on('disconnect', () => {
         //console.log('browser disconnected 🐙');
@@ -92,7 +92,7 @@ function addChatMessageSafe(data,socket){
     let isCommand = parseForCommand(data.message,socket);
 
     if(!isCommand){
-        console.log('💬 ' +data.name +':'+ data.message)
+        console.log('💬 ' +data.name +':'+ data.message);
         io.emit('chatMsg',data);
     }
 }
@@ -119,7 +119,7 @@ function addPlayerToDataSafe(data,socket){
     let dataIsValid = dataError === undefined;
     if(!dataIsValid) {
         if(lastInvalidMessageTime + 2 < Date.now()/1000){
-            whisperChatMessage('⚠️ Your client is sending invalid data. Try a hard refresh.',socket)
+            whisperChatMessage('⚠️ Your client is sending invalid data. Try a hard refresh.',socket);
             //console.log(dataError)
             console.log("⚠️ invalid player data received");
             updateLastInvalidMessageTime = true;
@@ -174,7 +174,7 @@ const chatMsgSchema = Joi.object({
     id: Joi.number().required(),
     name: Joi.string().required().allow(''),
     message: Joi.string().required().allow(''),
-})
+});
 
 
 

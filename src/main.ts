@@ -1,10 +1,10 @@
 import * as RENDERER from './modules/ren.module.ts';
-import * as CHAT from './modules/chat.module.ts'
+import * as CHAT from './modules/chat.module.ts';
 import * as INPUTS from './modules/input.module.ts';
-import * as NETWORKING from './modules/networking.module.ts'
+import * as NETWORKING from './modules/networking.module.ts';
 import * as THREE from 'three';
-import * as COLLISION from './modules/collision.module.ts'
-import * as INVENTORY from './modules/inventory.module.ts'
+import * as COLLISION from './modules/collision.module.ts';
+import * as INVENTORY from './modules/inventory.module.ts';
 
 
 
@@ -35,15 +35,15 @@ function animate() {
     INPUTS.handleInputs(localPlayer);
     NETWORKING.updatePlayerData(localPlayer);
     remotePlayerData = NETWORKING.getRemotePlayerData();
-    COLLISION.collisionPeriodic(localPlayer)
-    CHAT.onFrame()
-    INVENTORY.onFrame()
+    COLLISION.collisionPeriodic(localPlayer);
+    CHAT.onFrame();
+    INVENTORY.onFrame();
 
     RENDERER.doFrame(localPlayer);
 
 
 
-    requestAnimationFrame(animate)
+    requestAnimationFrame(animate);
 }
 
 export function getLocalPlayerData(){

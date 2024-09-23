@@ -1,13 +1,13 @@
 import * as THREE from 'three';
-import * as RENDERER from './ren.module.ts'
+import * as RENDERER from './ren.module.ts';
 
 const clock = new THREE.Clock();
 
 const raycaster = new THREE.Raycaster();
 
 const cube = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( { color: 0x0000ff } ));
-const wall1 = new THREE.Mesh( new THREE.BoxGeometry( 1, 5, 5), new THREE.MeshBasicMaterial( { color: 0xff0000 } ))
-const wall2 = new THREE.Mesh( new THREE.BoxGeometry( 5, 5, 1), new THREE.MeshBasicMaterial( { color: 0xff0000 } ))
+const wall1 = new THREE.Mesh( new THREE.BoxGeometry( 1, 5, 5), new THREE.MeshBasicMaterial( { color: 0xff0000 } ));
+const wall2 = new THREE.Mesh( new THREE.BoxGeometry( 5, 5, 1), new THREE.MeshBasicMaterial( { color: 0xff0000 } ));
 
 export function collisionPeriodic(localPlayer) {
     const deltaTime = clock.getDelta();
@@ -16,9 +16,9 @@ export function collisionPeriodic(localPlayer) {
     cube.rotation.x += 2 * deltaTime ;
     cube.rotation.y += 2 * deltaTime;
 
-    const direction = new THREE.Vector3()
-    direction.copy(localPlayer.velocity)
-    direction.normalize()
+    const direction = new THREE.Vector3();
+    direction.copy(localPlayer.velocity);
+    direction.normalize();
     raycaster.set(localPlayer.position, direction);
 
     const intersects = raycaster.intersectObject(scene, true);

@@ -1,7 +1,7 @@
 import * as RENDERER from './ren.module.ts';
 import * as THREE from 'three';
-import * as MAIN from '../main.ts'
-import * as NETWORKING from './networking.module.ts'
+import * as MAIN from '../main.ts';
+import * as NETWORKING from './networking.module.ts';
 import {getRemotePlayerData} from "./networking.module.ts";
 import {getLocalPlayerData} from "../main.ts";
 
@@ -29,12 +29,12 @@ function renderChatMessages(){
     const linesToRender = [];
     const pixOffsets = [];
     if(MAIN.getLocalPlayerData().chatActive){
-        linesToRender.push(usermsg+cursor)
-        pixOffsets.push(0)
+        linesToRender.push(usermsg+cursor);
+        pixOffsets.push(0);
     }
     if(nameSettingActive){
         linesToRender.push('Enter your name: '+usermsg+cursor);
-        pixOffsets.push(0)
+        pixOffsets.push(0);
     }
 
     const messagesBeingTyped = NETWORKING.getMessagesBeingTyped();
@@ -80,7 +80,7 @@ if(!duplicateFromPlayerData){
         let width = ctx.measureText(usermsg).width;
         if(nameSettingActive)
             width = ctx.measureText(usermsg + "Enter your name: ").width;
-        ctx.fillRect(256+2,200-40-7,width+1,9)
+        ctx.fillRect(256+2,200-40-7,width+1,9);
     }
 
 }
@@ -95,8 +95,8 @@ function renderDebugText(){
     const playerCount = getRemotePlayerData().length;
     const latency = getLocalPlayerData().latency;
 
-    linesToRender.push(Math.floor(framerate)+'FPS, ' + playerCount + ' online')
-    linesToRender.push(Math.floor(latency) + 'ms')
+    linesToRender.push(Math.floor(framerate)+'FPS, ' + playerCount + ' online');
+    linesToRender.push(Math.floor(latency) + 'ms');
 
     for(let i = 0; i < linesToRender.length; i++)
         ctx.fillText(linesToRender[i], 256 +2, 7 + 7*i);
@@ -125,7 +125,7 @@ function onKeyDown(e) {
 
 
     if(e.key === "Escape" || e.key === "Enter"){
-        MAIN.getLocalPlayerData().chatMsg = ''
+        MAIN.getLocalPlayerData().chatMsg = '';
         MAIN.getLocalPlayerData().chatActive=false;
         nameSettingActive = false;
     }
@@ -197,7 +197,7 @@ export function onFrame() {
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     renderChatMessages();
-    renderDebugText()
+    renderDebugText();
 
 
     // Update the texture
