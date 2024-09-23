@@ -55,8 +55,9 @@ cube.material.depthTest = false;
 
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight2 = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
-heldItemScene.add(ambientLight);
+heldItemScene.add(ambientLight2);
 
 heldItemScene.fog = new THREE.FogExp2('#111111',0.1)
 scene.fog = new THREE.FogExp2('#111111', 0.1);

@@ -45,8 +45,11 @@ export class BananaGun extends HeldItem {
             this.sceneAdded = true;
         }
 
-        this.bananaObject.position.set(0,-0.6,3 + 0.1*Math.sin(Date.now()/1000))
 
+        // this.bananaObject.position.copy(unscopedPosition)
+        // this.bananaObject.position.add(new THREE.Vector3(0,0,0.1*Math.sin(Date.now()/5000)))
+
+        this.bananaObject.quaternion.identity();
 
         // Create a quaternion for a 90-degree rotation around the Y-axis
         const angle = Math.PI / 2; // 90 degrees in radians
@@ -61,9 +64,22 @@ export class BananaGun extends HeldItem {
         quaternion2.setFromAxisAngle(axis2, angle2);
         this.bananaObject.quaternion.multiplyQuaternions(quaternion2, this.bananaObject.quaternion)
 
-        if (input.leftClick) {
-        console.log('banana gun shoots!');
-        }
+        if (input.rightClick)
+            moveTowards(this.bananaObject.position, scopedPosition, 0.2);
+        else
+            moveTowards(this.bananaObject.position, unscopedPosition, 0.1);
+
     }
 
 }
+
+function moveTowards(source: THREE.Vector3, target: THREE.Vector3, frac: number) {
+    const newX = source.x + frac * (target.x - source.x);
+    const newY = source.y + frac * (target.y - source.y);
+    const newZ = source.z + frac * (target.z - source.z);
+    source.set(newX, newY, newZ);
+}
+
+
+const scopedPosition = new THREE.Vector3(0,-0.6,3.5);
+const unscopedPosition = new THREE.Vector3(0.85,-0.8,3.2);

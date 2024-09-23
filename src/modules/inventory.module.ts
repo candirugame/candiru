@@ -1,4 +1,5 @@
 import * as RENDERER from './ren.module.ts';
+import * as INPUT from './input.module';
 import {BananaGun} from '../HeldItem/BananaGun.ts'
 import {HeldItemInput} from "../HeldItem/HeldItemInput";
 
@@ -9,5 +10,5 @@ bananaGun.init()
 }
 
 export function onFrame(){
-bananaGun.onFrame(new HeldItemInput())
+bananaGun.onFrame(new HeldItemInput(INPUT.getLeftMouseDown(),INPUT.getRightMouseDown(),false));
 }

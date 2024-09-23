@@ -14,5 +14,12 @@ export default [
       "*.min.js",     // Ignore all minified JavaScript files
       "public/",
     ],
+
   },
+  {
+    rules: {
+      "no-undef": "error",
+      "semi": "error",
+    },
+  }
 ];
