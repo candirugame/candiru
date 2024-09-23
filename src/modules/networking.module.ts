@@ -1,5 +1,5 @@
 import {io} from 'socket.io-client';
-import {getLocalPlayerData} from "./main.ts";
+import {getLocalPlayerData} from "../main.ts";
 import * as CHAT from './chat.module.ts'
 
 const socket = io();

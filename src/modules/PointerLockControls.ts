@@ -2,7 +2,7 @@ import {
 	Controls,
 	Euler,
 } from 'three';
-import {getLocalPlayerData} from "./main.ts";
+import {getLocalPlayerData} from "../main.ts";
 
 const _euler = new Euler( 0, 0, 0, 'YXZ' );
 
