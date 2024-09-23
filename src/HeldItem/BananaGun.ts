@@ -31,16 +31,20 @@ export class BananaGun extends HeldItem {
                     }
                 });
             },
-            () => {}, //progress callback
-            () => { console.log('banana loading error'); }
+            () => {
+            }, //progress callback
+            () => {
+                console.log('banana loading error');
+            }
         );
     }
 
     sceneAdded = false;
+    hidden = false;
 
     onFrame(input: HeldItemInput) {
-        if(this.bananaObject === null) return;
-        if (!this.sceneAdded) {
+        if (this.bananaObject === null) return;
+        if (!this.sceneAdded && !this.hidden) {
             this.scene.add(this.bananaObject);
             this.sceneAdded = true;
         }
@@ -64,11 +68,41 @@ export class BananaGun extends HeldItem {
         quaternion2.setFromAxisAngle(axis2, angle2);
         this.bananaObject.quaternion.multiplyQuaternions(quaternion2, this.bananaObject.quaternion);
 
-        if (input.rightClick)
-            moveTowards(this.bananaObject.position, scopedPosition, 0.2);
-        else
-            moveTowards(this.bananaObject.position, unscopedPosition, 0.1);
+        if(!this.hidden){
+            if (input.rightClick)
+                moveTowards(this.bananaObject.position, scopedPosition, 0.3);
+            else
+                moveTowards(this.bananaObject.position, unscopedPosition, 0.1);
+        }
 
+        if (this.hidden && this.sceneAdded) {
+            moveTowards(this.bananaObject.position, hiddenPosition, 0.1);
+            if(Date.now()/1000 - this.hiddenTimestamp > 3 ){
+                this.scene.remove(this.bananaObject);
+                this.sceneAdded = false;
+            }
+        }
+
+        if((Date.now()/1000/3) % 1<0.5)
+            this.hide();
+        else
+            this.show();
+
+        console.log(this.scene.children.length,this.sceneAdded);
+
+
+    }
+
+    hiddenTimestamp = 0;
+
+    show(){
+        if(!this.hidden) return;
+        this.hidden=false;
+    }
+    hide(){
+        if(this.hidden) return;
+        this.hidden=true;
+        this.hiddenTimestamp = Date.now()/1000;
     }
 
 }
@@ -83,3 +117,4 @@ function moveTowards(source: THREE.Vector3, target: THREE.Vector3, frac: number)
 
 const scopedPosition = new THREE.Vector3(0,-0.6,3.5);
 const unscopedPosition = new THREE.Vector3(0.85,-0.8,3.2);
+const hiddenPosition = new THREE.Vector3(0.85,-2.12,3.2);
