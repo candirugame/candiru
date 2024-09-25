@@ -4,7 +4,8 @@ import { HeldItemInput } from "./HeldItemInput";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import * as THREE from 'three';
-
+import { Clock } from 'three';
+const clock = new THREE.Clock();
 export class BananaGun extends HeldItem {
     scene: THREE.Scene = null;
     bananaObject = null;
@@ -42,13 +43,14 @@ export class BananaGun extends HeldItem {
     sceneAdded = false;
     hidden = false;
 
+
     onFrame(input: HeldItemInput) {
         if (this.bananaObject === null) return;
         if (!this.sceneAdded && !this.hidden) {
             this.scene.add(this.bananaObject);
             this.sceneAdded = true;
         }
-
+        const deltaTime = clock.getDelta();
 
         // this.bananaObject.position.copy(unscopedPosition)
         // this.bananaObject.position.add(new THREE.Vector3(0,0,0.1*Math.sin(Date.now()/5000)))
@@ -70,25 +72,25 @@ export class BananaGun extends HeldItem {
 
         if(!this.hidden){
             if (input.rightClick)
-                moveTowards(this.bananaObject.position, scopedPosition, 0.3);
+                moveTowards(this.bananaObject.position, scopedPosition, 0.3*deltaTime*60);
             else
-                moveTowards(this.bananaObject.position, unscopedPosition, 0.1);
+                moveTowards(this.bananaObject.position, unscopedPosition, 0.1*deltaTime*60);
         }
 
         if (this.hidden && this.sceneAdded) {
-            moveTowards(this.bananaObject.position, hiddenPosition, 0.1);
+            moveTowards(this.bananaObject.position, hiddenPosition, 0.1*deltaTime*60);
             if(Date.now()/1000 - this.hiddenTimestamp > 3 ){
                 this.scene.remove(this.bananaObject);
                 this.sceneAdded = false;
             }
         }
 
-        if((Date.now()/1000/3) % 1<0.5)
-            this.hide();
-        else
-            this.show();
+        // if((Date.now()/1000/3) % 1<0.5) //banana stashing test
+        //     this.hide();
+        // else
+        //     this.show();
 
-        console.log(this.scene.children.length,this.sceneAdded);
+        //console.log(this.scene.children.length,this.sceneAdded);
 
 
     }
