@@ -12,6 +12,7 @@ const scene = new THREE.Scene();
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
 document.addEventListener('keydown', onKeyDown);
 
 const chatMessages = [];
@@ -171,6 +172,9 @@ canvas.height = 200;
 
 // Create a texture from the canvas
 const texture = new THREE.CanvasTexture(canvas);
+texture.minFilter = THREE.NearestFilter;
+texture.magFilter = THREE.NearestFilter;
+
 
 
 // Create a plane geometry and apply the texture
