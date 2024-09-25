@@ -4,8 +4,10 @@ import { HeldItemInput } from "./HeldItemInput";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import * as THREE from 'three';
-import { Clock } from 'three';
+import {Vector3} from "three";
+
 const clock = new THREE.Clock();
+const firingDelay = 0.15;
 export class BananaGun extends HeldItem {
     scene: THREE.Scene = null;
     bananaObject = null;
@@ -71,28 +73,36 @@ export class BananaGun extends HeldItem {
         this.bananaObject.quaternion.multiplyQuaternions(quaternion2, this.bananaObject.quaternion);
 
         if(!this.hidden){
-            if (input.rightClick)
-                moveTowards(this.bananaObject.position, scopedPosition, 0.3*deltaTime*60);
-            else
-                moveTowards(this.bananaObject.position, unscopedPosition, 0.1*deltaTime*60);
+            this.handleInput(input,deltaTime);
         }
 
         if (this.hidden && this.sceneAdded) {
-            moveTowards(this.bananaObject.position, hiddenPosition, 0.1*deltaTime*60);
+            moveTowardsPos(this.bananaObject.position, hiddenPosition, 0.1*deltaTime*60);
             if(Date.now()/1000 - this.hiddenTimestamp > 3 ){
                 this.scene.remove(this.bananaObject);
                 this.sceneAdded = false;
             }
         }
+    }
+    lastFired = 0;
+    handleInput(input: HeldItemInput, deltaTime:number) {
+        if (input.rightClick){
+            moveTowardsPos(this.bananaObject.position, scopedPosition, 0.3*deltaTime*60);
+        }
+        else{
+            moveTowardsPos(this.bananaObject.position, unscopedPosition, 0.1*deltaTime*60);
+        }
 
-        // if((Date.now()/1000/3) % 1<0.5) //banana stashing test
-        //     this.hide();
-        // else
-        //     this.show();
 
-        //console.log(this.scene.children.length,this.sceneAdded);
+        if(input.leftClick) {
+            if (input.leftClick && Date.now() / 1000 - this.lastFired > firingDelay) {
+                this.lastFired = Date.now() / 1000;
+                console.log('Firing banana');
+                this.bananaObject.position.add(new Vector3(0,0,0.6));
+                //moveTowards(this.bananaObject.position, this.bananaObject.,1);
 
-
+            }
+        }
     }
 
     hiddenTimestamp = 0;
@@ -109,14 +119,24 @@ export class BananaGun extends HeldItem {
 
 }
 
-function moveTowards(source: THREE.Vector3, target: THREE.Vector3, frac: number) {
+function moveTowardsPos(source: THREE.Vector3, target: THREE.Vector3, frac: number) {
     const newX = source.x + frac * (target.x - source.x);
     const newY = source.y + frac * (target.y - source.y);
     const newZ = source.z + frac * (target.z - source.z);
     source.set(newX, newY, newZ);
 }
 
+function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac: number) {
+    const newQuat = new THREE.Quaternion();
+    newQuat.slerp(target, frac);
+    source.copy(newQuat);
+}
+
+
 
 const scopedPosition = new THREE.Vector3(0,-0.6,3.5);
 const unscopedPosition = new THREE.Vector3(0.85,-0.8,3.2);
 const hiddenPosition = new THREE.Vector3(0.85,-2.12,3.2);
+
+const identityQuaternion = new THREE.Quaternion(new THREE.Vector3(0, -1, 0), Math.PI / 2).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, -0.03), 3.8));
+
