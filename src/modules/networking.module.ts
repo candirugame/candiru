@@ -1,6 +1,6 @@
 import {io} from 'socket.io-client';
 import {getLocalPlayerData} from "../main.ts";
-import * as CHAT from './chat.module.ts';
+import * as CHAT from './canvasOverlay.module.ts';
 
 const socket = io();
 async function fetchVersion(){

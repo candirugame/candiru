@@ -3,7 +3,7 @@ import * as NETWORKING from './networking.module.ts';
 import * as MAIN from '../main.ts';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-import * as CHAT from './chat.module.ts';
+import * as CHAT from './canvasOverlay.module.ts';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
@@ -34,7 +34,7 @@ let playersToRender = [];
 
 // Create a new scene and camera for the held item
 const heldItemScene = new THREE.Scene();
-const heldItemCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
+const heldItemCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
 heldItemCamera.position.set(0, 0, 5); // Adjust as needed
 heldItemCamera.lookAt(0, 0, 0); // Ensure the camera is looking at the origin where the cube is
 
@@ -180,6 +180,8 @@ function onWindowResize() {
 
     // Update held item camera aspect ratio
     heldItemCamera.aspect = window.innerWidth / window.innerHeight;
+    console.log(heldItemCamera.fov);
+
     heldItemCamera.updateProjectionMatrix();
 }
 

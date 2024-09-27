@@ -1,5 +1,5 @@
 import * as RENDERER from './modules/ren.module.ts';
-import * as CHAT from './modules/chat.module.ts';
+import * as CHAT from './modules/canvasOverlay.module.ts';
 import * as INPUTS from './modules/input.module.ts';
 import * as NETWORKING from './modules/networking.module.ts';
 import * as THREE from 'three';
