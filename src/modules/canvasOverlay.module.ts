@@ -11,14 +11,12 @@ const scene = new THREE.Scene();
 const chatScene = new THREE.Scene();
 const chatCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
 
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d');
-ctx.imageSmoothingEnabled = false;
+
 
 const chatCanvas = document.createElement('canvas');
 const chatCtx = chatCanvas.getContext('2d');
 chatCtx.imageSmoothingEnabled = false;
-chatCanvas.width = 512;
+chatCanvas.width = 1024;
 chatCanvas.height = 200;
 
 document.addEventListener('keydown', onKeyDown);
@@ -81,14 +79,14 @@ function renderChatMessages(ctx) {
     }
 
     for (let i = 0; i < linesToRender.length; i++)
-        ctx.fillText(linesToRender[i], 256 + 3 + pixOffsets[i], 200 - 40 - 8 * i);
+        ctx.fillText(linesToRender[i], chatCanvas.width/2 + 3 + pixOffsets[i], 200 - 40 - 8 * i);
 
     if ((usermsg !== '' && MAIN.getLocalPlayerData().chatActive) || nameSettingActive) {
         ctx.fillStyle = 'rgba(145,142,118,0.3)';
         let width = ctx.measureText(usermsg).width;
         if (nameSettingActive)
             width = ctx.measureText(usermsg + "Enter your name: ").width;
-        ctx.fillRect(256 + 2, 200 - 40 - 7, width + 1, 9);
+        ctx.fillRect(chatCanvas.width/2 + 2, 200 - 40 - 7, width + 1, 9);
     }
 }
 
@@ -105,7 +103,17 @@ function renderDebugText(ctx) {
     linesToRender.push(Math.floor(latency) + 'ms');
 
     for (let i = 0; i < linesToRender.length; i++)
-        ctx.fillText(linesToRender[i], 256 + 2, 7 + 7 * i);
+        ctx.fillText(linesToRender[i], chatCanvas.width/2 + 2, 7 + 7 * i);
+
+
+}
+
+function renderCrosshair(ctx) {
+    ctx.fillStyle = 'rgb(0,255,225)';
+    //create crosshair from 2 rectangles at the center
+    ctx.fillRect(chatCanvas.width/2+screenWidth/2, 100-3, 1, 7);
+    ctx.fillRect(chatCanvas.width/2+screenWidth/2-3, 100, 7, 1);
+
 }
 
 let nameSettingActive = false;
@@ -159,26 +167,15 @@ export function addChatMessage(msg) {
     chatMessages.push(msg);
 }
 
-canvas.width = 512;
-canvas.height = 200;
 
-// Create a texture from the canvas
-const texture = new THREE.CanvasTexture(canvas);
-texture.minFilter = THREE.NearestFilter;
-texture.magFilter = THREE.NearestFilter;
 
-// Create a plane geometry and apply the texture
-const geometry = new THREE.PlaneGeometry(canvas.width, canvas.height);
-const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true
-});
 
-const plane = new THREE.Mesh(geometry, material);
+
+
+
 
 // Scale down the plane to make it visible
 const scaleFactor = 0.001; // Adjust this value as needed
-plane.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
 const chatTexture = new THREE.CanvasTexture(chatCanvas);
 chatTexture.minFilter = THREE.NearestFilter;
@@ -193,26 +190,25 @@ const chatMaterial = new THREE.MeshBasicMaterial({
 const chatPlane = new THREE.Mesh(chatGeometry, chatMaterial);
 chatPlane.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-chatScene.add(chatPlane);
 
 let addedToScene = false;
-
+let screenWidth = 100;
 export function onFrame() {
     if (!addedToScene) {
-        scene.add(plane);
+        chatScene.add(chatPlane);
         addedToScene = true;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    renderChatMessages(ctx);
-    renderDebugText(ctx);
-    texture.needsUpdate = true;
+
     clearOldMessages();
+
 
     chatCtx.clearRect(0, 0, chatCanvas.width, chatCanvas.height);
     renderChatMessages(chatCtx);
     renderDebugText(chatCtx);
+    renderCrosshair(chatCtx);
     chatTexture.needsUpdate = true;
+
 
     const distanceFromCamera = 0.1; // Distance in front of the camera
     const frustumHeight = 2 * distanceFromCamera * Math.tan(THREE.MathUtils.degToRad(chatCamera.fov / 2));
@@ -223,6 +219,8 @@ export function onFrame() {
     vector.applyMatrix4(chatCamera.matrixWorld);
     chatPlane.position.set(vector.x, vector.y, vector.z);
     chatPlane.quaternion.copy(chatCamera.quaternion);
+
+     screenWidth = RENDERER.getCamera().aspect * 200;
 }
 
 export function getScene() {

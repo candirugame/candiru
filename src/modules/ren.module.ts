@@ -173,6 +173,7 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(200 / window.innerHeight);
 
+
     // Update held item camera aspect ratio
     heldItemCamera.aspect = window.innerWidth / window.innerHeight;
     heldItemCamera.updateProjectionMatrix();
