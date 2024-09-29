@@ -20,6 +20,7 @@ export default [
     rules: {
       "no-undef": "error",
       "semi": "error",
+      "no-unused-vars": "warn",
     },
   }
 ];

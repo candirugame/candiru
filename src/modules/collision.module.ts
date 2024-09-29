@@ -11,6 +11,7 @@ const wall2 = new THREE.Mesh( new THREE.BoxGeometry( 5, 5, 1), new THREE.MeshBas
 
 export function collisionPeriodic(localPlayer) {
     const deltaTime = clock.getDelta();
+
     const scene = RENDERER.getScene();
 
     cube.rotation.x += 2 * deltaTime ;
