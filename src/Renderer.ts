@@ -3,15 +3,17 @@ import { Networking } from './Networking';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player';
+import {ChatOverlay} from "./ChatOverlay";
 
 export class Renderer {
+    private chatOverlay: ChatOverlay;
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
     private loader: GLTFLoader;
     private dracoLoader: DRACOLoader;
     private possumGLTFScene: THREE.Group;
-    private playersToRender: any[];
+    private playersToRender;
     private heldItemScene: THREE.Scene;
     private heldItemCamera: THREE.PerspectiveCamera;
     private ambientLight: THREE.AmbientLight;
@@ -22,9 +24,10 @@ export class Renderer {
     private networking: Networking;
     private localPlayer: Player;
 
-    constructor(networking: Networking, localPlayer: Player) {
+    constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
         this.localPlayer = localPlayer;
+        this.chatOverlay = chatOverlay;
 
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
@@ -74,11 +77,27 @@ export class Renderer {
     }
 
     public doFrame(localPlayer: Player) {
+        // Render the main scene
         this.renderer.render(this.scene, this.camera);
         this.renderer.autoClear = false;
+
+        // Render the held item scene
         this.renderer.render(this.heldItemScene, this.heldItemCamera);
+
+        // Render the chat overlay
+        const chatScene = this.chatOverlay.getChatScene();
+        const chatCamera = this.chatOverlay.getChatCamera();
+        chatScene.traverse((obj) => {
+            if (obj.isMesh) {
+                obj.renderOrder = 998; // Ensure it's rendered just before the held item
+                obj.material.depthTest = false;
+            }
+        });
+        this.renderer.render(chatScene, chatCamera);
+
         this.renderer.autoClear = true;
 
+        // Update camera position for local player
         this.camera.position.copy(localPlayer.position);
         this.updateRemotePlayers();
         this.updateFramerate();

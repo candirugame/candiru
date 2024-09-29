@@ -19,7 +19,7 @@ export class Game {
         this.localPlayer = new Player();
         this.chatOverlay = new ChatOverlay(this.localPlayer);
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
-        this.renderer = new Renderer(this.networking, this.localPlayer);
+        this.renderer = new Renderer(this.networking, this.localPlayer, this.chatOverlay);
         this.chatOverlay.setRenderer(this.renderer);
         this.inputHandler = new InputHandler(this.renderer, this.localPlayer);
         this.collisionManager = new CollisionManager(this.renderer);

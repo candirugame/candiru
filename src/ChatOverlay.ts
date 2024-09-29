@@ -116,7 +116,6 @@ export class ChatOverlay {
         }
 
         const messagesBeingTyped = this.networking.getMessagesBeingTyped();
-        console.log('messagesBeingTyped', messagesBeingTyped);
         for (const msg of messagesBeingTyped) {
             linesToRender.push(msg + cursor);
             pixOffsets.push(0);
