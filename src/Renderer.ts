@@ -124,7 +124,7 @@ export class Renderer {
         this.removeInactivePlayers(remotePlayerData);
     }
 
-    private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData: any) {
+    private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData) {
         playerObject.position.set(
             remotePlayerData.position.x,
             remotePlayerData.position.y,
@@ -150,7 +150,7 @@ export class Renderer {
         playerObject.quaternion.multiply(rotationQuaternion);
     }
 
-    private addNewPlayer(remotePlayerData: any) {
+    private addNewPlayer(remotePlayerData) {
         const newPlayer = {
             id: remotePlayerData.id,
             object: this.possumGLTFScene.clone()
@@ -159,7 +159,7 @@ export class Renderer {
         this.scene.add(newPlayer.object);
     }
 
-    private removeInactivePlayers(remotePlayerData: any[]) {
+    private removeInactivePlayers(remotePlayerData) {
         this.playersToRender = this.playersToRender.filter((player) => {
             const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
             if (!isActive) {
@@ -203,5 +203,11 @@ export class Renderer {
         // Update held item camera aspect ratio
         this.heldItemCamera.aspect = window.innerWidth / window.innerHeight;
         this.heldItemCamera.updateProjectionMatrix();
+
+        // Update chat camera aspect ratio
+        const chatCamera = this.chatOverlay.getChatCamera();
+        chatCamera.aspect = window.innerWidth / window.innerHeight;
+        chatCamera.updateProjectionMatrix();
+        
     }
 }
