@@ -5,8 +5,8 @@ import { ChatOverlay } from './ChatOverlay';
 export class Networking {
     private socket: Socket;
     private gameVersion: string;
-    private remotePlayers: any[];
-    private lastUploadedLocalPlayer: any;
+    private remotePlayers;
+    private lastUploadedLocalPlayer;
     private lastUploadTime: number;
     private uploadWait: number;
     private lastLatencyTestEmit: number;
@@ -97,7 +97,7 @@ export class Networking {
         return this.messagesBeingTyped;
     }
 
-    private playersAreEqualEnough(player1: Player, player2: any) {
+    private playersAreEqualEnough(player1: Player, player2: Player) {
         if (player1 === null || player2 === null) return false;
         let out = true;
         out = out && player1.position.equals(player2.position);
