@@ -1,30 +1,28 @@
-import { HeldItem } from "./HeldItem";
-import { HeldItemInput } from "./HeldItemInput";
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { HeldItem } from './HeldItem';
+import { HeldItemInput } from './HeldItemInput';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import { Vector3 } from "three";
 
 const clock = new THREE.Clock();
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;
 
 export class BananaGun extends HeldItem {
-    scene: THREE.Scene = null;
-    bananaObject = null;
-    sceneAdded = false;
-    hidden = false;
-    lastInput: HeldItemInput = new HeldItemInput();
-    lastFired = 0;
-    hiddenTimestamp = 0;
+    private scene: THREE.Scene;
+    private bananaObject: THREE.Group;
+    private sceneAdded: boolean = false;
+    private hidden: boolean = false;
+    private lastInput: HeldItemInput = new HeldItemInput();
+    private lastFired: number = 0;
+    private hiddenTimestamp: number = 0;
 
     constructor(scene: THREE.Scene) {
-        super(); // Assuming HeldItem is a class
+        super();
         this.scene = scene;
-        this.init();
     }
 
-    init() {
+    public init() {
         const loader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('/draco/');
@@ -34,21 +32,21 @@ export class BananaGun extends HeldItem {
             (gltf) => {
                 this.bananaObject = gltf.scene;
                 this.bananaObject.traverse((child) => {
-                    if (child.isMesh) {
+                    if ((child as THREE.Mesh).isMesh) {
                         child.renderOrder = 999;
-                        child.material.depthTest = false;
+                        (child as THREE.Mesh).material.depthTest = false;
                     }
                 });
             },
-            () => {},
+            undefined,
             () => {
                 console.log('banana loading error');
             }
         );
     }
 
-    onFrame(input: HeldItemInput) {
-        if (this.bananaObject === null) return;
+    public onFrame(input: HeldItemInput) {
+        if (!this.bananaObject) return;
         if (!this.sceneAdded && !this.hidden) {
             this.scene.add(this.bananaObject);
             this.sceneAdded = true;
@@ -68,7 +66,7 @@ export class BananaGun extends HeldItem {
         }
     }
 
-    handleInput(input: HeldItemInput, deltaTime: number) {
+    private handleInput(input: HeldItemInput, deltaTime: number) {
         if (input.rightClick) {
             moveTowardsPos(this.bananaObject.position, scopedPosition, 0.3 * deltaTime * 60);
         } else {
@@ -81,7 +79,7 @@ export class BananaGun extends HeldItem {
             if (input.leftClick && Date.now() / 1000 - this.lastFired > firingDelay) {
                 this.lastFired = Date.now() / 1000;
                 console.log('Firing banana');
-                this.bananaObject.position.add(new Vector3(0, 0, 0.6));
+                this.bananaObject.position.add(new THREE.Vector3(0, 0, 0.6));
                 rotateAroundWorldAxis(this.bananaObject.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
             }
         }
@@ -89,15 +87,19 @@ export class BananaGun extends HeldItem {
         this.lastInput = input;
     }
 
-    show() {
+    public show() {
         if (!this.hidden) return;
         this.hidden = false;
     }
 
-    hide() {
+    public hide() {
         if (this.hidden) return;
         this.hidden = true;
         this.hiddenTimestamp = Date.now() / 1000;
+    }
+
+    public itemDepleted(): boolean {
+        return false;
     }
 }
 
@@ -107,10 +109,7 @@ function rotateAroundWorldAxis(source: THREE.Quaternion, axis: THREE.Vector3, an
 }
 
 function moveTowardsPos(source: THREE.Vector3, target: THREE.Vector3, frac: number) {
-    const newX = source.x + frac * (target.x - source.x);
-    const newY = source.y + frac * (target.y - source.y);
-    const newZ = source.z + frac * (target.z - source.z);
-    source.set(newX, newY, newZ);
+    source.lerp(target, frac);
 }
 
 function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac: number) {
