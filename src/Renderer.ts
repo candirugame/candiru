@@ -132,10 +132,10 @@ export class Renderer {
         );
 
         playerObject.quaternion.set(
-            remotePlayerData.quaternion.x,
-            remotePlayerData.quaternion.y,
-            remotePlayerData.quaternion.z,
-            remotePlayerData.quaternion.w
+            remotePlayerData.quaternion[0],
+            remotePlayerData.quaternion[1],
+            remotePlayerData.quaternion[2],
+            remotePlayerData.quaternion[3]
         );
 
         const velocity = Math.sqrt(
