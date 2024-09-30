@@ -25,7 +25,7 @@ export class Networking {
         this.remotePlayers = [];
         this.lastUploadedLocalPlayer = null;
 
-        this.lastUploadTime = 0;
+        this.lastUploadTime = Date.now()/1000;
         this.uploadWait = 1 / 15;
         this.lastLatencyTestEmit = 0;
         this.latencyTestWait = 5;
