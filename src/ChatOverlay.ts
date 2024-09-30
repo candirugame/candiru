@@ -8,7 +8,7 @@ export class ChatOverlay {
     private chatCamera: THREE.PerspectiveCamera;
     private chatCanvas: HTMLCanvasElement;
     private chatCtx: CanvasRenderingContext2D;
-    private chatMessages: any[];
+    private chatMessages;//TODO: type this?
     private chatMessageLifespan: number;
     private charsToRemovePerSecond: number;
     private maxMessagesOnScreen: number;
@@ -224,7 +224,7 @@ export class ChatOverlay {
             this.nameSettingActive = true;
     }
 
-    public addChatMessage(msg: any) {
+    public addChatMessage(msg) {//TODO: type this?
         msg['timestamp'] = Date.now() / 1000;
         this.chatMessages.push(msg);
     }
