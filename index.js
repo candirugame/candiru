@@ -168,6 +168,7 @@ const playerDataSchema = Joi.object({
     chatActive: Joi.boolean().required(),
     chatMsg: Joi.string().required().allow(''),
     latency: Joi.number().required(),
+    health: Joi.number().required(),
 });
 
 const chatMsgSchema = Joi.object({

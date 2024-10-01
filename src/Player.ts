@@ -11,6 +11,7 @@ export class Player {
     public chatActive: boolean;
     public chatMsg: string;
     public latency: number;
+    public health: number;
 
     constructor() {
         this.position = new THREE.Vector3(6, 0.1016, 12);
@@ -23,6 +24,7 @@ export class Player {
         this.chatActive = false;
         this.chatMsg = '';
         this.latency = 1000;
+        this.health = 100;
 
         if (this.name === '') {
             const storedName = localStorage.getItem('name');
