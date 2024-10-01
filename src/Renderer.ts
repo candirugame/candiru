@@ -115,7 +115,7 @@ export class Renderer {
 
         // Update camera position and rotation for local player
         this.camera.position.copy(localPlayer.position);
-        this.camera.quaternion.copy(localPlayer.quaternion);
+     //   this.camera.quaternion.copy(localPlayer.quaternion);
 
         this.updateRemotePlayers();
         this.updateFramerate();
