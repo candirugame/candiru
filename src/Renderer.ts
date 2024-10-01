@@ -25,6 +25,7 @@ export class Renderer {
     private networking: Networking;
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
+    private crosshairVec = new THREE.Vector2;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -123,8 +124,7 @@ export class Renderer {
 
         this.updateRemotePlayers();
         this.updateFramerate();
-
-        console.log(this.getRemotePlayerIDsInCrosshair());
+        
     }
 
     private updateRemotePlayers() {
@@ -237,14 +237,28 @@ export class Renderer {
     }
 
     private getRemotePlayerObjectsInCrosshair():THREE.Object3D[]{
-        const crosshairVec = new THREE.Vector2;
-        this.raycaster.setFromCamera(crosshairVec, this.camera);
+        this.raycaster.setFromCamera(this.crosshairVec, this.camera);
         return this.raycaster.intersectObjects(this.remotePlayersScene.children);
+    }
+
+    private getPlayersInCrosshairWithWalls(){
+        const out = this.getRemotePlayerObjectsInCrosshair();
+        const walls = this.raycaster.intersectObjects(this.scene.children);
+        for(let i = out.length-1; i >= 0; i--) {
+            for (const wall of walls) {
+                       if(out[i].distance > wall.distance)
+                           out.splice(i, 1);
+                break;
+            }
+        }
+
+
+        return out;
     }
 
     public getRemotePlayerIDsInCrosshair(): number[] {
         const playerIDs: number[] = [];
-        const objectsInCrosshair = this.getRemotePlayerObjectsInCrosshair();
+        const objectsInCrosshair = this.getPlayersInCrosshairWithWalls();
 
         for (const object of objectsInCrosshair) {
             for (const player of this.playersToRender) {
