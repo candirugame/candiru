@@ -5,6 +5,7 @@ import { InputHandler } from './InputHandler';
 import { Networking } from './Networking';
 import { CollisionManager } from './CollisionManager';
 import { InventoryManager } from './InventoryManager';
+import { Map } from './Map';
 
 export class Game {
     private localPlayer: Player;
@@ -14,6 +15,7 @@ export class Game {
     private networking: Networking;
     private collisionManager: CollisionManager;
     private inventoryManager: InventoryManager;
+    private map: Map;
 
     constructor() {
         this.localPlayer = new Player();
@@ -25,6 +27,7 @@ export class Game {
         this.collisionManager = new CollisionManager(this.renderer);
         this.inventoryManager = new InventoryManager(this.renderer, this.inputHandler);
         this.chatOverlay.setNetworking(this.networking);
+        this.map = new Map('maps/test1.glb', this.renderer);
     }
 
     init() {
