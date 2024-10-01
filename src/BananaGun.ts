@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
 import {Renderer} from "./Renderer";
+import {Networking} from "./Networking";
 
 const clock = new THREE.Clock();
 const firingDelay = 0.12;
@@ -19,10 +20,12 @@ export class BananaGun extends HeldItem {
     private hiddenTimestamp: number = 0;
     private renderer:Renderer;
     private lastShotSomeoneTimestamp:number = 0;
+    private networking:Networking;
 
-    constructor(renderer: Renderer) {
+    constructor(renderer: Renderer, networking:Networking) {
         super();
         this.renderer = renderer;
+        this.networking = networking;
         this.scene = renderer.getHeldItemScene();
     }
 
@@ -69,7 +72,7 @@ export class BananaGun extends HeldItem {
             }
         }
 
-        this.renderer.crosshairIsFlashing = Date.now()/1000 - this.lastShotSomeoneTimestamp <0.1;
+        this.renderer.crosshairIsFlashing = Date.now()/1000 - this.lastShotSomeoneTimestamp <0.05;
 
     }
 
@@ -113,6 +116,9 @@ export class BananaGun extends HeldItem {
         console.log('Firing banana');
         if(this.renderer.getRemotePlayerIDsInCrosshair().length>0){
             console.log('shot someone >:)');
+            for(const id of this.renderer.getRemotePlayerIDsInCrosshair()){
+                this.networking.applyDamage(id, 10);
+            }
             this.lastShotSomeoneTimestamp = Date.now()/1000;
         }
 

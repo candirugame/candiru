@@ -75,6 +75,33 @@ io.on('connection', (socket) => {
         socket.emit('latencyTest','response :)');
     });
 
+    socket.on('applyDamage',(data)=>{
+        console.log('got damage request');
+        let dataError = damageRequestSchema.validate(data).error;
+        let dataIsValid = dataError === undefined;
+        if(!dataIsValid){
+            console.log("⚠️ invalid damage request data received");
+            //console.log(dataError)
+            return;
+        }
+        //find target player in playerData by ID of targetPlayer
+        let targetPlayerIndex = -1;
+        let localPlayerIndex = -1;
+        for(let i = 0; i<playerData.length; i++){
+            if(playerData[i]['id'] === data.targetPlayer.id)
+                targetPlayerIndex = i;
+            if(playerData[i]['id'] === data.localPlayer.id)
+                localPlayerIndex = i;
+        }
+        if(targetPlayerIndex === -1){
+            console.log('⚠️ target player not found in playerData'); return;
+        }
+        if(localPlayerIndex === -1){
+            console.log('⚠️ local player not found in playerData'); return;
+        }
+
+    });
+
     socket.on('disconnect', () => {
         //console.log('browser disconnected 🐙');
     });
@@ -169,12 +196,19 @@ const playerDataSchema = Joi.object({
     chatMsg: Joi.string().required().allow(''),
     latency: Joi.number().required(),
     health: Joi.number().required(),
+    updateTimestamp: Joi.number(),
 });
 
 const chatMsgSchema = Joi.object({
     id: Joi.number().required(),
     name: Joi.string().required().allow(''),
     message: Joi.string().required().allow(''),
+});
+
+const damageRequestSchema = Joi.object({
+    localPlayer: playerDataSchema.required(),
+    targetPlayer: playerDataSchema.required(),
+    damage: Joi.number().required(),
 });
 
 

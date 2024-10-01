@@ -122,4 +122,14 @@ export class Networking {
         if (msg.charAt(0) === '/') return;
         this.chatOverlay.addChatMessage(chatMessage);
     }
+
+    public applyDamage(id:number, damage: number) {
+        const player2 = this.remotePlayers.find((player) => player.id === id);
+        const damageRequest = {
+            localPlayer: this.localPlayer,
+            targetPlayer: player2,
+            damage: damage
+        };
+        this.socket.emit('applyDamage',damageRequest);
+    }
 }
