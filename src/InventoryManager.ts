@@ -11,7 +11,7 @@ export class InventoryManager {
     constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.renderer = renderer;
         this.inputHandler = inputHandler;
-        this.bananaGun = new BananaGun(this.renderer.getHeldItemScene());
+        this.bananaGun = new BananaGun(renderer);
     }
 
     public init() {

@@ -26,6 +26,7 @@ export class Renderer {
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
     private crosshairVec = new THREE.Vector2;
+    public crosshairIsFlashing:boolean;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -124,7 +125,7 @@ export class Renderer {
 
         this.updateRemotePlayers();
         this.updateFramerate();
-        
+
     }
 
     private updateRemotePlayers() {

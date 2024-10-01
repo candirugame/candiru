@@ -3,6 +3,7 @@ import { HeldItemInput } from './HeldItemInput';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
+import {Renderer} from "./Renderer";
 
 const clock = new THREE.Clock();
 const firingDelay = 0.12;
@@ -16,10 +17,13 @@ export class BananaGun extends HeldItem {
     private lastInput: HeldItemInput = new HeldItemInput();
     private lastFired: number = 0;
     private hiddenTimestamp: number = 0;
+    private renderer:Renderer;
+    private lastShotSomeoneTimestamp:number = 0;
 
-    constructor(scene: THREE.Scene) {
+    constructor(renderer: Renderer) {
         super();
-        this.scene = scene;
+        this.renderer = renderer;
+        this.scene = renderer.getHeldItemScene();
     }
 
     public init() {
@@ -64,6 +68,9 @@ export class BananaGun extends HeldItem {
                 this.sceneAdded = false;
             }
         }
+
+        this.renderer.crosshairIsFlashing = Date.now()/1000 - this.lastShotSomeoneTimestamp <0.1;
+
     }
 
     private handleInput(input: HeldItemInput, deltaTime: number) {
@@ -78,7 +85,7 @@ export class BananaGun extends HeldItem {
         if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
             if (input.leftClick && Date.now() / 1000 - this.lastFired > firingDelay) {
                 this.lastFired = Date.now() / 1000;
-                console.log('Firing banana');
+                this.shootBanana();
                 this.bananaObject.position.add(new THREE.Vector3(0, 0, 0.6));
                 rotateAroundWorldAxis(this.bananaObject.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
             }
@@ -101,7 +108,20 @@ export class BananaGun extends HeldItem {
     public itemDepleted(): boolean {
         return false;
     }
+
+     shootBanana(){
+        console.log('Firing banana');
+        if(this.renderer.getRemotePlayerIDsInCrosshair().length>0){
+            console.log('shot someone >:)');
+            this.lastShotSomeoneTimestamp = Date.now()/1000;
+        }
+
+
+    }
+
 }
+
+
 
 function rotateAroundWorldAxis(source: THREE.Quaternion, axis: THREE.Vector3, angle: number) {
     const rotationQuat = new THREE.Quaternion().setFromAxisAngle(axis, angle);
