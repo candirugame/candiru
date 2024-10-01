@@ -3,11 +3,12 @@ import { Networking } from './Networking';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player';
-import {ChatOverlay} from "./ChatOverlay";
+import { ChatOverlay } from "./ChatOverlay";
 
 export class Renderer {
     private chatOverlay: ChatOverlay;
     private scene: THREE.Scene;
+    private remotePlayersScene: THREE.Scene; // New scene for remote players
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
     private loader: GLTFLoader;
@@ -30,6 +31,7 @@ export class Renderer {
         this.chatOverlay = chatOverlay;
 
         this.scene = new THREE.Scene();
+        this.remotePlayersScene = new THREE.Scene(); // Initialize the new scene
         this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
         this.renderer = new THREE.WebGLRenderer();
         document.body.appendChild(this.renderer.domElement);
@@ -62,10 +64,15 @@ export class Renderer {
         // Ambient lights
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         const ambientLight2 = new THREE.AmbientLight(0xffffff, 0.5);
+        const ambientLight3 = new THREE.AmbientLight(0xffffff, 0.5); // Ambient light for remote players scene
         this.scene.add(this.ambientLight);
         this.heldItemScene.add(ambientLight2);
-        this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.1);
+        this.remotePlayersScene.add(ambientLight3); // Add ambient light to remote players scene
+
+        // Fog settings
         this.scene.fog = new THREE.FogExp2('#111111', 0.1);
+        this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.1);
+        this.remotePlayersScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
 
         this.framerate = 0;
         this.framesInFramerateSample = 100;
@@ -77,9 +84,17 @@ export class Renderer {
     }
 
     public doFrame(localPlayer: Player) {
+        // Ensure the renderer clears the buffers before the first render
+        this.renderer.autoClear = true;
+
         // Render the main scene
         this.renderer.render(this.scene, this.camera);
+
+        // Prevent clearing the buffers in subsequent renders
         this.renderer.autoClear = false;
+
+        // Render the remote players scene using the same camera
+        this.renderer.render(this.remotePlayersScene, this.camera);
 
         // Render the held item scene
         this.renderer.render(this.heldItemScene, this.heldItemCamera);
@@ -95,10 +110,13 @@ export class Renderer {
         });
         this.renderer.render(chatScene, chatCamera);
 
+        // Restore autoClear to true if necessary
         this.renderer.autoClear = true;
 
-        // Update camera position for local player
+        // Update camera position and rotation for local player
         this.camera.position.copy(localPlayer.position);
+        this.camera.quaternion.copy(localPlayer.quaternion);
+
         this.updateRemotePlayers();
         this.updateFramerate();
     }
@@ -156,14 +174,14 @@ export class Renderer {
             object: this.possumGLTFScene.clone()
         };
         this.playersToRender.push(newPlayer);
-        this.scene.add(newPlayer.object);
+        this.remotePlayersScene.add(newPlayer.object); // Add to remote players scene
     }
 
     private removeInactivePlayers(remotePlayerData) {
         this.playersToRender = this.playersToRender.filter((player) => {
             const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
             if (!isActive) {
-                this.scene.remove(player.object);
+                this.remotePlayersScene.remove(player.object); // Remove from remote players scene
             }
             return isActive;
         });
@@ -208,6 +226,5 @@ export class Renderer {
         const chatCamera = this.chatOverlay.getChatCamera();
         chatCamera.aspect = window.innerWidth / window.innerHeight;
         chatCamera.updateProjectionMatrix();
-        
     }
 }
