@@ -10,7 +10,7 @@ const firingDelayHeld = 0.225;
 
 export class BananaGun extends HeldItem {
     private scene: THREE.Scene;
-    private bananaObject: THREE.Group;
+    private bananaObject: THREE.Object3D;
     private sceneAdded: boolean = false;
     private hidden: boolean = false;
     private lastInput: HeldItemInput = new HeldItemInput();

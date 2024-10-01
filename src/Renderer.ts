@@ -24,6 +24,7 @@ export class Renderer {
     private lastFramerateCalculation: number;
     private networking: Networking;
     private localPlayer: Player;
+    private raycaster: THREE.Raycaster;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -48,6 +49,7 @@ export class Renderer {
             'models/simplified_possum.glb',
             (gltf) => {
                 this.possumGLTFScene = gltf.scene;
+                this.remotePlayersScene.add(this.possumGLTFScene);
             },
             undefined,
             () => { console.log('possum loading error'); }
@@ -78,6 +80,8 @@ export class Renderer {
         this.framesInFramerateSample = 100;
         this.sampleOn = 0;
         this.lastFramerateCalculation = 0;
+
+        this.raycaster = new THREE.Raycaster();
 
         this.onWindowResize();
         window.addEventListener('resize', this.onWindowResize.bind(this), false);
@@ -119,6 +123,8 @@ export class Renderer {
 
         this.updateRemotePlayers();
         this.updateFramerate();
+
+        console.log(this.getRemotePlayerIDsInCrosshair());
     }
 
     private updateRemotePlayers() {
@@ -169,9 +175,11 @@ export class Renderer {
     }
 
     private addNewPlayer(remotePlayerData) {
+        const object = this.possumGLTFScene.children[0].clone();
         const newPlayer = {
             id: remotePlayerData.id,
-            object: this.possumGLTFScene.clone()
+            object: object,
+            objectUUID: object.uuid
         };
         this.playersToRender.push(newPlayer);
         this.remotePlayersScene.add(newPlayer.object); // Add to remote players scene
@@ -227,4 +235,28 @@ export class Renderer {
         chatCamera.aspect = window.innerWidth / window.innerHeight;
         chatCamera.updateProjectionMatrix();
     }
+
+    private getRemotePlayerObjectsInCrosshair():THREE.Object3D[]{
+        const crosshairVec = new THREE.Vector2;
+        this.raycaster.setFromCamera(crosshairVec, this.camera);
+        return this.raycaster.intersectObjects(this.remotePlayersScene.children);
+    }
+
+    public getRemotePlayerIDsInCrosshair(): number[] {
+        const playerIDs: number[] = [];
+        const objectsInCrosshair = this.getRemotePlayerObjectsInCrosshair();
+
+        for (const object of objectsInCrosshair) {
+            for (const player of this.playersToRender) {
+                if (player.objectUUID === object.object.uuid) {
+                    if(playerIDs.indexOf(player.id) === -1)
+                        playerIDs.push(player.id);
+                    break;
+                }
+            }
+        }
+
+        return playerIDs;
+    }
+
 }
