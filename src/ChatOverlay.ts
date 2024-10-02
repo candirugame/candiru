@@ -179,6 +179,8 @@ export class ChatOverlay {
         // const playerZ = Math.floor(this.localPlayer.position.z * 100)/100;
 
 
+        if(this.localPlayer.latency >=999)
+            linesToRender.push('Disconnected :(');
 
         linesToRender.push(Math.floor(framerate) + 'FPS');
         //linesToRender.push(Math.floor(latency) + 'ms');

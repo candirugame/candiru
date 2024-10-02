@@ -11,6 +11,7 @@ export class Networking {
     private lastUploadTime: number;
     private uploadWait: number;
     private lastLatencyTestEmit: number;
+    private lastLatencyTestGotResponse: boolean;
     private latencyTestWait: number;
     private messagesBeingTyped: string[];
     private localPlayer: Player;
@@ -29,6 +30,7 @@ export class Networking {
         this.lastUploadTime = Date.now()/1000;
         this.uploadWait = 1 / 15;
         this.lastLatencyTestEmit = 0;
+        this.lastLatencyTestGotResponse = false;
         this.latencyTestWait = 5;
         this.messagesBeingTyped = [];
 
@@ -48,6 +50,7 @@ export class Networking {
     private setupSocketListeners() {
         this.socket.on('latencyTest', () => {
             this.localPlayer.latency = (Date.now() / 1000 - this.lastLatencyTestEmit) * 1000;
+            this.lastLatencyTestGotResponse = true;
         });
 
         this.socket.on('remotePlayerData', (data) => {
@@ -82,6 +85,10 @@ export class Networking {
         if (currentTime - this.lastLatencyTestEmit > this.latencyTestWait) {
             this.socket.emit('latencyTest');
             this.lastLatencyTestEmit = currentTime;
+            if(!this.lastLatencyTestGotResponse){
+                this.localPlayer.latency = 999;
+            }
+            this.lastLatencyTestGotResponse = false;
         }
     }
 
