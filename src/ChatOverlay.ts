@@ -165,9 +165,12 @@ export class ChatOverlay {
         const framerate = this.renderer.getFramerate();
         const playerCount = this.networking.getRemotePlayerData().length;
         const latency = this.localPlayer.latency;
+        const health = this.localPlayer.health;
 
         linesToRender.push(Math.floor(framerate) + 'FPS, ' + playerCount + ' online');
         linesToRender.push(Math.floor(latency) + 'ms');
+        linesToRender.push('health: ' + health);
+
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
@@ -176,6 +179,8 @@ export class ChatOverlay {
     private renderCrosshair() {
         const ctx = this.chatCtx;
         ctx.fillStyle = 'rgb(0,255,225)';
+        if(this.renderer.crosshairIsFlashing)
+            ctx.fillStyle = 'rgb(255,0,0)';
         ctx.fillRect(this.chatCanvas.width / 2 + this.screenWidth / 2, 100 - 3, 1, 7);
         ctx.fillRect(this.chatCanvas.width / 2 + this.screenWidth / 2 - 3, 100, 7, 1);
     }

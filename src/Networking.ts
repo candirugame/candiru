@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { Player } from './Player';
 import { ChatOverlay } from './ChatOverlay';
+import * as THREE from 'three';
 
 export class Networking {
     private socket: Socket;
@@ -87,7 +88,19 @@ export class Networking {
     private processRemoteData() {
         this.messagesBeingTyped = [];
         for (const remotePlayer of this.remotePlayers) {
-            if (remotePlayer['id'] === this.localPlayer.id) continue;
+            if (remotePlayer['id'] === this.localPlayer.id) {
+                if(remotePlayer['forced'] === true){
+                    this.localPlayer.position = new THREE.Vector3(remotePlayer['position']['x'], remotePlayer['position']['y'], remotePlayer['position']['z']);
+                    this.localPlayer.quaternion = new THREE.Quaternion(remotePlayer['quaternion'][0], remotePlayer['quaternion'][1], remotePlayer['quaternion'][2], remotePlayer['quaternion'][3]);
+                    this.localPlayer.name = remotePlayer['name'];
+                    this.localPlayer.forcedAcknowledged = true;
+                }else{
+                    this.localPlayer.forcedAcknowledged = false;
+                }
+
+                this.localPlayer.health = remotePlayer['health']; //trust server to handle health
+                continue;
+            }
             if (remotePlayer['chatActive'])
                 this.messagesBeingTyped.push(remotePlayer['name'] + ': ' + remotePlayer['chatMsg']);
         }
@@ -121,5 +134,15 @@ export class Networking {
         this.socket.emit('chatMsg', chatMessage);
         if (msg.charAt(0) === '/') return;
         this.chatOverlay.addChatMessage(chatMessage);
+    }
+
+    public applyDamage(id:number, damage: number) {
+        const player2 = this.remotePlayers.find((player) => player.id === id);
+        const damageRequest = {
+            localPlayer: this.localPlayer,
+            targetPlayer: player2,
+            damage: damage
+        };
+        this.socket.emit('applyDamage',damageRequest);
     }
 }
