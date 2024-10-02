@@ -70,11 +70,13 @@ export class InputHandler {
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
     }
 
-    private getKey(key: string) {
-        return !!this.keys[key];
+    public getKey(key: string):boolean {
+        return this.keys[key];
     }
 
     private onKeyDown(event: KeyboardEvent) {
+        //event.preventDefault();
+        if(event.key === 'Tab' || event.key === "'") event.preventDefault();
         const key = event.key.toLowerCase();
         this.keys[key] = true;
     }

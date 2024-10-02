@@ -113,9 +113,7 @@ export class BananaGun extends HeldItem {
     }
 
      shootBanana(){
-        console.log('Firing banana');
         if(this.renderer.getRemotePlayerIDsInCrosshair().length>0){
-            console.log('shot someone >:)');
             for(const id of this.renderer.getRemotePlayerIDsInCrosshair()){
                 this.networking.applyDamage(id, 10);
             }
