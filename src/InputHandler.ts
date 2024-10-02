@@ -75,6 +75,8 @@ export class InputHandler {
     }
 
     private onKeyDown(event: KeyboardEvent) {
+        //event.preventDefault();
+        if(event.key === 'Tab') event.preventDefault();
         const key = event.key.toLowerCase();
         this.keys[key] = true;
     }

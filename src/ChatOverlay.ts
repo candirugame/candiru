@@ -77,6 +77,7 @@ export class ChatOverlay {
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
         this.renderChatMessages();
         this.renderDebugText();
+        this.renderPlayerList();
         this.renderCrosshair();
         this.chatTexture.needsUpdate = true;
 
@@ -179,6 +180,28 @@ export class ChatOverlay {
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
+    }
+
+    private renderPlayerList(){
+        const ctx = this.chatCtx;
+        const linesToRender = [];
+
+
+
+
+        //rectangular background at top center
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(this.chatCanvas.width / 2 + this.screenWidth / 2 - 30, 4, 60, linesToRender.length * 7 + 2);
+
+        //render player list in box
+        ctx.font = '8px Tiny5';
+        ctx.fillStyle = 'white';
+
+
+        for (let i = 0; i < linesToRender.length; i++)
+            ctx.fillText(linesToRender[i], Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - 28), 11 + 7 * i);
+
+
     }
 
     private renderCrosshair() {
