@@ -112,6 +112,18 @@ io.on('connection', (socket) => {
         if(localPlayerIndex === -1){
             console.log('⚠️ local player not found in playerData'); return;
         }
+        //check if local player is close enough to the server's position of the local player
+        let localPlayerSent = data.localPlayer;
+        let localPlayerServer = playerData[localPlayerIndex];
+        let localDistance = Math.sqrt(Math.pow(localPlayerSent.position.x - localPlayerServer.position.x,2) + Math.pow(localPlayerSent.position.y - localPlayerServer.position.y,2) + Math.pow(localPlayerSent.position.z - localPlayerServer.position.z,2));
+        let targetPlayerSent = data.targetPlayer;
+        let targetPlayerServer = playerData[targetPlayerIndex];
+        let targetDistance = Math.sqrt(Math.pow(targetPlayerSent.position.x - targetPlayerServer.position.x,2) + Math.pow(targetPlayerSent.position.y - targetPlayerServer.position.y,2) + Math.pow(targetPlayerSent.position.z - targetPlayerServer.position.z,2));
+
+        if(localDistance > 1 || targetDistance > 1){
+            console.log('⚠️ player position not close enough to server position for shot to register'); return;
+        }
+
         //apply damage
         playerData[targetPlayerIndex].health -= data.damage;
 
