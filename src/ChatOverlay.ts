@@ -172,7 +172,7 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        const latency = this.localPlayer.latency;
+        //const latency = this.localPlayer.latency;
         // const health = this.localPlayer.health;
         // const playerX = Math.floor(this.localPlayer.position.x * 100)/100;
         // const playerY = Math.floor(this.localPlayer.position.y * 100)/100;
@@ -181,7 +181,7 @@ export class ChatOverlay {
 
 
         linesToRender.push(Math.floor(framerate) + 'FPS');
-        linesToRender.push(Math.floor(latency) + 'ms');
+        //linesToRender.push(Math.floor(latency) + 'ms');
         //linesToRender.push('health: ' + health);
         //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
 
