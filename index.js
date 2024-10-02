@@ -32,7 +32,7 @@ let updateSinceLastEmit = false;
 let lastUpdateSent = 0;
 function serverTick(){
     setTimeout(serverTick, 1000/15, '');
-    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 5) return;
+    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 0.5) return;
 
     io.emit('remotePlayerData',playerData);
     updateSinceLastEmit = false;
@@ -44,6 +44,20 @@ serverTick();
 function periodicCleanup() {
     let currentTime = Date.now() / 1000;
     for (let i = playerData.length - 1; i >= 0; i--) {
+
+        //respawn people
+        if(playerData[i].health <= 0){
+            //console.log('💔 ' + playerData[i]['name'] + '(' + playerData[i].id + ') died');
+            // let nameToSend = playerData[i]['name'];
+            // sendChatMessage(nameToSend+' died');
+            playerData[i].health = 100;
+            playerData[i].position = {x:6,y:0.1016,z:12}; //6, 0.1016, 12
+            playerData[i].velocity = {x:0,y:0,z:0};
+            playerData[i].quaternion = [0,0,0,1];
+            playerData[i].forced = true;
+        }
+
+        //kick logged out players
         if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
             console.log('🟠 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
             let nameToSend = playerData[i]['name'];
@@ -51,10 +65,10 @@ function periodicCleanup() {
             playerData.splice(i, 1);
         }
     }
-    setTimeout(() => periodicCleanup(), 5000);
+    //setTimeout(() => periodicCleanup(), 2000);
 }
 
-periodicCleanup();
+setInterval(periodicCleanup, 5000);
 
 
 
@@ -76,7 +90,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('applyDamage',(data)=>{
-        console.log('got damage request');
         let dataError = damageRequestSchema.validate(data).error;
         let dataIsValid = dataError === undefined;
         if(!dataIsValid){
@@ -98,6 +111,16 @@ io.on('connection', (socket) => {
         }
         if(localPlayerIndex === -1){
             console.log('⚠️ local player not found in playerData'); return;
+        }
+        //apply damage
+        playerData[targetPlayerIndex].health -= data.damage;
+
+        if(playerData[targetPlayerIndex].health <= 0){
+            let nameOfKilled = playerData[targetPlayerIndex]['name'];
+            let nameOfKiller = playerData[localPlayerIndex]['name'];
+            sendChatMessage(nameOfKilled+' was killed by '+nameOfKiller);
+            console.log('💔 '+nameOfKilled+' was killed by '+nameOfKiller);
+            periodicCleanup();
         }
 
     });
@@ -154,6 +177,23 @@ function addPlayerToDataSafe(data,socket){
 
         return;
     }
+    for(let i = 0; i<playerData.length; i++)
+        if(playerData[i]['id'] === data.id){
+            if(data['forcedAcknowledged'] === false && playerData[i]['forced'] === true){
+                return;
+            }
+        }
+    if(data['forcedAcknowledged'] === true && data['forced'] === true){
+        data['forced'] = false;
+        console.log('🟢 '+data['name'] +'('+ data.id +') acknowledged force');
+    }
+
+
+
+
+
+
+
     updateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
@@ -196,6 +236,8 @@ const playerDataSchema = Joi.object({
     chatMsg: Joi.string().required().allow(''),
     latency: Joi.number().required(),
     health: Joi.number().required(),
+    forced: Joi.boolean().required(),
+    forcedAcknowledged: Joi.boolean().required(),
     updateTimestamp: Joi.number(),
 });
 

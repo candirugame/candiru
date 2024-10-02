@@ -165,9 +165,12 @@ export class ChatOverlay {
         const framerate = this.renderer.getFramerate();
         const playerCount = this.networking.getRemotePlayerData().length;
         const latency = this.localPlayer.latency;
+        const health = this.localPlayer.health;
 
         linesToRender.push(Math.floor(framerate) + 'FPS, ' + playerCount + ' online');
         linesToRender.push(Math.floor(latency) + 'ms');
+        linesToRender.push('health: ' + health);
+
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
