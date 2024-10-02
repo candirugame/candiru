@@ -195,11 +195,16 @@ export class ChatOverlay {
         const colorsToRender = [];
         const playerData = this.networking.getRemotePlayerData();
 
-        linesToRender.push(playerData.length + ' online');
+        linesToRender.push(playerData.length + ' online - ' + Math.round(this.localPlayer.latency) + 'ms');
         colorsToRender.push('white');
         for(let i = 0; i < playerData.length; i++){
             linesToRender.push(playerData[i].name + ' - ' + playerData[i].health);
-            colorsToRender.push('red');
+            if(playerData[i].latency > 200)
+                colorsToRender.push('red');
+            else if(playerData[i].latency > 50)
+                colorsToRender.push('orange');
+            else
+                colorsToRender.push('green');
         }
 
         ctx.font = '8px Tiny5';
