@@ -25,6 +25,7 @@ export class Game {
         this.collisionManager = new CollisionManager(this.renderer);
         this.inventoryManager = new InventoryManager(this.renderer, this.inputHandler, this.networking);
         this.chatOverlay.setNetworking(this.networking);
+        this.chatOverlay.setInputHandler(this.inputHandler);
     }
 
     init() {

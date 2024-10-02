@@ -70,8 +70,8 @@ export class InputHandler {
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
     }
 
-    private getKey(key: string) {
-        return !!this.keys[key];
+    public getKey(key: string):boolean {
+        return this.keys[key];
     }
 
     private onKeyDown(event: KeyboardEvent) {

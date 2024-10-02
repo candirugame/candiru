@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Player } from './Player';
 import { Renderer } from './Renderer';
 import { Networking } from './Networking';
+import {InputHandler} from "./InputHandler";
 
 export class ChatOverlay {
     private chatScene: THREE.Scene;
@@ -19,6 +20,7 @@ export class ChatOverlay {
     private chatTexture: THREE.CanvasTexture;
     private chatPlane: THREE.Mesh;
     private screenWidth: number;
+    private inputHandler : InputHandler;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -38,6 +40,8 @@ export class ChatOverlay {
         this.nameSettingActive = false;
         this.screenWidth = 100;
 
+
+
         this.setupEventListeners();
         this.setupChatPlane();
     }
@@ -48,6 +52,9 @@ export class ChatOverlay {
 
     public setNetworking(networking: Networking) {
         this.networking = networking;
+    }
+    public setInputHandler(inputHandler: InputHandler){
+        this.inputHandler = inputHandler;
     }
 
     private setupEventListeners() {
@@ -77,7 +84,8 @@ export class ChatOverlay {
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
         this.renderChatMessages();
         this.renderDebugText();
-        this.renderPlayerList();
+        if(this.inputHandler.getKey('tab'))
+            this.renderPlayerList();
         this.renderCrosshair();
         this.chatTexture.needsUpdate = true;
 
@@ -164,7 +172,6 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        const playerCount = this.networking.getRemotePlayerData().length;
         const latency = this.localPlayer.latency;
         const health = this.localPlayer.health;
         const playerX = Math.floor(this.localPlayer.position.x * 100)/100;
@@ -173,10 +180,10 @@ export class ChatOverlay {
 
 
 
-        linesToRender.push(Math.floor(framerate) + 'FPS, ' + playerCount + ' online');
+        linesToRender.push(Math.floor(framerate) + 'FPS');
         linesToRender.push(Math.floor(latency) + 'ms');
-        linesToRender.push('health: ' + health);
-        linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        //linesToRender.push('health: ' + health);
+        //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
@@ -184,22 +191,32 @@ export class ChatOverlay {
 
     private renderPlayerList(){
         const ctx = this.chatCtx;
-        const linesToRender = [];
+        const linesToRender:string[] = [];
+        const colorsToRender = [];
+        const playerData = this.networking.getRemotePlayerData();
 
+        linesToRender.push(playerData.length + ' online');
+        colorsToRender.push('white');
+        for(let i = 0; i < playerData.length; i++){
+            linesToRender.push(playerData[i].name + ' - ' + playerData[i].health);
+            colorsToRender.push('red');
+        }
 
+        ctx.font = '8px Tiny5';
+
+        let longestLinePix = 0;
+        for (let i = 0; i < linesToRender.length; i++)
+            longestLinePix = Math.max(longestLinePix, ctx.measureText(linesToRender[i]).width);
 
 
         //rectangular background at top center
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(this.chatCanvas.width / 2 + this.screenWidth / 2 - 30, 4, 60, linesToRender.length * 7 + 2);
+        ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix/2), 4, longestLinePix+3, linesToRender.length * 7 + 2);
 
-        //render player list in box
-        ctx.font = '8px Tiny5';
-        ctx.fillStyle = 'white';
-
-
-        for (let i = 0; i < linesToRender.length; i++)
-            ctx.fillText(linesToRender[i], Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - 28), 11 + 7 * i);
+        for (let i = 0; i < linesToRender.length; i++){
+            ctx.fillStyle = colorsToRender[i];
+            ctx.fillText(linesToRender[i], Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix/2 +2), 11 + 7 * i);
+        }
 
 
     }
