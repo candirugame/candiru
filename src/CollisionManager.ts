@@ -43,8 +43,8 @@ export class CollisionManager {
 
         if (down_intersects.length > 0) {
             for (const intersect of down_intersects) {
-                if (intersect.distance < 0.201) {
-                    localPlayer.position.y = intersect.point.y + 0.2;
+                if (intersect.distance < 0.181) {
+                    localPlayer.position.y = intersect.point.y + 0.18;
 
                     onGround = true;
                 }
