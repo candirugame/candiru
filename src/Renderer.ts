@@ -162,8 +162,12 @@ export class Renderer {
         playerObject.position.y += remotePlayerData.velocity.y * this.deltaTime;
         playerObject.position.z += remotePlayerData.velocity.z * this.deltaTime;
 
+        if(remotePlayerData.forced){
+            playerObject.position.x = remotePlayerData.position.x;
+            playerObject.position.y = remotePlayerData.position.y;
+            playerObject.position.z = remotePlayerData.position.z;
+        }
 
-      //  playerObject.position.y = remotePlayerData.position.y;
         playerObject.position.lerp(new THREE.Vector3(
             remotePlayerData.position.x,
             remotePlayerData.position.y,
