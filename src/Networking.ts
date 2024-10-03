@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { Player } from './Player';
 import { ChatOverlay } from './ChatOverlay';
+import * as THREE from 'three';
 
 export class Networking {
     private socket: Socket;
@@ -10,6 +11,7 @@ export class Networking {
     private lastUploadTime: number;
     private uploadWait: number;
     private lastLatencyTestEmit: number;
+    private lastLatencyTestGotResponse: boolean;
     private latencyTestWait: number;
     private messagesBeingTyped: string[];
     private localPlayer: Player;
@@ -28,6 +30,7 @@ export class Networking {
         this.lastUploadTime = Date.now()/1000;
         this.uploadWait = 1 / 15;
         this.lastLatencyTestEmit = 0;
+        this.lastLatencyTestGotResponse = false;
         this.latencyTestWait = 5;
         this.messagesBeingTyped = [];
 
@@ -47,6 +50,7 @@ export class Networking {
     private setupSocketListeners() {
         this.socket.on('latencyTest', () => {
             this.localPlayer.latency = (Date.now() / 1000 - this.lastLatencyTestEmit) * 1000;
+            this.lastLatencyTestGotResponse = true;
         });
 
         this.socket.on('remotePlayerData', (data) => {
@@ -81,13 +85,29 @@ export class Networking {
         if (currentTime - this.lastLatencyTestEmit > this.latencyTestWait) {
             this.socket.emit('latencyTest');
             this.lastLatencyTestEmit = currentTime;
+            if(!this.lastLatencyTestGotResponse){
+                this.localPlayer.latency = 999;
+            }
+            this.lastLatencyTestGotResponse = false;
         }
     }
 
     private processRemoteData() {
         this.messagesBeingTyped = [];
         for (const remotePlayer of this.remotePlayers) {
-            if (remotePlayer['id'] === this.localPlayer.id) continue;
+            if (remotePlayer['id'] === this.localPlayer.id) {
+                if(remotePlayer['forced'] === true){
+                    this.localPlayer.position = new THREE.Vector3(remotePlayer['position']['x'], remotePlayer['position']['y'], remotePlayer['position']['z']);
+                    this.localPlayer.quaternion = new THREE.Quaternion(remotePlayer['quaternion'][0], remotePlayer['quaternion'][1], remotePlayer['quaternion'][2], remotePlayer['quaternion'][3]);
+                    this.localPlayer.name = remotePlayer['name'];
+                    this.localPlayer.forcedAcknowledged = true;
+                }else{
+                    this.localPlayer.forcedAcknowledged = false;
+                }
+
+                this.localPlayer.health = remotePlayer['health']; //trust server to handle health
+                continue;
+            }
             if (remotePlayer['chatActive'])
                 this.messagesBeingTyped.push(remotePlayer['name'] + ': ' + remotePlayer['chatMsg']);
         }
@@ -121,5 +141,15 @@ export class Networking {
         this.socket.emit('chatMsg', chatMessage);
         if (msg.charAt(0) === '/') return;
         this.chatOverlay.addChatMessage(chatMessage);
+    }
+
+    public applyDamage(id:number, damage: number) {
+        const player2 = this.remotePlayers.find((player) => player.id === id);
+        const damageRequest = {
+            localPlayer: this.localPlayer,
+            targetPlayer: player2,
+            damage: damage
+        };
+        this.socket.emit('applyDamage',damageRequest);
     }
 }

@@ -58,6 +58,7 @@ export class InputHandler {
         if (this.getKey('d')) inputZ += 1;
 
         if (inputX !== 0 || inputZ !== 0) dist = 1;
+        if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
         dir = Math.atan2(inputZ, inputX);
 
         this.localPlayer.velocity.z = dist * Math.cos(dir);
@@ -69,11 +70,13 @@ export class InputHandler {
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
     }
 
-    private getKey(key: string) {
-        return !!this.keys[key];
+    public getKey(key: string):boolean {
+        return this.keys[key];
     }
 
     private onKeyDown(event: KeyboardEvent) {
+        //event.preventDefault();
+        if(event.key === 'Tab' || event.key === "'"|| event.key === '/') event.preventDefault();
         const key = event.key.toLowerCase();
         this.keys[key] = true;
     }
