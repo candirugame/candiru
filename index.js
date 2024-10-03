@@ -125,8 +125,10 @@ io.on('connection', (socket) => {
         let targetPlayerServer = playerData[targetPlayerIndex];
         let targetDistance = Math.sqrt(Math.pow(targetPlayerSent.position.x - targetPlayerServer.position.x,2) + Math.pow(targetPlayerSent.position.y - targetPlayerServer.position.y,2) + Math.pow(targetPlayerSent.position.z - targetPlayerServer.position.z,2));
 
-        if(localDistance > 1 || targetDistance > 1){
-            console.log('⚠️ player position not close enough to server position for shot to register'); return;
+        if(localDistance > 0.5 || targetDistance > 0.5){
+            console.log('⚠️ player position not close enough to server position for shot to register');
+            whisperChatMessage('⚠️ shot not registered (client out of sync)',socket);
+            return;
         }
 
         //apply damage
