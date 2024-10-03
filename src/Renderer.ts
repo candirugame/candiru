@@ -225,8 +225,7 @@ export class Renderer {
             // Compute Y offset
             const amplitude = 0.06; // Adjust amplitude as desired
             const yOffset = amplitude * (1 + Math.cos(this.animationPhase[remotePlayerData.id]));
-
-            console.log(yOffset);
+            
             // Apply new Y offset
             playerObject.position.y += yOffset;
             this.lastRunningYOffset[remotePlayerData.id] = yOffset;
