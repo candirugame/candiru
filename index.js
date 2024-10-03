@@ -57,6 +57,12 @@ function periodicCleanup() {
             playerData[i].forced = true;
         }
 
+        if(playerData[i]['position']['y'] < -150){
+            playerData[i]['health'] = 0;
+             sendChatMessage(playerData[i]['name'] + ' fell off the map');
+             console.log('💔 '+playerData[i]['name'] +'('+ playerData[i].id +') fell off the map');
+        }
+
         //kick logged out players
         if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
             console.log('🟠 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
@@ -65,7 +71,6 @@ function periodicCleanup() {
             playerData.splice(i, 1);
         }
     }
-    //setTimeout(() => periodicCleanup(), 2000);
 }
 
 setInterval(periodicCleanup, 5000);
@@ -209,11 +214,7 @@ function addPlayerToDataSafe(data,socket){
     if(data['name'].length<1)
         data['name'] = 'possum' + data['id'];
 
-    if(data['position']['y'] < -150){
-        data['health'] = 0;
-        // sendChatMessage(data['name'] + ' fell off the map');
-        // console.log('💔 '+data['name'] +'('+ data.id +') fell off the map');
-    }
+
 
 
 
