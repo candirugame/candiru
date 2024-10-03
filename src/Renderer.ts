@@ -187,19 +187,20 @@ export class Renderer {
             Math.pow(remotePlayerData.velocity.y, 2) +
             Math.pow(remotePlayerData.velocity.z, 2)
         );
-        playerObject.position.add(new THREE.Vector3(0,-this.lastRunningYOffset, 0));
+        if(this.lastRunningYOffset[remotePlayerData.id])
+            playerObject.position.add(new THREE.Vector3(0,-this.lastRunningYOffset[remotePlayerData.id], 0));
        if (velocity > 0){
            const yToAdd = 0.2 * (0.5 + Math.sin(Date.now() / 1000 * 20));
            playerObject.position.add(new THREE.Vector3(0,yToAdd, 0));
-           this.lastRunningYOffset = yToAdd;
+           this.lastRunningYOffset[remotePlayerData.id] = yToAdd;
        }else{
-           this.lastRunningYOffset = 0;
+           this.lastRunningYOffset[remotePlayerData.id] = 0;
        }
 
 
 
     }
-    lastRunningYOffset = 0;
+    lastRunningYOffset = {};
 
     private addNewPlayer(remotePlayerData) {
         const object = this.possumGLTFScene.children[0].clone();
