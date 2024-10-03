@@ -79,7 +79,7 @@ export class Renderer {
         this.remotePlayersScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
 
         this.framerate = 0;
-        this.framesInFramerateSample = 100;
+        this.framesInFramerateSample = 30;
         this.sampleOn = 0;
         this.lastFramerateCalculation = 0;
 
