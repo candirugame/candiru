@@ -216,8 +216,10 @@ function addPlayerToDataSafe(data,socket){
     }
 
 
+
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
+            data['health'] = playerData[i]['health'];
             playerData[i] = data;
             return;
         }
