@@ -159,11 +159,6 @@ export class Renderer {
     }
 
     private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData) {
-        // Undo the last Y offset before applying a new one
-        if (this.lastRunningYOffset[remotePlayerData.id]) {
-            playerObject.position.y -= this.lastRunningYOffset[remotePlayerData.id];
-        }
-
         // Compute current velocity magnitude
         const velocity = Math.sqrt(
             Math.pow(remotePlayerData.velocity.x, 2) +
@@ -182,32 +177,6 @@ export class Renderer {
         } else if (prevVelocity > 0 && velocity === 0) {
             // Player stopped moving but continue animation until cosine crosses zero
             // No action needed here
-        }
-
-        // Update animation if active
-        if (this.isAnimating[remotePlayerData.id]) {
-            // Update animation phase
-            const frequency = 25; // Adjust frequency as desired
-            this.animationPhase[remotePlayerData.id] += this.deltaTime * frequency;
-
-            // Compute Y offset
-            const amplitude = 0.2; // Adjust amplitude as desired
-            const yOffset = amplitude * Math.cos(this.animationPhase[remotePlayerData.id]);
-
-            // Apply new Y offset
-            playerObject.position.y += yOffset;
-            this.lastRunningYOffset[remotePlayerData.id] = yOffset;
-
-            // Check if we should stop animating
-            if (velocity === 0 && Math.cos(this.animationPhase[remotePlayerData.id]) <= 0) {
-                // Cosine has crossed zero; stop animating
-                this.isAnimating[remotePlayerData.id] = false;
-                playerObject.position.y -= this.lastRunningYOffset[remotePlayerData.id];
-                this.lastRunningYOffset[remotePlayerData.id] = 0;
-            }
-        } else {
-            // Ensure Y offset is reset when not animating
-            this.lastRunningYOffset[remotePlayerData.id] = 0;
         }
 
         // Update previous velocity for next frame
@@ -246,6 +215,32 @@ export class Renderer {
         targetQuaternion.multiply(rotationQuaternion);
 
         playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
+
+        // Apply animation offset after LERP and rotation updates
+        if (this.isAnimating[remotePlayerData.id]) {
+            // Update animation phase
+            const frequency = 25; // Adjust frequency as desired
+            this.animationPhase[remotePlayerData.id] += this.deltaTime * frequency;
+
+            // Compute Y offset
+            const amplitude = 0.06; // Adjust amplitude as desired
+            const yOffset = amplitude * (1 + Math.cos(this.animationPhase[remotePlayerData.id]));
+
+            console.log(yOffset);
+            // Apply new Y offset
+            playerObject.position.y += yOffset;
+            this.lastRunningYOffset[remotePlayerData.id] = yOffset;
+
+            // Check if we should stop animating
+            if (velocity === 0 && Math.cos(this.animationPhase[remotePlayerData.id]) <= 0) {
+                // Cosine has crossed zero; stop animating
+                this.isAnimating[remotePlayerData.id] = false;
+                this.lastRunningYOffset[remotePlayerData.id] = 0;
+            }
+        } else {
+            // Ensure Y offset is reset when not animating
+            this.lastRunningYOffset[remotePlayerData.id] = 0;
+        }
     }
 
     private addNewPlayer(remotePlayerData) {
