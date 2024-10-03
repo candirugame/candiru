@@ -203,14 +203,18 @@ function addPlayerToDataSafe(data,socket){
 
 
 
-
-
-
     updateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
     if(data['name'].length<1)
         data['name'] = 'possum' + data['id'];
+
+    if(data['position']['y'] < -150){
+        data['health'] = 0;
+        // sendChatMessage(data['name'] + ' fell off the map');
+        // console.log('💔 '+data['name'] +'('+ data.id +') fell off the map');
+    }
+
 
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
@@ -228,6 +232,7 @@ function addPlayerToDataSafe(data,socket){
     //TODO: send player join message to chat
 
 }
+
 
 const vector3Schema = Joi.object({
     x: Joi.number().required(),
