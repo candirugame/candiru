@@ -28,7 +28,13 @@ export class Renderer {
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
     private crosshairVec = new THREE.Vector2;
-    public crosshairIsFlashing:boolean;
+    public crosshairIsFlashing: boolean;
+
+    // New state tracking variables
+    private isAnimating: { [id: number]: boolean } = {};
+    private animationPhase: { [id: number]: number } = {};
+    private previousVelocity: { [id: number]: number } = {};
+    private lastRunningYOffset: { [id: number]: number } = {};
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -92,7 +98,6 @@ export class Renderer {
         window.addEventListener('resize', this.onWindowResize.bind(this), false);
     }
 
-
     public doFrame(localPlayer: Player) {
         this.deltaTime = this.clock.getDelta();
         // Ensure the renderer clears the buffers before the first render
@@ -126,14 +131,11 @@ export class Renderer {
 
         // Update camera position and rotation for local player
         this.camera.position.copy(localPlayer.position);
-     //   this.camera.quaternion.copy(localPlayer.quaternion);
+        // this.camera.quaternion.copy(localPlayer.quaternion);
 
         this.updateRemotePlayers();
         this.updateFramerate();
-
     }
-
-
 
     private updateRemotePlayers() {
         if (!this.possumGLTFScene) return;
@@ -157,50 +159,94 @@ export class Renderer {
     }
 
     private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData) {
-
-        playerObject.position.x += remotePlayerData.velocity.x * this.deltaTime;
-        playerObject.position.y += remotePlayerData.velocity.y * this.deltaTime;
-        playerObject.position.z += remotePlayerData.velocity.z * this.deltaTime;
-
-        if(remotePlayerData.forced){
-            playerObject.position.x = remotePlayerData.position.x;
-            playerObject.position.y = remotePlayerData.position.y;
-            playerObject.position.z = remotePlayerData.position.z;
+        // Undo the last Y offset before applying a new one
+        if (this.lastRunningYOffset[remotePlayerData.id]) {
+            playerObject.position.y -= this.lastRunningYOffset[remotePlayerData.id];
         }
 
-        playerObject.position.lerp(new THREE.Vector3(
-            remotePlayerData.position.x,
-            remotePlayerData.position.y,
-            remotePlayerData.position.z
-        ), 0.3 * this.deltaTime * 60);
-
-        const targetQuaternion = new THREE.Quaternion(remotePlayerData.quaternion[0], remotePlayerData.quaternion[1], remotePlayerData.quaternion[2], remotePlayerData.quaternion[3]);
-        const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
-        targetQuaternion.multiply(rotationQuaternion);
-
-       playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
-
-
-
+        // Compute current velocity magnitude
         const velocity = Math.sqrt(
             Math.pow(remotePlayerData.velocity.x, 2) +
             Math.pow(remotePlayerData.velocity.y, 2) +
             Math.pow(remotePlayerData.velocity.z, 2)
         );
-        if(this.lastRunningYOffset[remotePlayerData.id])
-            playerObject.position.add(new THREE.Vector3(0,-this.lastRunningYOffset[remotePlayerData.id], 0));
-       if (velocity > 0){
-           const yToAdd = 0.2 * (0.5 + Math.sin(Date.now() / 1000 * 20));
-           playerObject.position.add(new THREE.Vector3(0,yToAdd, 0));
-           this.lastRunningYOffset[remotePlayerData.id] = yToAdd;
-       }else{
-           this.lastRunningYOffset[remotePlayerData.id] = 0;
-       }
 
+        // Retrieve previous velocity (default to 0 if undefined)
+        const prevVelocity = this.previousVelocity[remotePlayerData.id] || 0;
 
+        // Check for velocity state changes
+        if (prevVelocity === 0 && velocity > 0) {
+            // Player started moving
+            this.isAnimating[remotePlayerData.id] = true;
+            this.animationPhase[remotePlayerData.id] = 0;
+        } else if (prevVelocity > 0 && velocity === 0) {
+            // Player stopped moving but continue animation until cosine crosses zero
+            // No action needed here
+        }
 
+        // Update animation if active
+        if (this.isAnimating[remotePlayerData.id]) {
+            // Update animation phase
+            const frequency = 25; // Adjust frequency as desired
+            this.animationPhase[remotePlayerData.id] += this.deltaTime * frequency;
+
+            // Compute Y offset
+            const amplitude = 0.2; // Adjust amplitude as desired
+            const yOffset = amplitude * Math.cos(this.animationPhase[remotePlayerData.id]);
+
+            // Apply new Y offset
+            playerObject.position.y += yOffset;
+            this.lastRunningYOffset[remotePlayerData.id] = yOffset;
+
+            // Check if we should stop animating
+            if (velocity === 0 && Math.cos(this.animationPhase[remotePlayerData.id]) <= 0) {
+                // Cosine has crossed zero; stop animating
+                this.isAnimating[remotePlayerData.id] = false;
+                playerObject.position.y -= this.lastRunningYOffset[remotePlayerData.id];
+                this.lastRunningYOffset[remotePlayerData.id] = 0;
+            }
+        } else {
+            // Ensure Y offset is reset when not animating
+            this.lastRunningYOffset[remotePlayerData.id] = 0;
+        }
+
+        // Update previous velocity for next frame
+        this.previousVelocity[remotePlayerData.id] = velocity;
+
+        // Update position based on velocity and deltaTime
+        playerObject.position.x += remotePlayerData.velocity.x * this.deltaTime;
+        playerObject.position.y += remotePlayerData.velocity.y * this.deltaTime;
+        playerObject.position.z += remotePlayerData.velocity.z * this.deltaTime;
+
+        // If forced position, set directly
+        if (remotePlayerData.forced) {
+            playerObject.position.x = remotePlayerData.position.x;
+            playerObject.position.y = remotePlayerData.position.y;
+            playerObject.position.z = remotePlayerData.position.z;
+        }
+
+        // Lerp position for smooth movement
+        playerObject.position.lerp(
+            new THREE.Vector3(
+                remotePlayerData.position.x,
+                remotePlayerData.position.y,
+                remotePlayerData.position.z
+            ),
+            0.3 * this.deltaTime * 60
+        );
+
+        // Slerp rotation for smooth orientation changes
+        const targetQuaternion = new THREE.Quaternion(
+            remotePlayerData.quaternion[0],
+            remotePlayerData.quaternion[1],
+            remotePlayerData.quaternion[2],
+            remotePlayerData.quaternion[3]
+        );
+        const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+        targetQuaternion.multiply(rotationQuaternion);
+
+        playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
     }
-    lastRunningYOffset = {};
 
     private addNewPlayer(remotePlayerData) {
         const object = this.possumGLTFScene.children[0].clone();
@@ -264,22 +310,20 @@ export class Renderer {
         chatCamera.updateProjectionMatrix();
     }
 
-    private getRemotePlayerObjectsInCrosshair():THREE.Object3D[]{
+    private getRemotePlayerObjectsInCrosshair(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
         return this.raycaster.intersectObjects(this.remotePlayersScene.children);
     }
 
-    private getPlayersInCrosshairWithWalls(){
+    private getPlayersInCrosshairWithWalls() {
         const out = this.getRemotePlayerObjectsInCrosshair();
         const walls = this.raycaster.intersectObjects(this.scene.children);
-        for(let i = out.length-1; i >= 0; i--) {
+        for (let i = out.length - 1; i >= 0; i--) {
             for (const wall of walls) {
-                       if(out[i].distance > wall.distance)
-                           out.splice(i, 1);
+                if (out[i].distance > wall.distance) out.splice(i, 1);
                 break;
             }
         }
-
 
         return out;
     }
@@ -291,8 +335,7 @@ export class Renderer {
         for (const object of objectsInCrosshair) {
             for (const player of this.playersToRender) {
                 if (player.objectUUID === object.object.uuid) {
-                    if(playerIDs.indexOf(player.id) === -1)
-                        playerIDs.push(player.id);
+                    if (playerIDs.indexOf(player.id) === -1) playerIDs.push(player.id);
                     break;
                 }
             }
@@ -300,5 +343,4 @@ export class Renderer {
 
         return playerIDs;
     }
-
 }
