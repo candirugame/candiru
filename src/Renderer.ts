@@ -6,6 +6,8 @@ import { Player } from './Player';
 import { ChatOverlay } from "./ChatOverlay";
 
 export class Renderer {
+    private clock: THREE.Clock;
+    private deltaTime: number;
     private chatOverlay: ChatOverlay;
     private scene: THREE.Scene;
     private remotePlayersScene: THREE.Scene; // New scene for remote players
@@ -33,6 +35,7 @@ export class Renderer {
         this.localPlayer = localPlayer;
         this.chatOverlay = chatOverlay;
 
+        this.clock = new THREE.Clock();
         this.scene = new THREE.Scene();
         this.remotePlayersScene = new THREE.Scene(); // Initialize the new scene
         this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
@@ -89,7 +92,9 @@ export class Renderer {
         window.addEventListener('resize', this.onWindowResize.bind(this), false);
     }
 
+
     public doFrame(localPlayer: Player) {
+        this.deltaTime = this.clock.getDelta();
         // Ensure the renderer clears the buffers before the first render
         this.renderer.autoClear = true;
 
@@ -128,6 +133,8 @@ export class Renderer {
 
     }
 
+
+
     private updateRemotePlayers() {
         if (!this.possumGLTFScene) return;
 
@@ -150,29 +157,37 @@ export class Renderer {
     }
 
     private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData) {
-        playerObject.position.set(
+
+        playerObject.position.x += remotePlayerData.velocity.x * this.deltaTime;
+        playerObject.position.y += remotePlayerData.velocity.y * this.deltaTime;
+        playerObject.position.z += remotePlayerData.velocity.z * this.deltaTime;
+
+
+      //  playerObject.position.y = remotePlayerData.position.y;
+        playerObject.position.lerp(new THREE.Vector3(
             remotePlayerData.position.x,
             remotePlayerData.position.y,
             remotePlayerData.position.z
-        );
+        ), 0.3 * this.deltaTime * 60);
 
-        playerObject.quaternion.set(
-            remotePlayerData.quaternion[0],
-            remotePlayerData.quaternion[1],
-            remotePlayerData.quaternion[2],
-            remotePlayerData.quaternion[3]
-        );
+        const targetQuaternion = new THREE.Quaternion(remotePlayerData.quaternion[0], remotePlayerData.quaternion[1], remotePlayerData.quaternion[2], remotePlayerData.quaternion[3]);
+        const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+        targetQuaternion.multiply(rotationQuaternion);
+
+       playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
+
+
 
         const velocity = Math.sqrt(
             Math.pow(remotePlayerData.velocity.x, 2) +
             Math.pow(remotePlayerData.velocity.y, 2) +
             Math.pow(remotePlayerData.velocity.z, 2)
         );
-        if (velocity > 0)
-            playerObject.position.add(new THREE.Vector3(0, 0.2 * (0.5 + Math.sin(Date.now() / 1000 * 20)), 0));
+      //  if (velocity > 0)
+      //      playerObject.position.add(new THREE.Vector3(0, 0.2 * (0.5 + Math.sin(Date.now() / 1000 * 20)), 0));
 
-        const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
-        playerObject.quaternion.multiply(rotationQuaternion);
+
+
     }
 
     private addNewPlayer(remotePlayerData) {

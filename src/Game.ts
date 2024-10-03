@@ -35,8 +35,8 @@ export class Game {
 
     animate() {
         this.inputHandler.handleInputs();
-        this.networking.updatePlayerData();
         this.collisionManager.collisionPeriodic(this.localPlayer);
+        this.networking.updatePlayerData();
         this.chatOverlay.onFrame();
         this.inventoryManager.onFrame();
         this.renderer.doFrame(this.localPlayer);
