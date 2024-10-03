@@ -19,7 +19,7 @@ export class Player {
         this.id = Math.floor(Math.random() * 10000);
         this.gameVersion = '';
         this.name = '';
-        this.speed = 1;
+        this.speed = 5;
         this.chatActive = false;
         this.chatMsg = '';
         this.latency = 1000;
