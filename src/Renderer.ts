@@ -6,6 +6,8 @@ import { Player } from './Player';
 import { ChatOverlay } from "./ChatOverlay";
 
 export class Renderer {
+    private clock: THREE.Clock;
+    private deltaTime: number;
     private chatOverlay: ChatOverlay;
     private scene: THREE.Scene;
     private remotePlayersScene: THREE.Scene; // New scene for remote players
@@ -26,13 +28,20 @@ export class Renderer {
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
     private crosshairVec = new THREE.Vector2;
-    public crosshairIsFlashing:boolean;
+    public crosshairIsFlashing: boolean;
+
+    // New state tracking variables
+    private isAnimating: { [id: number]: boolean } = {};
+    private animationPhase: { [id: number]: number } = {};
+    private previousVelocity: { [id: number]: number } = {};
+    private lastRunningYOffset: { [id: number]: number } = {};
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
         this.localPlayer = localPlayer;
         this.chatOverlay = chatOverlay;
 
+        this.clock = new THREE.Clock();
         this.scene = new THREE.Scene();
         this.remotePlayersScene = new THREE.Scene(); // Initialize the new scene
         this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
@@ -90,6 +99,7 @@ export class Renderer {
     }
 
     public doFrame(localPlayer: Player) {
+        this.deltaTime = this.clock.getDelta();
         // Ensure the renderer clears the buffers before the first render
         this.renderer.autoClear = true;
 
@@ -121,11 +131,10 @@ export class Renderer {
 
         // Update camera position and rotation for local player
         this.camera.position.copy(localPlayer.position);
-     //   this.camera.quaternion.copy(localPlayer.quaternion);
+        // this.camera.quaternion.copy(localPlayer.quaternion);
 
         this.updateRemotePlayers();
         this.updateFramerate();
-
     }
 
     private updateRemotePlayers() {
@@ -150,29 +159,87 @@ export class Renderer {
     }
 
     private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData) {
-        playerObject.position.set(
-            remotePlayerData.position.x,
-            remotePlayerData.position.y,
-            remotePlayerData.position.z
-        );
-
-        playerObject.quaternion.set(
-            remotePlayerData.quaternion[0],
-            remotePlayerData.quaternion[1],
-            remotePlayerData.quaternion[2],
-            remotePlayerData.quaternion[3]
-        );
-
+        // Compute current velocity magnitude
         const velocity = Math.sqrt(
             Math.pow(remotePlayerData.velocity.x, 2) +
             Math.pow(remotePlayerData.velocity.y, 2) +
             Math.pow(remotePlayerData.velocity.z, 2)
         );
-        if (velocity > 0)
-            playerObject.position.add(new THREE.Vector3(0, 0.2 * (0.5 + Math.sin(Date.now() / 1000 * 20)), 0));
 
+        // Retrieve previous velocity (default to 0 if undefined)
+        const prevVelocity = this.previousVelocity[remotePlayerData.id] || 0;
+
+        // Check for velocity state changes
+        if (prevVelocity === 0 && velocity > 0) {
+            // Player started moving
+            this.isAnimating[remotePlayerData.id] = true;
+            this.animationPhase[remotePlayerData.id] = 0;
+        } else if (prevVelocity > 0 && velocity === 0) {
+            // Player stopped moving but continue animation until cosine crosses zero
+            // No action needed here
+        }
+
+        // Update previous velocity for next frame
+        this.previousVelocity[remotePlayerData.id] = velocity;
+
+        // Update position based on velocity and deltaTime
+        playerObject.position.x += remotePlayerData.velocity.x * this.deltaTime;
+        playerObject.position.y += remotePlayerData.velocity.y * this.deltaTime;
+        playerObject.position.z += remotePlayerData.velocity.z * this.deltaTime;
+
+        // If forced position, set directly
+        if (remotePlayerData.forced) {
+            playerObject.position.x = remotePlayerData.position.x;
+            playerObject.position.y = remotePlayerData.position.y;
+            playerObject.position.z = remotePlayerData.position.z;
+        }
+
+        // Lerp position for smooth movement
+        playerObject.position.lerp(
+            new THREE.Vector3(
+                remotePlayerData.position.x,
+                remotePlayerData.position.y,
+                remotePlayerData.position.z
+            ),
+            0.3 * this.deltaTime * 60
+        );
+
+        // Slerp rotation for smooth orientation changes
+        const targetQuaternion = new THREE.Quaternion(
+            remotePlayerData.quaternion[0],
+            remotePlayerData.quaternion[1],
+            remotePlayerData.quaternion[2],
+            remotePlayerData.quaternion[3]
+        );
         const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
-        playerObject.quaternion.multiply(rotationQuaternion);
+        targetQuaternion.multiply(rotationQuaternion);
+
+        playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
+
+        // Apply animation offset after LERP and rotation updates
+        if (this.isAnimating[remotePlayerData.id]) {
+            // Update animation phase
+            const frequency = 25; // Adjust frequency as desired
+            this.animationPhase[remotePlayerData.id] += this.deltaTime * frequency;
+
+            // Compute Y offset
+            const amplitude = 0.06; // Adjust amplitude as desired
+            const yOffset = amplitude * (1 + Math.cos(this.animationPhase[remotePlayerData.id]));
+            
+            // Apply new Y offset
+            playerObject.position.y += yOffset;
+            this.lastRunningYOffset[remotePlayerData.id] = yOffset;
+
+            // Check if we should stop animating
+            if (velocity === 0 && Math.cos(this.animationPhase[remotePlayerData.id]) <= 0) {
+                // Cosine has crossed zero; stop animating
+                this.isAnimating[remotePlayerData.id] = false;
+                this.lastRunningYOffset[remotePlayerData.id] = 0;
+            }
+        } else {
+            // Ensure Y offset is reset when not animating
+            this.lastRunningYOffset[remotePlayerData.id] = 0;
+        }
     }
 
     private addNewPlayer(remotePlayerData) {
@@ -237,22 +304,20 @@ export class Renderer {
         chatCamera.updateProjectionMatrix();
     }
 
-    private getRemotePlayerObjectsInCrosshair():THREE.Object3D[]{
+    private getRemotePlayerObjectsInCrosshair(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
         return this.raycaster.intersectObjects(this.remotePlayersScene.children);
     }
 
-    private getPlayersInCrosshairWithWalls(){
+    private getPlayersInCrosshairWithWalls() {
         const out = this.getRemotePlayerObjectsInCrosshair();
         const walls = this.raycaster.intersectObjects(this.scene.children);
-        for(let i = out.length-1; i >= 0; i--) {
+        for (let i = out.length - 1; i >= 0; i--) {
             for (const wall of walls) {
-                       if(out[i].distance > wall.distance)
-                           out.splice(i, 1);
+                if (out[i].distance > wall.distance) out.splice(i, 1);
                 break;
             }
         }
-
 
         return out;
     }
@@ -264,8 +329,7 @@ export class Renderer {
         for (const object of objectsInCrosshair) {
             for (const player of this.playersToRender) {
                 if (player.objectUUID === object.object.uuid) {
-                    if(playerIDs.indexOf(player.id) === -1)
-                        playerIDs.push(player.id);
+                    if (playerIDs.indexOf(player.id) === -1) playerIDs.push(player.id);
                     break;
                 }
             }
@@ -273,5 +337,4 @@ export class Renderer {
 
         return playerIDs;
     }
-
 }

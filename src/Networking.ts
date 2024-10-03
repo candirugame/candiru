@@ -73,11 +73,14 @@ export class Networking {
         if (this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) && currentTime - this.lastUploadTime < 5)
             return;
 
+
+
         this.socket.emit('playerData', this.localPlayer);
         this.lastUploadedLocalPlayer = {
             position: this.localPlayer.position.clone(),
             quaternion: this.localPlayer.quaternion.clone(),
-            chatMsg: this.localPlayer.chatMsg
+            chatMsg: this.localPlayer.chatMsg,
+            velocity: this.localPlayer.velocity.clone(),
         };
 
         this.lastUploadTime = currentTime;
@@ -123,6 +126,7 @@ export class Networking {
         out = out && player1.position.equals(player2.position);
         out = out && player1.quaternion.equals(player2.quaternion);
         out = out && player1.chatMsg === player2.chatMsg;
+        out = out && player1.velocity.equals(player2.velocity);
 
         return out;
     }
