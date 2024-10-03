@@ -8,16 +8,27 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node index.js",
-    "prestart": "npm run build"
+    "prestart": "npm run build",
+    "lint": "npx eslint"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/three": "^0.168.0",
     "express": "^5.0.0",
     "joi": "^17.13.3",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "three": "^0.168.0",
+    "three-mesh-bvh": "^0.8.1",
+    "typescript": "^5.6.2",
     "vite": "^5.4.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "eslint": "^9.11.0",
+    "globals": "^15.9.0",
+    "typescript-eslint": "^8.6.0"
   }
 }

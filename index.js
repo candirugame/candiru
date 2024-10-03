@@ -15,7 +15,7 @@ const io = new Server(server);
 
 const playerKickTime = 5; //kick players after 5 seconds of no ping
 
-let SERVER_VERSION = ''
+let SERVER_VERSION = '';
 try {
     const jsonData = JSON.parse(readFileSync('public/gameVersion.json', 'utf8'));
     if(jsonData.version !== undefined){
@@ -32,7 +32,7 @@ let updateSinceLastEmit = false;
 let lastUpdateSent = 0;
 function serverTick(){
     setTimeout(serverTick, 1000/15, '');
-    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 5) return;
+    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 0.5) return;
 
     io.emit('remotePlayerData',playerData);
     updateSinceLastEmit = false;
@@ -44,6 +44,20 @@ serverTick();
 function periodicCleanup() {
     let currentTime = Date.now() / 1000;
     for (let i = playerData.length - 1; i >= 0; i--) {
+
+        //respawn people
+        if(playerData[i].health <= 0){
+            //console.log('💔 ' + playerData[i]['name'] + '(' + playerData[i].id + ') died');
+            // let nameToSend = playerData[i]['name'];
+            // sendChatMessage(nameToSend+' died');
+            playerData[i].health = 100;
+            playerData[i].position = {x:6,y:0.1016,z:12}; //6, 0.1016, 12
+            playerData[i].velocity = {x:0,y:0,z:0};
+            playerData[i].quaternion = [0,0,0,1];
+            playerData[i].forced = true;
+        }
+
+        //kick logged out players
         if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
             console.log('🟠 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
             let nameToSend = playerData[i]['name'];
@@ -51,16 +65,16 @@ function periodicCleanup() {
             playerData.splice(i, 1);
         }
     }
-    setTimeout(() => periodicCleanup(), 5000);
+    //setTimeout(() => periodicCleanup(), 2000);
 }
 
-periodicCleanup();
+setInterval(periodicCleanup, 5000);
 
 
 
 io.on('connection', (socket) => {
     socket.on('playerData',(data) => {
-        addPlayerToDataSafe(data,socket)
+        addPlayerToDataSafe(data,socket);
         if(updateLastInvalidMessageTime){
             lastInvalidMessageTime = Date.now()/1000;
             updateLastInvalidMessageTime = false;
@@ -68,12 +82,60 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chatMsg',(data) => {
-        addChatMessageSafe(data,socket)
-    })
+        addChatMessageSafe(data,socket);
+    });
 
-    socket.on('latencyTest',(data) => {
-        socket.emit('latencyTest','response :)')
-    })
+    socket.on('latencyTest',() => {
+        socket.emit('latencyTest','response :)');
+    });
+
+    socket.on('applyDamage',(data)=>{
+        let dataError = damageRequestSchema.validate(data).error;
+        let dataIsValid = dataError === undefined;
+        if(!dataIsValid){
+            console.log("⚠️ invalid damage request data received");
+            //console.log(dataError)
+            return;
+        }
+        //find target player in playerData by ID of targetPlayer
+        let targetPlayerIndex = -1;
+        let localPlayerIndex = -1;
+        for(let i = 0; i<playerData.length; i++){
+            if(playerData[i]['id'] === data.targetPlayer.id)
+                targetPlayerIndex = i;
+            if(playerData[i]['id'] === data.localPlayer.id)
+                localPlayerIndex = i;
+        }
+        if(targetPlayerIndex === -1){
+            console.log('⚠️ target player not found in playerData'); return;
+        }
+        if(localPlayerIndex === -1){
+            console.log('⚠️ local player not found in playerData'); return;
+        }
+        //check if local player is close enough to the server's position of the local player
+        let localPlayerSent = data.localPlayer;
+        let localPlayerServer = playerData[localPlayerIndex];
+        let localDistance = Math.sqrt(Math.pow(localPlayerSent.position.x - localPlayerServer.position.x,2) + Math.pow(localPlayerSent.position.y - localPlayerServer.position.y,2) + Math.pow(localPlayerSent.position.z - localPlayerServer.position.z,2));
+        let targetPlayerSent = data.targetPlayer;
+        let targetPlayerServer = playerData[targetPlayerIndex];
+        let targetDistance = Math.sqrt(Math.pow(targetPlayerSent.position.x - targetPlayerServer.position.x,2) + Math.pow(targetPlayerSent.position.y - targetPlayerServer.position.y,2) + Math.pow(targetPlayerSent.position.z - targetPlayerServer.position.z,2));
+
+        if(localDistance > 1 || targetDistance > 1){
+            console.log('⚠️ player position not close enough to server position for shot to register'); return;
+        }
+
+        //apply damage
+        playerData[targetPlayerIndex].health -= data.damage;
+
+        if(playerData[targetPlayerIndex].health <= 0){
+            let nameOfKilled = playerData[targetPlayerIndex]['name'];
+            let nameOfKiller = playerData[localPlayerIndex]['name'];
+            sendChatMessage(nameOfKilled+' was killed by '+nameOfKiller);
+            console.log('💔 '+nameOfKilled+' was killed by '+nameOfKiller);
+            periodicCleanup();
+        }
+
+    });
 
     socket.on('disconnect', () => {
         //console.log('browser disconnected 🐙');
@@ -92,7 +154,7 @@ function addChatMessageSafe(data,socket){
     let isCommand = parseForCommand(data.message,socket);
 
     if(!isCommand){
-        console.log('💬 ' +data.name +':'+ data.message)
+        console.log('💬 ' +data.name +':'+ data.message);
         io.emit('chatMsg',data);
     }
 }
@@ -119,19 +181,40 @@ function addPlayerToDataSafe(data,socket){
     let dataIsValid = dataError === undefined;
     if(!dataIsValid) {
         if(lastInvalidMessageTime + 2 < Date.now()/1000){
-            whisperChatMessage('⚠️ Your client is sending invalid data. Try a hard refresh.',socket)
-            console.log(dataError)
+            whisperChatMessage('⚠️ Your client is sending invalid data. Try a hard refresh.',socket);
+            //console.log(dataError)
             console.log("⚠️ invalid player data received");
             updateLastInvalidMessageTime = true;
         }
 
         return;
     }
+    for(let i = 0; i<playerData.length; i++)
+        if(playerData[i]['id'] === data.id){
+            if(data['forcedAcknowledged'] === false && playerData[i]['forced'] === true){
+                return;
+            }
+        }
+    if(data['forcedAcknowledged'] === true && data['forced'] === true){
+        data['forced'] = false;
+        console.log('🟢 '+data['name'] +'('+ data.id +') acknowledged force');
+    }
+
+
+
+
     updateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
     if(data['name'].length<1)
         data['name'] = 'possum' + data['id'];
+
+    if(data['position']['y'] < -150){
+        data['health'] = 0;
+        // sendChatMessage(data['name'] + ' fell off the map');
+        // console.log('💔 '+data['name'] +'('+ data.id +') fell off the map');
+    }
+
 
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
@@ -150,18 +233,13 @@ function addPlayerToDataSafe(data,socket){
 
 }
 
+
 const vector3Schema = Joi.object({
     x: Joi.number().required(),
     y: Joi.number().required(),
     z: Joi.number().required(),
 });
 
-const quaternionSchema = Joi.object({
-    _w: Joi.number().required(),
-    _x: Joi.number().required(),
-    _y: Joi.number().required(),
-    _z: Joi.number().required(),
-});
 
 const playerDataSchema = Joi.object({
     id: Joi.number().required(),
@@ -174,13 +252,23 @@ const playerDataSchema = Joi.object({
     chatActive: Joi.boolean().required(),
     chatMsg: Joi.string().required().allow(''),
     latency: Joi.number().required(),
+    health: Joi.number().required(),
+    forced: Joi.boolean().required(),
+    forcedAcknowledged: Joi.boolean().required(),
+    updateTimestamp: Joi.number(),
 });
 
 const chatMsgSchema = Joi.object({
     id: Joi.number().required(),
     name: Joi.string().required().allow(''),
     message: Joi.string().required().allow(''),
-})
+});
+
+const damageRequestSchema = Joi.object({
+    localPlayer: playerDataSchema.required(),
+    targetPlayer: playerDataSchema.required(),
+    damage: Joi.number().required(),
+});
 
 
 

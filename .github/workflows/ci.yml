@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.7'
+      - name: Install dependencies
+        run: npm install
+      - name: Build project
+        run: npm run build
+      - name: List build directory contents
+        run: ls -la ./dist
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.7'
+      - name: Install dependencies
+        run: npm install
+      - name: Run lint
+        run: npm run lint
+
+  healthcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.7'
+      - name: Install dependencies
+        run: npm install
+      - name: Start server
+        run: npm start &
+      - name: Wait for server to start
+        run: sleep 5
+      - name: Health check
+        run: curl -f http://localhost:3000 || exit 1
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.7'
+      - name: Install dependencies
+        run: npm install
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
