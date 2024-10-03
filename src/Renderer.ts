@@ -68,7 +68,7 @@ export class Renderer {
         this.scene.fog = new THREE.FogExp2('#111111', 0.1);
 
         this.framerate = 0;
-        this.framesInFramerateSample = 100;
+        this.framesInFramerateSample = 30;
         this.sampleOn = 0;
         this.lastFramerateCalculation = 0;
 
