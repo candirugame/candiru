@@ -60,8 +60,8 @@ export class InputHandler {
         if (inputX !== 0 || inputZ !== 0) dist = 5;
         dir = Math.atan2(inputZ, inputX);
 
-        this.localPlayer.velocity.z = this.localPlayer.speed * dist * Math.cos(dir);
-        this.localPlayer.velocity.x = this.localPlayer.speed * dist * Math.sin(dir);
+        this.localPlayer.velocity.z = dist * Math.cos(dir);
+        this.localPlayer.velocity.x = dist * Math.sin(dir);
 
         camera.getWorldDirection(this.direction);
         this.direction.y = 0;
