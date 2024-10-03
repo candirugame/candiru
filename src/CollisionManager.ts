@@ -11,6 +11,7 @@ export class CollisionManager {
     private clock: THREE.Clock;
     private raycaster: THREE.Raycaster;
     private scene: THREE.Scene;
+    private gravity: number;
 
     constructor(renderer: Renderer) {
         this.scene = renderer.getScene();
@@ -19,12 +20,7 @@ export class CollisionManager {
     }
 
     public init() {
-        // const geometry = new THREE.TorusGeometry;
-        // const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        // const cube = new THREE.Mesh(geometry, material);
-        // cube.position.x = 5;
-        // cube.geometry.computeBoundsTree();
-        // this.scene.add(cube);
+        this.gravity = 0;
     }
 
     public collisionPeriodic(localPlayer: Player) {
@@ -43,9 +39,13 @@ export class CollisionManager {
         if (down_intersects.length > 0) {
             for (const intersect of down_intersects) {
                 if (intersect.distance < 0.181) {
-                    localPlayer.position.y = intersect.point.y + 0.18;
+                    const slopeAngle = Math.acos(intersect.face.normal.dot(new THREE.Vector3(0, 1, 0)));
+                    if (!(slopeAngle < Math.PI / 4 && slopeAngle != 0)) {
+                        localPlayer.position.y = intersect.point.y + 0.18;
+                    }
 
                     onGround = true;
+                    this.gravity = 0;
                 }
             }
         }
@@ -66,7 +66,8 @@ export class CollisionManager {
         }
 
         if(!onGround) {
-            localPlayer.position.add(new THREE.Vector3(0, -4, 0).multiplyScalar(deltaTime));
+            this.gravity += -9.8 * deltaTime;
+            localPlayer.position.add(new THREE.Vector3(0, this.gravity, 0).multiplyScalar(deltaTime));
         }
 
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime * localPlayer.speed));
