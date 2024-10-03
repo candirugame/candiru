@@ -57,12 +57,12 @@ export class InputHandler {
         if (this.getKey('a')) inputZ -= 1;
         if (this.getKey('d')) inputZ += 1;
 
-        if (inputX !== 0 || inputZ !== 0) dist = 5;
+        if (inputX !== 0 || inputZ !== 0) dist = 1;
         if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
         dir = Math.atan2(inputZ, inputX);
 
-        this.localPlayer.velocity.z = this.localPlayer.speed * dist * Math.cos(dir);
-        this.localPlayer.velocity.x = this.localPlayer.speed * dist * Math.sin(dir);
+        this.localPlayer.velocity.z = dist * Math.cos(dir);
+        this.localPlayer.velocity.x = dist * Math.sin(dir);
 
         camera.getWorldDirection(this.direction);
         this.direction.y = 0;

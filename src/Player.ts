@@ -16,13 +16,13 @@ export class Player {
     public forcedAcknowledged: boolean;
 
     constructor() {
-        this.position = new THREE.Vector3(6, 0.1016, 12);
+        this.position = new THREE.Vector3(6, 2, 12);
         this.velocity = new THREE.Vector3();
         this.quaternion = new THREE.Quaternion();
         this.id = Math.floor(Math.random() * 10000);
         this.gameVersion = '';
         this.name = '';
-        this.speed = 1;
+        this.speed = 5;
         this.chatActive = false;
         this.chatMsg = '';
         this.latency = 1000;

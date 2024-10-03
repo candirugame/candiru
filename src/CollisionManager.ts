@@ -1,61 +1,92 @@
 import * as THREE from 'three';
 import { Renderer } from './Renderer';
 import { Player } from './Player';
+import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
+
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
 export class CollisionManager {
     private clock: THREE.Clock;
     private raycaster: THREE.Raycaster;
-    private cube: THREE.Mesh;
-    private wall1: THREE.Mesh;
-    private wall2: THREE.Mesh;
-    private renderer: Renderer;
+    private scene: THREE.Scene;
+    private gravity: number;
+    private physicsTickRate: number;
+    private physicsTickTimer: number;
 
-    constructor(renderer: Renderer) {
-        this.renderer = renderer;
+    constructor(renderer: Renderer, physicsTickRate: number) {
+        this.scene = renderer.getScene();
         this.clock = new THREE.Clock();
         this.raycaster = new THREE.Raycaster();
-
-        this.cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x0000ff }));
-        this.wall1 = new THREE.Mesh(new THREE.BoxGeometry(1, 5, 5), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
-        this.wall2 = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        if (physicsTickRate) {
+            this.physicsTickRate = physicsTickRate;
+        } else {
+            this.physicsTickRate = 1/60;
+        }
+        this.physicsTickTimer = 0;
     }
 
     public init() {
-        const scene = this.renderer.getScene();
-
-        this.wall1.position.set(5, 2.5, 5);
-        this.wall2.position.set(7.5, 2.5, 5);
-        this.cube.position.set(0, 2, -4);
-        scene.add(this.cube);
-        scene.add(this.wall1);
-        scene.add(this.wall2);
+        this.gravity = 0;
     }
 
     public collisionPeriodic(localPlayer: Player) {
-        const deltaTime = this.clock.getDelta();
+        const deltaTime: number = this.clock.getDelta();
+        // console.log(localPlayer.position);
+        this.physics(localPlayer, deltaTime);
+    }
 
-        const scene = this.renderer.getScene();
+    private physics(localPlayer: Player, deltaTime: number) {
+        this.physicsTickTimer += deltaTime;
+        while(this.physicsTickTimer >= this.physicsTickRate) {
+            let onGround: boolean = false;
 
-        this.cube.rotation.x += 2 * deltaTime;
-        this.cube.rotation.y += 2 * deltaTime;
+            const direction = new THREE.Vector3();
+            localPlayer.velocity.y = 0;
+            direction.copy(localPlayer.velocity);
+            direction.normalize();
 
-        const direction = new THREE.Vector3();
-        direction.copy(localPlayer.velocity);
-        direction.normalize();
-        this.raycaster.set(localPlayer.position, direction);
+            this.raycaster.set(localPlayer.position, new THREE.Vector3(0, -1, 0));
 
-        const intersects = this.raycaster.intersectObjects(scene.children, true);
-        if (intersects.length > 0) {
-            for (const intersect of intersects) {
-                const distance = intersect.distance;
-                if (distance < 0.5) {
-                    const wallNormal = intersect.face.normal.clone();
+            const down_intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
-                    localPlayer.velocity = localPlayer.velocity.projectOnPlane(wallNormal);
+            if (down_intersects.length > 0) {
+                for (const intersect of down_intersects) {
+                    if (intersect.distance < 0.201) {
+                        const slopeAngle = Math.acos(intersect.face.normal.dot(new THREE.Vector3(0, 1, 0)));
+                        if (!(slopeAngle < Math.PI / 4 && slopeAngle != 0)) {
+                            localPlayer.position.y = intersect.point.y + 0.2;
+                        }
+
+                        onGround = true;
+                        this.gravity = 0;
+                    }
                 }
             }
-        }
+            this.raycaster.set(localPlayer.position, direction);
+            const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
-        localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
+            if (intersects.length > 0) {
+                for (const intersect of intersects) {
+                    if (intersect.distance < 0.2) {
+                        const normal = intersect.face.normal;
+                        const slopeAngle = Math.acos(intersect.face.normal.dot(new THREE.Vector3(0, 1, 0)));
+                        if (!(slopeAngle < Math.PI / 4)) {
+                            normal.y = 0;
+                        }
+                        localPlayer.velocity = localPlayer.velocity.projectOnPlane(normal);
+                    }
+                }
+            }
+
+            if(!onGround) {
+                this.gravity += -9.8 * deltaTime;
+                localPlayer.position.add(new THREE.Vector3(0, this.gravity, 0).multiplyScalar(this.physicsTickRate));
+            }
+
+            localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(this.physicsTickRate * localPlayer.speed));
+            this.physicsTickTimer -= this.physicsTickRate;
+        }
     }
 }
