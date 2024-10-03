@@ -57,7 +57,7 @@ export class InputHandler {
         if (this.getKey('a')) inputZ -= 1;
         if (this.getKey('d')) inputZ += 1;
 
-        if (inputX !== 0 || inputZ !== 0) dist = 5;
+        if (inputX !== 0 || inputZ !== 0) dist = 1;
         dir = Math.atan2(inputZ, inputX);
 
         this.localPlayer.velocity.z = dist * Math.cos(dir);
