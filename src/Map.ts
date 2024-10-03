@@ -23,6 +23,11 @@ export class Map {
             this.mapUrl,
             (gltf) => {
                 this.mapObject = gltf.scene;
+                console.time( 'computing bounds tree for map' );
+                for (const child of this.mapObject.children) {
+                    child.geometry.computeBoundsTree();
+                }
+                console.timeEnd( 'computing bounds tree for map' );
                 this.scene.add(this.mapObject);
             },
             undefined,
