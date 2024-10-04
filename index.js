@@ -45,6 +45,12 @@ function periodicCleanup() {
     let currentTime = Date.now() / 1000;
     for (let i = playerData.length - 1; i >= 0; i--) {
 
+        if(playerData[i]['position']['y'] < -150){
+            playerData[i]['health'] = 0;
+             sendChatMessage(playerData[i]['name'] + ' fell off the map');
+             console.log('💔 '+playerData[i]['name'] +'('+ playerData[i].id +') fell off the map');
+        }
+
         //respawn people
         if(playerData[i].health <= 0){
             //console.log('💔 ' + playerData[i]['name'] + '(' + playerData[i].id + ') died');
@@ -57,12 +63,6 @@ function periodicCleanup() {
             playerData[i].forced = true;
         }
 
-        if(playerData[i]['position']['y'] < -150){
-            playerData[i]['health'] = 0;
-             sendChatMessage(playerData[i]['name'] + ' fell off the map');
-             console.log('💔 '+playerData[i]['name'] +'('+ playerData[i].id +') fell off the map');
-        }
-
         //kick logged out players
         if (playerData[i]['updateTimestamp'] + playerKickTime < currentTime) {
             console.log('🟠 ' + playerData[i]['name'] + '(' + playerData[i].id + ') left');
@@ -73,7 +73,7 @@ function periodicCleanup() {
     }
 }
 
-setInterval(periodicCleanup, 5000);
+setInterval(periodicCleanup, 500);
 
 
 
