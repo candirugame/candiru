@@ -86,6 +86,7 @@ export class ChatOverlay {
         this.renderDebugText();
         if(this.inputHandler.getKey('tab'))
             this.renderPlayerList();
+        this.renderEvil();
         this.renderCrosshair();
         this.chatTexture.needsUpdate = true;
 
@@ -231,6 +232,14 @@ export class ChatOverlay {
         }
 
 
+    }
+
+    private renderEvil(){
+        const ctx = this.chatCtx;
+        if(Date.now()/1000 - this.networking.getDamagedTimestamp() < 0.05){
+            ctx.fillStyle = 'rgba(255,0,0,0.1)';
+            ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+        }
     }
 
     private renderCrosshair() {

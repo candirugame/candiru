@@ -223,7 +223,7 @@ export class Renderer {
             this.animationPhase[remotePlayerData.id] += this.deltaTime * frequency;
 
             // Compute Y offset
-            const amplitude = 0.06; // Adjust amplitude as desired
+            const amplitude = 0.02; // Adjust amplitude as desired
             const yOffset = amplitude * (1 + Math.cos(this.animationPhase[remotePlayerData.id]));
             
             // Apply new Y offset
