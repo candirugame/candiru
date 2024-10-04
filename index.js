@@ -47,7 +47,7 @@ function periodicCleanup() {
 
         if(playerData[i]['position']['y'] < -150){
             playerData[i]['health'] = 0;
-             sendChatMessage(playerData[i]['name'] + ' fell off the map');
+             sendChatMessage(playerData[i]['name'] + ' fell off :\'(');
              console.log('💔 '+playerData[i]['name'] +'('+ playerData[i].id +') fell off the map');
         }
 
@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
         let targetDistance = Math.sqrt(Math.pow(targetPlayerSent.position.x - targetPlayerServer.position.x,2) + Math.pow(targetPlayerSent.position.y - targetPlayerServer.position.y,2) + Math.pow(targetPlayerSent.position.z - targetPlayerServer.position.z,2));
 
         if(localDistance > 1 || targetDistance > 1){
-            console.log('⚠️ player position not close enough to server position for shot to register');
+            console.log('⚠️ client out of sync - name:' + data.localPlayer.name +' latency: ' + Math.floor(data.localPlayer.latency)+ ' localDistance: ' + localDistance + ' targetDistance: ' + targetDistance);
             whisperChatMessage('⚠️ shot not registered (client out of sync)',socket);
             return;
         }
@@ -137,8 +137,8 @@ io.on('connection', (socket) => {
         if(playerData[targetPlayerIndex].health <= 0){
             let nameOfKilled = playerData[targetPlayerIndex]['name'];
             let nameOfKiller = playerData[localPlayerIndex]['name'];
-            sendChatMessage(nameOfKilled+' was killed by '+nameOfKiller);
-            console.log('💔 '+nameOfKilled+' was killed by '+nameOfKiller);
+            sendChatMessage(nameOfKiller+' killed '+nameOfKilled);
+            console.log('💔 '+nameOfKiller+' killed '+nameOfKilled);
             periodicCleanup();
         }
 
