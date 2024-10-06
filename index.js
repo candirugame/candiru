@@ -254,6 +254,7 @@ const vector3Schema = Joi.object({
 const playerDataSchema = Joi.object({
     id: Joi.number().required(),
     speed: Joi.number().required(),
+    acceleration: Joi.number().required(),
     name: Joi.string().required().allow(''),
     gameVersion: Joi.string().required().valid(SERVER_VERSION),
     position: vector3Schema.required(),

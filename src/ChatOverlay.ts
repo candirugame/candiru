@@ -174,25 +174,25 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        //const latency = this.localPlayer.latency;
-        // const health = this.localPlayer.health;
-         //const playerX = Math.floor(this.localPlayer.position.x * 100)/100;
-         //const playerY = Math.floor(this.localPlayer.position.y * 100)/100;
-         //const playerZ = Math.floor(this.localPlayer.position.z * 100)/100;
+        const latency = this.localPlayer.latency;
+        const health = this.localPlayer.health;
+         const playerX = Math.floor(this.localPlayer.position.x * 100)/100;
+         const playerY = Math.floor(this.localPlayer.position.y * 100)/100;
+         const playerZ = Math.floor(this.localPlayer.position.z * 100)/100;
 
-        //const playerVelX = Math.floor(this.localPlayer.velocity.x * 100)/100;
-        //const playerVelY = Math.floor(this.localPlayer.velocity.y * 100)/100;
-        //const playerVelZ = Math.floor(this.localPlayer.velocity.z * 100)/100;
+        const playerVelX = Math.floor(this.localPlayer.velocity.x * 100)/100;
+        const playerVelY = Math.floor(this.localPlayer.velocity.y * 100)/100;
+        const playerVelZ = Math.floor(this.localPlayer.velocity.z * 100)/100;
 
 
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
 
         linesToRender.push(Math.floor(framerate) + 'FPS');
-        //linesToRender.push(Math.floor(latency) + 'ms');
-        //linesToRender.push('health: ' + health);
-        //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
-        //linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
+        linesToRender.push(Math.floor(latency) + 'ms');
+        linesToRender.push('health: ' + health);
+        linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);

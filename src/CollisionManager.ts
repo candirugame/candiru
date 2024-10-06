@@ -85,7 +85,7 @@ export class CollisionManager {
                 localPlayer.position.add(new THREE.Vector3(0, this.gravity, 0).multiplyScalar(this.physicsTickRate));
             }
 
-            localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(this.physicsTickRate * localPlayer.speed));
+            localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(this.physicsTickRate));
             this.physicsTickTimer -= this.physicsTickRate;
         }
     }
