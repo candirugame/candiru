@@ -27,7 +27,7 @@ try {
 app.use(express.static(join(__dirname, 'dist')));
 
 app.post('/trigger-server-restart', (req, res) => {
-    sendChatMessage('😾Server restarting...');
+    sendChatMessage('⚠️Stopping server...');
     res.send('Server restart message sent.');
 });
 
