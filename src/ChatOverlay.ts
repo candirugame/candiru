@@ -155,14 +155,14 @@ export class ChatOverlay {
         }
 
         for (let i = 0; i < linesToRender.length; i++)
-            ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 3 + pixOffsets[i], 200 - 40 - 8 * i);
+            ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 3 + pixOffsets[i], 200 - 20 - 8 * i);
 
         if ((usermsg !== '' && this.localPlayer.chatActive) || this.nameSettingActive) {
             ctx.fillStyle = 'rgba(145,142,118,0.3)';
             let width = ctx.measureText(usermsg).width;
             if (this.nameSettingActive)
                 width = ctx.measureText('Enter your name: ' + usermsg).width;
-            ctx.fillRect(this.chatCanvas.width / 2 + 2, 200 - 40 - 7, width + 1, 9);
+            ctx.fillRect(this.chatCanvas.width / 2 + 2, 200 - 20 - 7, width + 1, 9);
         }
     }
 
