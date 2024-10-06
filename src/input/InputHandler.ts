@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { Renderer } from './Renderer';
-import { Player } from './Player';
+import { PointerLockControls } from './PointerLockControl';
+import { Renderer } from '../Renderer';
+import { Player } from '../Player';
 
 export class InputHandler {
     private mouse: PointerLockControls;
@@ -17,7 +17,7 @@ export class InputHandler {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
 
-        this.mouse = new PointerLockControls(this.renderer.getCamera(), document.body);
+        this.mouse = new PointerLockControls(this.localPlayer, document.body);
         this.forward = new THREE.Vector3(0, 0, -1);
         this.direction = new THREE.Vector3();
 
@@ -64,9 +64,7 @@ export class InputHandler {
         this.localPlayer.velocity.z = dist * Math.cos(dir);
         this.localPlayer.velocity.x = dist * Math.sin(dir);
 
-        camera.getWorldDirection(this.direction);
-        this.direction.y = 0;
-        this.localPlayer.quaternion.setFromUnitVectors(this.forward, this.direction.normalize());
+        camera.setRotationFromQuaternion(this.localPlayer.quaternion);
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
     }
 
