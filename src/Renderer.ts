@@ -139,7 +139,6 @@ export class Renderer {
         this.renderer.setScissor(2 * this.screenPixelsInGamePixel, screenHeight - (healthIndicatorHeight + 1 + this.chatOverlay.getDebugTextHeight())* this.screenPixelsInGamePixel, healthIndicatorWidth * this.screenPixelsInGamePixel, healthIndicatorHeight* this.screenPixelsInGamePixel);
         this.renderer.setViewport(2* this.screenPixelsInGamePixel, screenHeight - (healthIndicatorHeight + 1 + this.chatOverlay.getDebugTextHeight())* this.screenPixelsInGamePixel, healthIndicatorWidth* this.screenPixelsInGamePixel, healthIndicatorHeight* this.screenPixelsInGamePixel);
 
-        console.log(this.screenPixelsInGamePixel);
         // Render the health indicator scene
         this.renderer.render(this.healthIndicatorScene, this.healthIndicatorCamera);
 
