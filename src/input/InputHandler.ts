@@ -51,17 +51,19 @@ export class InputHandler {
         const deltaTime: number = this.clock.getDelta();
         const camera = this.renderer.getCamera();
         const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
-        if (this.localPlayer.chatActive) return;
 
         let dist = 0;
 
         const oldInputZ = this.inputZ;
         const oldInputX = this.inputX;
 
-        if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
-        if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
-        if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
-        if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
+        console.log(this.localPlayer.chatActive);
+        if (!this.localPlayer.chatActive) {
+            if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
+            if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
+            if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
+            if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
+        }
 
         switch (this.inputZ - oldInputZ) {
             case 0:
