@@ -1,11 +1,18 @@
-name: CI
+name: CI and Release Pipeline
 
 on:
   push:
     branches:
       - '**'
 
+permissions:
+  contents: read # For checkout
+  issues: write # To be able to comment on released issues
+  pull-requests: write # To be able to comment on released pull requests
+  id-token: write # To enable use of OIDC for npm provenance
+
 jobs:
+  # Build Job
   build:
     runs-on: ubuntu-latest
     steps:
@@ -22,6 +29,7 @@ jobs:
       - name: List build directory contents
         run: ls -la ./dist
 
+  # Lint Job
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -36,6 +44,7 @@ jobs:
       - name: Run lint
         run: npm run lint
 
+  # Healthcheck Job
   healthcheck:
     runs-on: ubuntu-latest
     steps:
@@ -54,6 +63,7 @@ jobs:
       - name: Health check
         run: curl -f http://localhost:3000 || exit 1
 
+  # Audit Job
   audit:
     runs-on: ubuntu-latest
     steps:
@@ -67,3 +77,49 @@ jobs:
         run: npm install
       - name: Run npm audit
         run: npm audit --audit-level=moderate
+
+  # Release Job (Only for main and dev branches)
+  release:
+    if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/dev')
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # To publish a GitHub release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+      - name: Install dependencies
+        run: npm clean-install
+      - name: Verify the integrity of dependencies
+        run: npm audit signatures
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
+
+  # Dry-run Release (For non-main and non-dev branches)
+  dry-run-release:
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev'
+    name: Dry-run Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+      - name: Install dependencies
+        run: npm clean-install
+      - name: Verify the integrity of dependencies
+        run: npm audit signatures
+      - name: Dry Run Release
+        run: npx semantic-release --dry-run --branch ${GITHUB_REF#refs/heads/}
