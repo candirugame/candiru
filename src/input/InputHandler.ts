@@ -2,8 +2,6 @@ import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControl';
 import { Renderer } from '../Renderer';
 import { Player } from '../Player';
-import {number} from "joi";
-import {timerDelta} from "three/src/nodes/utils/TimerNode";
 
 export class InputHandler {
     private mouse: PointerLockControls;
@@ -56,7 +54,6 @@ export class InputHandler {
         if (this.localPlayer.chatActive) return;
 
         let dist = 0;
-        let dir = 0;
 
         const oldInputZ = this.inputZ;
         const oldInputX = this.inputX;
