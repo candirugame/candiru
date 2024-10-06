@@ -6,9 +6,12 @@ on:
       - '**'
 
 permissions:
-  contents: read # For checkout
-  issues: write # To be able to comment on released issues
-  pull-requests: write # To be able to comment on released pull requests
+  contents: write # For checkout and publishing GitHub release
+  issues: write # To comment on issues
+  pull-requests: write # To comment on pull requests and update metadata
+  metadata: write # To ensure access to associated pull requests and other repository metadata
+  actions: write # To enable workflow actions like publishing
+  commit-statuses: write # To update statuses of commits
   id-token: write # To enable use of OIDC for npm provenance
 
 jobs:
@@ -85,6 +88,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # To publish a GitHub release
+      issues: write # For comments on issues
+      pull-requests: write # For comments on pull requests and update metadata
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
