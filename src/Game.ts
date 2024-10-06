@@ -31,7 +31,7 @@ export class Game {
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
         this.map = new Map('maps/test1.glb', this.renderer);
-        this.healthIndicator = new HealthIndicator(this.renderer);
+        this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
     }
 
     init() {
