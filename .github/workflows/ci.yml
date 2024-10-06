@@ -6,7 +6,7 @@ on:
       - '**'
 
 permissions:
-  contents: read # For checkout
+  contents: read # For checkout - test
   issues: write # To be able to comment on released issues
   pull-requests: write # To be able to comment on released pull requests
   id-token: write # To enable use of OIDC for npm provenance
