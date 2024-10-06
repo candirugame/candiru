@@ -1,4 +1,4 @@
-name: CI
+name: CI and Version Update
 
 on:
   push:
@@ -85,6 +85,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # To publish a GitHub release
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -99,27 +101,49 @@ jobs:
       - name: Verify the integrity of dependencies
         run: npm audit signatures
       - name: Release
+        id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
+      - name: Extract new version
+        id: get_version
+        run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
 
-  # Dry-run Release (For non-main and non-dev branches)
-  dry-run-release:
-    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev'
-    name: Dry-run Release
+  # Update Game Version (Only for main branch after release)
+  update-game-version:
+    needs: release
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "lts/*"
-      - name: Install dependencies
-        run: npm clean-install
-      - name: Verify the integrity of dependencies
-        run: npm audit signatures
-      - name: Dry Run Release
-        run: npx semantic-release --dry-run --branch ${GITHUB_REF#refs/heads/}
+          persist-credentials: false
+      - name: Check if commit is from GitHub Actions
+        id: check_author
+        run: |
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          if [ "$COMMIT_AUTHOR" = "github-actions[bot]" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Update gameVersion.json
+        if: steps.check_author.outputs.skip == 'false'
+        run: |
+          mkdir -p public
+          echo "{\"version\": \"${{ needs.release.outputs.version }}\"}" > public/gameVersion.json
+      - name: Commit and push changes
+        if: steps.check_author.outputs.skip == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_DEPLOY_TOKEN }}@github.com/${{ github.repository }}
+          git add public/gameVersion.json
+          git commit -m "Update gameVersion to ${{ needs.release.outputs.version }}" || echo "No changes to commit"
+          git push origin main
+      - name: Debugging List files in public after update
+        if: steps.check_author.outputs.skip == 'false'
+        run: ls -al public
