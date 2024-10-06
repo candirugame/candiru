@@ -103,7 +103,7 @@ jobs:
       - name: Release
         id: semantic_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
       - name: Extract new version
         id: get_version
@@ -119,6 +119,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           persist-credentials: false
+      - name: Set up credentials for pushing changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_DEPLOY_TOKEN }}@github.com/${{ github.repository }}
       - name: Check if commit is from GitHub Actions
         id: check_author
         run: |
@@ -138,9 +145,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_DEPLOY_TOKEN }}@github.com/${{ github.repository }}
           git add public/gameVersion.json
           git commit -m "Update gameVersion to ${{ needs.release.outputs.version }}" || echo "No changes to commit"
           git push origin main
