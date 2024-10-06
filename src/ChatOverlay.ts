@@ -21,6 +21,7 @@ export class ChatOverlay {
     private chatPlane: THREE.Mesh;
     private screenWidth: number;
     private inputHandler : InputHandler;
+    private debugTextHeight: number;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -86,6 +87,7 @@ export class ChatOverlay {
         this.renderDebugText();
         if(this.inputHandler.getKey('tab'))
             this.renderPlayerList();
+        this.renderEvil();
         this.renderCrosshair();
         this.chatTexture.needsUpdate = true;
 
@@ -154,14 +156,14 @@ export class ChatOverlay {
         }
 
         for (let i = 0; i < linesToRender.length; i++)
-            ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 3 + pixOffsets[i], 200 - 40 - 8 * i);
+            ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 3 + pixOffsets[i], 200 - 20 - 8 * i);
 
         if ((usermsg !== '' && this.localPlayer.chatActive) || this.nameSettingActive) {
             ctx.fillStyle = 'rgba(145,142,118,0.3)';
             let width = ctx.measureText(usermsg).width;
             if (this.nameSettingActive)
                 width = ctx.measureText('Enter your name: ' + usermsg).width;
-            ctx.fillRect(this.chatCanvas.width / 2 + 2, 200 - 40 - 7, width + 1, 9);
+            ctx.fillRect(this.chatCanvas.width / 2 + 2, 200 - 20 - 7, width + 1, 9);
         }
     }
 
@@ -194,6 +196,12 @@ export class ChatOverlay {
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
+
+        this.debugTextHeight = 7 * linesToRender.length;
+    }
+
+    public getDebugTextHeight(){
+        return this.debugTextHeight;
     }
 
     private renderPlayerList(){
@@ -231,6 +239,14 @@ export class ChatOverlay {
         }
 
 
+    }
+
+    private renderEvil(){
+        const ctx = this.chatCtx;
+        if(Date.now()/1000 - this.networking.getDamagedTimestamp() < 0.05){
+            ctx.fillStyle = 'rgba(255,0,0,0.1)';
+            ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+        }
     }
 
     private renderCrosshair() {

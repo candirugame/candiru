@@ -5,6 +5,7 @@ import { InputHandler } from './InputHandler';
 import { Networking } from './Networking';
 import { CollisionManager } from './CollisionManager';
 import { InventoryManager } from './InventoryManager';
+import { HealthIndicator } from './HealthIndicator';
 import { Map } from './Map';
 
 export class Game {
@@ -16,6 +17,7 @@ export class Game {
     private collisionManager: CollisionManager;
     private inventoryManager: InventoryManager;
     private map: Map;
+    private healthIndicator: HealthIndicator;
 
     constructor() {
         this.localPlayer = new Player();
@@ -29,11 +31,13 @@ export class Game {
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
         this.map = new Map('maps/test1.glb', this.renderer);
+        this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
     }
 
     init() {
         this.collisionManager.init();
         this.inventoryManager.init();
+        this.healthIndicator.init();
     }
 
     animate() {
@@ -42,7 +46,8 @@ export class Game {
         this.networking.updatePlayerData();
         this.chatOverlay.onFrame();
         this.inventoryManager.onFrame();
-        this.renderer.doFrame(this.localPlayer);
+        this.healthIndicator.onFrame();
+        this.renderer.onFrame(this.localPlayer);
         requestAnimationFrame(this.animate.bind(this));
     }
 

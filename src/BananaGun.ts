@@ -115,7 +115,7 @@ export class BananaGun extends HeldItem {
      shootBanana(){
         if(this.renderer.getRemotePlayerIDsInCrosshair().length>0){
             for(const id of this.renderer.getRemotePlayerIDsInCrosshair()){
-                this.networking.applyDamage(id, 20);
+                this.networking.applyDamage(id, 10);
             }
             this.lastShotSomeoneTimestamp = Date.now()/1000;
         }

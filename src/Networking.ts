@@ -16,6 +16,7 @@ export class Networking {
     private messagesBeingTyped: string[];
     private localPlayer: Player;
     private chatOverlay: ChatOverlay;
+    private damagedTimestamp: number;
 
     constructor(localPlayer: Player, chatOverlay: ChatOverlay) {
         this.localPlayer = localPlayer;
@@ -107,7 +108,7 @@ export class Networking {
                 }else{
                     this.localPlayer.forcedAcknowledged = false;
                 }
-
+                if(remotePlayer['health'] < this.localPlayer.health) this.damagedTimestamp = Date.now()/1000;
                 this.localPlayer.health = remotePlayer['health']; //trust server to handle health
                 continue;
             }
@@ -115,6 +116,10 @@ export class Networking {
                 this.messagesBeingTyped.push(remotePlayer['name'] + ': ' + remotePlayer['chatMsg']);
         }
     }
+    public getDamagedTimestamp() {
+        return this.damagedTimestamp;
+    }
+
 
     public getMessagesBeingTyped() {
         return this.messagesBeingTyped;
