@@ -55,15 +55,18 @@ export class HealthIndicator extends HeldItem {
             this.sceneAdded = true;
         }
         const deltaTime = clock.getDelta();
-        const scaredLevel = Math.pow(this.localPlayer.health / 100,1); //0-1
+        const scaredLevel = 1-Math.pow(this.localPlayer.health / 100,1); //0-1
 
         this.targetPosition.copy(basePosition);
-        this.targetPosition.y += (1-scaredLevel) * 0.5 * Math.sin(1.1 * Math.PI * this.rotatedAngle);
+        this.targetPosition.y += scaredLevel * 0.5 * Math.sin(1.1 * Math.PI * this.rotatedAngle);
+        this.targetPosition.y += (Math.random() - 0.5 ) * 0.2 * scaredLevel;
+        this.targetPosition.x += (Math.random() - 0.5 ) * 0.2 * scaredLevel;
+        this.targetPosition.z += (Math.random() - 0.5 ) * 0.2 * scaredLevel;
 
         this.targetQuaternion.copy(baseQuaternion);
         rotateAroundWorldAxis(this.targetQuaternion, new THREE.Vector3(0, 0, 1), Math.PI - this.localPlayer.health * Math.PI / 100);
 
-        this.rotatedAngle += 4 * deltaTime / (scaredLevel*3);
+        this.rotatedAngle += 4 * deltaTime / ((1-scaredLevel)*3);
         rotateAroundWorldAxis(this.targetQuaternion, new THREE.Vector3(0, 1, 0),  this.rotatedAngle);
 
         moveTowardsPos(this.possumObject.position, this.targetPosition, 0.8 * deltaTime * 60);
