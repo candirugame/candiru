@@ -1,4 +1,4 @@
-name: CI and Version Update
+name: CI
 
 on:
   push:
