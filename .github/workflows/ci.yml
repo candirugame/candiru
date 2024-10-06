@@ -1,4 +1,4 @@
-name: CI and Release Pipeline
+name: CI
 
 on:
   push:
