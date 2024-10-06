@@ -26,6 +26,11 @@ try {
 
 app.use(express.static(join(__dirname, 'dist')));
 
+app.post('/trigger-server-restart', (req, res) => {
+    sendChatMessage('⚠️Stopping server...');
+    res.send('Server restart message sent.');
+});
+
 let playerData = [];
 
 let updateSinceLastEmit = false;
