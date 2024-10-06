@@ -9,7 +9,6 @@ permissions:
   contents: write # For checkout and publishing GitHub release
   issues: write # To comment on issues
   pull-requests: write # To comment on pull requests and update metadata
-  metadata: write # To ensure access to associated pull requests and other repository metadata
   actions: write # To enable workflow actions like publishing
   commit-statuses: write # To update statuses of commits
   id-token: write # To enable use of OIDC for npm provenance
