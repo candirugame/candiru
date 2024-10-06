@@ -21,6 +21,7 @@ export class ChatOverlay {
     private chatPlane: THREE.Mesh;
     private screenWidth: number;
     private inputHandler : InputHandler;
+    private debugTextHeight: number;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -195,6 +196,12 @@ export class ChatOverlay {
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
+
+        this.debugTextHeight = 7 * linesToRender.length;
+    }
+
+    public getDebugTextHeight(){
+        return this.debugTextHeight;
     }
 
     private renderPlayerList(){

@@ -1,5 +1,4 @@
 import { HeldItem } from './HeldItem';
-import { HeldItemInput } from './HeldItemInput';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
@@ -17,7 +16,7 @@ export class HealthIndicator extends HeldItem {
     constructor(renderer: Renderer) {
         super();
         this.renderer = renderer;
-        this.scene = renderer.getHeldItemScene();
+        this.scene = renderer.getHealthIndicatorScene();
     }
 
     public init() {
@@ -26,7 +25,7 @@ export class HealthIndicator extends HeldItem {
         dracoLoader.setDecoderPath('/draco/');
         loader.setDRACOLoader(dracoLoader);
         loader.load(
-            'models/possum.glb',
+            'models/simplified_possum.glb',
             (gltf) => {
                 this.bananaObject = gltf.scene;
                 this.bananaObject.traverse((child) => {
@@ -54,10 +53,7 @@ export class HealthIndicator extends HeldItem {
         moveTowardsPos(this.bananaObject.position, bottomLeftPosition, 0.1 * deltaTime * 60);
         moveTowardsRot(this.bananaObject.quaternion, baseQuaternion, 0.1 * deltaTime * 60);
 
-
-
-
-
+        rotateAroundWorldAxis(baseQuaternion, new THREE.Vector3(0, 1, 0), deltaTime * 0.5 * Math.PI);
 
     }
 
@@ -80,5 +76,5 @@ function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac
     source.slerp(target, frac);
 }
 
-const bottomLeftPosition = new THREE.Vector3(0, -0.6, 3.5);
+const bottomLeftPosition = new THREE.Vector3(0, 0, 1.2);
 const baseQuaternion = new THREE.Quaternion(0,0,0,1);

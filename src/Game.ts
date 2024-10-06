@@ -47,7 +47,7 @@ export class Game {
         this.chatOverlay.onFrame();
         this.inventoryManager.onFrame();
         this.healthIndicator.onFrame();
-        this.renderer.doFrame(this.localPlayer);
+        this.renderer.onFrame(this.localPlayer);
         requestAnimationFrame(this.animate.bind(this));
     }
 

@@ -29,6 +29,9 @@ export class Renderer {
     private raycaster: THREE.Raycaster;
     private crosshairVec = new THREE.Vector2;
     public crosshairIsFlashing: boolean;
+    private healthIndicatorScene: THREE.Scene;
+    private healthIndicatorCamera: THREE.PerspectiveCamera;
+    private screenPixelsInGamePixel: number;
 
     // New state tracking variables
     private isAnimating: { [id: number]: boolean } = {};
@@ -74,18 +77,27 @@ export class Renderer {
         this.heldItemCamera.position.set(0, 0, 5);
         this.heldItemCamera.lookAt(0, 0, 0);
 
+        // Create a new scene and camera for the health indicator
+        this.healthIndicatorScene = new THREE.Scene();
+        this.healthIndicatorCamera = new THREE.PerspectiveCamera(70, 1, 0.01, 1000);
+        this.healthIndicatorCamera.position.set(0, 0, 0);
+        this.healthIndicatorCamera.lookAt(0, 0, 1);
+
         // Ambient lights
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         const ambientLight2 = new THREE.AmbientLight(0xffffff, 0.5);
         const ambientLight3 = new THREE.AmbientLight(0xffffff, 0.5); // Ambient light for remote players scene
+        const ambientLight4 = new THREE.AmbientLight(0xffffff, 0.5); // Ambient light for health indicator scene
         this.scene.add(this.ambientLight);
         this.heldItemScene.add(ambientLight2);
         this.remotePlayersScene.add(ambientLight3); // Add ambient light to remote players scene
+        this.healthIndicatorScene.add(ambientLight4); // Add ambient light to health indicator scene
 
         // Fog settings
         this.scene.fog = new THREE.FogExp2('#111111', 0.1);
         this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.1);
         this.remotePlayersScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
+        this.healthIndicatorScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to health indicator scene
 
         this.framerate = 0;
         this.framesInFramerateSample = 30;
@@ -97,9 +109,9 @@ export class Renderer {
         this.onWindowResize();
         window.addEventListener('resize', this.onWindowResize.bind(this), false);
     }
-
-    public doFrame(localPlayer: Player) {
+    public onFrame(localPlayer: Player) {
         this.deltaTime = this.clock.getDelta();
+
         // Ensure the renderer clears the buffers before the first render
         this.renderer.autoClear = true;
 
@@ -112,8 +124,28 @@ export class Renderer {
         // Render the remote players scene using the same camera
         this.renderer.render(this.remotePlayersScene, this.camera);
 
-        // Render the held item scene
+        // Render the held item scene normally (full screen)
         this.renderer.render(this.heldItemScene, this.heldItemCamera);
+
+        // Set up the scissor and viewport for the health indicator scene rendering
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+
+        const healthIndicatorWidth = 60; //native
+        const healthIndicatorHeight = healthIndicatorWidth; // 1:1 aspect ratio
+
+        // Set up scissor and viewport for a region from (0, 0) to (50, 50)
+        this.renderer.setScissorTest(true);
+        this.renderer.setScissor(2 * this.screenPixelsInGamePixel, screenHeight - (healthIndicatorHeight + 1 + this.chatOverlay.getDebugTextHeight())* this.screenPixelsInGamePixel, healthIndicatorWidth * this.screenPixelsInGamePixel, healthIndicatorHeight* this.screenPixelsInGamePixel);
+        this.renderer.setViewport(2* this.screenPixelsInGamePixel, screenHeight - (healthIndicatorHeight + 1 + this.chatOverlay.getDebugTextHeight())* this.screenPixelsInGamePixel, healthIndicatorWidth* this.screenPixelsInGamePixel, healthIndicatorHeight* this.screenPixelsInGamePixel);
+
+        console.log(this.screenPixelsInGamePixel);
+        // Render the health indicator scene
+        this.renderer.render(this.healthIndicatorScene, this.healthIndicatorCamera);
+
+        // Reset scissor test and viewport after rendering the health indicator
+        this.renderer.setScissorTest(false);
+        this.renderer.setViewport(0, 0, screenWidth, screenHeight);
 
         // Render the chat overlay
         const chatScene = this.chatOverlay.getChatScene();
@@ -136,7 +168,6 @@ export class Renderer {
         this.updateRemotePlayers();
         this.updateFramerate();
     }
-
     private updateRemotePlayers() {
         if (!this.possumGLTFScene) return;
 
@@ -288,12 +319,17 @@ export class Renderer {
         return this.heldItemScene;
     }
 
+    public getHealthIndicatorScene() {
+        return this.healthIndicatorScene;
+    }
+
     private onWindowResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(200 / window.innerHeight);
 
+        this.screenPixelsInGamePixel =  window.innerHeight / 200;
         // Update held item camera aspect ratio
         this.heldItemCamera.aspect = window.innerWidth / window.innerHeight;
         this.heldItemCamera.updateProjectionMatrix();
