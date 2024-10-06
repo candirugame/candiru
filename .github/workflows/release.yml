@@ -3,14 +3,14 @@ on:
   push:
     branches:
       - main
-      - "**"  # Add all branches for dry-run checks
+      - dev # Add the dev branch for actual releases
 
 permissions:
   contents: read # for checkout
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/main' # Ensure it only runs on main
+    if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/dev')
     name: Release
     runs-on: ubuntu-latest
     permissions:
@@ -35,10 +35,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+        run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
 
   dry-run-release:
-    if: github.ref != 'refs/heads/main' # Dry run for non-main branches
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' # Dry run for non-main and non-dev branches
     name: Dry-run Release
     runs-on: ubuntu-latest
     steps:
@@ -55,4 +55,4 @@ jobs:
       - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
         run: npm audit signatures
       - name: Dry Run Release
-        run: npx semantic-release --dry-run
+        run: npx semantic-release --dry-run --branch ${GITHUB_REF#refs/heads/}
