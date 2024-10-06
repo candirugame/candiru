@@ -14,6 +14,7 @@ export class CollisionManager {
     private gravity: number;
     private physicsTickRate: number;
     private physicsTickTimer: number;
+    public static mapLoaded: boolean = false;
 
     constructor(renderer: Renderer, physicsTickRate: number) {
         this.scene = renderer.getScene();
@@ -32,6 +33,7 @@ export class CollisionManager {
     }
 
     public collisionPeriodic(localPlayer: Player) {
+        if(!CollisionManager.mapLoaded) {return;}
         const deltaTime: number = this.clock.getDelta();
         // console.log(localPlayer.position);
         this.physics(localPlayer, deltaTime);

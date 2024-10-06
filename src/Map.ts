@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader";
 import { Renderer } from './Renderer';
+import {computeBoundsTree} from "three-mesh-bvh";
+import {CollisionManager} from "./CollisionManager";
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 
 export class Map {
     private scene: THREE.Scene;
@@ -29,6 +33,7 @@ export class Map {
                 }
                 console.timeEnd( 'computing bounds tree for map' );
                 this.scene.add(this.mapObject);
+                CollisionManager.mapLoaded = true;
             },
             undefined,
             () => {
