@@ -1,5 +1,5 @@
 import { Renderer } from './Renderer';
-import { InputHandler } from './InputHandler';
+import { InputHandler } from './input/InputHandler';
 import { BananaGun } from './BananaGun';
 import { HeldItemInput } from './HeldItemInput';
 import {Networking} from "./Networking";

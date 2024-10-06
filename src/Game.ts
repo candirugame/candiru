@@ -1,7 +1,7 @@
 import { Player } from './Player';
 import { Renderer } from './Renderer';
 import { ChatOverlay } from './ChatOverlay';
-import { InputHandler } from './InputHandler';
+import { InputHandler } from './input/InputHandler';
 import { Networking } from './Networking';
 import { CollisionManager } from './CollisionManager';
 import { InventoryManager } from './InventoryManager';
