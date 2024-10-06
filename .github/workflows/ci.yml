@@ -110,6 +110,7 @@ jobs:
         run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
 
   # Update Game Version (Only for main branch after release)
+  # Update Game Version (Only for main branch after release)
   update-game-version:
     needs: release
     if: github.ref == 'refs/heads/main'
@@ -118,6 +119,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
+          fetch-depth: 0  # Fetch all history for all tags
           persist-credentials: false
       - name: Set up credentials for pushing changes
         env:
@@ -126,6 +128,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_DEPLOY_TOKEN }}@github.com/${{ github.repository }}
+      - name: Fetch all tags
+        run: git fetch --tags
+      - name: Get latest tag
+        id: get_latest_tag
+        run: echo "latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)" >> $GITHUB_OUTPUT
       - name: Check if commit is from GitHub Actions
         id: check_author
         run: |
@@ -139,14 +146,14 @@ jobs:
         if: steps.check_author.outputs.skip == 'false'
         run: |
           mkdir -p public
-          echo "{\"version\": \"${{ needs.release.outputs.version }}\"}" > public/gameVersion.json
+          echo "{\"version\": \"${{ steps.get_latest_tag.outputs.latest_tag }}\"}" > public/gameVersion.json
       - name: Commit and push changes
         if: steps.check_author.outputs.skip == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         run: |
           git add public/gameVersion.json
-          git commit -m "Update gameVersion to ${{ needs.release.outputs.version }}" || echo "No changes to commit"
+          git commit -m "Update gameVersion to ${{ steps.get_latest_tag.outputs.latest_tag }}" || echo "No changes to commit"
           git push origin main
       - name: Debugging List files in public after update
         if: steps.check_author.outputs.skip == 'false'
