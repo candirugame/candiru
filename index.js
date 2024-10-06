@@ -179,6 +179,12 @@ function parseForCommand(msg,socket){
         case '/help':
             whisperChatMessage(msg + ' -> nah i\'m good', socket);
             break;
+        case '/ping':
+            whisperChatMessage(msg + ' -> pong!', socket);
+            break;
+            case '/version':
+            whisperChatMessage(msg + ' -> Candiru ' + SERVER_VERSION, socket);
+            break;
         default:
             whisperChatMessage(msg + ' -> unknown command.', socket);
     }
