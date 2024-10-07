@@ -14,6 +14,7 @@ export class InputHandler {
     private localPlayer: Player;
     private inputX: number;
     private inputZ: number;
+    public  jump;
 
     constructor(renderer: Renderer, localPlayer: Player) {
         this.renderer = renderer;
@@ -28,6 +29,7 @@ export class InputHandler {
         this.rightMouseDown = false;
         this.inputX = 0;
         this.inputZ = 0;
+        this.jump = false;
 
         this.setupEventListeners();
     }
@@ -62,6 +64,7 @@ export class InputHandler {
             if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
             if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
             if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
+            this.jump = this.getKey(' ');
         }
 
         switch (this.inputZ - oldInputZ) {

@@ -3,6 +3,7 @@ import { Renderer } from './Renderer';
 import { Player } from './Player';
 import {acceleratedRaycast, computeBoundsTree, disposeBoundsTree, StaticGeometryGenerator, MeshBVH } from 'three-mesh-bvh';
 import {Group, Vector3} from "three";
+import {InputHandler} from "./input/InputHandler";
 
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -17,9 +18,11 @@ export class CollisionManager {
     public mapLoaded: boolean = false;
     private staticGenerator: StaticGeometryGenerator;
     private colliderGeom: THREE.BufferGeometry;
+    private inputHandler: InputHandler;
 
-    constructor(renderer: Renderer) {
+    constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.scene = renderer.getScene();
+        this.inputHandler = inputHandler;
         this.clock = new THREE.Clock();
         this.raycaster = new THREE.Raycaster();
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
@@ -36,7 +39,9 @@ export class CollisionManager {
     }
 
     private physics(localPlayer: Player, deltaTime: number) {
-        localPlayer.gravity += deltaTime * -20;
+        const jump: boolean = this.inputHandler.jump;
+
+        localPlayer.gravity += deltaTime * -16;
         localPlayer.velocity.y += localPlayer.gravity;
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
 
@@ -67,6 +72,9 @@ export class CollisionManager {
                     localPlayer.position.addScaledVector( this.deltaVec, depth );
                     localPlayer.velocity.y = 0;
                     localPlayer.gravity = 0;
+                    if (jump) {
+                        localPlayer.gravity = 3;
+                    }
                 }
             },
 
