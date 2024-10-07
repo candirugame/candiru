@@ -81,9 +81,9 @@ jobs:
       - name: Run npm audit
         run: npm audit --audit-level=moderate
 
-  # Release Job (Only for main branch)
+  # Release Job (Only for main and dev branches)
   release:
-    if: github.ref == 'refs/heads/main'  # Only run for the main branch
+    if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/dev')
     name: Release
     runs-on: ubuntu-latest
     permissions:
@@ -107,7 +107,7 @@ jobs:
         id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: npx semantic-release --branch main --ci
+        run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
       - name: Extract new version
         id: get_version
         run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
