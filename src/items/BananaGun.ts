@@ -142,5 +142,5 @@ function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac
 
 const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
 const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
-const hiddenPosition = new THREE.Vector3(0.85, -2.12, 3.2);
+const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
 const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
