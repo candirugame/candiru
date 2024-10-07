@@ -157,7 +157,7 @@ io.on('connection', (socket) => {
 function addChatMessageSafe(data,socket){
     let dataError = chatMsgSchema.validate(data).error;
     let dataIsValid = dataError === undefined;
-    if(!dataIsValid){
+    if(!dataIsValid) {
         console.log("⚠️ invalid message data received");
         //console.log(dataError)
         return;
@@ -268,13 +268,13 @@ const vector3Schema = Joi.object({
 const playerDataSchema = Joi.object({
     id: Joi.number().required(),
     speed: Joi.number().required(),
-    name: Joi.string().required().allow(''),
+    name: Joi.string().required().allow('').max(42),
     gameVersion: Joi.string().required().valid(SERVER_VERSION),
     position: vector3Schema.required(),
     velocity: vector3Schema.required(),
     quaternion: Joi.array().items(Joi.number()).length(4).required(),
     chatActive: Joi.boolean().required(),
-    chatMsg: Joi.string().required().allow(''),
+    chatMsg: Joi.string().required().allow('').max(300),
     latency: Joi.number().required(),
     health: Joi.number().required(),
     forced: Joi.boolean().required(),
@@ -284,8 +284,8 @@ const playerDataSchema = Joi.object({
 
 const chatMsgSchema = Joi.object({
     id: Joi.number().required(),
-    name: Joi.string().required().allow(''),
-    message: Joi.string().required().allow(''),
+    name: Joi.string().required().allow('').max(42),
+    message: Joi.string().required().allow('').max(300),
 });
 
 const damageRequestSchema = Joi.object({
