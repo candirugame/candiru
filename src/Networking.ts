@@ -102,8 +102,10 @@ export class Networking {
             if (remotePlayer['id'] === this.localPlayer.id) {
                 if(remotePlayer['forced'] === true){
                     this.localPlayer.position = new THREE.Vector3(remotePlayer['position']['x'], remotePlayer['position']['y'], remotePlayer['position']['z']);
+                    this.localPlayer.velocity = new THREE.Vector3(remotePlayer['velocity']['x'], remotePlayer['velocity']['y'], remotePlayer['velocity']['z']);
                     this.localPlayer.lookQuaternion = new THREE.Quaternion(remotePlayer['lookQuaternion'][0], remotePlayer['lookQuaternion'][1], remotePlayer['lookQuaternion'][2], remotePlayer['lookQuaternion'][3]);
                     this.localPlayer.name = remotePlayer['name'];
+                    this.localPlayer.gravity = remotePlayer['gravity'];
                     this.localPlayer.forcedAcknowledged = true;
                 }else{
                     this.localPlayer.forcedAcknowledged = false;

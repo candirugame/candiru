@@ -14,7 +14,6 @@ export class CollisionManager {
     private deltaVec: THREE.Vector3;
     private raycaster: THREE.Raycaster;
     private scene: THREE.Scene;
-    private gravity: number;
     public mapLoaded: boolean = false;
     private staticGenerator: StaticGeometryGenerator;
     private colliderGeom: THREE.BufferGeometry;
@@ -28,7 +27,6 @@ export class CollisionManager {
     }
 
     public init() {
-        this.gravity = 0;
     }
 
     public collisionPeriodic(localPlayer: Player) {
@@ -38,8 +36,8 @@ export class CollisionManager {
     }
 
     private physics(localPlayer: Player, deltaTime: number) {
-        this.gravity += deltaTime * -20;
-        localPlayer.velocity.y += this.gravity;
+        localPlayer.gravity += deltaTime * -20;
+        localPlayer.velocity.y += localPlayer.gravity;
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
 
         const bvh: MeshBVH = this.colliderGeom.boundsTree;
@@ -68,7 +66,7 @@ export class CollisionManager {
                     this.colliderSphere.center.addScaledVector( this.deltaVec, depth );
                     localPlayer.position.addScaledVector( this.deltaVec, depth );
                     localPlayer.velocity.y = 0;
-                    this.gravity = 0;
+                    localPlayer.gravity = 0;
                 }
             },
 

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 export class Player {
     public position: THREE.Vector3;
     public velocity: THREE.Vector3;
+    public gravity: number;
     public lookQuaternion: THREE.Quaternion;
     public quaternion: THREE.Quaternion;
     public id: number;
@@ -20,6 +21,7 @@ export class Player {
     constructor() {
         this.position = new THREE.Vector3(6, 2, 12);
         this.velocity = new THREE.Vector3();
+        this.gravity = 0;
         this.lookQuaternion = new THREE.Quaternion();
         this.quaternion = new THREE.Quaternion();
         this.id = Math.floor(Math.random() * 10000);
