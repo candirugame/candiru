@@ -80,10 +80,10 @@ export class HealthIndicator extends HeldItem {
 
         let targetRGBI = [255,255,255,0.5];
 
-        if(!this.lastHealthChangeWasDamage && this.localPlayer.health < 100 && Date.now()/1000 % 0.4 > 0.2)
+        if(!this.lastHealthChangeWasDamage && this.localPlayer.health < 100 && this.rotatedAngle % 2 > 1)
             targetRGBI = [125,255,125,1.2];
         else
-            targetRGBI = [255,255,255,0.5]; 
+            targetRGBI = [255,255,255,0.5];
 
 
         for(let i = 0; i < 4; i++)
