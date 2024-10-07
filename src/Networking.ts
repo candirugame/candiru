@@ -79,7 +79,7 @@ export class Networking {
         this.socket.emit('playerData', this.localPlayer);
         this.lastUploadedLocalPlayer = {
             position: this.localPlayer.position.clone(),
-            quaternion: this.localPlayer.quaternion.clone(),
+            quaternion: this.localPlayer.lookQuaternion.clone(),
             chatMsg: this.localPlayer.chatMsg,
             velocity: this.localPlayer.velocity.clone(),
         };
@@ -102,7 +102,7 @@ export class Networking {
             if (remotePlayer['id'] === this.localPlayer.id) {
                 if(remotePlayer['forced'] === true){
                     this.localPlayer.position = new THREE.Vector3(remotePlayer['position']['x'], remotePlayer['position']['y'], remotePlayer['position']['z']);
-                    this.localPlayer.quaternion = new THREE.Quaternion(remotePlayer['quaternion'][0], remotePlayer['quaternion'][1], remotePlayer['quaternion'][2], remotePlayer['quaternion'][3]);
+                    this.localPlayer.lookQuaternion = new THREE.Quaternion(remotePlayer['lookQuaternion'][0], remotePlayer['lookQuaternion'][1], remotePlayer['lookQuaternion'][2], remotePlayer['lookQuaternion'][3]);
                     this.localPlayer.name = remotePlayer['name'];
                     this.localPlayer.forcedAcknowledged = true;
                 }else{

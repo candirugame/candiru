@@ -62,7 +62,7 @@ export class PointerLockControls extends THREE.EventDispatcher {
     }
 
     public getDirection = (v: THREE.Vector3) => {
-        return v.copy(direction).applyQuaternion(this.localPlayer.quaternion);
+        return v.copy(direction).applyQuaternion(this.localPlayer.lookQuaternion);
     };
 
     public lock(): void {
@@ -79,14 +79,14 @@ export class PointerLockControls extends THREE.EventDispatcher {
         const movementX = event.movementX || (event as unknown).mozMovementX || (event as unknown).webkitMovementX || 0;
         const movementY = event.movementY || (event as unknown).mozMovementY || (event as unknown).webkitMovementY || 0;
 
-        euler.setFromQuaternion(this.localPlayer.quaternion);
+        euler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
         euler.y -= movementX * this.sensitivity;
         euler.x -= movementY * this.sensitivity;
 
         euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
 
-        this.localPlayer.quaternion.setFromEuler(euler);
+        this.localPlayer.lookQuaternion.setFromEuler(euler);
 
         this.dispatchEvent(changeEvent);
     };
