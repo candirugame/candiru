@@ -30,7 +30,7 @@ export class Game {
         this.inventoryManager = new InventoryManager(this.renderer, this.inputHandler, this.networking);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new Map('maps/test1.glb', this.renderer);
+        this.map = new Map('maps/test1.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
     }
 
