@@ -74,16 +74,16 @@ export class CollisionManager {
                     const distance = this.deltaVec.length();
                     if ( distance < this.colliderSphere.radius ) {
 
-                        // move the sphere position to be outside the triangle
-                        const radius = this.colliderSphere.radius;
-                        const depth = distance - radius;
-                        this.deltaVec.multiplyScalar( 1 / distance );
-                        this.colliderSphere.center.addScaledVector( this.deltaVec, depth );
-                        localPlayer.position.addScaledVector( this.deltaVec, depth );
-                        this.gravity = 0;
-                    }
-
-                },
+                    // move the sphere position to be outside the triangle
+                    const radius = this.colliderSphere.radius;
+                    const depth = distance - radius;
+                    this.deltaVec.multiplyScalar( 1 / distance );
+                    this.colliderSphere.center.addScaledVector( this.deltaVec, depth );
+                    localPlayer.position.addScaledVector( this.deltaVec, depth );
+                    localPlayer.velocity.y = 0;
+                    this.gravity = 0;
+                }
+            },
 
                 boundsTraverseOrder: box => {
 
