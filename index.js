@@ -14,6 +14,11 @@ const server = createServer(app);
 const io = new Server(server);
 
 const playerKickTime = 5; //kick players after 5 seconds of no ping
+const healthRegenRate = 3; //regen 3 health per second
+const healthRegenDelay = 5; //regen after 5 seconds of no damage
+const maxHealth = 100;
+
+
 
 let SERVER_VERSION = '';
 try {
@@ -35,14 +40,26 @@ let playerData = [];
 
 let updateSinceLastEmit = false;
 let lastUpdateSent = 0;
+let lastTickTimestamp = Date.now()/1000;
 function serverTick(){
+    let timeSinceLastTick = Date.now()/1000 - lastTickTimestamp;
     setTimeout(serverTick, 1000/15, '');
     if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 0.5) return;
+
+    for(let i = 0; i<playerData.length; i++){
+        if(playerData[i]['lastDamageTime'] === undefined)
+            playerData[i]['lastDamageTime'] = 0;
+        if(playerData[i].health < maxHealth && playerData[i]['lastDamageTime'] + healthRegenDelay < Date.now()/1000){
+            playerData[i].health += healthRegenRate * timeSinceLastTick;
+            if(playerData[i].health > maxHealth)
+                playerData[i].health = maxHealth;
+        }
+    }
 
     io.emit('remotePlayerData',playerData);
     updateSinceLastEmit = false;
     lastUpdateSent = Date.now()/1000;
-
+    lastTickTimestamp = Date.now()/1000;
 }
 serverTick();
 
@@ -138,6 +155,8 @@ io.on('connection', (socket) => {
 
         //apply damage
         playerData[targetPlayerIndex].health -= data.damage;
+        playerData[targetPlayerIndex]['lastDamageTime'] = Date.now()/1000;
+
 
         if(playerData[targetPlayerIndex].health <= 0){
             let nameOfKilled = playerData[targetPlayerIndex]['name'];
@@ -242,6 +261,7 @@ function addPlayerToDataSafe(data,socket){
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
             data['health'] = playerData[i]['health'];
+            data['lastDamageTime'] = playerData[i]['lastDamageTime'];
             playerData[i] = data;
             return;
         }
@@ -280,6 +300,7 @@ const playerDataSchema = Joi.object({
     forced: Joi.boolean().required(),
     forcedAcknowledged: Joi.boolean().required(),
     updateTimestamp: Joi.number(),
+    lastDamageTime: Joi.number(),
 });
 
 const chatMsgSchema = Joi.object({
