@@ -28,6 +28,7 @@ export class InputHandler {
         this.rightMouseDown = false;
         this.inputX = 0;
         this.inputZ = 0;
+        this.quat = new THREE.Quaternion();
 
         this.setupEventListeners();
     }
@@ -57,7 +58,6 @@ export class InputHandler {
         const oldInputZ = this.inputZ;
         const oldInputX = this.inputX;
 
-        console.log(this.localPlayer.chatActive);
         if (!this.localPlayer.chatActive) {
             if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
             if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
@@ -85,7 +85,9 @@ export class InputHandler {
         this.inputX = this.localPlayer.velocity.x;
 
         camera.setRotationFromQuaternion(this.localPlayer.quaternion);
-        this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
+        this.quat.copy(this.localPlayer.quaternion);
+        this.localPlayer.velocity.applyQuaternion(this.quat);
+        this.localPlayer.velocity.y = 0;
     }
 
     public getKey(key: string):boolean {
