@@ -113,9 +113,49 @@ export class ChatOverlay {
         let cursor = '';
         if ((Date.now() / 1000) % 0.7 < 0.35) cursor = '|';
 
-        const linesToRender = [];
-        const pixOffsets = [];
+        const linesToRender: string[] = [];
+        const pixOffsets: number[] = [];
+        const messagesBeingTyped = this.networking.getMessagesBeingTyped();
 
+        // Collect chat messages in the correct order (oldest to newest)
+        for (let i = 0; i < this.chatMessages.length; i++) {
+            let msg = this.chatMessages[i]['message'];
+            const name = this.chatMessages[i]['name'];
+            if (name.length > 0) msg = `${name}: ${msg}`;
+
+            const duplicateFromPlayerData = messagesBeingTyped.includes(msg);
+
+            let charsToRemove =
+                Date.now() / 1000 - this.chatMessages[i]['timestamp'] - this.chatMessageLifespan;
+            charsToRemove = Math.max(0, charsToRemove * this.charsToRemovePerSecond);
+            charsToRemove = Math.floor(charsToRemove);
+
+            // Remove characters carefully, accounting for spaces
+            let removedSubstring = '';
+            let remainingMsg = msg;
+            if (charsToRemove > 0) {
+                let charsRemoved = 0;
+                while (charsRemoved < charsToRemove && remainingMsg.length > 0) {
+                    const char = remainingMsg.charAt(0);
+                    removedSubstring += char;
+                    remainingMsg = remainingMsg.substring(1);
+                    charsRemoved++;
+                }
+            }
+
+            if (!duplicateFromPlayerData) {
+                linesToRender.push(remainingMsg);
+                pixOffsets.push(ctx.measureText(removedSubstring).width);
+            }
+        }
+
+        // Add messages being typed by others
+        for (const msg of messagesBeingTyped) {
+            linesToRender.push(msg + cursor);
+            pixOffsets.push(0);
+        }
+
+        // Add the user's message or name prompt if active
         if (this.localPlayer.chatActive) {
             linesToRender.push(usermsg + cursor);
             pixOffsets.push(0);
@@ -126,46 +166,52 @@ export class ChatOverlay {
             pixOffsets.push(0);
         }
 
-        const messagesBeingTyped = this.networking.getMessagesBeingTyped();
-        for (const msg of messagesBeingTyped) {
-            linesToRender.push(msg + cursor);
-            pixOffsets.push(0);
-        }
+        // Wrap lines and keep track of their origins and whether they're the first wrapped line
+        const wrappedLines: string[] = [];
+        const lineOrigins: number[] = [];
+        const isFirstWrappedLine: boolean[] = [];
 
-        for (let i = this.chatMessages.length - 1; i >= 0; i--) {
-            let msg = this.chatMessages[i]['message'];
-            const name = this.chatMessages[i]['name'];
-            if (name.length > 0) msg = name + ': ' + msg;
-
-            let duplicateFromPlayerData = false;
-            for (const message of messagesBeingTyped)
-                if (message === msg) duplicateFromPlayerData = true;
-
-            let charsToRemove = Date.now() / 1000 - this.chatMessages[i]['timestamp'] - this.chatMessageLifespan;
-            if (charsToRemove < 0) charsToRemove = 0;
-            charsToRemove *= this.charsToRemovePerSecond;
-            charsToRemove = Math.floor(charsToRemove);
-
-            const removedSubstring = msg.substring(0, charsToRemove);
-            msg = msg.substring(charsToRemove);
-
-            if (!duplicateFromPlayerData) {
-                linesToRender.push(msg);
-                pixOffsets.push(ctx.measureText(removedSubstring).width);
+        for (let i = 0; i < linesToRender.length; i++) {
+            // Modify wrapping function to prevent leading spaces
+            const wrapped = this.doTextWrapping(ctx, [linesToRender[i]], this.screenWidth - 10);
+            for (let j = 0; j < wrapped.length; j++) {
+                wrappedLines.push(wrapped[j]);
+                lineOrigins.push(i);
+                isFirstWrappedLine.push(j === 0);
             }
         }
 
-        for (let i = 0; i < linesToRender.length; i++)
-            ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 3 + pixOffsets[i], 200 - 20 - 8 * i);
+        // Render the wrapped lines from bottom to top
+        const totalLines = wrappedLines.length;
+        for (let i = 0; i < totalLines; i++) {
+            const lineIndex = totalLines - i - 1;
+            const text = wrappedLines[lineIndex];
+            const originIndex = lineOrigins[lineIndex];
+            const pixOffset = isFirstWrappedLine[lineIndex] ? pixOffsets[originIndex] : 0;
 
+            ctx.fillText(
+                text,
+                this.chatCanvas.width / 2 + 3 + pixOffset,
+                200 - 20 - 8 * i
+            );
+        }
+
+        // Render background for the input field if needed
         if ((usermsg !== '' && this.localPlayer.chatActive) || this.nameSettingActive) {
             ctx.fillStyle = 'rgba(145,142,118,0.3)';
             let width = ctx.measureText(usermsg).width;
-            if (this.nameSettingActive)
+            if (this.nameSettingActive) {
                 width = ctx.measureText('Enter your name: ' + usermsg).width;
-            ctx.fillRect(this.chatCanvas.width / 2 + 2, 200 - 20 - 7, width + 1, 9);
+            }
+            ctx.fillRect(
+                this.chatCanvas.width / 2 + 2,
+                200 - 20 - 7,
+                width + 1,
+                9
+            );
         }
     }
+
 
     private renderDebugText() {
         const ctx = this.chatCtx;
@@ -328,4 +374,44 @@ export class ChatOverlay {
                 );
         }
     }
+
+    private doTextWrapping(ctx: CanvasRenderingContext2D, text: string[], maxWidth: number, initialOffset: number = 0): string[] {
+        ctx.font = '8px Tiny5';
+        const resultLines: string[] = [];
+
+        for (const line of text) {
+            if (line === '' || ctx.measureText(line).width <= maxWidth) {
+                resultLines.push(line);
+                continue;
+            }
+
+            const words = line.split(' ');
+            let currentLine = '';
+            let isFirstLine = true;
+
+            for (const word of words) {
+                const testLine = currentLine ? `${currentLine} ${word}` : word;
+                const testWidth = ctx.measureText(testLine).width;
+
+                const availableWidth = isFirstLine ? maxWidth - initialOffset : maxWidth;
+
+                if (testWidth <= availableWidth) {
+                    currentLine = testLine;
+                } else {
+                    if (currentLine) {
+                        resultLines.push(currentLine);
+                    }
+                    currentLine = word;
+                    isFirstLine = false;
+                }
+            }
+
+            if (currentLine) {
+                resultLines.push(currentLine);
+            }
+        }
+
+        return resultLines;
+    }
+
 }

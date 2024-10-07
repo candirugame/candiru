@@ -185,6 +185,14 @@ function parseForCommand(msg,socket){
             case '/version':
             whisperChatMessage(msg + ' -> Candiru ' + SERVER_VERSION, socket);
             break;
+        case '/bee':
+            whisperChatMessage(msg + ' -> 🐝 According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyway because bees don\'t care what humans think is impossible.', socket);
+            break;
+        case '/clear':
+            for(let i = 0; i<25; i++)
+                whisperChatMessage('', socket);
+            whisperChatMessage(msg+ ' -> chat cleared', socket);
+            break;
         default:
             whisperChatMessage(msg + ' -> unknown command.', socket);
     }
