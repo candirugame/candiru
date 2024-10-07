@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - '**'
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read # For checkout - test
@@ -109,7 +112,6 @@ jobs:
         id: get_version
         run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
 
-  # Update Game Version (Only for main branch after release)
   # Update Game Version (Only for main branch after release)
   update-game-version:
     needs: release
