@@ -327,7 +327,10 @@ export class ChatOverlay {
             this.nameSettingActive = false;
         }
 
-        if ((this.localPlayer.chatActive || this.nameSettingActive) && e.key.length === 1)
+        if ((this.localPlayer.chatActive) && e.key.length === 1 && this.localPlayer.chatMsg.length < 300)
+            this.localPlayer.chatMsg += e.key;
+
+        if ((this.nameSettingActive) && e.key.length === 1 && this.localPlayer.chatMsg.length < 42)
             this.localPlayer.chatMsg += e.key;
 
         if (e.key.toLowerCase() === 't' && !this.nameSettingActive) {
