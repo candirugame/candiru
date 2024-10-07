@@ -28,7 +28,6 @@ export class InputHandler {
         this.rightMouseDown = false;
         this.inputX = 0;
         this.inputZ = 0;
-        this.quat = new THREE.Quaternion();
 
         this.setupEventListeners();
     }
