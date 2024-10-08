@@ -1,33 +1,40 @@
+import * as THREE from 'three';
 import { Renderer } from './Renderer';
 import { InputHandler } from '../input/InputHandler';
 import { BananaGun } from '../items/BananaGun';
 import { HeldItemInput } from '../input/HeldItemInput';
 import {Networking} from "./Networking";
+import {ItemBase} from "../items/ItemBase";
 
 export class Inventory {
-    private bananaGun: BananaGun;
+    private inventoryItems: ItemBase[] = [];
     private renderer: Renderer;
     private inputHandler: InputHandler;
     private networking: Networking;
+    private inventoryScene: THREE.Scene;
 
     constructor(renderer: Renderer, inputHandler: InputHandler, networking:Networking) {
         this.renderer = renderer;
         this.inputHandler = inputHandler;
         this.networking = networking;
-        this.bananaGun = new BananaGun(renderer,networking);
+        this.inventoryScene = renderer.getInventoryMenuScene();
     }
 
     public init() {
-        this.bananaGun.init();
+        for(const item of this.inventoryItems) {
+            item.init();
+        }
+        const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
+        banana.init();
+        this.inventoryItems.push(banana);
+
+
     }
 
     public onFrame() {
-        this.bananaGun.onFrame(
-            new HeldItemInput(
-                this.inputHandler.getLeftMouseDown(),
-                this.inputHandler.getRightMouseDown(),
-                false
-            )
-        );
+        const heldItemInput = new HeldItemInput(this.inputHandler.getLeftMouseDown(), this.inputHandler.getRightMouseDown(), false);
+        for(const item of this.inventoryItems) {
+            item.onFrame(heldItemInput);
+        }
     }
 }

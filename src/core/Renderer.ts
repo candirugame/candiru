@@ -32,6 +32,10 @@ export class Renderer {
     private healthIndicatorScene: THREE.Scene;
     private healthIndicatorCamera: THREE.PerspectiveCamera;
     private screenPixelsInGamePixel: number;
+    private inventoryMenuScene: THREE.Scene;
+    private inventoryMenuCamera: THREE.OrthographicCamera;
+
+
 
     // New state tracking variables
     private isAnimating: { [id: number]: boolean } = {};
@@ -83,10 +87,19 @@ export class Renderer {
         this.healthIndicatorCamera.position.set(0, 0, 0);
         this.healthIndicatorCamera.lookAt(0, 0, 1);
 
+        this.inventoryMenuScene = new THREE.Scene();
+        this.inventoryMenuCamera = new THREE.OrthographicCamera(-0.5, 0.5, 2.5, -2.5, 0.01, 10);
+        this.inventoryMenuCamera.position.set(0, 0, 5);
+        this.inventoryMenuCamera.lookAt(0, 0, 0);
+        this.inventoryMenuScene.add(this.inventoryMenuCamera);
+        this.inventoryMenuScene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+
         // Ambient lights
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         const ambientLight2 = new THREE.AmbientLight(0xffffff, 0.5);
         const ambientLight3 = new THREE.AmbientLight(0xffffff, 0.5); // Ambient light for remote players scene
+
         this.scene.add(this.ambientLight);
         this.heldItemScene.add(ambientLight2);
         this.remotePlayersScene.add(ambientLight3); // Add ambient light to remote players scene
@@ -143,6 +156,9 @@ export class Renderer {
         // Reset scissor test and viewport after rendering the health indicator
         this.renderer.setScissorTest(false);
         this.renderer.setViewport(0, 0, screenWidth, screenHeight);
+
+        this.renderer.render(this.inventoryMenuScene, this.inventoryMenuCamera);
+        
 
         // Render the chat overlay
         const chatScene = this.chatOverlay.getChatScene();
@@ -318,6 +334,9 @@ export class Renderer {
 
     public getHealthIndicatorScene() {
         return this.healthIndicatorScene;
+    }
+    public getInventoryMenuScene() {
+        return this.inventoryMenuScene;
     }
 
     private onWindowResize() {
