@@ -102,11 +102,12 @@ export class CollisionManager {
     }
 
     public staticGeometry(group: Group) {
+        console.time("Building static geometry BVH");
         this.staticGenerator = new StaticGeometryGenerator( group );
         this.staticGenerator.attributes = [ 'position' ];
         this.colliderGeom = this.staticGenerator.generate();
         this.colliderGeom.computeBoundsTree();
-        console.log(this.colliderGeom.boundsTree);
         this.mapLoaded = true;
+        console.timeEnd("Building static geometry BVH");
     }
 }
