@@ -61,6 +61,8 @@ export class BananaGun extends ItemBase {
         if (!this.sceneAdded && !this.hidden) {
             this.handScene.add(this.heldItemObject);
             this.renderer.getInventoryMenuScene().add(this.inventoryObject);
+            this.inventoryObject.scale.set(2, 30, 1);
+            this.inventoryObject.position.set(0, 5, 0);
             this.sceneAdded = true;
         }
         const deltaTime = clock.getDelta();

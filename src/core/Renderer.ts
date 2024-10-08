@@ -153,12 +153,19 @@ export class Renderer {
         // Render the health indicator scene
         this.renderer.render(this.healthIndicatorScene, this.healthIndicatorCamera);
 
+
+        //render inventory view
+        const inventoryWidth = 20;
+        const inventoryHeight = inventoryWidth * 5;
+        this.renderer.setScissorTest(true);
+        this.renderer.setScissor(screenWidth - (inventoryWidth + 4) * this.screenPixelsInGamePixel, screenHeight/2 - inventoryHeight/2 * this.screenPixelsInGamePixel, inventoryWidth * this.screenPixelsInGamePixel, inventoryHeight* this.screenPixelsInGamePixel);
+        this.renderer.setViewport(screenWidth - (inventoryWidth + 4)* this.screenPixelsInGamePixel, screenHeight/2 - inventoryHeight/2 * this.screenPixelsInGamePixel, inventoryWidth* this.screenPixelsInGamePixel, inventoryHeight* this.screenPixelsInGamePixel);
+        this.renderer.render(this.inventoryMenuScene, this.inventoryMenuCamera);
+
         // Reset scissor test and viewport after rendering the health indicator
         this.renderer.setScissorTest(false);
         this.renderer.setViewport(0, 0, screenWidth, screenHeight);
 
-        this.renderer.render(this.inventoryMenuScene, this.inventoryMenuCamera);
-        
 
         // Render the chat overlay
         const chatScene = this.chatOverlay.getChatScene();
