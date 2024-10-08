@@ -21,8 +21,10 @@ export class CollisionManager {
     private inputHandler: InputHandler;
     private static maxAngle = Math.cos(45 * Math.PI / 180);
     private triNormal: Vector3;
+    private fixedTimeStep;
+    private accumulator: number;
 
-    constructor(renderer: Renderer, inputHandler: InputHandler) {
+    constructor(renderer: Renderer, inputHandler: InputHandler, fixedTimeStep: number = 1/120) {
         this.scene = renderer.getScene();
         this.inputHandler = inputHandler;
         this.clock = new THREE.Clock();
@@ -30,6 +32,8 @@ export class CollisionManager {
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
         this.deltaVec = new THREE.Vector3();
         this.triNormal=new THREE.Vector3();
+        this.fixedTimeStep = fixedTimeStep;
+        this.accumulator = 0;
     }
 
     public init() {
@@ -38,7 +42,11 @@ export class CollisionManager {
     public collisionPeriodic(localPlayer: Player) {
         if(!this.mapLoaded) {return;}
         const deltaTime: number = this.clock.getDelta();
-        this.physics(localPlayer, deltaTime);
+        this.accumulator += deltaTime;
+        while (this.accumulator >= this.fixedTimeStep) {
+            this.physics(localPlayer, this.fixedTimeStep);
+            this.accumulator -= this.fixedTimeStep;
+        }
     }
 
     private physics(localPlayer: Player, deltaTime: number) {
