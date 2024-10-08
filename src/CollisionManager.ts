@@ -65,7 +65,7 @@ export class CollisionManager {
 
                 const angle = this.triNormal.dot(new THREE.Vector3(0,1,0));
 
-                // get delta between closest point and center
+                // get delta between the closest point and center
                 tri.closestPointToPoint( this.colliderSphere.center, this.deltaVec );
                 this.deltaVec.sub( this.colliderSphere.center );
                 const distance = this.deltaVec.length();
