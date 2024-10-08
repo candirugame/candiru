@@ -1,16 +1,16 @@
-import { HeldItem } from './HeldItem';
-import { HeldItemInput } from './HeldItemInput';
+import { ItemBase } from './ItemBase';
+import { HeldItemInput } from '../input/HeldItemInput';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import {Renderer} from "./Renderer";
-import {Networking} from "./Networking";
+import {Renderer} from "../core/Renderer";
+import {Networking} from "../core/Networking";
 
 const clock = new THREE.Clock();
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;
 
-export class BananaGun extends HeldItem {
+export class BananaGun extends ItemBase {
     private scene: THREE.Scene;
     private bananaObject: THREE.Object3D;
     private sceneAdded: boolean = false;

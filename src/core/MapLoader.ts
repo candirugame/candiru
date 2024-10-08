@@ -3,11 +3,11 @@ import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader";
 import { Renderer } from './Renderer';
 import {computeBoundsTree} from "three-mesh-bvh";
-import {CollisionManager} from "./CollisionManager";
+import {CollisionManager} from "../input/CollisionManager";
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 
-export class Map {
+export class MapLoader {
     private scene: THREE.Scene;
     private mapObject: THREE.Group;
     private mapUrl: string;

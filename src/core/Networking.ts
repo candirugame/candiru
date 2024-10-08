@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { Player } from './Player';
-import { ChatOverlay } from './ChatOverlay';
+import { ChatOverlay } from '../ui/ChatOverlay';
 import * as THREE from 'three';
 
 export class Networking {
