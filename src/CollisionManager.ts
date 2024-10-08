@@ -19,6 +19,8 @@ export class CollisionManager {
     private staticGenerator: StaticGeometryGenerator;
     private colliderGeom: THREE.BufferGeometry;
     private inputHandler: InputHandler;
+    private static maxAngle = Math.cos(45 * Math.PI / 180);
+    private triNormal: Vector3;
 
     constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.scene = renderer.getScene();
@@ -27,6 +29,7 @@ export class CollisionManager {
         this.raycaster = new THREE.Raycaster();
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
         this.deltaVec = new THREE.Vector3();
+        this.triNormal=new THREE.Vector3();
     }
 
     public init() {
@@ -58,22 +61,32 @@ export class CollisionManager {
 
             intersectsTriangle: tri => {
 
+                tri.getNormal(this.triNormal);
+
+                const angle = this.triNormal.dot(new THREE.Vector3(0,1,0));
+
                 // get delta between closest point and center
                 tri.closestPointToPoint( this.colliderSphere.center, this.deltaVec );
                 this.deltaVec.sub( this.colliderSphere.center );
                 const distance = this.deltaVec.length();
-                if ( distance < this.colliderSphere.radius ) {
 
+                if ( distance < this.colliderSphere.radius) {
                     // move the sphere position to be outside the triangle
-                    const radius = this.colliderSphere.radius;
-                    const depth = distance - radius;
-                    this.deltaVec.multiplyScalar( 1 / distance );
-                    this.colliderSphere.center.addScaledVector( this.deltaVec, depth );
-                    localPlayer.position.addScaledVector( this.deltaVec, depth );
-                    localPlayer.velocity.y = 0;
-                    localPlayer.gravity = 0;
-                    if (jump) {
-                        localPlayer.gravity = 3;
+                    if (angle >=  CollisionManager.maxAngle) {
+                        const radius = this.colliderSphere.radius;
+                        const depth = distance - radius;
+                        this.deltaVec.multiplyScalar(1 / distance);
+                        localPlayer.position.addScaledVector(this.deltaVec, depth);
+                        localPlayer.velocity.y = 0;
+                        localPlayer.gravity = 0;
+                        if (jump) {
+                            localPlayer.gravity = 3;
+                        }
+                    } else {
+                        const radius = this.colliderSphere.radius;
+                        const depth = distance - radius;
+                        this.deltaVec.multiplyScalar(1 / distance);
+                        localPlayer.position.addScaledVector(this.deltaVec, depth);
                     }
                 }
             },
