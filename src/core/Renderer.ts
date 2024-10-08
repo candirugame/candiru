@@ -345,6 +345,9 @@ export class Renderer {
     public getInventoryMenuScene() {
         return this.inventoryMenuScene;
     }
+    public getInventoryMenuCamera() {
+        return this.inventoryMenuCamera;
+    }
 
     private onWindowResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;

@@ -5,6 +5,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
 import {Renderer} from "../core/Renderer";
 import {Networking} from "../core/Networking";
+import {select} from "three/src/nodes/math/ConditionalNode";
 
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;
@@ -56,20 +57,28 @@ export class BananaGun extends ItemBase {
         );
     }
 
-    public onFrame(input: HeldItemInput) {
+    public onFrame(input: HeldItemInput, selectedIndex: number) {
         if (!this.heldItemObject) return;
         if (!this.sceneAdded) {
             this.handScene.add(this.heldItemObject);
             this.renderer.getInventoryMenuScene().add(this.inventoryObject);
-            this.inventoryObject.scale.set(0.8, 0.8, 1);
+            this.inventoryObject.scale.set(0.8, 0.8, 0.8);
             this.inventoryObject.position.set(0, this.getIndex(), 0);
             this.sceneAdded = true;
         }
         const deltaTime = this.clock.getDelta();
 
        this.handRenderingStuff(input, deltaTime);
+       this.inventoryRenderingStuff(selectedIndex);
 
 
+    }
+
+    public inventoryRenderingStuff(selectedIndex:number){
+        if(this.index === selectedIndex)
+            this.showInHand();
+        else
+            this.hideInHand();
     }
 
     public handRenderingStuff(input:HeldItemInput, deltaTime:number){

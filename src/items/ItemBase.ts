@@ -5,7 +5,7 @@ export abstract class ItemBase {
         this.index = index;
     }
     abstract init(): void;
-    abstract onFrame(input:HeldItemInput): void;
+    abstract onFrame(input:HeldItemInput, selectedIndex:number): void;
     private readonly index: number;
     public getIndex(): number {return this.index;}
     abstract hideInHand(): void;
