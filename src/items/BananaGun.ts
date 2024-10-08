@@ -24,6 +24,7 @@ export class BananaGun extends ItemBase {
     private lastShotSomeoneTimestamp:number = 0;
     private networking:Networking;
     private clock = new THREE.Clock();
+    private angleAccum = 0;
 
     constructor(renderer: Renderer, networking:Networking, index: number) {
         super(index);
@@ -68,17 +69,26 @@ export class BananaGun extends ItemBase {
         }
         const deltaTime = this.clock.getDelta();
 
+
        this.handRenderingStuff(input, deltaTime);
-       this.inventoryRenderingStuff(selectedIndex);
+       this.inventoryRenderingStuff(selectedIndex, deltaTime);
 
 
     }
 
-    public inventoryRenderingStuff(selectedIndex:number){
-        if(this.index === selectedIndex)
+    public inventoryRenderingStuff(selectedIndex:number, deltaTime:number){
+        this.angleAccum += deltaTime;
+        if(this.index === selectedIndex){
             this.showInHand();
-        else
+            const targetQuaternion = inventoryQuaternionBase.clone();
+            rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0, 1, 0), this.angleAccum *8);
+            moveTowardsRot(this.inventoryObject.quaternion, targetQuaternion, 0.1 * 60 * deltaTime);
+        }
+        else{
             this.hideInHand();
+            moveTowardsRot(this.inventoryObject.quaternion, inventoryQuaternionBase, 0.1 * 60 * deltaTime);
+        }
+
     }
 
     public handRenderingStuff(input:HeldItemInput, deltaTime:number){
@@ -166,3 +176,5 @@ const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
 const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
 const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
 const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
+
+const inventoryQuaternionBase = new THREE.Quaternion(0,0,0,1);

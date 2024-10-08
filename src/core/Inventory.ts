@@ -39,19 +39,10 @@ export class Inventory {
         for(const item of this.inventoryItems) {
             item.init();
         }
-        const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
-        banana.init();
-        this.inventoryItems.push(banana);
-        //banana.showInHand();
+        //const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
+        //banana.init();
+        //this.inventoryItems.push(banana);
 
-        for(let i = 0; i<8; i++) {
-            const banana2 = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
-            banana2.init();
-            this.inventoryItems.push(banana2);
-        }
-
-
-        //banana2.showInHand();
 
     }
 
@@ -72,12 +63,13 @@ export class Inventory {
         if(downPressed || upPressed) this.lastInventoryTouchTime = Date.now() / 1000;
         const deltaTime = this.clock.getDelta();
 
-        if(downPressed && !this.oldDownPressed) {
+        if(downPressed && !this.oldDownPressed)
             this.selectedInventoryItem++;
-        }
-        if(upPressed && !this.oldUpPressed) {
+        if(upPressed && !this.oldUpPressed)
             this.selectedInventoryItem--;
-        }
+        if(this.inputHandler.getKey('enter'))
+            this.lastInventoryTouchTime = 0; //hide inventory
+
         if(this.selectedInventoryItem < 0)
             this.selectedInventoryItem = this.inventoryItems.length - 1;
         if(this.selectedInventoryItem >= this.inventoryItems.length)
