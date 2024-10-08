@@ -6,7 +6,6 @@ import * as THREE from 'three';
 import {Renderer} from "../core/Renderer";
 import {Networking} from "../core/Networking";
 
-const clock = new THREE.Clock();
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;
 
@@ -16,13 +15,14 @@ export class BananaGun extends ItemBase {
     private worldObject: THREE.Object3D;
     private inventoryObject: THREE.Object3D;
     private sceneAdded: boolean = false;
-    private hidden: boolean = false;
+    private hiddenInHand: boolean = true;
     private lastInput: HeldItemInput = new HeldItemInput();
     private lastFired: number = 0;
     private hiddenTimestamp: number = 0;
     private renderer:Renderer;
     private lastShotSomeoneTimestamp:number = 0;
     private networking:Networking;
+    private clock = new THREE.Clock();
 
     constructor(renderer: Renderer, networking:Networking, index: number) {
         super(index);
@@ -58,14 +58,14 @@ export class BananaGun extends ItemBase {
 
     public onFrame(input: HeldItemInput) {
         if (!this.heldItemObject) return;
-        if (!this.sceneAdded && !this.hidden) {
+        if (!this.sceneAdded) {
             this.handScene.add(this.heldItemObject);
             this.renderer.getInventoryMenuScene().add(this.inventoryObject);
-            this.inventoryObject.scale.set(2, 30, 1);
-            this.inventoryObject.position.set(0, 5, 0);
+            this.inventoryObject.scale.set(0.8, 0.8, 1);
+            this.inventoryObject.position.set(0, this.getIndex(), 0);
             this.sceneAdded = true;
         }
-        const deltaTime = clock.getDelta();
+        const deltaTime = this.clock.getDelta();
 
        this.handRenderingStuff(input, deltaTime);
 
@@ -73,11 +73,11 @@ export class BananaGun extends ItemBase {
     }
 
     public handRenderingStuff(input:HeldItemInput, deltaTime:number){
-        if (!this.hidden) {
+        if (!this.hiddenInHand) {
             this.handleInput(input, deltaTime);
         }
 
-        if (this.hidden && this.sceneAdded) {
+        if (this.hiddenInHand && this.sceneAdded) {
             moveTowardsPos(this.heldItemObject.position, hiddenPosition, 0.1 * deltaTime * 60);
             if (Date.now() / 1000 - this.hiddenTimestamp > 3) {
                 this.handScene.remove(this.heldItemObject);
@@ -111,13 +111,13 @@ export class BananaGun extends ItemBase {
     }
 
     public showInHand() {
-        if (!this.hidden) return;
-        this.hidden = false;
+        if (!this.hiddenInHand) return;
+        this.hiddenInHand = false;
     }
 
     public hideInHand() {
-        if (this.hidden) return;
-        this.hidden = true;
+        if (this.hiddenInHand) return;
+        this.hiddenInHand = true;
         this.hiddenTimestamp = Date.now() / 1000;
     }
 

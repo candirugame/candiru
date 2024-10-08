@@ -27,14 +27,20 @@ export class Inventory {
         const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
         banana.init();
         this.inventoryItems.push(banana);
+        //banana.showInHand();
 
+        const banana2 = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
+        banana2.init();
+        this.inventoryItems.push(banana2);
+
+        banana2.showInHand();
 
     }
 
     public onFrame() {
         const heldItemInput = new HeldItemInput(this.inputHandler.getLeftMouseDown(), this.inputHandler.getRightMouseDown(), false);
         for(const item of this.inventoryItems) {
-            item.onFrame(heldItemInput);
+           item.onFrame(heldItemInput);
         }
     }
 }
