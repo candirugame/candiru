@@ -42,7 +42,7 @@ export class CollisionManager {
     public collisionPeriodic(localPlayer: Player) {
         if (!this.mapLoaded) return;
         let deltaTime: number = this.clock.getDelta();
-        if (deltaTime > 0.0666666666667) deltaTime = 0.0666666666667;
+        if (deltaTime > 1/15) deltaTime = 1/15;
         this.physics(localPlayer, deltaTime);
     }
 
