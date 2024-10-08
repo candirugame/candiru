@@ -21,6 +21,8 @@ export class CollisionManager {
     private inputHandler: InputHandler;
     private static maxAngle = Math.cos(45 * Math.PI / 180);
     private triNormal: Vector3;
+    private coyoteTime; number;
+    private jumped: boolean;
 
     constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.scene = renderer.getScene();
@@ -30,6 +32,8 @@ export class CollisionManager {
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
         this.deltaVec = new THREE.Vector3();
         this.triNormal=new THREE.Vector3();
+        this.coyoteTime = 0;
+        this.jumped = false;
     }
 
     public init() {
@@ -38,7 +42,7 @@ export class CollisionManager {
     public collisionPeriodic(localPlayer: Player) {
         if (!this.mapLoaded) return;
         let deltaTime: number = this.clock.getDelta();
-        if (deltaTime > 0.0666666666667) deltaTime = 0.0666666666667;
+        if (deltaTime > 1/15) deltaTime = 1/15;
         this.physics(localPlayer, deltaTime);
     }
 
@@ -52,6 +56,8 @@ export class CollisionManager {
 
         const bvh: MeshBVH = this.colliderGeom.boundsTree;
         this.colliderSphere.center = localPlayer.position.clone();
+
+        let collided: boolean = false;
 
         bvh.shapecast( {
 
@@ -81,9 +87,8 @@ export class CollisionManager {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
                         localPlayer.velocity.y = 0;
                         localPlayer.gravity = 0;
-                        if (jump) {
-                            localPlayer.gravity = 8;
-                        }
+                        this.coyoteTime = 0;
+                        collided = true;
                     } else {
                         const radius = this.colliderSphere.radius;
                         const depth = distance - radius;
@@ -100,6 +105,20 @@ export class CollisionManager {
             },
 
         } );
+
+        if (!collided) {
+            this.coyoteTime += deltaTime;
+            if (jump && this.coyoteTime < 6/60 && !this.jumped) {
+                localPlayer.gravity = 8;
+                this.jumped = true;
+            }
+        } else {
+            if (jump) {
+                localPlayer.gravity = 8;
+            } else {
+                this.jumped = false;
+            }
+        }
 
     }
 
