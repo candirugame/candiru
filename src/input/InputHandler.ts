@@ -15,10 +15,12 @@ export class InputHandler {
     private inputX: number;
     private inputZ: number;
     public  jump;
+    public prevVelocity: THREE.Vector3;
 
     constructor(renderer: Renderer, localPlayer: Player) {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
+        this.prevVelocity = new THREE.Vector3();
 
         this.clock = new THREE.Clock();
         this.mouse = new PointerLockControls(this.localPlayer, document.body);
@@ -79,6 +81,8 @@ export class InputHandler {
 
         if (this.inputX !== 0 || this.inputZ !== 0) dist = 1;
         if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
+
+        this.prevVelocity.clone(this.localPlayer.velocity);
 
         this.localPlayer.velocity.z = dist * this.inputZ;
         this.localPlayer.velocity.x = dist * this.inputX;
