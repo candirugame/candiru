@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { Player } from './Player';
-import { Renderer } from './Renderer';
-import { Networking } from './Networking';
+import { Player } from '../core/Player';
+import { Renderer } from '../core/Renderer';
+import { Networking } from '../core/Networking';
 import {InputHandler} from "./InputHandler";
 
 export class ChatOverlay {

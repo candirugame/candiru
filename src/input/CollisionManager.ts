@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { Renderer } from './Renderer';
-import { Player } from './Player';
+import { Renderer } from '../core/Renderer';
+import { Player } from '../core/Player';
 import {acceleratedRaycast, computeBoundsTree, disposeBoundsTree, StaticGeometryGenerator, MeshBVH } from 'three-mesh-bvh';
 import {Group, Vector3} from "three";
-import {InputHandler} from "./input/InputHandler";
+import {InputHandler} from "./InputHandler";
 
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;

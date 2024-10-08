@@ -1,12 +1,12 @@
 import { Player } from './Player';
 import { Renderer } from './Renderer';
-import { ChatOverlay } from './ChatOverlay';
-import { InputHandler } from './input/InputHandler';
+import { ChatOverlay } from '../ui/ChatOverlay';
+import { InputHandler } from '../input/InputHandler';
 import { Networking } from './Networking';
-import { CollisionManager } from './CollisionManager';
-import { InventoryManager } from './InventoryManager';
-import { HealthIndicator } from './HealthIndicator';
-import { Map } from './Map';
+import { CollisionManager } from '../input/CollisionManager';
+import { Inventory } from './Inventory';
+import { HealthIndicator } from '../ui/HealthIndicator';
+import { MapLoader } from './MapLoader';
 
 export class Game {
     private localPlayer: Player;
@@ -15,8 +15,8 @@ export class Game {
     private inputHandler: InputHandler;
     private networking: Networking;
     private collisionManager: CollisionManager;
-    private inventoryManager: InventoryManager;
-    private map: Map;
+    private inventoryManager: Inventory;
+    private map: MapLoader;
     private healthIndicator: HealthIndicator;
 
     constructor() {
@@ -27,10 +27,10 @@ export class Game {
         this.chatOverlay.setRenderer(this.renderer);
         this.inputHandler = new InputHandler(this.renderer, this.localPlayer);
         this.collisionManager = new CollisionManager(this.renderer, this.inputHandler);
-        this.inventoryManager = new InventoryManager(this.renderer, this.inputHandler, this.networking);
+        this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new Map('maps/test1.glb', this.renderer, this.collisionManager);
+        this.map = new MapLoader('maps/test1.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
     }
 

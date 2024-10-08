@@ -1,4 +1,4 @@
-export abstract class HeldItem {
+export abstract class ItemBase {
     protected constructor() {}
     abstract init(): void;
     abstract onFrame(): void;

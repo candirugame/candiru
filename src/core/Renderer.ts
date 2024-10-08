@@ -3,7 +3,7 @@ import { Networking } from './Networking';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player';
-import { ChatOverlay } from "./ChatOverlay";
+import { ChatOverlay } from "../ui/ChatOverlay";
 
 export class Renderer {
     private clock: THREE.Clock;

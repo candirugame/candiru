@@ -1,14 +1,14 @@
-import { HeldItem } from './HeldItem';
+import { ItemBase } from '../items/ItemBase';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import {Renderer} from "./Renderer";
-import {Player} from "./Player";
+import {Renderer} from "../core/Renderer";
+import {Player} from "../core/Player";
 
 
 const clock = new THREE.Clock();
 
-export class HealthIndicator extends HeldItem {
+export class HealthIndicator extends ItemBase {
     private scene: THREE.Scene;
     private possumObject: THREE.Object3D;
     private sceneAdded: boolean = false;

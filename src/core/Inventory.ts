@@ -1,10 +1,10 @@
 import { Renderer } from './Renderer';
-import { InputHandler } from './input/InputHandler';
-import { BananaGun } from './BananaGun';
-import { HeldItemInput } from './HeldItemInput';
+import { InputHandler } from '../input/InputHandler';
+import { BananaGun } from '../items/BananaGun';
+import { HeldItemInput } from '../input/HeldItemInput';
 import {Networking} from "./Networking";
 
-export class InventoryManager {
+export class Inventory {
     private bananaGun: BananaGun;
     private renderer: Renderer;
     private inputHandler: InputHandler;

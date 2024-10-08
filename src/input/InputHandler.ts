@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControl';
-import { Renderer } from '../Renderer';
-import { Player } from '../Player';
+import { Renderer } from '../core/Renderer';
+import { Player } from '../core/Player';
 
 export class InputHandler {
     private mouse: PointerLockControls;
