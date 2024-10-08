@@ -87,11 +87,9 @@ export class Renderer {
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         const ambientLight2 = new THREE.AmbientLight(0xffffff, 0.5);
         const ambientLight3 = new THREE.AmbientLight(0xffffff, 0.5); // Ambient light for remote players scene
-        const ambientLight4 = new THREE.AmbientLight(0xffffff, 0.5); // Ambient light for health indicator scene
         this.scene.add(this.ambientLight);
         this.heldItemScene.add(ambientLight2);
         this.remotePlayersScene.add(ambientLight3); // Add ambient light to remote players scene
-        this.healthIndicatorScene.add(ambientLight4); // Add ambient light to health indicator scene
 
         // Fog settings
         this.scene.fog = new THREE.FogExp2('#111111', 0.1);
