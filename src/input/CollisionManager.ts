@@ -45,7 +45,7 @@ export class CollisionManager {
     private physics(localPlayer: Player, deltaTime: number) {
         const jump: boolean = this.inputHandler.jump;
 
-        localPlayer.gravity += deltaTime * -16;
+        localPlayer.gravity += deltaTime * -30;
         localPlayer.velocity.y += localPlayer.gravity;
         localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .5;
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
@@ -82,7 +82,7 @@ export class CollisionManager {
                         localPlayer.velocity.y = 0;
                         localPlayer.gravity = 0;
                         if (jump) {
-                            localPlayer.gravity = 6;
+                            localPlayer.gravity = 8;
                         }
                     } else {
                         const radius = this.colliderSphere.radius;
