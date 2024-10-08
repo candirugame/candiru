@@ -1,29 +1,35 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { Renderer } from './Renderer';
-import { Player } from './Player';
+import { PointerLockControls } from './PointerLockControl';
+import { Renderer } from '../Renderer';
+import { Player } from '../Player';
 
 export class InputHandler {
     private mouse: PointerLockControls;
+    private clock: THREE.Clock;
     private forward: THREE.Vector3;
-    private direction: THREE.Vector3;
     private keys: { [key: string]: boolean };
     private leftMouseDown: boolean;
     private rightMouseDown: boolean;
     private renderer: Renderer;
     private localPlayer: Player;
+    private inputX: number;
+    private inputZ: number;
+    public  jump;
 
     constructor(renderer: Renderer, localPlayer: Player) {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
 
-        this.mouse = new PointerLockControls(this.renderer.getCamera(), document.body);
+        this.clock = new THREE.Clock();
+        this.mouse = new PointerLockControls(this.localPlayer, document.body);
         this.forward = new THREE.Vector3(0, 0, -1);
-        this.direction = new THREE.Vector3();
 
         this.keys = {};
         this.leftMouseDown = false;
         this.rightMouseDown = false;
+        this.inputX = 0;
+        this.inputZ = 0;
+        this.jump = false;
 
         this.setupEventListeners();
     }
@@ -44,29 +50,47 @@ export class InputHandler {
     }
 
     public handleInputs() {
+        const deltaTime: number = this.clock.getDelta();
         const camera = this.renderer.getCamera();
-        if (this.localPlayer.chatActive) return;
+        const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
 
-        let inputX = 0;
-        let inputZ = 0;
         let dist = 0;
-        let dir = 0;
 
-        if (this.getKey('w')) inputX -= 1;
-        if (this.getKey('s')) inputX += 1;
-        if (this.getKey('a')) inputZ -= 1;
-        if (this.getKey('d')) inputZ += 1;
+        const oldInputZ = this.inputZ;
+        const oldInputX = this.inputX;
 
-        if (inputX !== 0 || inputZ !== 0) dist = 1;
+        if (!this.localPlayer.chatActive) {
+            if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
+            if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
+            if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
+            if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
+            this.jump = this.getKey(' ');
+        }
+
+        switch (this.inputZ - oldInputZ) {
+            case 0:
+                this.inputZ = InputHandler.approachZero(this.inputZ, deltaTimeAcceleration);
+        }
+
+        switch (this.inputX - oldInputX) {
+            case 0:
+                this.inputX = InputHandler.approachZero(this.inputX, deltaTimeAcceleration);
+        }
+
+        if (this.inputX !== 0 || this.inputZ !== 0) dist = 1;
         if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
-        dir = Math.atan2(inputZ, inputX);
 
-        this.localPlayer.velocity.z = dist * Math.cos(dir);
-        this.localPlayer.velocity.x = dist * Math.sin(dir);
+        this.localPlayer.velocity.z = dist * this.inputZ;
+        this.localPlayer.velocity.x = dist * this.inputX;
+        this.localPlayer.velocity.clampLength(0, this.localPlayer.speed);
+        this.inputZ = this.localPlayer.velocity.z;
+        this.inputX = this.localPlayer.velocity.x;
 
-        camera.getWorldDirection(this.direction);
-        this.direction.y = 0;
-        this.localPlayer.quaternion.setFromUnitVectors(this.forward, this.direction.normalize());
+        camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+        const euler = new THREE.Euler().setFromQuaternion(this.localPlayer.lookQuaternion, 'YXZ');
+        euler.x = 0;
+        euler.z = 0;
+        this.localPlayer.quaternion.setFromEuler(euler);
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
     }
 
@@ -108,5 +132,14 @@ export class InputHandler {
 
     public getRightMouseDown() {
         return this.rightMouseDown;
+    }
+
+    private static approachZero(input: number, step: number): number {
+        if (input == 0) {return 0;}
+        let sign: number = 1;
+        if (input < 0) {sign = -1;}
+        const output: number = Math.abs(input) - step;
+        if (output <= 0) {return  0;}
+        return sign * output;
     }
 }

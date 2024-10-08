@@ -69,6 +69,7 @@ function periodicCleanup() {
 
         if(playerData[i]['position']['y'] < -150){
             playerData[i]['health'] = 0;
+            playerData[i].velocity = {x:0,y:0,z:0};
              sendChatMessage(playerData[i]['name'] + ' fell off :\'(');
              console.log('💔 '+playerData[i]['name'] +'('+ playerData[i].id +') fell off the map');
         }
@@ -79,9 +80,10 @@ function periodicCleanup() {
             // let nameToSend = playerData[i]['name'];
             // sendChatMessage(nameToSend+' died');
             playerData[i].health = 100;
+            playerData[i].gravity = 0;
             playerData[i].position = {x:6,y:0.1016,z:12}; //6, 0.1016, 12
             playerData[i].velocity = {x:0,y:0,z:0};
-            playerData[i].quaternion = [0,0,0,1];
+            playerData[i].lookQuaternion = [0,0,0,1];
             playerData[i].forced = true;
         }
 
@@ -288,10 +290,13 @@ const vector3Schema = Joi.object({
 const playerDataSchema = Joi.object({
     id: Joi.number().required(),
     speed: Joi.number().required(),
+    acceleration: Joi.number().required(),
     name: Joi.string().required().allow('').max(42),
     gameVersion: Joi.string().required().valid(SERVER_VERSION),
     position: vector3Schema.required(),
     velocity: vector3Schema.required(),
+    gravity: Joi.number().required(),
+    lookQuaternion: Joi.array().items(Joi.number()).length(4).required(),
     quaternion: Joi.array().items(Joi.number()).length(4).required(),
     chatActive: Joi.boolean().required(),
     chatMsg: Joi.string().required().allow('').max(300),

@@ -1,7 +1,7 @@
 import { Player } from './Player';
 import { Renderer } from './Renderer';
 import { ChatOverlay } from './ChatOverlay';
-import { InputHandler } from './InputHandler';
+import { InputHandler } from './input/InputHandler';
 import { Networking } from './Networking';
 import { CollisionManager } from './CollisionManager';
 import { InventoryManager } from './InventoryManager';
@@ -26,11 +26,11 @@ export class Game {
         this.renderer = new Renderer(this.networking, this.localPlayer, this.chatOverlay);
         this.chatOverlay.setRenderer(this.renderer);
         this.inputHandler = new InputHandler(this.renderer, this.localPlayer);
-        this.collisionManager = new CollisionManager(this.renderer);
+        this.collisionManager = new CollisionManager(this.renderer, this.inputHandler);
         this.inventoryManager = new InventoryManager(this.renderer, this.inputHandler, this.networking);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new Map('maps/test1.glb', this.renderer);
+        this.map = new Map('maps/test1.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
     }
 
