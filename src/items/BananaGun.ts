@@ -5,7 +5,6 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
 import {Renderer} from "../core/Renderer";
 import {Networking} from "../core/Networking";
-import {select} from "three/src/nodes/math/ConditionalNode";
 
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;

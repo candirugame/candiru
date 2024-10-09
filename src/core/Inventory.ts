@@ -35,7 +35,6 @@ export class Inventory {
     }
 
     public init() {
-        const deltaTime = this.clock.getDelta();
         for(const item of this.inventoryItems) {
             item.init();
         }

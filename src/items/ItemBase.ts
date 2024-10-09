@@ -1,11 +1,9 @@
-import {HeldItemInput} from "../input/HeldItemInput";
-
 export abstract class ItemBase {
     protected constructor(index: number) {
         this.index = index;
     }
     abstract init(): void;
-    abstract onFrame(input:HeldItemInput, selectedIndex:number): void;
+    abstract onFrame(): void;
     private readonly index: number;
     public getIndex(): number {return this.index;}
     abstract hideInHand(): void;
