@@ -10,7 +10,7 @@ export class Renderer {
     private deltaTime: number;
     private chatOverlay: ChatOverlay;
     private scene: THREE.Scene;
-    private remotePlayersScene: THREE.Scene; // New scene for remote players
+    private entityScene: THREE.Scene; // New scene for remote players
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
     private loader: GLTFLoader;
@@ -50,7 +50,7 @@ export class Renderer {
 
         this.clock = new THREE.Clock();
         this.scene = new THREE.Scene();
-        this.remotePlayersScene = new THREE.Scene(); // Initialize the new scene
+        this.entityScene = new THREE.Scene(); // Initialize the new scene
         this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
         this.renderer = new THREE.WebGLRenderer();
         document.body.appendChild(this.renderer.domElement);
@@ -67,7 +67,7 @@ export class Renderer {
             'models/simplified_possum.glb',
             (gltf) => {
                 this.possumGLTFScene = gltf.scene;
-                this.remotePlayersScene.add(this.possumGLTFScene);
+                this.entityScene.add(this.possumGLTFScene);
             },
             undefined,
             () => { console.log('possum loading error'); }
@@ -102,12 +102,12 @@ export class Renderer {
 
         this.scene.add(this.ambientLight);
         this.heldItemScene.add(ambientLight2);
-        this.remotePlayersScene.add(ambientLight3); // Add ambient light to remote players scene
+        this.entityScene.add(ambientLight3); // Add ambient light to remote players scene
 
         // Fog settings
         this.scene.fog = new THREE.FogExp2('#111111', 0.1);
         this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.1);
-        this.remotePlayersScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
+        this.entityScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
         this.healthIndicatorScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to health indicator scene
 
         this.framerate = 0;
@@ -133,7 +133,7 @@ export class Renderer {
         this.renderer.autoClear = false;
 
         // Render the remote players scene using the same camera
-        this.renderer.render(this.remotePlayersScene, this.camera);
+        this.renderer.render(this.entityScene, this.camera);
 
         // Render the held item scene normally (full screen)
         this.renderer.render(this.heldItemScene, this.heldItemCamera);
@@ -301,14 +301,14 @@ export class Renderer {
             objectUUID: object.uuid
         };
         this.playersToRender.push(newPlayer);
-        this.remotePlayersScene.add(newPlayer.object); // Add to remote players scene
+        this.entityScene.add(newPlayer.object); // Add to remote players scene
     }
 
     private removeInactivePlayers(remotePlayerData) {
         this.playersToRender = this.playersToRender.filter((player) => {
             const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
             if (!isActive) {
-                this.remotePlayersScene.remove(player.object); // Remove from remote players scene
+                this.entityScene.remove(player.object); // Remove from remote players scene
             }
             return isActive;
         });
@@ -349,6 +349,10 @@ export class Renderer {
         return this.inventoryMenuCamera;
     }
 
+    public getEntityScene(){
+        return this.entityScene;
+    }
+
     private onWindowResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
@@ -368,7 +372,7 @@ export class Renderer {
 
     private getRemotePlayerObjectsInCrosshair(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
-        return this.raycaster.intersectObjects(this.remotePlayersScene.children);
+        return this.raycaster.intersectObjects(this.entityScene.children);
     }
 
     private getPlayersInCrosshairWithWalls() {

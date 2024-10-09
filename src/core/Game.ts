@@ -7,6 +7,8 @@ import { CollisionManager } from '../input/CollisionManager';
 import { Inventory } from './Inventory';
 import { HealthIndicator } from '../ui/HealthIndicator';
 import { MapLoader } from './MapLoader';
+import {ItemBaseNew, ItemType} from "../items/ItemBaseNew";
+import * as THREE from 'three';
 
 export class Game {
     private localPlayer: Player;
@@ -18,6 +20,9 @@ export class Game {
     private inventoryManager: Inventory;
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
+
+    private testWorldItem: ItemBaseNew;
+
 
     constructor() {
         this.localPlayer = new Player();
@@ -38,6 +43,10 @@ export class Game {
         this.collisionManager.init();
         this.inventoryManager.init();
         this.healthIndicator.init();
+
+        //TODO: for debugging- pls remove this
+        this.testWorldItem = new ItemBaseNew(ItemType.WorldItem, this.renderer.getEntityScene());
+        this.testWorldItem.setWorldPosition(new THREE.Vector3(6,1,12));
     }
 
     animate() {
@@ -48,6 +57,9 @@ export class Game {
         this.inventoryManager.onFrame();
         this.healthIndicator.onFrame();
         this.renderer.onFrame(this.localPlayer);
+
+        this.testWorldItem.onFrame();
+
         requestAnimationFrame(this.animate.bind(this));
     }
 
