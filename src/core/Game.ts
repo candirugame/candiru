@@ -27,7 +27,7 @@ export class Game {
         this.chatOverlay.setRenderer(this.renderer);
         this.inputHandler = new InputHandler(this.renderer, this.localPlayer);
         this.collisionManager = new CollisionManager(this.renderer, this.inputHandler);
-        this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking);
+        this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
         this.map = new MapLoader('maps/test1.glb', this.renderer, this.collisionManager);

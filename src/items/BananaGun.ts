@@ -6,27 +6,30 @@ import * as THREE from 'three';
 import {Renderer} from "../core/Renderer";
 import {Networking} from "../core/Networking";
 
-const clock = new THREE.Clock();
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;
 
 export class BananaGun extends ItemBase {
-    private scene: THREE.Scene;
-    private bananaObject: THREE.Object3D;
+    private handScene: THREE.Scene;
+    private heldItemObject: THREE.Object3D;
+    private worldObject: THREE.Object3D;
+    private inventoryObject: THREE.Object3D;
     private sceneAdded: boolean = false;
-    private hidden: boolean = false;
+    private hiddenInHand: boolean = true;
     private lastInput: HeldItemInput = new HeldItemInput();
     private lastFired: number = 0;
     private hiddenTimestamp: number = 0;
     private renderer:Renderer;
     private lastShotSomeoneTimestamp:number = 0;
     private networking:Networking;
+    private clock = new THREE.Clock();
+    private angleAccum = 0;
 
-    constructor(renderer: Renderer, networking:Networking) {
-        super();
+    constructor(renderer: Renderer, networking:Networking, index: number) {
+        super(index);
         this.renderer = renderer;
         this.networking = networking;
-        this.scene = renderer.getHeldItemScene();
+        this.handScene = renderer.getHeldItemScene();
     }
 
     public init() {
@@ -37,13 +40,15 @@ export class BananaGun extends ItemBase {
         loader.load(
             'models/simplified_banana_1.glb',
             (gltf) => {
-                this.bananaObject = gltf.scene;
-                this.bananaObject.traverse((child) => {
+                this.heldItemObject = gltf.scene;
+                this.heldItemObject.traverse((child) => {
                     if ((child as THREE.Mesh).isMesh) {
                         child.renderOrder = 999;
                         (child as THREE.Mesh).material.depthTest = false;
                     }
                 });
+                this.inventoryObject = this.heldItemObject.clone();
+                this.worldObject = this.heldItemObject.clone();
             },
             undefined,
             () => {
@@ -52,22 +57,48 @@ export class BananaGun extends ItemBase {
         );
     }
 
-    public onFrame(input: HeldItemInput) {
-        if (!this.bananaObject) return;
-        if (!this.sceneAdded && !this.hidden) {
-            this.scene.add(this.bananaObject);
+    public onFrame(input: HeldItemInput, selectedIndex: number) {
+        if (!this.heldItemObject) return;
+        if (!this.sceneAdded) {
+            this.handScene.add(this.heldItemObject);
+            this.renderer.getInventoryMenuScene().add(this.inventoryObject);
+            this.inventoryObject.scale.set(0.8, 0.8, 0.8);
+            this.inventoryObject.position.set(0, this.getIndex(), 0);
             this.sceneAdded = true;
         }
+        const deltaTime = this.clock.getDelta();
 
-        const deltaTime = clock.getDelta();
-        if (!this.hidden) {
+
+       this.handRenderingStuff(input, deltaTime);
+       this.inventoryRenderingStuff(selectedIndex, deltaTime);
+
+
+    }
+
+    public inventoryRenderingStuff(selectedIndex:number, deltaTime:number){
+        this.angleAccum += deltaTime;
+        if(this.index === selectedIndex){
+            this.showInHand();
+            const targetQuaternion = inventoryQuaternionBase.clone();
+            rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0, 1, 0), this.angleAccum *8);
+            moveTowardsRot(this.inventoryObject.quaternion, targetQuaternion, 0.1 * 60 * deltaTime);
+        }
+        else{
+            this.hideInHand();
+            moveTowardsRot(this.inventoryObject.quaternion, inventoryQuaternionBase, 0.1 * 60 * deltaTime);
+        }
+
+    }
+
+    public handRenderingStuff(input:HeldItemInput, deltaTime:number){
+        if (!this.hiddenInHand) {
             this.handleInput(input, deltaTime);
         }
 
-        if (this.hidden && this.sceneAdded) {
-            moveTowardsPos(this.bananaObject.position, hiddenPosition, 0.1 * deltaTime * 60);
+        if (this.hiddenInHand && this.sceneAdded) {
+            moveTowardsPos(this.heldItemObject.position, hiddenPosition, 0.1 * deltaTime * 60);
             if (Date.now() / 1000 - this.hiddenTimestamp > 3) {
-                this.scene.remove(this.bananaObject);
+                this.handScene.remove(this.heldItemObject);
                 this.sceneAdded = false;
             }
         }
@@ -78,33 +109,33 @@ export class BananaGun extends ItemBase {
 
     private handleInput(input: HeldItemInput, deltaTime: number) {
         if (input.rightClick) {
-            moveTowardsPos(this.bananaObject.position, scopedPosition, 0.3 * deltaTime * 60);
+            moveTowardsPos(this.heldItemObject.position, scopedPosition, 0.3 * deltaTime * 60);
         } else {
-            moveTowardsPos(this.bananaObject.position, unscopedPosition, 0.1 * deltaTime * 60);
+            moveTowardsPos(this.heldItemObject.position, unscopedPosition, 0.1 * deltaTime * 60);
         }
 
-        moveTowardsRot(this.bananaObject.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
+        moveTowardsRot(this.heldItemObject.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
 
         if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
             if (input.leftClick && Date.now() / 1000 - this.lastFired > firingDelay) {
                 this.lastFired = Date.now() / 1000;
                 this.shootBanana();
-                this.bananaObject.position.add(new THREE.Vector3(0, 0, 0.6));
-                rotateAroundWorldAxis(this.bananaObject.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
+                this.heldItemObject.position.add(new THREE.Vector3(0, 0, 0.6));
+                rotateAroundWorldAxis(this.heldItemObject.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
             }
         }
 
         this.lastInput = input;
     }
 
-    public show() {
-        if (!this.hidden) return;
-        this.hidden = false;
+    public showInHand() {
+        if (!this.hiddenInHand) return;
+        this.hiddenInHand = false;
     }
 
-    public hide() {
-        if (this.hidden) return;
-        this.hidden = true;
+    public hideInHand() {
+        if (this.hiddenInHand) return;
+        this.hiddenInHand = true;
         this.hiddenTimestamp = Date.now() / 1000;
     }
 
@@ -142,5 +173,7 @@ function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac
 
 const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
 const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
-const hiddenPosition = new THREE.Vector3(0.85, -2.12, 3.2);
+const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
 const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
+
+const inventoryQuaternionBase = new THREE.Quaternion(0,0,0,1);
