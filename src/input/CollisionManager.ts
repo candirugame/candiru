@@ -21,10 +21,10 @@ export class CollisionManager {
     private inputHandler: InputHandler;
     private static maxAngle = Math.cos(45 * Math.PI / 180);
     private triNormal: Vector3;
-    private fixedTimeStep;
-    private accumulator: number;
+    private coyoteTime; number;
+    private jumped: boolean;
 
-    constructor(renderer: Renderer, inputHandler: InputHandler, fixedTimeStep: number = 1/120) {
+    constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.scene = renderer.getScene();
         this.inputHandler = inputHandler;
         this.clock = new THREE.Clock();
@@ -32,32 +32,32 @@ export class CollisionManager {
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
         this.deltaVec = new THREE.Vector3();
         this.triNormal=new THREE.Vector3();
-        this.fixedTimeStep = fixedTimeStep;
-        this.accumulator = 0;
+        this.coyoteTime = 0;
+        this.jumped = false;
     }
 
     public init() {
     }
 
     public collisionPeriodic(localPlayer: Player) {
-        if(!this.mapLoaded) {return;}
-        const deltaTime: number = this.clock.getDelta();
-        this.accumulator += deltaTime;
-        while (this.accumulator >= this.fixedTimeStep) {
-            this.physics(localPlayer, this.fixedTimeStep);
-            this.accumulator -= this.fixedTimeStep;
-        }
+        if (!this.mapLoaded) return;
+        let deltaTime: number = this.clock.getDelta();
+        if (deltaTime > 1/15) deltaTime = 1/15;
+        this.physics(localPlayer, deltaTime);
     }
 
     private physics(localPlayer: Player, deltaTime: number) {
         const jump: boolean = this.inputHandler.jump;
 
-        localPlayer.gravity += deltaTime * -16;
+        localPlayer.gravity += deltaTime * -30;
         localPlayer.velocity.y += localPlayer.gravity;
+        localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .5;
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
 
         const bvh: MeshBVH = this.colliderGeom.boundsTree;
         this.colliderSphere.center = localPlayer.position.clone();
+
+        let collided: boolean = false;
 
         bvh.shapecast( {
 
@@ -87,9 +87,8 @@ export class CollisionManager {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
                         localPlayer.velocity.y = 0;
                         localPlayer.gravity = 0;
-                        if (jump) {
-                            localPlayer.gravity = 3;
-                        }
+                        this.coyoteTime = 0;
+                        collided = true;
                     } else {
                         const radius = this.colliderSphere.radius;
                         const depth = distance - radius;
@@ -106,6 +105,20 @@ export class CollisionManager {
             },
 
         } );
+
+        if (!collided) {
+            this.coyoteTime += deltaTime;
+            if (jump && this.coyoteTime < 6/60 && !this.jumped) {
+                localPlayer.gravity = 8;
+                this.jumped = true;
+            }
+        } else {
+            if (jump) {
+                localPlayer.gravity = 8;
+            } else {
+                this.jumped = false;
+            }
+        }
 
     }
 
