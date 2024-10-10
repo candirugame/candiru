@@ -6,7 +6,7 @@ import { HeldItemInput } from '../input/HeldItemInput';
 import {Networking} from "./Networking";
 import {ItemBase} from "../items/ItemBase";
 import {Player} from "./Player";
-import {ItemBaseNew, ItemType} from "../items/ItemBaseNew";
+import {ItemBase, ItemType} from "../items/ItemBase";
 
 export class Inventory {
     private inventoryItems: ItemBase[] = [];
@@ -44,7 +44,7 @@ export class Inventory {
         this.inventoryItems.push(banana);
 
         for(let i = 0; i < 4; i++) {
-            const testItem = new ItemBaseNew(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, this.inventoryItems.length);
+            const testItem = new ItemBase(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, this.inventoryItems.length);
             this.inventoryItems.push(testItem);
         }
 

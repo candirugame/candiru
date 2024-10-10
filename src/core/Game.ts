@@ -7,7 +7,7 @@ import { CollisionManager } from '../input/CollisionManager';
 import { Inventory } from './Inventory';
 import { HealthIndicator } from '../ui/HealthIndicator';
 import { MapLoader } from './MapLoader';
-import {ItemBaseNew, ItemType} from "../items/ItemBaseNew";
+import {ItemBase, ItemType} from "../items/ItemBase";
 import * as THREE from 'three';
 
 export class Game {
@@ -21,7 +21,7 @@ export class Game {
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
 
-    private testWorldItem: ItemBaseNew;
+    private testWorldItem: ItemBase;
 
 
     constructor() {
@@ -45,7 +45,7 @@ export class Game {
         this.healthIndicator.init();
 
         //TODO: for debugging- pls remove this
-        this.testWorldItem = new ItemBaseNew(ItemType.WorldItem, this.renderer.getEntityScene());
+        this.testWorldItem = new ItemBase(ItemType.WorldItem, this.renderer.getEntityScene());
         this.testWorldItem.setWorldPosition(new THREE.Vector3(11,0.4,10));
 
 

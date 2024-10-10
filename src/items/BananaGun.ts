@@ -1,4 +1,4 @@
-import { ItemBaseNew, ItemType } from './ItemBaseNew';
+import { ItemBase, ItemType } from './ItemBase';
 import { HeldItemInput } from '../input/HeldItemInput';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
@@ -16,7 +16,7 @@ const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
 const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
-export class BananaGun extends ItemBaseNew {
+export class BananaGun extends ItemBase {
     private renderer: Renderer;
     private networking: Networking;
     private lastInput: HeldItemInput = new HeldItemInput();
