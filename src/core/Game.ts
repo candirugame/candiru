@@ -46,7 +46,10 @@ export class Game {
 
         //TODO: for debugging- pls remove this
         this.testWorldItem = new ItemBaseNew(ItemType.WorldItem, this.renderer.getEntityScene());
-        this.testWorldItem.setWorldPosition(new THREE.Vector3(6,1,12));
+        this.testWorldItem.setWorldPosition(new THREE.Vector3(11,0.4,10));
+
+
+
     }
 
     animate() {
