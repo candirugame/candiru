@@ -2,7 +2,7 @@ import { HeldItemInput } from '../input/HeldItemInput';
 import * as THREE from 'three';
 import {rotate} from "three/src/nodes/utils/RotateNode";
 
-
+const showInHandDelay = 0.1;
 
 export class ItemBaseNew{
     private timeAccum:number = 0;
@@ -16,8 +16,10 @@ export class ItemBaseNew{
     private inventoryMenuScene: THREE.Scene; //Inventory menu scene
     private inventoryMenuObject:THREE.Object3D; //The object shown in the inventory menu (he do spin)
     private index:number; //The index of the item in the inventory
-    private showInHand:boolean = false;
+    private shownInHand:boolean = false;
     private angleAccum: number = 0;
+    private handPosition:THREE.Vector3 = new THREE.Vector3(0.85, -0.8, 3.2);
+    private shownInHandTimestamp:number = 0;
 
 
     constructor(itemType:ItemType, scene:THREE.Scene, inventoryMenuScene:THREE.Scene, index:number){
@@ -36,7 +38,14 @@ export class ItemBaseNew{
         const material = new THREE.MeshBasicMaterial({color: 0x00ff00});
         this.object = new THREE.Mesh(geometry, material);
         this.inventoryMenuObject = this.object.clone();
-       // this.inventoryMenuObject.scale.set(0.5,0.5,0.5);
+
+        if(this.itemType === ItemType.InventoryItem)
+            this.object.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    child.renderOrder = 999;
+                    (child as THREE.Mesh).material.depthTest = false;
+                }
+            });
     }
 
     public onFrame(input: HeldItemInput, selectedIndex: number) {
@@ -46,8 +55,10 @@ export class ItemBaseNew{
 
         if(this.itemType === ItemType.WorldItem)
             this.worldOnFrame(deltaTime);
-        if(this.itemType === ItemType.InventoryItem)
+        if(this.itemType === ItemType.InventoryItem){
             this.inventoryOnFrame(deltaTime, selectedIndex);
+            this.handOnFrame(deltaTime, input);
+        }
     }
 
     /** -- World Items -- */
@@ -55,7 +66,7 @@ export class ItemBaseNew{
     private worldPosition:THREE.Vector3 = new THREE.Vector3();
 
 
-    public worldOnFrame(){ // This function is called every frame for world items
+    private worldOnFrame(){ // This function is called every frame for world items
         if(!this.addedToWorldScene){
             this.scene.add(this.object);
             this.addedToWorldScene = true;
@@ -72,7 +83,7 @@ export class ItemBaseNew{
     /** -- Inventory Items -- */
     private addedToInventoryItemScenes:boolean = false;
 
-    public inventoryOnFrame(deltaTime:number, selectedIndex:number){
+    private inventoryOnFrame(deltaTime:number, selectedIndex:number){
         if(!this.addedToInventoryItemScenes){
             this.scene.add(this.object);
             this.inventoryMenuScene.add(this.inventoryMenuObject);
@@ -83,21 +94,46 @@ export class ItemBaseNew{
         const targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,0));
         if(this.index === selectedIndex){
             rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0,1,0), this.angleAccum * 8);
-            this.showInHand = true;
+            this.showInHand();
         }else{
-            this.showInHand = false;
+            this.hideInHand();
         }
         rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(1,0,0), Math.PI / 4);
         this.inventoryMenuObject.quaternion.slerp(targetQuaternion, 0.1 * 60 * deltaTime);
+    }
+
+    private handOnFrame(deltaTime:number, input:HeldItemInput){
+        if(this.shownInHand && Date.now() / 1000 - this.shownInHandTimestamp > showInHandDelay)
+            this.handPosition.lerp(heldPosition, 0.1 * 60 *deltaTime);
+        else
+            this.handPosition.lerp(hiddenPosition, 0.1 * 60 *deltaTime);
+
+        this.object.position.copy(this.handPosition);
+        if(this.shownInHand && input.leftClick){
+            this.object.position.add(new THREE.Vector3(Math.random()*0.2, Math.random()*0.2, Math.random()*0.2));
+            this.object.quaternion.slerp(new THREE.Quaternion().random(),0.1);
+        }
+    }
+
+    private showInHand(){
+        if(this.shownInHand) return;
+        this.shownInHand = true;
+        this.shownInHandTimestamp = Date.now() / 1000;
 
     }
 
-    
+    private hideInHand(){
+        if(!this.shownInHand) return;
+        this.shownInHand = false;
+    }
+
 
 
 
 
 }
+const heldPosition = new THREE.Vector3(0.85, -0.8, 3.2);
+const hiddenPosition = new THREE.Vector3(0.85, -2.5, 3.2);
 export enum ItemType {
     WorldItem = 1,
     InventoryItem = 2,
