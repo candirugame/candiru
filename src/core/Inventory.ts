@@ -39,12 +39,12 @@ export class Inventory {
         for(const item of this.inventoryItems) {
             item.init();
         }
-        // const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
-        // banana.init();
-        // this.inventoryItems.push(banana);
+        const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
+        banana.init();
+        this.inventoryItems.push(banana);
 
-        for(let i = 0; i < 10; i++) {
-            const testItem = new ItemBaseNew(ItemType.InventoryItem, this.renderer.getEntityScene(), this.inventoryScene, this.inventoryItems.length);
+        for(let i = 0; i < 4; i++) {
+            const testItem = new ItemBaseNew(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, this.inventoryItems.length);
             this.inventoryItems.push(testItem);
         }
 

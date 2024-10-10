@@ -93,7 +93,7 @@ export class ItemBaseNew{
 
         const targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,0));
         if(this.index === selectedIndex){
-            rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0,1,0), this.angleAccum * 8);
+            rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0,1,0), this.angleAccum * 6);
             this.showInHand();
         }else{
             this.hideInHand();
