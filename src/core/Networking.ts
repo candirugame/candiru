@@ -79,7 +79,7 @@ export class Networking {
         this.socket.emit('playerData', this.localPlayer);
         this.lastUploadedLocalPlayer = {
             position: this.localPlayer.position.clone(),
-            quaternion: this.localPlayer.lookQuaternion.clone(),
+            quaternion: this.localPlayer.quaternion.clone(),
             chatMsg: this.localPlayer.chatMsg,
             velocity: this.localPlayer.velocity.clone(),
         };
