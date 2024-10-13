@@ -260,7 +260,7 @@ export class ChatOverlay {
         linesToRender.push(playerData.length + ' online - ' + Math.round(this.localPlayer.latency) + 'ms');
         colorsToRender.push('white');
         for(let i = 0; i < playerData.length; i++){
-            linesToRender.push(playerData[i].name + ' - ' + Math.floor(playerData[i].health));
+            linesToRender.push(playerData[i].name);
             if(playerData[i].latency > 200)
                 colorsToRender.push('red');
             else if(playerData[i].latency > 50)
