@@ -1,14 +1,15 @@
-import { Player } from './Player';
-import { Renderer } from './Renderer';
-import { ChatOverlay } from '../ui/ChatOverlay';
-import { InputHandler } from '../input/InputHandler';
-import { Networking } from './Networking';
-import { CollisionManager } from '../input/CollisionManager';
-import { Inventory } from './Inventory';
-import { HealthIndicator } from '../ui/HealthIndicator';
-import { MapLoader } from './MapLoader';
+import {Player} from './Player';
+import {Renderer} from './Renderer';
+import {ChatOverlay} from '../ui/ChatOverlay';
+import {InputHandler} from '../input/InputHandler';
+import {Networking} from './Networking';
+import {CollisionManager} from '../input/CollisionManager';
+import {Inventory} from './Inventory';
+import {HealthIndicator} from '../ui/HealthIndicator';
+import {MapLoader} from './MapLoader';
 import {ItemBase, ItemType} from "../items/ItemBase";
 import * as THREE from 'three';
+import {BananaGun} from "../items/BananaGun";
 
 export class Game {
     private localPlayer: Player;
@@ -22,6 +23,7 @@ export class Game {
     private healthIndicator: HealthIndicator;
 
     private testWorldItem: ItemBase;
+    private testWorldItem2: ItemBase;
 
 
     constructor() {
@@ -45,8 +47,12 @@ export class Game {
         this.healthIndicator.init();
 
         //TODO: for debugging- pls remove this
-        this.testWorldItem = new ItemBase(ItemType.WorldItem, this.renderer.getEntityScene());
-        this.testWorldItem.setWorldPosition(new THREE.Vector3(11,0.4,10));
+        this.testWorldItem = new BananaGun(this.renderer, this.networking, 0,ItemType.WorldItem);
+        this.testWorldItem.setWorldPosition(new THREE.Vector3(11,0.25,10));
+
+        this.testWorldItem2 = new ItemBase(ItemType.WorldItem, this.renderer.getEntityScene(), 0);
+        this.testWorldItem2.setWorldPosition(new THREE.Vector3(10,0.25,10));
+
 
 
 
@@ -62,6 +68,7 @@ export class Game {
         this.renderer.onFrame(this.localPlayer);
 
         this.testWorldItem.onFrame();
+        this.testWorldItem2.onFrame();
 
         requestAnimationFrame(this.animate.bind(this));
     }

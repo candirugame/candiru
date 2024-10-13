@@ -4,21 +4,21 @@ import * as THREE from 'three';
 const showInHandDelay = 0.1;
 
 export class ItemBase {
-    private timeAccum:number = 0;
-    private clock:THREE.Clock = new THREE.Clock();
+    protected timeAccum:number = 0;
+    protected clock:THREE.Clock = new THREE.Clock();
 
-    private object: THREE.Object3D;
-    private itemType: ItemType;
+    protected object: THREE.Object3D;
+    protected itemType: ItemType;
 
-    private scene: THREE.Scene; // The scene to put the item in
+    protected scene: THREE.Scene; // The scene to put the item in
 
-    private inventoryMenuScene: THREE.Scene; //Inventory menu scene
-    private inventoryMenuObject:THREE.Object3D; //The object shown in the inventory menu (he do spin)
-    private index:number; //The index of the item in the inventory
-    private shownInHand:boolean = false;
-    private angleAccum: number = 0;
-    private handPosition:THREE.Vector3 = new THREE.Vector3(0.85, -0.8, 3.2);
-    private shownInHandTimestamp:number = 0;
+    protected inventoryMenuScene: THREE.Scene; //Inventory menu scene
+    protected inventoryMenuObject:THREE.Object3D; //The object shown in the inventory menu (he do spin)
+    protected index:number; //The index of the item in the inventory
+    protected shownInHand:boolean = false;
+    protected angleAccum: number = 0;
+    protected handPosition:THREE.Vector3 = new THREE.Vector3(0.85, -0.8, 3.2);
+    protected shownInHandTimestamp:number = 0;
 
 
     constructor(itemType:ItemType, scene:THREE.Scene, inventoryMenuScene:THREE.Scene, index:number){
@@ -30,7 +30,7 @@ export class ItemBase {
         this.init();
     }
 
-    public init() {
+    protected init() {
         // Init should be responsible for creating object and inventoryMenuObject
         // For this class, we'll just create a simple cube
         const geometry = new THREE.BoxGeometry(0.5,0.5,0.5);
@@ -47,7 +47,7 @@ export class ItemBase {
             });
     }
 
-    public onFrame(input: HeldItemInput, selectedIndex: number) {
+    protected onFrame(input: HeldItemInput, selectedIndex: number) {
         if(!this.object) return; //return if object hasn't loaded
         const deltaTime = this.clock.getDelta();
         this.timeAccum += deltaTime;
@@ -61,28 +61,31 @@ export class ItemBase {
     }
 
     /** -- World Items -- */
-    private addedToWorldScene:boolean = false;
-    private worldPosition:THREE.Vector3 = new THREE.Vector3();
+    protected addedToWorldScene:boolean = false;
+    protected worldPosition:THREE.Vector3 = new THREE.Vector3();
 
 
-    private worldOnFrame(){ // This function is called every frame for world items
+    protected worldOnFrame(deltaTime:number){ // This function is called every frame for world items
         if(!this.addedToWorldScene){
             this.scene.add(this.object);
             this.addedToWorldScene = true;
+            console.log("Added to world scene");
+
         }
         this.object.position.copy(this.worldPosition);
         this.object.position.add(new THREE.Vector3(0, Math.sin(this.timeAccum*2) * 0.1, 0));
+        this.object.rotation.y += deltaTime * 2;
 
     }
 
-    public setWorldPosition(vector:THREE.Vector3){
+    protected setWorldPosition(vector:THREE.Vector3){
         this.worldPosition = vector;
     }
 
     /** -- Inventory Items -- */
-    private addedToInventoryItemScenes:boolean = false;
+    protected addedToInventoryItemScenes:boolean = false;
 
-    private inventoryOnFrame(deltaTime:number, selectedIndex:number){
+    protected inventoryOnFrame(deltaTime:number, selectedIndex:number){
         if(!this.addedToInventoryItemScenes){
             this.scene.add(this.object);
             this.inventoryMenuScene.add(this.inventoryMenuObject);
@@ -101,7 +104,7 @@ export class ItemBase {
         this.inventoryMenuObject.quaternion.slerp(targetQuaternion, 0.1 * 60 * deltaTime);
     }
 
-    private handOnFrame(deltaTime:number, input:HeldItemInput){
+    protected handOnFrame(deltaTime:number, input:HeldItemInput){
         if(this.shownInHand && Date.now() / 1000 - this.shownInHandTimestamp > showInHandDelay)
             this.handPosition.lerp(heldPosition, 0.1 * 60 *deltaTime);
         else
@@ -114,14 +117,14 @@ export class ItemBase {
         }
     }
 
-    private showInHand(){
+    protected showInHand(){
         if(this.shownInHand) return;
         this.shownInHand = true;
         this.shownInHandTimestamp = Date.now() / 1000;
 
     }
 
-    private hideInHand(){
+    protected hideInHand(){
         if(!this.shownInHand) return;
         this.shownInHand = false;
     }
@@ -134,7 +137,10 @@ export class ItemBase {
 const heldPosition = new THREE.Vector3(0.85, -0.8, 3.2);
 const hiddenPosition = new THREE.Vector3(0.85, -2.5, 3.2);
 export enum ItemType {
+    //TODO diagnose lint being weird here?
+    // eslint-disable-next-line no-unused-vars
     WorldItem = 1,
+    // eslint-disable-next-line no-unused-vars
     InventoryItem = 2,
 }
 

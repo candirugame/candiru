@@ -22,11 +22,13 @@ export class BananaGun extends ItemBase {
     private lastInput: HeldItemInput = new HeldItemInput();
     private lastFired: number = 0;
     private lastShotSomeoneTimestamp: number = 0;
-    private angleAccum: number = 0;
     private addedToHandScene: boolean = false;
 
-    constructor(renderer: Renderer, networking: Networking, index: number) {
-        super(ItemType.InventoryItem, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
+    constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+        if(itemType === ItemType.WorldItem)
+            super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
+        if(itemType === ItemType.InventoryItem)
+            super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
         this.renderer = renderer;
         this.networking = networking;
     }
@@ -40,14 +42,20 @@ export class BananaGun extends ItemBase {
             'models/simplified_banana_1.glb',
             (gltf) => {
                 this.object = gltf.scene;
-                this.object.traverse((child) => {
-                    if ((child as THREE.Mesh).isMesh) {
-                        child.renderOrder = 999;
-                        (child as THREE.Mesh).material.depthTest = false;
-                    }
-                });
+                // Adjust render order and depthTest based on itemType
+                if (this.itemType === ItemType.InventoryItem) {
+                    this.object.traverse((child) => {
+                        if ((child as THREE.Mesh).isMesh) {
+                            child.renderOrder = 999;
+                            (child as THREE.Mesh).material.depthTest = false;
+                        }
+                    });
+                }
                 this.inventoryMenuObject = this.object.clone();
                 this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+
+                if(this.itemType === ItemType.WorldItem)
+                    this.object.scale.set(0.45, 0.45, 0.45);
             },
             undefined,
             () => {
@@ -62,9 +70,16 @@ export class BananaGun extends ItemBase {
         this.timeAccum += deltaTime;
         this.angleAccum += deltaTime;
 
-        this.inventoryOnFrame(deltaTime, selectedIndex);
-        this.handOnFrame(deltaTime, input);
+        if (this.itemType === ItemType.WorldItem) {
+            this.worldOnFrame(deltaTime);
+        } else if (this.itemType === ItemType.InventoryItem) {
+            this.inventoryOnFrame(deltaTime, selectedIndex);
+            this.handOnFrame(deltaTime, input);
+        }
     }
+
+    // No need to override worldOnFrame if default behavior is sufficient
+    // If specific behavior is needed, you can override it here
 
     public inventoryOnFrame(deltaTime: number, selectedIndex: number) {
         if (!this.addedToInventoryItemScenes) {
@@ -82,7 +97,6 @@ export class BananaGun extends ItemBase {
         } else {
             this.hideInHand();
         }
-       // rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(1, 0, 0), Math.PI / 4);
         this.inventoryMenuObject.quaternion.slerp(targetQuaternion, 0.1 * 60 * deltaTime);
     }
 
@@ -162,6 +176,11 @@ export class BananaGun extends ItemBase {
             }
             this.lastShotSomeoneTimestamp = Date.now() / 1000;
         }
+    }
+
+    // Method to set world position when used as WorldItem
+    public setWorldPosition(vector: THREE.Vector3) {
+        super.setWorldPosition(vector);
     }
 }
 

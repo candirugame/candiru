@@ -39,8 +39,8 @@ export class Inventory {
         for(const item of this.inventoryItems) {
             item.init();
         }
-        const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length);
-        banana.init();
+        const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length,ItemType.InventoryItem);
+      //  banana.init();
         this.inventoryItems.push(banana);
 
         for(let i = 0; i < 4; i++) {
