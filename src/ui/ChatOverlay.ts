@@ -220,8 +220,8 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        const latency = this.localPlayer.latency;
-        const health = this.localPlayer.health;
+        //const latency = this.localPlayer.latency;
+        //const health = this.localPlayer.health;
          const playerX = Math.floor(this.localPlayer.position.x * 100)/100;
          const playerY = Math.floor(this.localPlayer.position.y * 100)/100;
          const playerZ = Math.floor(this.localPlayer.position.z * 100)/100;
@@ -234,9 +234,10 @@ export class ChatOverlay {
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
 
+        linesToRender.push('Candiru ' + this.localPlayer.gameVersion);
         linesToRender.push(Math.floor(framerate) + 'FPS');
-        linesToRender.push(Math.floor(latency) + 'ms');
-        linesToRender.push('health: ' + health);
+        //linesToRender.push(Math.floor(latency) + 'ms');
+        //linesToRender.push('health: ' + health);
         linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
         linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
