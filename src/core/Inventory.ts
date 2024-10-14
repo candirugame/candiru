@@ -96,8 +96,12 @@ export class Inventory {
     public onFrame() {
         this.updateInventoryItems();
         const heldItemInput = new HeldItemInput(this.inputHandler.getLeftMouseDown(), this.inputHandler.getRightMouseDown(), false);
-        const downPressed = this.inputHandler.getKey('[') && !this.localPlayer.chatActive;
-        const upPressed = this.inputHandler.getKey(']') && !this.localPlayer.chatActive;
+        let downPressed = this.inputHandler.getKey('[') && !this.localPlayer.chatActive;
+        let upPressed = this.inputHandler.getKey(']') && !this.localPlayer.chatActive;
+        const lastScroll = this.inputHandler.getScrollClicks();
+        if(lastScroll > 0) upPressed = true;
+        if(lastScroll < 0) downPressed = true;
+
         if(!this.localPlayer.chatActive){
             const nums = ['1','2','3','4','5','6','7','8','9','0'];
             for(let i = 0; i < nums.length; i++) {
