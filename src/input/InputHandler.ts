@@ -42,6 +42,10 @@ export class InputHandler {
         document.addEventListener('mousedown', this.onMouseDown.bind(this));
         document.addEventListener('mouseup', this.onMouseUp.bind(this));
         document.addEventListener('mouseleave', this.onMouseUp.bind(this));
+        document.addEventListener('blur', this.deregisterAllKeys.bind(this), false);
+        document.addEventListener('pointerlockchange', this.deregisterAllKeys.bind(this), false);
+        document.addEventListener('visibilitychange', this.deregisterAllKeys.bind(this), false);
+
         document.addEventListener('click', () => {
             this.mouse.lock();
         });
@@ -136,6 +140,12 @@ export class InputHandler {
 
     public getRightMouseDown() {
         return this.rightMouseDown;
+    }
+
+    public deregisterAllKeys(){
+        const locked = document.pointerLockElement === document.body;
+        if(!locked)
+            this.keys = {};
     }
 
     private static approachZero(input: number, step: number): number {
