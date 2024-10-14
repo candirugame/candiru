@@ -38,14 +38,21 @@ app.post('/trigger-server-restart', (req, res) => {
 });
 
 let playerData = [];
-let worldItemData = [];
+let worldItemData = [new WorldItem(10, 0.2, 16, 1)];
+
+let lastPlayerTickTimestamp = Date.now()/1000;
+function serverTick(){
+    playersTick();
+    itemsTick();
+}
+setInterval(serverTick, 1000/15);
+
 
 let playerUpdateSinceLastEmit = false;
-let lastUpdateSent = 0;
-let lastTickTimestamp = Date.now()/1000;
-function serverTick(){
-    let timeSinceLastTick = Date.now()/1000 - lastTickTimestamp;
-    if(!playerUpdateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 5) return;
+let lastPlayerUpdateSentTimestamp = 0;
+function playersTick(){
+    const timeSinceLastTick = Date.now()/1000 - lastPlayerTickTimestamp;
+    if(!playerUpdateSinceLastEmit && Date.now()/1000 - lastPlayerUpdateSentTimestamp < 5) return;
 
     for(let i = 0; i<playerData.length; i++){
         if(playerData[i]['lastDamageTime'] === undefined)
@@ -59,10 +66,20 @@ function serverTick(){
 
     io.emit('remotePlayerData',playerData);
     playerUpdateSinceLastEmit = false;
-    lastUpdateSent = Date.now()/1000;
-    lastTickTimestamp = Date.now()/1000;
+    lastPlayerUpdateSentTimestamp = Date.now()/1000;
+    lastPlayerTickTimestamp = Date.now()/1000;
+
 }
-setInterval(serverTick, 1000/15);
+
+
+let itemUpdateSinceLastEmit = false;
+let lastItemUpdateSentTimestamp = 0;
+function itemsTick(){
+    if(!itemUpdateSinceLastEmit && Date.now()/1000 - lastItemUpdateSentTimestamp < 5) return;
+    io.emit('worldItemData',worldItemData);
+    itemUpdateSinceLastEmit = false;
+    lastItemUpdateSentTimestamp = Date.now()/1000;
+}
 
 function periodicCleanup() {
     let currentTime = Date.now() / 1000;
@@ -100,7 +117,11 @@ function periodicCleanup() {
 
 setInterval(periodicCleanup, 500);
 
-
+function WorldItem(x, y, z, itemType) {
+    this.vector = { x: x, y: y, z: z };
+    this.id = Math.floor(Math.random() * 100000) + 1;
+    this.itemType = itemType;
+}
 
 io.on('connection', (socket) => {
     socket.on('playerData',(data) => {

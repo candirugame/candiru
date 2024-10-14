@@ -7,6 +7,7 @@ export class Networking {
     private socket: Socket;
     private gameVersion: string;
     private remotePlayers;
+    private worldItems;
     private lastUploadedLocalPlayer;
     private lastUploadTime: number;
     private uploadWait: number;
@@ -26,6 +27,7 @@ export class Networking {
         this.fetchVersion();
 
         this.remotePlayers = [];
+        this.worldItems = [];
         this.lastUploadedLocalPlayer = null;
 
         this.lastUploadTime = Date.now()/1000;
@@ -56,7 +58,13 @@ export class Networking {
 
         this.socket.on('remotePlayerData', (data) => {
             this.remotePlayers = data;
-            this.processRemoteData();
+            this.processRemotePlayerData();
+        });
+
+        this.socket.on('worldItemData', (data) => {
+            this.worldItems = data;
+            console.log('worldItem update')
+            this.processWorldItemData();
         });
 
         this.socket.on('chatMsg', (data) => {
@@ -96,7 +104,11 @@ export class Networking {
         }
     }
 
-    private processRemoteData() {
+    public processWorldItemData() {
+
+    }
+
+    private processRemotePlayerData() {
         this.messagesBeingTyped = [];
         for (const remotePlayer of this.remotePlayers) {
             if (remotePlayer['id'] === this.localPlayer.id) {
