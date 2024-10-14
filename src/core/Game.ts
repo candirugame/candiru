@@ -19,7 +19,7 @@ export class Game {
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
 
-    constructor() {``
+    constructor() {
         this.localPlayer = new Player();
         this.chatOverlay = new ChatOverlay(this.localPlayer);
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
