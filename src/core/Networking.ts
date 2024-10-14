@@ -112,6 +112,7 @@ export class Networking {
                 }
                 if(remotePlayer['health'] < this.localPlayer.health) this.damagedTimestamp = Date.now()/1000;
                 this.localPlayer.health = remotePlayer['health']; //trust server to handle health
+                this.localPlayer.inventory = remotePlayer['inventory']; //trust server to handle inventory
                 continue;
             }
             if (remotePlayer['chatActive'])

@@ -262,7 +262,8 @@ function addPlayerToDataSafe(data,socket){
 
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
-            data['health'] = playerData[i]['health'];
+            data['health'] = playerData[i]['health']; //ignore health and inventory from client
+            data['inventory'] = playerData[i]['inventory'];
             data['lastDamageTime'] = playerData[i]['lastDamageTime'];
             playerData[i] = data;
             return;
@@ -270,7 +271,7 @@ function addPlayerToDataSafe(data,socket){
 
     //at this point the player data is valid but not already in the list (new player join)
     playerData.push(data);
-
+    data['inventory'] = [0,1,2,3];
 
     console.log('🟢 '+data['name'] +'('+ data.id +') joined');
     let nameToSend = data['name'];
@@ -306,6 +307,7 @@ const playerDataSchema = Joi.object({
     forcedAcknowledged: Joi.boolean().required(),
     updateTimestamp: Joi.number(),
     lastDamageTime: Joi.number(),
+    inventory: Joi.array().items(Joi.number()).required(),
 });
 
 const chatMsgSchema = Joi.object({
