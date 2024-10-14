@@ -17,7 +17,7 @@ const playerKickTime = 5; //kick players after 5 seconds of no ping
 const healthRegenRate = 3; //regen 3 health per second
 const healthRegenDelay = 5; //regen after 5 seconds of no damage
 const maxHealth = 100;
-const baseInventory = [1,0];
+const baseInventory = [1];
 
 
 
@@ -38,14 +38,14 @@ app.post('/trigger-server-restart', (req, res) => {
 });
 
 let playerData = [];
+let worldItemData = [];
 
-let updateSinceLastEmit = false;
+let playerUpdateSinceLastEmit = false;
 let lastUpdateSent = 0;
 let lastTickTimestamp = Date.now()/1000;
 function serverTick(){
     let timeSinceLastTick = Date.now()/1000 - lastTickTimestamp;
-    setTimeout(serverTick, 1000/15, '');
-    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 0.5) return;
+    if(!playerUpdateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 5) return;
 
     for(let i = 0; i<playerData.length; i++){
         if(playerData[i]['lastDamageTime'] === undefined)
@@ -58,11 +58,11 @@ function serverTick(){
     }
 
     io.emit('remotePlayerData',playerData);
-    updateSinceLastEmit = false;
+    playerUpdateSinceLastEmit = false;
     lastUpdateSent = Date.now()/1000;
     lastTickTimestamp = Date.now()/1000;
 }
-serverTick();
+setInterval(serverTick, 1000/15);
 
 function periodicCleanup() {
     let currentTime = Date.now() / 1000;
@@ -159,6 +159,7 @@ io.on('connection', (socket) => {
         //apply damage
         playerData[targetPlayerIndex].health -= data.damage;
         playerData[targetPlayerIndex]['lastDamageTime'] = Date.now()/1000;
+        playerUpdateSinceLastEmit = true;
 
 
         if(playerData[targetPlayerIndex].health <= 0){
@@ -168,7 +169,6 @@ io.on('connection', (socket) => {
             console.log('💔 '+nameOfKiller+' killed '+nameOfKilled);
             periodicCleanup();
         }
-
     });
 
     socket.on('disconnect', () => {
@@ -251,7 +251,7 @@ function addPlayerToDataSafe(data,socket){
 
 
 
-    updateSinceLastEmit = true;
+    playerUpdateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
     if(data['name'].length<1)
@@ -278,7 +278,6 @@ function addPlayerToDataSafe(data,socket){
     let nameToSend = data['name'];
     sendChatMessage(nameToSend + ' joined');
     //TODO: send player join message to chat
-
 }
 
 
@@ -310,6 +309,7 @@ const playerDataSchema = Joi.object({
     lastDamageTime: Joi.number(),
     inventory: Joi.array().items(Joi.number()).required(),
 });
+
 
 const chatMsgSchema = Joi.object({
     id: Joi.number().required(),
