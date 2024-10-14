@@ -21,7 +21,6 @@ export class BananaGun extends ItemBase {
     private networking: Networking;
     private lastInput: HeldItemInput = new HeldItemInput();
     private lastFired: number = 0;
-    private lastShotSomeoneTimestamp: number = 0;
     private addedToHandScene: boolean = false;
 
     constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
@@ -113,14 +112,17 @@ export class BananaGun extends ItemBase {
         } else {
             this.handPosition.lerp(hiddenPosition, 0.1 * 60 * deltaTime);
             this.object.position.copy(this.handPosition);
-            if (Date.now() / 1000 - this.shownInHandTimestamp > 3 && this.addedToHandScene) {
-                this.scene.remove(this.object);
-                this.addedToHandScene = false;
+            // Remove the object after it has slid out of view
+            if (this.handPosition.distanceTo(hiddenPosition) < 0.1) {
+                if (this.addedToHandScene) {
+                    this.scene.remove(this.object);
+                    this.addedToHandScene = false;
+                }
             }
         }
 
         // Update crosshair flashing based on last shot timestamp
-        this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.lastShotSomeoneTimestamp < 0.05;
+        this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.renderer.lastShotSomeoneTimestamp < 0.05;
     }
 
     private handleInput(input: HeldItemInput, deltaTime: number) {
@@ -158,12 +160,7 @@ export class BananaGun extends ItemBase {
     public hideInHand() {
         if (!this.shownInHand) return;
         this.shownInHand = false;
-        if (this.addedToHandScene && this.object) {
-            this.scene.remove(this.object);
-            this.addedToHandScene = false;
-        }
     }
-
     public itemDepleted(): boolean {
         return false;
     }
@@ -174,7 +171,7 @@ export class BananaGun extends ItemBase {
             for (const id of targets) {
                 this.networking.applyDamage(id, 10);
             }
-            this.lastShotSomeoneTimestamp = Date.now() / 1000;
+            this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
         }
     }
 

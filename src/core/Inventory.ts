@@ -21,6 +21,7 @@ export class Inventory {
     private camera: THREE.Camera;
     private lastInventoryTouchTime: number = 0;
     private localPlayer: Player;
+    private oldInventory: number[] = [];
 
     private oldDownPressed: boolean = false;
     private oldUpPressed: boolean = false;
@@ -36,24 +37,64 @@ export class Inventory {
     }
 
     public init() {
-        for(const item of this.inventoryItems) {
-            item.init();
-        }
-        const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length,ItemType.InventoryItem);
-      //  banana.init();
-        this.inventoryItems.push(banana);
-
-        for(let i = 0; i < 4; i++) {
-            const testItem = new ItemBase(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, this.inventoryItems.length);
-            this.inventoryItems.push(testItem);
-        }
+      //   for(const item of this.inventoryItems) {
+      //       item.init();
+      //   }
+      //   const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length,ItemType.InventoryItem);
+      // //  banana.init();
+      //   this.inventoryItems.push(banana);
+      //
+      //   for(let i = 0; i < 4; i++) {
+      //       const testItem = new ItemBase(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, this.inventoryItems.length);
+      //       this.inventoryItems.push(testItem);
+      //   }
 
 
 
 
     }
 
+    private updateInventoryItems(){
+        if(!this.arraysEqual(this.oldInventory, this.localPlayer.inventory)) {
+            for(let i = this.inventoryItems.length - 1; i >= 0; i--) {
+                this.inventoryItems[i].destroy();
+                this.inventoryItems.splice(i, 1);
+            }
+
+            //iterate through every number in localPlayer.inventory
+            for(let i = 0; i < this.localPlayer.inventory.length; i++) {
+                const num = this.localPlayer.inventory[i];
+                switch(num) {
+                    case 1: {
+                            const banana = new BananaGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+                            banana.init();
+                            this.inventoryItems.push(banana);
+                            break;
+                    }
+                    default: {
+                            const testItem = new ItemBase(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, i);
+                            this.inventoryItems.push(testItem);
+                            break;
+                    }
+                }
+
+            }
+        }
+
+        this.oldInventory = this.localPlayer.inventory;
+    }
+
+    public arraysEqual(a: number[], b: number[]) {
+        if (a === b) return true;
+        if (a == null || b == null) return false;
+        if (a.length != b.length) return false;
+        for (let i = 0; i < a.length; ++i)
+            if (a[i] !== b[i]) return false;
+        return true;
+    }
+
     public onFrame() {
+        this.updateInventoryItems();
         const heldItemInput = new HeldItemInput(this.inputHandler.getLeftMouseDown(), this.inputHandler.getRightMouseDown(), false);
         const downPressed = this.inputHandler.getKey('[') && !this.localPlayer.chatActive;
         const upPressed = this.inputHandler.getKey(']') && !this.localPlayer.chatActive;

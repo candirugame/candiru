@@ -27,6 +27,7 @@ export class Renderer {
     private raycaster: THREE.Raycaster;
 
     public crosshairIsFlashing: boolean;
+    public lastShotSomeoneTimestamp: number;
     private healthIndicatorScene: THREE.Scene;
     private healthIndicatorCamera: THREE.PerspectiveCamera;
     private screenPixelsInGamePixel: number;

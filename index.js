@@ -17,6 +17,7 @@ const playerKickTime = 5; //kick players after 5 seconds of no ping
 const healthRegenRate = 3; //regen 3 health per second
 const healthRegenDelay = 5; //regen after 5 seconds of no damage
 const maxHealth = 100;
+const baseInventory = [1,0];
 
 
 
@@ -271,7 +272,7 @@ function addPlayerToDataSafe(data,socket){
 
     //at this point the player data is valid but not already in the list (new player join)
     playerData.push(data);
-    data['inventory'] = [0,1,2,3];
+    data['inventory'] = baseInventory.slice();
 
     console.log('🟢 '+data['name'] +'('+ data.id +') joined');
     let nameToSend = data['name'];

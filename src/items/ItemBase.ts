@@ -130,6 +130,10 @@ export class ItemBase {
     }
 
 
+    public destroy(){
+        this.scene.remove(this.object);
+        this.inventoryMenuScene.remove(this.inventoryMenuObject);
+    }
 
 
 
