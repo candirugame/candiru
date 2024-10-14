@@ -19,7 +19,7 @@ export class Game {
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
 
-    constructor() {
+    constructor() {``
         this.localPlayer = new Player();
         this.chatOverlay = new ChatOverlay(this.localPlayer);
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
@@ -30,7 +30,7 @@ export class Game {
         this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new MapLoader('maps/test1.glb', this.renderer, this.collisionManager);
+        this.map = new MapLoader('maps/realmap1.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
     }
 
