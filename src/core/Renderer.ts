@@ -67,7 +67,6 @@ export class Renderer {
             'models/simplified_possum.glb',
             (gltf) => {
                 this.possumGLTFScene = gltf.scene;
-                this.remotePlayersScene.add(this.possumGLTFScene);
             },
             undefined,
             () => { console.log('possum loading error'); }
