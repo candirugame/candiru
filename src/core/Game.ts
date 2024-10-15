@@ -7,9 +7,6 @@ import {CollisionManager} from '../input/CollisionManager';
 import {Inventory} from './Inventory';
 import {HealthIndicator} from '../ui/HealthIndicator';
 import {MapLoader} from './MapLoader';
-import {ItemBase, ItemType} from "../items/ItemBase";
-import * as THREE from 'three';
-import {BananaGun} from "../items/BananaGun";
 import {RemoteItemRenderer} from "./RemoteItemRenderer";
 
 export class Game {
@@ -23,10 +20,6 @@ export class Game {
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
     private remoteItemRenderer: RemoteItemRenderer;
-
-
-    // private testWorldItem: ItemBase;
-    // private testWorldItem2: ItemBase;
 
 
     constructor() {
@@ -51,16 +44,6 @@ export class Game {
         this.inventoryManager.init();
         this.healthIndicator.init();
 
-        // //TODO: for debugging- pls remove this
-        // this.testWorldItem = new BananaGun(this.renderer, this.networking, 0,ItemType.WorldItem);
-        // this.testWorldItem.setWorldPosition(new THREE.Vector3(11,0.25,10));
-        //
-        // this.testWorldItem2 = new ItemBase(ItemType.WorldItem, this.renderer.getEntityScene(), 0);
-        // this.testWorldItem2.setWorldPosition(new THREE.Vector3(10,0.25,10));
-        //
-
-
-
     }
 
     animate() {
@@ -72,10 +55,6 @@ export class Game {
         this.healthIndicator.onFrame();
         this.renderer.onFrame(this.localPlayer);
 
-        // this.testWorldItem.onFrame();
-        // this.testWorldItem2.onFrame();
-
-        this.remoteItemRenderer.update();
         this.remoteItemRenderer.onFrame();
         requestAnimationFrame(this.animate.bind(this));
     }

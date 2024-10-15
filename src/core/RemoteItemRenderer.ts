@@ -71,7 +71,7 @@ export class RemoteItemRenderer {
     }
 
     public onFrame() {
-        // Call onFrame on each item
+        this.update();
         this.itemsToRender.forEach(itemEntry => {
             itemEntry.item.onFrame(null, null); // Passing null for input and selectedIndex
         });

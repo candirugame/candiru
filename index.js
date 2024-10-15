@@ -84,17 +84,29 @@ function itemsTick(){
     lastItemUpdateSentTimestamp = Date.now()/1000;
 }
 
-function checkForPickups(){
-    for(let i = 0; i<playerData.length; i++){
-        for(let j = 0; j<worldItemData.length; j++){
-            let distance = Math.sqrt(Math.pow(playerData[i].position.x - worldItemData[j].vector.x,2) + Math.pow(playerData[i].position.y - worldItemData[j].vector.y,2) + Math.pow(playerData[i].position.z - worldItemData[j].vector.z,2));
-            if(distance < 1){
-                playerData[i].inventory.push(worldItemData[j].itemType);
-                worldItemData.splice(j,1);
+function checkForPickups() {
+    for (let i = 0; i < playerData.length; i++) {
+        let itemIndex = worldItemCloseToPoint(playerData[i].position.x, playerData[i].position.y, playerData[i].position.z, 0.5);
+        if (itemIndex !== -1) {
+            let item = worldItemData[itemIndex];
+            if (item.itemType === 1) {
+                playerData[i].inventory.push(1);
+                worldItemData.splice(itemIndex, 1);
                 itemUpdateSinceLastEmit = true;
-            }
+                console.log('🍌 ' + playerData[i]['name'] + ' picked up banana!');
+                sendChatMessage(playerData[i]['name'] + ' picked up banana!');}
         }
     }
+}
+
+function worldItemCloseToPoint(x,y,z,dist){
+    //return index of item if close enough, -1 if not
+    for(let i = 0; i<worldItemData.length; i++){
+        let distance = Math.sqrt(Math.pow(x - worldItemData[i].vector.x,2) + Math.pow(y - worldItemData[i].vector.y,2) + Math.pow(z - worldItemData[i].vector.z,2));
+        if(distance < dist)
+            return i;
+    }
+    return -1;
 }
 
 function periodicCleanup() {

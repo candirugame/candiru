@@ -63,7 +63,6 @@ export class Networking {
 
         this.socket.on('worldItemData', (data) => {
             this.worldItems = data;
-            console.log('worldItem update')
             this.processWorldItemData();
         });
 
