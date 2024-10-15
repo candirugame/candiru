@@ -83,9 +83,9 @@ export class Renderer {
         this.heldItemScene.add(ambientLight2);
 
         // Fog settings
-        this.scene.fog = new THREE.FogExp2('#111111', 0.1);
-        this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.1);
-        this.healthIndicatorScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to health indicator scene
+        this.scene.fog = new THREE.FogExp2('#111111', 0.05);
+        this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.05);
+        this.healthIndicatorScene.fog = new THREE.FogExp2('#111111', 0.05); // Add fog to health indicator scene
 
         this.framerate = 0;
         this.framesInFramerateSample = 30;
