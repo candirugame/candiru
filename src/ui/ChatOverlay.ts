@@ -241,7 +241,7 @@ export class ChatOverlay {
         linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
         linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
         linesToRender.push('inv: ' + this.localPlayer.inventory);
-        linesToRender.push('worldItems: ' + this.networking.getWorldItemsData());
+        linesToRender.push('worldItems: ' + this.networking.getWorldItemsData().length);
 
         for (let i = 0; i < linesToRender.length; i++)
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);

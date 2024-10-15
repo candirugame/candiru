@@ -17,11 +17,11 @@ const playerKickTime = 5; //kick players after 5 seconds of no ping
 const healthRegenRate = 3; //regen 3 health per second
 const healthRegenDelay = 5; //regen after 5 seconds of no damage
 const maxHealth = 100;
-const baseInventory = [1];
+const baseInventory = [];
 
 
 let playerData = [];
-let worldItemData = [new WorldItem(10, 0.25, 16, 1)];
+let worldItemData = [new WorldItem(6.12, 0.25, 3.05, 1)];
 
 
 let SERVER_VERSION = '';
@@ -77,10 +77,24 @@ function playersTick(){
 let itemUpdateSinceLastEmit = false;
 let lastItemUpdateSentTimestamp = 0;
 function itemsTick(){
+    checkForPickups();
     if(!itemUpdateSinceLastEmit && Date.now()/1000 - lastItemUpdateSentTimestamp < 5) return;
     io.emit('worldItemData',worldItemData);
     itemUpdateSinceLastEmit = false;
     lastItemUpdateSentTimestamp = Date.now()/1000;
+}
+
+function checkForPickups(){
+    for(let i = 0; i<playerData.length; i++){
+        for(let j = 0; j<worldItemData.length; j++){
+            let distance = Math.sqrt(Math.pow(playerData[i].position.x - worldItemData[j].vector.x,2) + Math.pow(playerData[i].position.y - worldItemData[j].vector.y,2) + Math.pow(playerData[i].position.z - worldItemData[j].vector.z,2));
+            if(distance < 1){
+                playerData[i].inventory.push(worldItemData[j].itemType);
+                worldItemData.splice(j,1);
+                itemUpdateSinceLastEmit = true;
+            }
+        }
+    }
 }
 
 function periodicCleanup() {
@@ -300,6 +314,7 @@ function addPlayerToDataSafe(data,socket){
     console.log('🟢 '+data['name'] +'('+ data.id +') joined');
     let nameToSend = data['name'];
     sendChatMessage(nameToSend + ' joined');
+    itemUpdateSinceLastEmit = true;
     //TODO: send player join message to chat
 }
 
