@@ -176,4 +176,9 @@ export class Networking {
         };
         this.socket.emit('applyDamage',damageRequest);
     }
+
+    public getWorldItemsData() {
+        return this.worldItems;
+    }
+
 }

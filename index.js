@@ -20,6 +20,9 @@ const maxHealth = 100;
 const baseInventory = [1];
 
 
+let playerData = [];
+let worldItemData = [new WorldItem(10, 0.25, 16, 1)];
+
 
 let SERVER_VERSION = '';
 try {
@@ -37,8 +40,7 @@ app.post('/trigger-server-restart', (req, res) => {
     res.send('Server restart message sent.');
 });
 
-let playerData = [];
-let worldItemData = [new WorldItem(10, 0.2, 16, 1)];
+
 
 let lastPlayerTickTimestamp = Date.now()/1000;
 function serverTick(){
