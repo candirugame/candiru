@@ -81,7 +81,7 @@ function periodicCleanup() {
             // sendChatMessage(nameToSend+' died');
             playerData[i].health = 100;
             playerData[i].gravity = 0;
-            playerData[i].position = {x:6,y:0.1016,z:12}; //6, 0.1016, 12
+            playerData[i].position = {x:0,y:2,z:0}; //0, 2, 0
             playerData[i].velocity = {x:0,y:0,z:0};
             playerData[i].lookQuaternion = [0,0,0,1];
             playerData[i].forced = true;

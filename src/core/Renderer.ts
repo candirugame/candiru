@@ -67,7 +67,6 @@ export class Renderer {
             'models/simplified_possum.glb',
             (gltf) => {
                 this.possumGLTFScene = gltf.scene;
-                this.remotePlayersScene.add(this.possumGLTFScene);
             },
             undefined,
             () => { console.log('possum loading error'); }
@@ -105,10 +104,10 @@ export class Renderer {
         this.remotePlayersScene.add(ambientLight3); // Add ambient light to remote players scene
 
         // Fog settings
-        this.scene.fog = new THREE.FogExp2('#111111', 0.1);
-        this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.1);
-        this.remotePlayersScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
-        this.healthIndicatorScene.fog = new THREE.FogExp2('#111111', 0.1); // Add fog to health indicator scene
+        this.scene.fog = new THREE.FogExp2('#111111', 0.05);
+        this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.05);
+        this.remotePlayersScene.fog = new THREE.FogExp2('#111111', 0.05); // Add fog to remote players scene
+        this.healthIndicatorScene.fog = new THREE.FogExp2('#111111', 0.05); // Add fog to health indicator scene
 
         this.framerate = 0;
         this.framesInFramerateSample = 30;
