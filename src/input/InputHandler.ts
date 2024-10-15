@@ -16,6 +16,7 @@ export class InputHandler {
     private inputZ: number;
     public  jump;
     public prevVelocity: THREE.Vector3;
+    private scrollClicksSinceLastCheck: number = 0;
 
     constructor(renderer: Renderer, localPlayer: Player) {
         this.renderer = renderer;
@@ -50,9 +51,24 @@ export class InputHandler {
             this.mouse.lock();
         });
 
-        document.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
-        });
+        document.addEventListener('contextmenu', (event) => {event.preventDefault();});
+
+        document.addEventListener('wheel', this.processScroll.bind(this));
+
+    }
+
+    private processScroll(e) {
+        if(e.deltaY >= 4)
+            this.scrollClicksSinceLastCheck++;
+        if(e.deltaY <= -4)
+            this.scrollClicksSinceLastCheck--;
+    }
+
+    public getScrollClicks() {
+        const clicks = this.scrollClicksSinceLastCheck;
+        this.scrollClicksSinceLastCheck = 0;
+        return clicks;
+
     }
 
     public handleInputs() {

@@ -1,12 +1,13 @@
-import { Player } from './Player';
-import { Renderer } from './Renderer';
-import { ChatOverlay } from '../ui/ChatOverlay';
-import { InputHandler } from '../input/InputHandler';
-import { Networking } from './Networking';
-import { CollisionManager } from '../input/CollisionManager';
-import { Inventory } from './Inventory';
-import { HealthIndicator } from '../ui/HealthIndicator';
-import { MapLoader } from './MapLoader';
+import {Player} from './Player';
+import {Renderer} from './Renderer';
+import {ChatOverlay} from '../ui/ChatOverlay';
+import {InputHandler} from '../input/InputHandler';
+import {Networking} from './Networking';
+import {CollisionManager} from '../input/CollisionManager';
+import {Inventory} from './Inventory';
+import {HealthIndicator} from '../ui/HealthIndicator';
+import {MapLoader} from './MapLoader';
+import {RemoteItemRenderer} from "./RemoteItemRenderer";
 
 export class Game {
     private localPlayer: Player;
@@ -18,6 +19,8 @@ export class Game {
     private inventoryManager: Inventory;
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
+    private remoteItemRenderer: RemoteItemRenderer;
+
 
     constructor() {
         this.localPlayer = new Player();
@@ -32,12 +35,15 @@ export class Game {
         this.chatOverlay.setInputHandler(this.inputHandler);
         this.map = new MapLoader('maps/realmap1.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
+        this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
+
     }
 
     init() {
         this.collisionManager.init();
         this.inventoryManager.init();
         this.healthIndicator.init();
+
     }
 
     animate() {
@@ -48,6 +54,8 @@ export class Game {
         this.inventoryManager.onFrame();
         this.healthIndicator.onFrame();
         this.renderer.onFrame(this.localPlayer);
+
+        this.remoteItemRenderer.onFrame();
         requestAnimationFrame(this.animate.bind(this));
     }
 

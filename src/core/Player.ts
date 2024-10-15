@@ -17,6 +17,7 @@ export class Player {
     public health: number;
     public forced: boolean;
     public forcedAcknowledged: boolean;
+    public inventory: number[];
 
     constructor() {
         this.position = new THREE.Vector3(0, 2, 0);
@@ -35,6 +36,7 @@ export class Player {
         this.health = 100;
         this.forced = false;
         this.forcedAcknowledged = false;
+        this.inventory = [];
 
         if (this.name === '') {
             const storedName = localStorage.getItem('name');

@@ -7,6 +7,7 @@ export class Networking {
     private socket: Socket;
     private gameVersion: string;
     private remotePlayers;
+    private worldItems;
     private lastUploadedLocalPlayer;
     private lastUploadTime: number;
     private uploadWait: number;
@@ -26,6 +27,7 @@ export class Networking {
         this.fetchVersion();
 
         this.remotePlayers = [];
+        this.worldItems = [];
         this.lastUploadedLocalPlayer = null;
 
         this.lastUploadTime = Date.now()/1000;
@@ -56,7 +58,12 @@ export class Networking {
 
         this.socket.on('remotePlayerData', (data) => {
             this.remotePlayers = data;
-            this.processRemoteData();
+            this.processRemotePlayerData();
+        });
+
+        this.socket.on('worldItemData', (data) => {
+            this.worldItems = data;
+            this.processWorldItemData();
         });
 
         this.socket.on('chatMsg', (data) => {
@@ -79,7 +86,7 @@ export class Networking {
         this.socket.emit('playerData', this.localPlayer);
         this.lastUploadedLocalPlayer = {
             position: this.localPlayer.position.clone(),
-            quaternion: this.localPlayer.lookQuaternion.clone(),
+            quaternion: this.localPlayer.quaternion.clone(),
             chatMsg: this.localPlayer.chatMsg,
             velocity: this.localPlayer.velocity.clone(),
         };
@@ -96,7 +103,11 @@ export class Networking {
         }
     }
 
-    private processRemoteData() {
+    public processWorldItemData() {
+
+    }
+
+    private processRemotePlayerData() {
         this.messagesBeingTyped = [];
         for (const remotePlayer of this.remotePlayers) {
             if (remotePlayer['id'] === this.localPlayer.id) {
@@ -112,6 +123,7 @@ export class Networking {
                 }
                 if(remotePlayer['health'] < this.localPlayer.health) this.damagedTimestamp = Date.now()/1000;
                 this.localPlayer.health = remotePlayer['health']; //trust server to handle health
+                this.localPlayer.inventory = remotePlayer['inventory']; //trust server to handle inventory
                 continue;
             }
             if (remotePlayer['chatActive'])
@@ -163,4 +175,9 @@ export class Networking {
         };
         this.socket.emit('applyDamage',damageRequest);
     }
+
+    public getWorldItemsData() {
+        return this.worldItems;
+    }
+
 }

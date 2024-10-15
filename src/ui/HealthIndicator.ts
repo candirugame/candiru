@@ -1,4 +1,3 @@
-import { ItemBase } from '../items/ItemBase';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
@@ -8,7 +7,7 @@ import {Player} from "../core/Player";
 
 const clock = new THREE.Clock();
 
-export class HealthIndicator extends ItemBase {
+export class HealthIndicator {
     private scene: THREE.Scene;
     private possumObject: THREE.Object3D;
     private sceneAdded: boolean = false;
@@ -23,7 +22,6 @@ export class HealthIndicator extends ItemBase {
     private lightRGBI:number[] = [0,0,0,0];
 
     constructor(renderer: Renderer, localPlayer:Player) {
-        super();
         this.renderer = renderer;
         this.localPlayer = localPlayer;
         this.scene = renderer.getHealthIndicatorScene();

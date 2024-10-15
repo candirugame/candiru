@@ -1,35 +1,35 @@
-import { ItemBase } from './ItemBase';
+import { ItemBase, ItemType } from './ItemBase';
 import { HeldItemInput } from '../input/HeldItemInput';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import {Renderer} from "../core/Renderer";
-import {Networking} from "../core/Networking";
+import { Renderer } from '../core/Renderer';
+import { Networking } from '../core/Networking';
 
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;
+const showInHandDelay = 0.1;
+
+const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
+const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
+const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
+const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
+const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class BananaGun extends ItemBase {
-    private handScene: THREE.Scene;
-    private heldItemObject: THREE.Object3D;
-    private worldObject: THREE.Object3D;
-    private inventoryObject: THREE.Object3D;
-    private sceneAdded: boolean = false;
-    private hiddenInHand: boolean = true;
+    private renderer: Renderer;
+    private networking: Networking;
     private lastInput: HeldItemInput = new HeldItemInput();
     private lastFired: number = 0;
-    private hiddenTimestamp: number = 0;
-    private renderer:Renderer;
-    private lastShotSomeoneTimestamp:number = 0;
-    private networking:Networking;
-    private clock = new THREE.Clock();
-    private angleAccum = 0;
+    private addedToHandScene: boolean = false;
 
-    constructor(renderer: Renderer, networking:Networking, index: number) {
-        super(index);
+    constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+        if(itemType === ItemType.WorldItem)
+            super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
+        if(itemType === ItemType.InventoryItem)
+            super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
         this.renderer = renderer;
         this.networking = networking;
-        this.handScene = renderer.getHeldItemScene();
     }
 
     public init() {
@@ -40,88 +40,107 @@ export class BananaGun extends ItemBase {
         loader.load(
             'models/simplified_banana_1.glb',
             (gltf) => {
-                this.heldItemObject = gltf.scene;
-                this.heldItemObject.traverse((child) => {
-                    if ((child as THREE.Mesh).isMesh) {
-                        child.renderOrder = 999;
-                        (child as THREE.Mesh).material.depthTest = false;
-                    }
-                });
-                this.inventoryObject = this.heldItemObject.clone();
-                this.worldObject = this.heldItemObject.clone();
+                this.object = gltf.scene;
+                // Adjust render order and depthTest based on itemType
+                if (this.itemType === ItemType.InventoryItem) {
+                    this.object.traverse((child) => {
+                        if ((child as THREE.Mesh).isMesh) {
+                            child.renderOrder = 999;
+                            (child as THREE.Mesh).material.depthTest = false;
+                        }
+                    });
+                }
+                this.inventoryMenuObject = this.object.clone();
+                this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+
+                if(this.itemType === ItemType.WorldItem)
+                    this.object.scale.set(0.45, 0.45, 0.45);
             },
             undefined,
             () => {
-                console.log('banana loading error');
+                console.log('Banana model loading error');
             }
         );
     }
 
     public onFrame(input: HeldItemInput, selectedIndex: number) {
-        if (!this.heldItemObject) return;
-        if (!this.sceneAdded) {
-            this.handScene.add(this.heldItemObject);
-            this.renderer.getInventoryMenuScene().add(this.inventoryObject);
-            this.inventoryObject.scale.set(0.8, 0.8, 0.8);
-            this.inventoryObject.position.set(0, this.getIndex(), 0);
-            this.sceneAdded = true;
-        }
+        if (!this.object) return;
         const deltaTime = this.clock.getDelta();
-
-
-       this.handRenderingStuff(input, deltaTime);
-       this.inventoryRenderingStuff(selectedIndex, deltaTime);
-
-
-    }
-
-    public inventoryRenderingStuff(selectedIndex:number, deltaTime:number){
+        this.timeAccum += deltaTime;
         this.angleAccum += deltaTime;
-        if(this.index === selectedIndex){
-            this.showInHand();
-            const targetQuaternion = inventoryQuaternionBase.clone();
-            rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0, 1, 0), this.angleAccum *8);
-            moveTowardsRot(this.inventoryObject.quaternion, targetQuaternion, 0.1 * 60 * deltaTime);
-        }
-        else{
-            this.hideInHand();
-            moveTowardsRot(this.inventoryObject.quaternion, inventoryQuaternionBase, 0.1 * 60 * deltaTime);
-        }
 
+        if (this.itemType === ItemType.WorldItem) {
+            this.worldOnFrame(deltaTime);
+        } else if (this.itemType === ItemType.InventoryItem) {
+            this.inventoryOnFrame(deltaTime, selectedIndex);
+            this.handOnFrame(deltaTime, input);
+        }
     }
 
-    public handRenderingStuff(input:HeldItemInput, deltaTime:number){
-        if (!this.hiddenInHand) {
-            this.handleInput(input, deltaTime);
+    // No need to override worldOnFrame if default behavior is sufficient
+    // If specific behavior is needed, you can override it here
+
+    public inventoryOnFrame(deltaTime: number, selectedIndex: number) {
+        if (!this.addedToInventoryItemScenes) {
+            this.inventoryMenuScene.add(this.inventoryMenuObject);
+            this.addedToInventoryItemScenes = true;
         }
 
-        if (this.hiddenInHand && this.sceneAdded) {
-            moveTowardsPos(this.heldItemObject.position, hiddenPosition, 0.1 * deltaTime * 60);
-            if (Date.now() / 1000 - this.hiddenTimestamp > 3) {
-                this.handScene.remove(this.heldItemObject);
-                this.sceneAdded = false;
+        this.angleAccum += deltaTime;
+        this.inventoryMenuObject.position.set(0, this.index, 0);
+
+        const targetQuaternion = inventoryQuaternionBase.clone();
+        if (this.index === selectedIndex) {
+            rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0, 1, 0), this.angleAccum * 4);
+            this.showInHand();
+        } else {
+            this.hideInHand();
+        }
+        this.inventoryMenuObject.quaternion.slerp(targetQuaternion, 0.1 * 60 * deltaTime);
+    }
+
+    public handOnFrame(deltaTime: number, input: HeldItemInput) {
+        if (!this.object) return;
+
+        if (this.shownInHand && !this.addedToHandScene) {
+            this.scene.add(this.object);
+            this.addedToHandScene = true;
+        }
+
+        if (this.shownInHand && Date.now() / 1000 - this.shownInHandTimestamp > showInHandDelay) {
+            this.handleInput(input, deltaTime);
+        } else {
+            this.handPosition.lerp(hiddenPosition, 0.1 * 60 * deltaTime);
+            this.object.position.copy(this.handPosition);
+            // Remove the object after it has slid out of view
+            if (this.handPosition.distanceTo(hiddenPosition) < 0.1) {
+                if (this.addedToHandScene) {
+                    this.scene.remove(this.object);
+                    this.addedToHandScene = false;
+                }
             }
         }
 
-        this.renderer.crosshairIsFlashing = Date.now()/1000 - this.lastShotSomeoneTimestamp <0.05;
-
+        // Update crosshair flashing based on last shot timestamp
+        this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.renderer.lastShotSomeoneTimestamp < 0.05;
     }
 
     private handleInput(input: HeldItemInput, deltaTime: number) {
-        if (input.rightClick) {
-            moveTowardsPos(this.heldItemObject.position, scopedPosition, 0.3 * deltaTime * 60);
-        } else {
-            moveTowardsPos(this.heldItemObject.position, unscopedPosition, 0.1 * deltaTime * 60);
-        }
+        if (input.rightClick)
+            moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
+        else
+            moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
 
-        moveTowardsRot(this.heldItemObject.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
+        this.object.position.copy(this.handPosition);
+
+        moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
 
         if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
-            if (input.leftClick && Date.now() / 1000 - this.lastFired > firingDelay) {
+            if (Date.now() / 1000 - this.lastFired > firingDelay) {
                 this.lastFired = Date.now() / 1000;
                 this.shootBanana();
-                this.heldItemObject.position.add(new THREE.Vector3(0, 0, 0.6));
-                rotateAroundWorldAxis(this.heldItemObject.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
+                this.handPosition.add(new THREE.Vector3(0, 0, 0.6));
+                rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
             }
         }
 
@@ -129,34 +148,38 @@ export class BananaGun extends ItemBase {
     }
 
     public showInHand() {
-        if (!this.hiddenInHand) return;
-        this.hiddenInHand = false;
+        if (this.shownInHand) return;
+        this.shownInHand = true;
+        this.shownInHandTimestamp = Date.now() / 1000;
+        if (!this.addedToHandScene && this.object) {
+            this.scene.add(this.object);
+            this.addedToHandScene = true;
+        }
     }
 
     public hideInHand() {
-        if (this.hiddenInHand) return;
-        this.hiddenInHand = true;
-        this.hiddenTimestamp = Date.now() / 1000;
+        if (!this.shownInHand) return;
+        this.shownInHand = false;
     }
-
     public itemDepleted(): boolean {
         return false;
     }
 
-     shootBanana(){
-        if(this.renderer.getRemotePlayerIDsInCrosshair().length>0){
-            for(const id of this.renderer.getRemotePlayerIDsInCrosshair()){
+    private shootBanana() {
+        const targets = this.renderer.getRemotePlayerIDsInCrosshair();
+        if (targets.length > 0) {
+            for (const id of targets) {
                 this.networking.applyDamage(id, 10);
             }
-            this.lastShotSomeoneTimestamp = Date.now()/1000;
+            this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
         }
-
-
     }
 
+    // Method to set world position when used as WorldItem
+    public setWorldPosition(vector: THREE.Vector3) {
+        super.setWorldPosition(vector);
+    }
 }
-
-
 
 function rotateAroundWorldAxis(source: THREE.Quaternion, axis: THREE.Vector3, angle: number) {
     const rotationQuat = new THREE.Quaternion().setFromAxisAngle(axis, angle);
@@ -170,10 +193,3 @@ function moveTowardsPos(source: THREE.Vector3, target: THREE.Vector3, frac: numb
 function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac: number) {
     source.slerp(target, frac);
 }
-
-const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
-const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
-const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
-const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
-
-const inventoryQuaternionBase = new THREE.Quaternion(0,0,0,1);

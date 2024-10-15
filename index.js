@@ -17,7 +17,11 @@ const playerKickTime = 5; //kick players after 5 seconds of no ping
 const healthRegenRate = 3; //regen 3 health per second
 const healthRegenDelay = 5; //regen after 5 seconds of no damage
 const maxHealth = 100;
+const baseInventory = [1];
 
+
+let playerData = [];
+let worldItemData = [new WorldItem(6.12, 0.25, 3.05, 1)];
 
 
 let SERVER_VERSION = '';
@@ -36,15 +40,21 @@ app.post('/trigger-server-restart', (req, res) => {
     res.send('Server restart message sent.');
 });
 
-let playerData = [];
 
-let updateSinceLastEmit = false;
-let lastUpdateSent = 0;
-let lastTickTimestamp = Date.now()/1000;
+
+let lastPlayerTickTimestamp = Date.now()/1000;
 function serverTick(){
-    let timeSinceLastTick = Date.now()/1000 - lastTickTimestamp;
-    setTimeout(serverTick, 1000/15, '');
-    if(!updateSinceLastEmit && Date.now()/1000 - lastUpdateSent < 0.5) return;
+    playersTick();
+    itemsTick();
+}
+setInterval(serverTick, 1000/15);
+
+
+let playerUpdateSinceLastEmit = false;
+let lastPlayerUpdateSentTimestamp = 0;
+function playersTick(){
+    const timeSinceLastTick = Date.now()/1000 - lastPlayerTickTimestamp;
+    if(!playerUpdateSinceLastEmit && Date.now()/1000 - lastPlayerUpdateSentTimestamp < 5) return;
 
     for(let i = 0; i<playerData.length; i++){
         if(playerData[i]['lastDamageTime'] === undefined)
@@ -57,11 +67,47 @@ function serverTick(){
     }
 
     io.emit('remotePlayerData',playerData);
-    updateSinceLastEmit = false;
-    lastUpdateSent = Date.now()/1000;
-    lastTickTimestamp = Date.now()/1000;
+    playerUpdateSinceLastEmit = false;
+    lastPlayerUpdateSentTimestamp = Date.now()/1000;
+    lastPlayerTickTimestamp = Date.now()/1000;
+
 }
-serverTick();
+
+
+let itemUpdateSinceLastEmit = false;
+let lastItemUpdateSentTimestamp = 0;
+function itemsTick(){
+    checkForPickups();
+    if(!itemUpdateSinceLastEmit && Date.now()/1000 - lastItemUpdateSentTimestamp < 5) return;
+    io.emit('worldItemData',worldItemData);
+    itemUpdateSinceLastEmit = false;
+    lastItemUpdateSentTimestamp = Date.now()/1000;
+}
+
+function checkForPickups() {
+    for (let i = 0; i < playerData.length; i++) {
+        let itemIndex = worldItemCloseToPoint(playerData[i].position.x, playerData[i].position.y, playerData[i].position.z, 0.5);
+        if (itemIndex !== -1) {
+            let item = worldItemData[itemIndex];
+            if (item.itemType === 1) {
+                playerData[i].inventory.push(1);
+                worldItemData.splice(itemIndex, 1);
+                itemUpdateSinceLastEmit = true;
+                console.log('🍌 ' + playerData[i]['name'] + ' picked up banana!');
+                sendChatMessage(playerData[i]['name'] + ' picked up banana!');}
+        }
+    }
+}
+
+function worldItemCloseToPoint(x,y,z,dist){
+    //return index of item if close enough, -1 if not
+    for(let i = 0; i<worldItemData.length; i++){
+        let distance = Math.sqrt(Math.pow(x - worldItemData[i].vector.x,2) + Math.pow(y - worldItemData[i].vector.y,2) + Math.pow(z - worldItemData[i].vector.z,2));
+        if(distance < dist)
+            return i;
+    }
+    return -1;
+}
 
 function periodicCleanup() {
     let currentTime = Date.now() / 1000;
@@ -99,7 +145,11 @@ function periodicCleanup() {
 
 setInterval(periodicCleanup, 500);
 
-
+function WorldItem(x, y, z, itemType) {
+    this.vector = { x: x, y: y, z: z };
+    this.id = Math.floor(Math.random() * 100000) + 1;
+    this.itemType = itemType;
+}
 
 io.on('connection', (socket) => {
     socket.on('playerData',(data) => {
@@ -158,6 +208,7 @@ io.on('connection', (socket) => {
         //apply damage
         playerData[targetPlayerIndex].health -= data.damage;
         playerData[targetPlayerIndex]['lastDamageTime'] = Date.now()/1000;
+        playerUpdateSinceLastEmit = true;
 
 
         if(playerData[targetPlayerIndex].health <= 0){
@@ -167,7 +218,6 @@ io.on('connection', (socket) => {
             console.log('💔 '+nameOfKiller+' killed '+nameOfKilled);
             periodicCleanup();
         }
-
     });
 
     socket.on('disconnect', () => {
@@ -250,7 +300,7 @@ function addPlayerToDataSafe(data,socket){
 
 
 
-    updateSinceLastEmit = true;
+    playerUpdateSinceLastEmit = true;
     data['updateTimestamp'] = Date.now() / 1000;
 
     if(data['name'].length<1)
@@ -262,7 +312,8 @@ function addPlayerToDataSafe(data,socket){
 
     for(let i = 0; i<playerData.length; i++)
         if(playerData[i]['id'] === data.id){
-            data['health'] = playerData[i]['health'];
+            data['health'] = playerData[i]['health']; //ignore health and inventory from client
+            data['inventory'] = playerData[i]['inventory'];
             data['lastDamageTime'] = playerData[i]['lastDamageTime'];
             playerData[i] = data;
             return;
@@ -270,13 +321,13 @@ function addPlayerToDataSafe(data,socket){
 
     //at this point the player data is valid but not already in the list (new player join)
     playerData.push(data);
-
+    data['inventory'] = baseInventory.slice();
 
     console.log('🟢 '+data['name'] +'('+ data.id +') joined');
     let nameToSend = data['name'];
     sendChatMessage(nameToSend + ' joined');
+    itemUpdateSinceLastEmit = true;
     //TODO: send player join message to chat
-
 }
 
 
@@ -306,7 +357,9 @@ const playerDataSchema = Joi.object({
     forcedAcknowledged: Joi.boolean().required(),
     updateTimestamp: Joi.number(),
     lastDamageTime: Joi.number(),
+    inventory: Joi.array().items(Joi.number()).required(),
 });
+
 
 const chatMsgSchema = Joi.object({
     id: Joi.number().required(),
