@@ -69,7 +69,6 @@ export class ItemBase {
         if(!this.addedToWorldScene){
             this.scene.add(this.object);
             this.addedToWorldScene = true;
-            console.log("Added to world scene");
 
         }
         this.object.position.copy(this.worldPosition);
