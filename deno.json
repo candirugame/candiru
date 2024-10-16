@@ -12,5 +12,10 @@
   "imports": {
     "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.0",
     "vite": "npm:vite@^5.4.8"
-  }
+  },
+  "lint": {
+    "include": ["src/"],
+    "exclude": ["dist/", "node_modules/", "public/"]
+
+    }
 }
