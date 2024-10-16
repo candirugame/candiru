@@ -1,13 +1,31 @@
 import * as THREE from 'three';
-import { Networking } from './Networking';
+import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { Player } from './Player';
+import { Player } from './Player.ts';
+
+interface RemotePlayerData {
+    id: number;
+    velocity: { x: number; y: number; z: number };
+    position: { x: number; y: number; z: number };
+    quaternion: [number, number, number, number]; // Add quaternion as required
+    forced: boolean;
+}
+
+interface RemotePlayer extends Omit<RemotePlayerData, 'quaternion'> {
+    quaternion?: [number, number, number, number]; // Optional in case it's missing
+}
+
+interface PlayerToRender {
+    id: number;
+    object: THREE.Object3D;
+    objectUUID: string;
+}
 
 export class RemotePlayerRenderer {
     private entityScene: THREE.Scene;
-    private playersToRender;
-    private possumGLTFScene: THREE.Group;
+    private playersToRender: PlayerToRender[];
+    private possumGLTFScene: THREE.Group | undefined;
     private loader: GLTFLoader;
     private dracoLoader: DRACOLoader;
 
@@ -15,7 +33,6 @@ export class RemotePlayerRenderer {
     private camera: THREE.Camera;
     private scene: THREE.Scene;
 
-    // Animation state tracking variables
     private isAnimating: { [id: number]: boolean };
     private animationPhase: { [id: number]: number };
     private previousVelocity: { [id: number]: number };
@@ -23,11 +40,17 @@ export class RemotePlayerRenderer {
 
     private networking: Networking;
     private localPlayer: Player;
-    private deltaTime: number;
+    private deltaTime: number = 0; // Initialize deltaTime to avoid Deno error
 
     private crosshairVec = new THREE.Vector2();
 
-    constructor(networking: Networking, localPlayer: Player, raycaster: THREE.Raycaster, camera: THREE.Camera, scene: THREE.Scene) {
+    constructor(
+        networking: Networking,
+        localPlayer: Player,
+        raycaster: THREE.Raycaster,
+        camera: THREE.Camera,
+        scene: THREE.Scene
+    ) {
         this.networking = networking;
         this.localPlayer = localPlayer;
         this.raycaster = raycaster;
@@ -48,7 +71,9 @@ export class RemotePlayerRenderer {
                 this.possumGLTFScene = gltf.scene;
             },
             undefined,
-            () => { console.log('possum loading error'); }
+            () => {
+                console.log('possum loading error');
+            }
         );
 
         this.playersToRender = [];
@@ -59,70 +84,68 @@ export class RemotePlayerRenderer {
         this.lastRunningYOffset = {};
     }
 
-    public getEntityScene() {
+    public getEntityScene(): THREE.Scene {
         return this.entityScene;
     }
 
-    public update(deltaTime: number) {
+    public update(deltaTime: number): void {
         this.deltaTime = deltaTime;
         this.updateRemotePlayers();
     }
 
-    private updateRemotePlayers() {
+    private updateRemotePlayers(): void {
         if (!this.possumGLTFScene) return;
 
-        const remotePlayerData = this.networking.getRemotePlayerData();
+        const remotePlayerData: RemotePlayer[] = this.networking.getRemotePlayerData();
         const localPlayerId = this.localPlayer.id;
 
-        // Update existing players and add new players
         remotePlayerData.forEach((remotePlayer) => {
             if (remotePlayer.id === localPlayerId) return;
+
+            const playerDataWithQuaternion: RemotePlayerData = {
+                ...remotePlayer,
+                quaternion: remotePlayer.quaternion || [0, 0, 0, 1], // Provide default quaternion if missing
+            };
+
             const existingPlayer = this.playersToRender.find((player) => player.id === remotePlayer.id);
             if (existingPlayer) {
-                this.updatePlayerPosition(existingPlayer.object, remotePlayer);
+                this.updatePlayerPosition(existingPlayer.object, playerDataWithQuaternion);
             } else {
-                this.addNewPlayer(remotePlayer);
+                this.addNewPlayer(playerDataWithQuaternion);
             }
         });
 
-        // Remove players that are no longer in remotePlayerData
         this.removeInactivePlayers(remotePlayerData);
     }
 
-    private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData) {
-        // Compute current velocity magnitude
+    private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData: RemotePlayerData): void {
         const velocity = Math.sqrt(
             Math.pow(remotePlayerData.velocity.x, 2) +
             Math.pow(remotePlayerData.velocity.y, 2) +
             Math.pow(remotePlayerData.velocity.z, 2)
         );
 
-        // Retrieve previous velocity (default to 0 if undefined)
         const prevVelocity = this.previousVelocity[remotePlayerData.id] || 0;
 
-        // Check for velocity state changes
         if (prevVelocity === 0 && velocity > 0) {
-            // Player started moving
             this.isAnimating[remotePlayerData.id] = true;
             this.animationPhase[remotePlayerData.id] = 0;
         }
 
-        // Update previous velocity for next frame
         this.previousVelocity[remotePlayerData.id] = velocity;
 
-        // Update position based on velocity and deltaTime
         playerObject.position.x += remotePlayerData.velocity.x * this.deltaTime;
         playerObject.position.y += remotePlayerData.velocity.y * this.deltaTime;
         playerObject.position.z += remotePlayerData.velocity.z * this.deltaTime;
 
-        // If forced position, set directly
         if (remotePlayerData.forced) {
-            playerObject.position.x = remotePlayerData.position.x;
-            playerObject.position.y = remotePlayerData.position.y;
-            playerObject.position.z = remotePlayerData.position.z;
+            playerObject.position.set(
+                remotePlayerData.position.x,
+                remotePlayerData.position.y,
+                remotePlayerData.position.z
+            );
         }
 
-        // Lerp position for smooth movement
         playerObject.position.lerp(
             new THREE.Vector3(
                 remotePlayerData.position.x,
@@ -132,7 +155,6 @@ export class RemotePlayerRenderer {
             0.3 * this.deltaTime * 60
         );
 
-        // Slerp rotation for smooth orientation changes
         const targetQuaternion = new THREE.Quaternion(
             remotePlayerData.quaternion[0],
             remotePlayerData.quaternion[1],
@@ -144,56 +166,49 @@ export class RemotePlayerRenderer {
 
         playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
 
-        // Apply animation offset after LERP and rotation updates
         if (this.isAnimating[remotePlayerData.id]) {
-            // Update animation phase
-            const frequency = 25; // Adjust frequency as desired
+            const frequency = 25;
             this.animationPhase[remotePlayerData.id] += this.deltaTime * frequency;
 
-            // Compute Y offset
-            const amplitude = 0.02; // Adjust amplitude as desired
+            const amplitude = 0.02;
             const yOffset = amplitude * (1 + Math.cos(this.animationPhase[remotePlayerData.id]));
 
-            // Apply new Y offset
             playerObject.position.y += yOffset;
             this.lastRunningYOffset[remotePlayerData.id] = yOffset;
 
-            // Check if we should stop animating
             if (velocity === 0 && Math.cos(this.animationPhase[remotePlayerData.id]) <= 0) {
-                // Cosine has crossed zero; stop animating
                 this.isAnimating[remotePlayerData.id] = false;
                 this.lastRunningYOffset[remotePlayerData.id] = 0;
             }
         } else {
-            // Ensure Y offset is reset when not animating
             this.lastRunningYOffset[remotePlayerData.id] = 0;
         }
     }
 
-    private addNewPlayer(remotePlayerData) {
-        const object = this.possumGLTFScene.children[0].clone();
-        const newPlayer = {
+    private addNewPlayer(remotePlayerData: RemotePlayerData): void {
+        const object = this.possumGLTFScene!.children[0].clone();
+        const newPlayer: PlayerToRender = {
             id: remotePlayerData.id,
             object: object,
-            objectUUID: object.uuid
+            objectUUID: object.uuid,
         };
         this.playersToRender.push(newPlayer);
-        this.entityScene.add(newPlayer.object); // Add to remote players scene
+        this.entityScene.add(newPlayer.object);
     }
 
-    private removeInactivePlayers(remotePlayerData) {
+    private removeInactivePlayers(remotePlayerData: RemotePlayer[]): void {
         this.playersToRender = this.playersToRender.filter((player) => {
             const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
             if (!isActive) {
-                this.entityScene.remove(player.object); // Remove from remote players scene
+                this.entityScene.remove(player.object);
             }
             return isActive;
         });
     }
 
     public getRemotePlayerObjectsInCrosshair(raycaster: THREE.Raycaster, camera: THREE.Camera): THREE.Object3D[] {
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera); // Assuming crosshair at center
-        return raycaster.intersectObjects(this.entityScene.children).map(intersect => intersect.object);
+        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+        return raycaster.intersectObjects(this.entityScene.children).map((intersect) => intersect.object);
     }
 
     public getRemotePlayerIDsInCrosshair(): number[] {
@@ -218,7 +233,7 @@ export class RemotePlayerRenderer {
         const playerIntersects = this.raycaster.intersectObjects(this.entityScene.children);
         const wallIntersects = this.raycaster.intersectObjects(this.scene.children);
 
-        const filteredIntersects = playerIntersects.filter(playerIntersect => {
+        const filteredIntersects = playerIntersects.filter((playerIntersect) => {
             for (const wallIntersect of wallIntersects) {
                 if (wallIntersect.distance < playerIntersect.distance) {
                     return false;
@@ -227,7 +242,6 @@ export class RemotePlayerRenderer {
             return true;
         });
 
-        return filteredIntersects.map(intersect => intersect.object);
+        return filteredIntersects.map((intersect) => intersect.object);
     }
-
 }

@@ -1,8 +1,8 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import {Renderer} from "../core/Renderer";
-import {Player} from "../core/Player";
+import {Renderer} from "../core/Renderer.ts";
+import {Player} from "../core/Player.ts";
 
 
 const clock = new THREE.Clock();

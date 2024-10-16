@@ -1,13 +1,13 @@
-import {Player} from './Player';
-import {Renderer} from './Renderer';
-import {ChatOverlay} from '../ui/ChatOverlay';
-import {InputHandler} from '../input/InputHandler';
-import {Networking} from './Networking';
-import {CollisionManager} from '../input/CollisionManager';
-import {Inventory} from './Inventory';
-import {HealthIndicator} from '../ui/HealthIndicator';
-import {MapLoader} from './MapLoader';
-import {RemoteItemRenderer} from "./RemoteItemRenderer";
+import {Player} from './Player.ts';
+import {Renderer} from './Renderer.ts';
+import {ChatOverlay} from '../ui/ChatOverlay.ts';
+import {InputHandler} from '../input/InputHandler.ts';
+import {Networking} from './Networking.ts';
+import {CollisionManager} from '../input/CollisionManager.ts';
+import {Inventory} from './Inventory.ts';
+import {HealthIndicator} from '../ui/HealthIndicator.ts';
+import {MapLoader} from './MapLoader.ts';
+import {RemoteItemRenderer} from "./RemoteItemRenderer.ts";
 
 export class Game {
     private localPlayer: Player;

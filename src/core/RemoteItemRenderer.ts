@@ -1,14 +1,32 @@
 import * as THREE from 'three';
-import { Networking } from './Networking';
-import { Renderer } from './Renderer';
-import { ItemBase, ItemType } from '../items/ItemBase';
-import { BananaGun } from '../items/BananaGun';
+import { Networking } from './Networking.ts';
+import { Renderer } from './Renderer.ts';
+import { ItemBase, ItemType } from '../items/ItemBase.ts';
+import { BananaGun } from '../items/BananaGun.ts';
+
+// Custom types
+type Vector3Data = {
+    x: number;
+    y: number;
+    z: number;
+};
+
+type WorldItemData = {
+    id: number;
+    itemType: number;
+    vector: Vector3Data;
+};
+
+type ItemsToRenderEntry = {
+    id: number;
+    item: ItemBase;
+};
 
 export class RemoteItemRenderer {
     private networking: Networking;
     private renderer: Renderer;
-    private itemsToRender: { id: number, item: ItemBase }[] = [];
-    private worldItemsData= [];
+    private itemsToRender: ItemsToRenderEntry[] = [];
+    private worldItemsData: WorldItemData[] = [];
 
     constructor(networking: Networking, renderer: Renderer) {
         this.networking = networking;
@@ -17,13 +35,13 @@ export class RemoteItemRenderer {
 
     public update() {
         // Get the latest world items data from networking
-        const newWorldItemsData = this.networking.getWorldItemsData();
+        const newWorldItemsData: WorldItemData[] = this.networking.getWorldItemsData();
 
         // Process the new data to update itemsToRender
         this.updateWorldItems(newWorldItemsData);
     }
 
-    private updateWorldItems(newWorldItemsData) {
+    private updateWorldItems(newWorldItemsData: WorldItemData[]) {
         // Update existing items and add new items
         newWorldItemsData.forEach((worldItemData) => {
             const existingItem = this.itemsToRender.find(item => item.id === worldItemData.id);
@@ -73,7 +91,7 @@ export class RemoteItemRenderer {
     public onFrame() {
         this.update();
         this.itemsToRender.forEach(itemEntry => {
-            itemEntry.item.onFrame(null, null); // Passing null for input and selectedIndex
+            itemEntry.item.onFrame(undefined, undefined); // Passing null for input and selectedIndex
         });
     }
 }

@@ -10,7 +10,7 @@ export class Player {
     public gameVersion: string;
     public name: string;
     public speed: number;
-    public acceleration; number;
+    public acceleration: number;
     public chatActive: boolean;
     public chatMsg: string;
     public latency: number;

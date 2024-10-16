@@ -1,10 +1,10 @@
-import { ItemBase, ItemType } from './ItemBase';
-import { HeldItemInput } from '../input/HeldItemInput';
+import { ItemBase, ItemType } from './ItemBase.ts';
+import { HeldItemInput } from '../input/HeldItemInput.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import { Renderer } from '../core/Renderer';
-import { Networking } from '../core/Networking';
+import { Renderer } from '../core/Renderer.ts';
+import { Networking } from '../core/Networking.ts';
 
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225;
