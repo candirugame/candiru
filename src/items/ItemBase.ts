@@ -47,18 +47,19 @@ export class ItemBase {
             });
     }
 
-    onFrame(input: HeldItemInput, selectedIndex: number) {
+    onFrame(input: HeldItemInput | undefined, selectedIndex: number | undefined) {
         if(!this.object) return; //return if object hasn't loaded
         const deltaTime = this.clock.getDelta();
         this.timeAccum += deltaTime;
 
         if(this.itemType === ItemType.WorldItem)
             this.worldOnFrame(deltaTime);
-        if(this.itemType === ItemType.InventoryItem){
+        if(this.itemType === ItemType.InventoryItem && selectedIndex !== undefined && input !== undefined){
             this.inventoryOnFrame(deltaTime, selectedIndex);
             this.handOnFrame(deltaTime, input);
         }
     }
+
 
     /** -- World Items -- */
     protected addedToWorldScene:boolean = false;
@@ -77,7 +78,7 @@ export class ItemBase {
 
     }
 
-    protected setWorldPosition(vector:THREE.Vector3){
+    setWorldPosition(vector:THREE.Vector3){
         this.worldPosition = vector;
     }
 

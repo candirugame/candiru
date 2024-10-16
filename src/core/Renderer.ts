@@ -8,7 +8,7 @@ import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
 
 export class Renderer {
     private clock: THREE.Clock;
-    private deltaTime: number;
+    private deltaTime: number = 0;
     private chatOverlay: ChatOverlay;
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
@@ -26,14 +26,13 @@ export class Renderer {
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
 
-    public crosshairIsFlashing: boolean;
-    public lastShotSomeoneTimestamp: number;
+    public crosshairIsFlashing: boolean = false;
+    public lastShotSomeoneTimestamp: number = 0;
     private healthIndicatorScene: THREE.Scene;
     private healthIndicatorCamera: THREE.PerspectiveCamera;
-    private screenPixelsInGamePixel: number;
+    private screenPixelsInGamePixel: number = 1;
     private inventoryMenuScene: THREE.Scene;
     private inventoryMenuCamera: THREE.OrthographicCamera;
-
     private remotePlayerRenderer: RemotePlayerRenderer;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
@@ -53,7 +52,6 @@ export class Renderer {
         this.dracoLoader = new DRACOLoader();
         this.dracoLoader.setDecoderPath('/draco/');
         this.loader.setDRACOLoader(this.dracoLoader);
-
 
         // Create a new scene and camera for the held item
         this.heldItemScene = new THREE.Scene();
@@ -104,7 +102,6 @@ export class Renderer {
         );
         this.remotePlayerRenderer.getEntityScene().fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
         this.remotePlayerRenderer.getEntityScene().add(ambientLight3); // Add ambient light to remote players scene
-
 
         this.onWindowResize();
         window.addEventListener('resize', this.onWindowResize.bind(this), false);
@@ -180,9 +177,9 @@ export class Renderer {
         const chatScene = this.chatOverlay.getChatScene();
         const chatCamera = this.chatOverlay.getChatCamera();
         chatScene.traverse((obj) => {
-            if (obj.isMesh) {
+            if (obj.isObject3D) {
                 obj.renderOrder = 998; // Ensure it's rendered just before the held item
-                obj.material.depthTest = false;
+                //obj.material.depthTest = false;
             }
         });
         this.renderer.render(chatScene, chatCamera);
@@ -192,7 +189,6 @@ export class Renderer {
 
         // Update camera position and rotation for local player
         this.camera.position.copy(localPlayer.position);
-        // this.camera.quaternion.copy(localPlayer.quaternion);
 
         this.updateFramerate();
     }
@@ -206,31 +202,31 @@ export class Renderer {
         }
     }
 
-    public getFramerate() {
+    public getFramerate(): number {
         return this.framerate;
     }
 
-    public getScene() {
+    public getScene(): THREE.Scene {
         return this.scene;
     }
 
-    public getCamera() {
+    public getCamera(): THREE.PerspectiveCamera {
         return this.camera;
     }
 
-    public getHeldItemScene() {
+    public getHeldItemScene(): THREE.Scene {
         return this.heldItemScene;
     }
 
-    public getHealthIndicatorScene() {
+    public getHealthIndicatorScene(): THREE.Scene {
         return this.healthIndicatorScene;
     }
 
-    public getInventoryMenuScene() {
+    public getInventoryMenuScene(): THREE.Scene {
         return this.inventoryMenuScene;
     }
 
-    public getInventoryMenuCamera() {
+    public getInventoryMenuCamera(): THREE.OrthographicCamera {
         return this.inventoryMenuCamera;
     }
 
@@ -252,10 +248,10 @@ export class Renderer {
     }
 
     public getRemotePlayerIDsInCrosshair(): number[] {
-        return this.remotePlayerRenderer.getRemotePlayerIDsInCrosshair(this.raycaster, this.camera, this.remotePlayerRenderer.getEntityScene());
+        return this.remotePlayerRenderer.getRemotePlayerIDsInCrosshair();
     }
 
-    public getEntityScene(){
+    public getEntityScene(): THREE.Scene {
         return this.remotePlayerRenderer.getEntityScene();
     }
 }

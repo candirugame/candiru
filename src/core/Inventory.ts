@@ -36,20 +36,6 @@ export class Inventory {
     }
 
     public init() {
-      //   for(const item of this.inventoryItems) {
-      //       item.init();
-      //   }
-      //   const banana = new BananaGun(this.renderer, this.networking, this.inventoryItems.length,ItemType.InventoryItem);
-      // //  banana.init();
-      //   this.inventoryItems.push(banana);
-      //
-      //   for(let i = 0; i < 4; i++) {
-      //       const testItem = new ItemBase(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, this.inventoryItems.length);
-      //       this.inventoryItems.push(testItem);
-      //   }
-
-
-
 
     }
 
