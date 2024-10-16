@@ -3,22 +3,18 @@ import { PointerLockControls } from './PointerLockControl.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
 
-interface Keys {
-    [key: string]: boolean;
-}
-
 export class InputHandler {
     private mouse: PointerLockControls;
     private clock: THREE.Clock;
     private forward: THREE.Vector3;
-    private keys: Keys;
+    private keys: { [key: string]: boolean };
     private leftMouseDown: boolean;
     private rightMouseDown: boolean;
     private renderer: Renderer;
     private localPlayer: Player;
     private inputX: number;
     private inputZ: number;
-    public jump: boolean;
+    public  jump;
     public prevVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
 
@@ -61,17 +57,18 @@ export class InputHandler {
 
     }
 
-    private processScroll(e: WheelEvent) {
-        if (e.deltaY >= 4)
+    private processScroll(e) {
+        if(e.deltaY >= 4)
             this.scrollClicksSinceLastCheck++;
-        if (e.deltaY <= -4)
+        if(e.deltaY <= -4)
             this.scrollClicksSinceLastCheck--;
     }
 
-    public getScrollClicks(): number {
+    public getScrollClicks() {
         const clicks = this.scrollClicksSinceLastCheck;
         this.scrollClicksSinceLastCheck = 0;
         return clicks;
+
     }
 
     public handleInputs() {
@@ -103,9 +100,9 @@ export class InputHandler {
         }
 
         if (this.inputX !== 0 || this.inputZ !== 0) dist = 1;
-        if (this.localPlayer.health <= 0) dist = 0; // don't allow movement when health = 0
+        if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
 
-        this.prevVelocity.copy(this.localPlayer.velocity);
+        this.prevVelocity.clone(this.localPlayer.velocity);
 
         this.localPlayer.velocity.z = dist * this.inputZ;
         this.localPlayer.velocity.x = dist * this.inputX;
@@ -121,12 +118,13 @@ export class InputHandler {
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
     }
 
-    public getKey(key: string): boolean {
+    public getKey(key: string):boolean {
         return this.keys[key];
     }
 
     private onKeyDown(event: KeyboardEvent) {
-        if (event.key === 'Tab' || event.key === "'" || event.key === '/') event.preventDefault();
+        //event.preventDefault();
+        if(event.key === 'Tab' || event.key === "'"|| event.key === '/') event.preventDefault();
         const key = event.key.toLowerCase();
         this.keys[key] = true;
     }
@@ -152,23 +150,26 @@ export class InputHandler {
         }
     }
 
-    public getLeftMouseDown(): boolean {
+    public getLeftMouseDown() {
         return this.leftMouseDown;
     }
 
-    public getRightMouseDown(): boolean {
+    public getRightMouseDown() {
         return this.rightMouseDown;
     }
 
-    public deregisterAllKeys() {
+    public deregisterAllKeys(){
         const locked = document.pointerLockElement === document.body;
-        if (!locked) this.keys = {};
+        if(!locked)
+            this.keys = {};
     }
 
     private static approachZero(input: number, step: number): number {
-        if (input === 0) return 0;
-        const sign = input < 0 ? -1 : 1;
-        const output = Math.abs(input) - step;
-        return output <= 0 ? 0 : sign * output;
+        if (input == 0) {return 0;}
+        let sign: number = 1;
+        if (input < 0) {sign = -1;}
+        const output: number = Math.abs(input) - step;
+        if (output <= 0) {return  0;}
+        return sign * output;
     }
 }
