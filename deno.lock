@@ -7,7 +7,6 @@
     "npm:socket.io-client@^4.8.0": "4.8.0",
     "npm:socket.io@^4.8.0": "4.8.0",
     "npm:three-mesh-bvh@~0.8.2": "0.8.2_three@0.169.0",
-    "npm:three@0.169": "0.169.0",
     "npm:vite@*": "5.4.9",
     "npm:vite@^5.4.8": "5.4.9"
   },
@@ -748,8 +747,7 @@
         "npm:joi@^17.13.3",
         "npm:socket.io-client@^4.8.0",
         "npm:socket.io@^4.8.0",
-        "npm:three-mesh-bvh@~0.8.2",
-        "npm:three@0.169"
+        "npm:three-mesh-bvh@~0.8.2"
       ]
     }
   }
