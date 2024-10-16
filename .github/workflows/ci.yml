@@ -21,14 +21,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
         with:
-          node-version: '22.7'
-      - name: Install dependencies
-        run: npm install
+          deno-version: 'latest'
       - name: Build project
-        run: npm run build
+        run: deno task build
       - name: List build directory contents
         run: ls -la ./dist
 
@@ -38,14 +36,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
         with:
-          node-version: '22.7'
-      - name: Install dependencies
-        run: npm install
+          deno-version: 'latest'
       - name: Run lint
-        run: npm run lint
+        run: deno lint
 
   # Healthcheck Job
   healthcheck:
@@ -53,14 +49,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
         with:
-          node-version: '22.7'
-      - name: Install dependencies
-        run: npm install
+          deno-version: 'latest'
       - name: Start server
-        run: npm start &
+        run: deno task start &
       - name: Wait for server to start
         run: sleep 5
       - name: Health check
@@ -72,14 +66,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
         with:
-          node-version: '22.7'
-      - name: Install dependencies
-        run: npm install
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
+          deno-version: 'latest'
+      - name: Run security audit
+        run: deno task audit
 
   # Release Job (Only for main and dev branches)
   release:
@@ -95,22 +87,20 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
         with:
-          node-version: "lts/*"
-      - name: Install dependencies
-        run: npm clean-install
+          deno-version: "latest"
       - name: Verify the integrity of dependencies
-        run: npm audit signatures
+        run: deno task audit
       - name: Release
         id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
+        run: deno run --allow-net --allow-env --allow-run https://deno.land/x/semantic_release/mod.ts
       - name: Extract new version
         id: get_version
-        run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
+        run: echo "version=$(deno eval 'console.log(Deno.env.get(\"npm_package_version\"))')" >> $GITHUB_OUTPUT
 
   # Update Game Version (Only for main branch after release)
   update-game-version:
@@ -143,7 +133,6 @@ jobs:
             echo "skip=true" >> $GITHUB_OUTPUT
           else
             echo "skip=false" >> $GITHUB_OUTPUT
-          fi
       - name: Update gameVersion.json
         if: steps.check_author.outputs.skip == 'false'
         run: |
