@@ -99,7 +99,7 @@ jobs:
         id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: npx semantic-release --branch main --ci
+        run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
       - name: Extract new version
         id: get_version
         run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
