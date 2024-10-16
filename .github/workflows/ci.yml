@@ -87,19 +87,23 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set up Deno
-        uses: denoland/setup-deno@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          deno-version: "latest"
+          node-version: "lts/*"
+      - name: Install dependencies
+        run: npm clean-install
+      - name: Verify the integrity of dependencies
+        run: npm audit signatures
       - name: Release
         id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: deno run --allow-net --allow-env --allow-run https://deno.land/x/denomantic_release@0.10.3/mod.ts
+        run: npx semantic-release --branch main --ci
       - name: Extract new version
         id: get_version
-        run: echo "version=$(deno eval 'console.log(Deno.env.get(\"npm_package_version\"))')" >> $GITHUB_OUTPUT
-
+        run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
+        
   # Update Game Version (Only for main branch after release)
   update-game-version:
     needs: release
