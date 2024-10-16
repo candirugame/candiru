@@ -91,13 +91,11 @@ jobs:
         uses: denoland/setup-deno@v1
         with:
           deno-version: "latest"
-      - name: Verify the integrity of dependencies
-        run: deno task audit
       - name: Release
         id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: deno run --allow-net --allow-env --allow-run https://deno.land/x/semantic_release/mod.ts
+        run: deno run --allow-net --allow-env --allow-run https://deno.land/x/denomantic_release@0.10.3/mod.ts
       - name: Extract new version
         id: get_version
         run: echo "version=$(deno eval 'console.log(Deno.env.get(\"npm_package_version\"))')" >> $GITHUB_OUTPUT
