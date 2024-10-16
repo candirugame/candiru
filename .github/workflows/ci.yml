@@ -56,7 +56,7 @@ jobs:
       - name: Start server
         run: deno task start &
       - name: Wait for server to start
-        run: sleep 5
+        run: sleep 30
       - name: Health check
         run: curl -f http://localhost:3000 || exit 1
 
