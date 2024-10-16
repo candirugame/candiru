@@ -71,7 +71,7 @@ jobs:
         with:
           deno-version: 'latest'
       - name: Run security audit
-        run: deno task audit
+        run: npm audit
 
   # Release Job (Only for main and dev branches)
   release:
