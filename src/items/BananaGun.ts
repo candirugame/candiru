@@ -23,10 +23,11 @@ export class BananaGun extends ItemBase {
     private lastFired: number = 0;
     private addedToHandScene: boolean = false;
 
+    // deno-lint-ignore constructor-super
     constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
         if(itemType === ItemType.WorldItem)
             super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
-        else(itemType === ItemType.InventoryItem)
+        else
             super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
         this.renderer = renderer;
         this.networking = networking;
@@ -46,7 +47,7 @@ export class BananaGun extends ItemBase {
                     this.object.traverse((child) => {
                         if ((child as THREE.Mesh).isMesh) {
                             child.renderOrder = 999;
-                            //(child as THREE.Mesh).material.depthTest = false;
+                            (child as THREE.Mesh).material.depthTest = false;
                         }
                     });
                 }
