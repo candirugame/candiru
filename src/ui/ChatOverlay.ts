@@ -32,7 +32,7 @@ export class ChatOverlay {
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
         this.chatScene = new THREE.Scene();
-        this.chatCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
+        this.chatCamera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
         this.chatCanvas = document.createElement('canvas');
         this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
         this.chatCtx.imageSmoothingEnabled = false;
