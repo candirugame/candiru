@@ -92,10 +92,6 @@ try {
 
 app.use(express.static(join(__dirname, 'dist')));
 
-app.post('/trigger-server-restart', (req: express.Request, res: express.Response) => {
-  sendChatMessage('⚠️Stopping server...');
-  res.send('Server restart message sent.');
-});
 
 let lastPlayerTickTimestamp = Date.now() / 1000;
 function serverTick() {
@@ -111,11 +107,10 @@ function playersTick() {
   if (!playerUpdateSinceLastEmit && Date.now() / 1000 - lastPlayerUpdateSentTimestamp < 5) return;
 
   for (let i = 0; i < playerData.length; i++) {
-    if (playerData[i].lastDamageTime === undefined) playerData[i].lastDamageTime = 0;
-    if (
-        playerData[i].health < maxHealth &&
-        playerData[i].lastDamageTime + healthRegenDelay < Date.now() / 1000
-    ) {
+    // Ensure lastDamageTime is never undefined by using nullish coalescing
+    const lastDamageTime = playerData[i].lastDamageTime ?? 0;
+    if (playerData[i].health < maxHealth &&
+        lastDamageTime + healthRegenDelay < Date.now() / 1000) {
       playerData[i].health += healthRegenRate * timeSinceLastTick;
       if (playerData[i].health > maxHealth) playerData[i].health = maxHealth;
     }
