@@ -4,6 +4,7 @@ import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import * as THREE from 'three';
 
 interface RemotePlayer {
+    latency: number;
     id: number;
     position: { x: number, y: number, z: number };
     velocity: { x: number, y: number, z: number };
