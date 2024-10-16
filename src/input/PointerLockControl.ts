@@ -64,7 +64,9 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     private onMouseMove = (event: MouseEvent): void => {
         if (!this.isLocked) return;
 
+        // deno-lint-ignore no-explicit-any
         const movementX = event.movementX || (event as any).mozMovementX || (event as any).webkitMovementX || 0;
+        // deno-lint-ignore no-explicit-any
         const movementY = event.movementY || (event as any).mozMovementY || (event as any).webkitMovementY || 0;
 
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
