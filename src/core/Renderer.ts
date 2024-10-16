@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { Networking } from './Networking';
+import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { Player } from './Player';
-import { ChatOverlay } from "../ui/ChatOverlay";
-import { RemotePlayerRenderer } from './RemotePlayerRenderer';
+import { Player } from './Player.ts';
+import { ChatOverlay } from "../ui/ChatOverlay.ts";
+import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
 
 export class Renderer {
     private clock: THREE.Clock;

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { Networking } from './Networking';
-import { Renderer } from './Renderer';
-import { ItemBase, ItemType } from '../items/ItemBase';
-import { BananaGun } from '../items/BananaGun';
+import { Networking } from './Networking.ts';
+import { Renderer } from './Renderer.ts';
+import { ItemBase, ItemType } from '../items/ItemBase.ts';
+import { BananaGun } from '../items/BananaGun.ts';
 
 export class RemoteItemRenderer {
     private networking: Networking;

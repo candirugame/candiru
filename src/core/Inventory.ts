@@ -1,12 +1,11 @@
 import * as THREE from 'three';
-import { Renderer } from './Renderer';
-import { InputHandler } from '../input/InputHandler';
-import { BananaGun } from '../items/BananaGun';
-import { HeldItemInput } from '../input/HeldItemInput';
-import {Networking} from "./Networking";
-import {ItemBase} from "../items/ItemBase";
-import {Player} from "./Player";
-import {ItemBase, ItemType} from "../items/ItemBase";
+import { Renderer } from './Renderer.ts';
+import { InputHandler } from '../input/InputHandler.ts';
+import { BananaGun } from '../items/BananaGun.ts';
+import { HeldItemInput } from '../input/HeldItemInput.ts';
+import {Networking} from "./Networking.ts";
+import {Player} from "./Player.ts";
+import {ItemBase, ItemType} from "../items/ItemBase.ts";
 
 export class Inventory {
     private inventoryItems: ItemBase[] = [];

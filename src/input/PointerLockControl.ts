@@ -10,7 +10,7 @@
  */
 
 import * as THREE from 'three';
-import {Player} from "../core/Player";
+import {Player} from "../core/Player.ts";
 
 const PI_2 = Math.PI / 2;
 const euler = new THREE.Euler(0, 0, 0, 'YXZ');

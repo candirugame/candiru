@@ -1,4 +1,4 @@
-import { HeldItemInput } from '../input/HeldItemInput';
+import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 
 const showInHandDelay = 0.1;
@@ -47,7 +47,7 @@ export class ItemBase {
             });
     }
 
-    protected onFrame(input: HeldItemInput, selectedIndex: number) {
+    onFrame(input: HeldItemInput, selectedIndex: number) {
         if(!this.object) return; //return if object hasn't loaded
         const deltaTime = this.clock.getDelta();
         this.timeAccum += deltaTime;

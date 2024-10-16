@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { Networking } from './Networking';
+import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { Player } from './Player';
+import { Player } from './Player.ts';
 
 export class RemotePlayerRenderer {
     private entityScene: THREE.Scene;

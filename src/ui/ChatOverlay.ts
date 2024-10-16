@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { Player } from '../core/Player';
-import { Renderer } from '../core/Renderer';
-import { Networking } from '../core/Networking';
-import {InputHandler} from "./InputHandler";
+import { Player } from '../core/Player.ts';
+import { Renderer } from '../core/Renderer.ts';
+import { Networking } from '../core/Networking.ts';
+import {InputHandler} from "../input/InputHandler.ts";
 
 export class ChatOverlay {
     private chatScene: THREE.Scene;
