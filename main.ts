@@ -25,6 +25,30 @@ interface Vector3 {
   z: number;
 }
 
+interface Quaternion {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+interface RespawnPoint {
+  position: Vector3;
+  quaternion: Quaternion;
+}
+
+interface ItemRespawnPoint {
+  position: Vector3;
+  itemId: number;
+  spawnChancePerTick: number;
+}
+
+interface MapData {
+  name: string;
+  respawnPoints: RespawnPoint[];
+  itemRespawnPoints: ItemRespawnPoint[];
+}
+
 interface Player {
   id: number;
   speed: number;
@@ -89,6 +113,24 @@ try {
 } catch (error) {
   console.error('error getting server version:', error);
 }
+
+let mapProperties: MapData | undefined = undefined;
+try {
+  const jsonData = JSON.parse(readFileSync('public/maps/deathmatch_1/map.json', 'utf8'));
+  mapProperties = jsonData;
+    console.log('🐙 Map data loaded for ' + jsonData.name);
+}
+catch (error) {
+    console.error('error getting map properties:', error);
+}
+
+function getRandomSpawnpoint(): {vec: Vector3, quaternion: Quaternion}{
+  if(mapProperties === undefined) return {vec: {x: 2, y: 1, z: 0}, quaternion: {x: 0, y: 0, z: 0, w: 1}};
+    let randomIndex = Math.floor(Math.random() * mapProperties.respawnPoints.length);
+    return {vec: mapProperties.respawnPoints[randomIndex].position, quaternion: mapProperties.respawnPoints[randomIndex].quaternion};
+}
+
+
 
 app.use(express.static(join(__dirname, 'dist')));
 
@@ -185,12 +227,13 @@ function periodicCleanup() {
 
     // Respawn people
     if (playerData[i].health <= 0) {
-      playerData[i].health = 100;
-      playerData[i].gravity = 0;
-      playerData[i].position = { x: 2, y: 1, z: 0 }; // 0, 2, 0
-      playerData[i].velocity = { x: 0, y: 0, z: 0 };
-      playerData[i].lookQuaternion = [0, 0, 0, 1];
-      playerData[i].forced = true;
+        let spawnPoint = getRandomSpawnpoint();
+        playerData[i].position = spawnPoint.vec;
+        playerData[i].lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
+        playerData[i].health = 100;
+        playerData[i].gravity = 0;
+        playerData[i].velocity = { x: 0, y: 0, z: 0 };
+        playerData[i].forced = true;
     }
 
     // Kick logged-out players
@@ -300,7 +343,7 @@ function addChatMessageSafe(data: ChatMessage, socket: Socket): void {
     return;
   }
   // TODO: verify ID is in player list
-  let isCommand = parseForCommand(data.message, socket);
+  let isCommand = parseForCommand(data.message, socket, data.id);
 
   if (!isCommand) {
     console.log('💬 ' + data.name + ':' + data.message);
@@ -308,13 +351,24 @@ function addChatMessageSafe(data: ChatMessage, socket: Socket): void {
   }
 }
 
-function parseForCommand(msg: string, socket: Socket): boolean {
+function parseForCommand(msg: string, socket: Socket, id:number): boolean {
   if (msg.charAt(0) !== '/') return false;
 
   switch (msg) {
     case '/help':
       whisperChatMessage(msg + ' -> nah i\'m good', socket);
       break;
+    case '/kill':
+        for (let i = 0; i < playerData.length; i++)
+            if (playerData[i].id === id) {
+                whisperChatMessage(msg + ' -> killed ' + playerData[i].name, socket);
+                sendChatMessage(playerData[i].name + ' killed himself');
+                playerData[i].health = 0;
+                periodicCleanup();
+                playerUpdateSinceLastEmit = true;
+                return true;
+            }
+        break;
     case '/ping':
       whisperChatMessage(msg + ' -> pong!', socket);
       break;
@@ -381,6 +435,11 @@ function addPlayerToDataSafe(data: Player, socket: Socket): void {
 
   // At this point the player data is valid but not already in the list (new player join)
   data.inventory = baseInventory.slice();
+  // Set initial position
+    let spawnPoint = getRandomSpawnpoint();
+    data.position = spawnPoint.vec;
+    data.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
+    data.forced = true;
 
   playerData.push(data);
 

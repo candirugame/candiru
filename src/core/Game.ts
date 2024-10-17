@@ -33,7 +33,7 @@ export class Game {
         this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new MapLoader('maps/realmap1.glb', this.renderer, this.collisionManager);
+        this.map = new MapLoader('maps/deathmatch_1/map.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
     }
