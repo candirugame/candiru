@@ -1,22 +1,51 @@
 import { io, Socket } from 'socket.io-client';
-import { Player } from './Player';
-import { ChatOverlay } from './ChatOverlay';
+import { Player } from './Player.ts';
+import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import * as THREE from 'three';
+
+interface RemotePlayer {
+    latency: number;
+    id: number;
+    position: { x: number, y: number, z: number };
+    velocity: { x: number, y: number, z: number };
+    lookQuaternion: [number, number, number, number];
+    name: string;
+    gravity: number;
+    forced: boolean;
+    health: number;
+    inventory: number[];
+    chatActive: boolean;
+    chatMsg: string;
+}
+
+interface WorldItem {
+    vector: { x: number, y: number, z: number };
+    id: number;
+    itemType: number;
+}
+
+interface LastUploadedLocalPlayer {
+    position: THREE.Vector3;
+    quaternion: THREE.Quaternion;
+    chatMsg: string;
+    velocity: THREE.Vector3;
+}
 
 export class Networking {
     private socket: Socket;
-    private gameVersion: string;
-    private remotePlayers;
-    private lastUploadedLocalPlayer;
+    private gameVersion: string = '';
+    private remotePlayers: RemotePlayer[] = [];
+    private worldItems: WorldItem[] = [];
+    private lastUploadedLocalPlayer: LastUploadedLocalPlayer | null = null;
     private lastUploadTime: number;
     private uploadWait: number;
     private lastLatencyTestEmit: number;
     private lastLatencyTestGotResponse: boolean;
     private latencyTestWait: number;
-    private messagesBeingTyped: string[];
+    private messagesBeingTyped: string[] = [];
     private localPlayer: Player;
     private chatOverlay: ChatOverlay;
-    private damagedTimestamp: number;
+    private damagedTimestamp: number = 0;
 
     constructor(localPlayer: Player, chatOverlay: ChatOverlay) {
         this.localPlayer = localPlayer;
@@ -25,15 +54,11 @@ export class Networking {
         this.socket = io();
         this.fetchVersion();
 
-        this.remotePlayers = [];
-        this.lastUploadedLocalPlayer = null;
-
-        this.lastUploadTime = Date.now()/1000;
+        this.lastUploadTime = Date.now() / 1000;
         this.uploadWait = 1 / 15;
         this.lastLatencyTestEmit = 0;
         this.lastLatencyTestGotResponse = false;
         this.latencyTestWait = 5;
-        this.messagesBeingTyped = [];
 
         this.setupSocketListeners();
     }
@@ -54,12 +79,17 @@ export class Networking {
             this.lastLatencyTestGotResponse = true;
         });
 
-        this.socket.on('remotePlayerData', (data) => {
+        this.socket.on('remotePlayerData', (data: RemotePlayer[]) => {
             this.remotePlayers = data;
-            this.processRemoteData();
+            this.processRemotePlayerData();
         });
 
-        this.socket.on('chatMsg', (data) => {
+        this.socket.on('worldItemData', (data: WorldItem[]) => {
+            this.worldItems = data;
+            this.processWorldItemData();
+        });
+
+        this.socket.on('chatMsg', (data: { id: number, name: string, message: string }) => {
             if (data.id !== this.localPlayer.id) this.chatOverlay.addChatMessage(data);
         });
     }
@@ -71,10 +101,8 @@ export class Networking {
 
         if (this.localPlayer.gameVersion === '') return;
 
-        if (this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) && currentTime - this.lastUploadTime < 5)
+        if (this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) && currentTime - this.lastUploadTime < 4)
             return;
-
-
 
         this.socket.emit('playerData', this.localPlayer);
         this.lastUploadedLocalPlayer = {
@@ -89,43 +117,42 @@ export class Networking {
         if (currentTime - this.lastLatencyTestEmit > this.latencyTestWait) {
             this.socket.emit('latencyTest');
             this.lastLatencyTestEmit = currentTime;
-            if(!this.lastLatencyTestGotResponse){
+            if (!this.lastLatencyTestGotResponse) {
                 this.localPlayer.latency = 999;
             }
             this.lastLatencyTestGotResponse = false;
         }
     }
 
-    private processRemoteData() {
+    public processWorldItemData() {
+        // Implementation for processing world items
+    }
+
+    private processRemotePlayerData() {
         this.messagesBeingTyped = [];
         for (const remotePlayer of this.remotePlayers) {
-            if (remotePlayer['id'] === this.localPlayer.id) {
-                if(remotePlayer['forced'] === true){
-                    this.localPlayer.position = new THREE.Vector3(remotePlayer['position']['x'], remotePlayer['position']['y'], remotePlayer['position']['z']);
-                    this.localPlayer.quaternion = new THREE.Quaternion(remotePlayer['quaternion'][0], remotePlayer['quaternion'][1], remotePlayer['quaternion'][2], remotePlayer['quaternion'][3]);
-                    this.localPlayer.name = remotePlayer['name'];
+            if (remotePlayer.id === this.localPlayer.id) {
+                if (remotePlayer.forced) {
+                    this.localPlayer.position.set(remotePlayer.position.x, remotePlayer.position.y, remotePlayer.position.z);
+                    this.localPlayer.velocity.set(remotePlayer.velocity.x, remotePlayer.velocity.y, remotePlayer.velocity.z);
+                    this.localPlayer.lookQuaternion.set(...remotePlayer.lookQuaternion);
+                    this.localPlayer.name = remotePlayer.name;
+                    this.localPlayer.gravity = remotePlayer.gravity;
                     this.localPlayer.forcedAcknowledged = true;
-                }else{
+                } else {
                     this.localPlayer.forcedAcknowledged = false;
                 }
-                if(remotePlayer['health'] < this.localPlayer.health) this.damagedTimestamp = Date.now()/1000;
-                this.localPlayer.health = remotePlayer['health']; //trust server to handle health
+                if (remotePlayer.health < this.localPlayer.health) this.damagedTimestamp = Date.now() / 1000;
+                this.localPlayer.health = remotePlayer.health;
+                this.localPlayer.inventory = remotePlayer.inventory;
                 continue;
             }
-            if (remotePlayer['chatActive'])
-                this.messagesBeingTyped.push(remotePlayer['name'] + ': ' + remotePlayer['chatMsg']);
+            if (remotePlayer.chatActive)
+                this.messagesBeingTyped.push(`${remotePlayer.name}: ${remotePlayer.chatMsg}`);
         }
     }
-    public getDamagedTimestamp() {
-        return this.damagedTimestamp;
-    }
 
-
-    public getMessagesBeingTyped() {
-        return this.messagesBeingTyped;
-    }
-
-    private playersAreEqualEnough(player1: Player, player2: Player) {
+    private playersAreEqualEnough(player1: Player, player2: LastUploadedLocalPlayer | null) {
         if (player1 === null || player2 === null) return false;
         let out = true;
         out = out && player1.position.equals(player2.position);
@@ -134,6 +161,14 @@ export class Networking {
         out = out && player1.velocity.equals(player2.velocity);
 
         return out;
+    }
+
+    public getDamagedTimestamp() {
+        return this.damagedTimestamp;
+    }
+
+    public getMessagesBeingTyped() {
+        return this.messagesBeingTyped;
     }
 
     public getRemotePlayerData() {
@@ -152,13 +187,17 @@ export class Networking {
         this.chatOverlay.addChatMessage(chatMessage);
     }
 
-    public applyDamage(id:number, damage: number) {
-        const player2 = this.remotePlayers.find((player) => player.id === id);
+    public applyDamage(id: number, damage: number) {
+        const player2 = this.remotePlayers.find(player => player.id === id);
         const damageRequest = {
             localPlayer: this.localPlayer,
             targetPlayer: player2,
             damage: damage
         };
-        this.socket.emit('applyDamage',damageRequest);
+        this.socket.emit('applyDamage', damageRequest);
+    }
+
+    public getWorldItemsData() {
+        return this.worldItems;
     }
 }

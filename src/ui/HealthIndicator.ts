@@ -1,28 +1,32 @@
-import { HeldItem } from './HeldItem';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import {Renderer} from "./Renderer";
-import {Player} from "./Player";
+import {Renderer} from "../core/Renderer.ts";
+import {Player} from "../core/Player.ts";
 
 
 const clock = new THREE.Clock();
 
-export class HealthIndicator extends HeldItem {
+export class HealthIndicator {
     private scene: THREE.Scene;
-    private possumObject: THREE.Object3D;
+    private possumObject!: THREE.Object3D;
     private sceneAdded: boolean = false;
     private renderer:Renderer;
     private targetQuaternion: THREE.Quaternion = new THREE.Quaternion(0,0,0,1);
     private targetPosition: THREE.Vector3 = new THREE.Vector3(0,0,0);
     private localPlayer:Player;
     private rotatedAngle:number = 0;
+    private ambientLight: THREE.AmbientLight;
+    private lastHealth:number = 100;
+    private lastHealthChangeWasDamage:boolean = false;
+    private lightRGBI:number[] = [0,0,0,0];
 
     constructor(renderer: Renderer, localPlayer:Player) {
-        super();
         this.renderer = renderer;
         this.localPlayer = localPlayer;
         this.scene = renderer.getHealthIndicatorScene();
+        this.ambientLight = new THREE.AmbientLight(rgbToHex(0,0,0), 0);
+        this.scene.add(this.ambientLight);
     }
 
     public init() {
@@ -36,8 +40,15 @@ export class HealthIndicator extends HeldItem {
                 this.possumObject = gltf.scene;
                 this.possumObject.traverse((child) => {
                     if ((child as THREE.Mesh).isMesh) {
-                        child.renderOrder = 10006;
-                        (child as THREE.Mesh).material.depthTest = false;
+                        child.renderOrder = 999;
+                        const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+                            if (Array.isArray(material))
+                                material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
+                            else
+                                material.depthTest = false;
+                        };
+                        const mesh = child as THREE.Mesh;
+                        applyDepthTest(mesh.material);
                     }
                 });
             },
@@ -72,8 +83,23 @@ export class HealthIndicator extends HeldItem {
         moveTowardsPos(this.possumObject.position, this.targetPosition, 0.8 * deltaTime * 60);
         moveTowardsRot(this.possumObject.quaternion, this.targetQuaternion, 0.5 * deltaTime * 60);
 
+        let targetRGBI = [255,255,255,0.5];
+
+        if(!this.lastHealthChangeWasDamage && this.localPlayer.health < 100 && this.rotatedAngle % 2 > 1)
+            targetRGBI = [125,255,125,1.2];
+        else
+            targetRGBI = [255,255,255,0.5];
 
 
+        for(let i = 0; i < 4; i++)
+            this.lightRGBI[i] = this.lightRGBI[i] + (targetRGBI[i] - this.lightRGBI[i]) * 0.4 * deltaTime * 60;
+        this.ambientLight.copy(new THREE.AmbientLight(rgbToHex(this.lightRGBI[0], this.lightRGBI[1], this.lightRGBI[2]),this.lightRGBI[3]));
+
+        if(this.lastHealth<this.localPlayer.health)
+            this.lastHealthChangeWasDamage = false;
+        else if(this.lastHealth>this.localPlayer.health)
+            this.lastHealthChangeWasDamage = true;
+        this.lastHealth = this.localPlayer.health;
     }
 
 
@@ -93,6 +119,10 @@ function moveTowardsPos(source: THREE.Vector3, target: THREE.Vector3, frac: numb
 
 function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac: number) {
     source.slerp(target, frac);
+}
+
+function rgbToHex(r:number, g:number, b:number) {
+    return (r << 16) + (g << 8) + b;
 }
 
 const basePosition = new THREE.Vector3(0, 0, 1.2);

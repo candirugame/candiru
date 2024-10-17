@@ -1,46 +1,14 @@
 {
-  "type": "module",
   "name": "candiru",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "start": "node index.js",
-    "prestart": "npm run build",
-    "lint": "npx eslint",
-    "commit": "npx cz",
-    "release": "npx semantic-release",
-    "restartmessage": "node serverRestartMessage.js"
-  },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@types/three": "^0.168.0",
-    "express": "^5.0.0",
+    "@types/three": "^0.169.0",
+    "express": "^4.21.1",
     "joi": "^17.13.3",
-    "node-fetch": "^3.3.2",
-    "socket.io": "^4.7.5",
-    "socket.io-client": "^4.7.5",
-    "three": "^0.168.0",
-    "three-mesh-bvh": "^0.8.1",
-    "typescript": "^5.6.2",
-    "vite": "^5.4.5"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.11.0",
-    "@vitejs/plugin-vue": "^5.1.4",
-    "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^9.11.0",
-    "globals": "^15.9.0",
     "semantic-release": "^24.1.2",
-    "typescript-eslint": "^8.6.0"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
+    "socket.io": "^4.8.0",
+    "socket.io-client": "^4.8.0",
+    "three": "^0.169.0",
+    "three-mesh-bvh": "^0.8.2"
   },
   "release": {
     "branches": [

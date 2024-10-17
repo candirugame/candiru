@@ -6,5 +6,5 @@ html, body {
 
 @font-face {
     font-family: 'Tiny5';
-    src: url('Tiny5-Regular.ttf') format('truetype');
+    src: url('Tiny5-Regular.woff') format('woff');
 }
