@@ -4,6 +4,7 @@ import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
 
 export class InputHandler {
+    private id: number;
     private mouse: PointerLockControls;
     private clock: THREE.Clock;
     private forward: THREE.Vector3;
@@ -18,7 +19,7 @@ export class InputHandler {
     public prevVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
 
-    constructor(renderer: Renderer, localPlayer: Player) {
+    constructor(renderer: Renderer, localPlayer: Player, id: number) {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
         this.prevVelocity = new THREE.Vector3();
@@ -33,6 +34,8 @@ export class InputHandler {
         this.inputX = 0;
         this.inputZ = 0;
         this.jump = false;
+
+        this.id = id;
 
         this.setupEventListeners();
     }
