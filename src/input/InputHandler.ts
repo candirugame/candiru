@@ -95,7 +95,6 @@ export class InputHandler {
 
         if(this.gamepad) {
             if(this.gamepad.connected) {
-                console.log(this.gamepad.axes)
                 if (Math.abs(this.gamepad.axes[0]) >= .2) this.inputX += deltaTimeAcceleration * this.gamepad.axes[0];
                 if (Math.abs(this.gamepad.axes[1]) >= .2) this.inputZ += deltaTimeAcceleration * this.gamepad.axes[1];
                 if (this.gamepad.buttons[0].pressed) this.jump = true;
