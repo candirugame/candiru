@@ -211,11 +211,20 @@ export class ChatOverlay {
         const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
         const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
 
+        // const playerVelX = Math.ceil(this.localPlayer.velocity.x * 100)/100;
+        // const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
+        // const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
+
         if (this.localPlayer.latency >= 999) linesToRender.push('Disconnected :(');
+
+
+        if(this.localPlayer.latency >=999)
+            linesToRender.push('Disconnected :(');
 
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion);
         linesToRender.push(Math.floor(framerate) + 'FPS');
         linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
         for (let i = 0; i < linesToRender.length; i++) {
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
