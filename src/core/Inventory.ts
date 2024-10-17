@@ -52,7 +52,6 @@ export class Inventory {
                 switch(num) {
                     case 1: {
                             const banana = new BananaGun(this.renderer, this.networking, i, ItemType.InventoryItem);
-                            banana.init();
                             this.inventoryItems.push(banana);
                             break;
                     }
