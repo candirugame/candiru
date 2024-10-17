@@ -187,7 +187,7 @@ function periodicCleanup() {
     if (playerData[i].health <= 0) {
       playerData[i].health = 100;
       playerData[i].gravity = 0;
-      playerData[i].position = { x: 0, y: 2, z: 0 }; // 0, 2, 0
+      playerData[i].position = { x: 2, y: 1, z: 0 }; // 0, 2, 0
       playerData[i].velocity = { x: 0, y: 0, z: 0 };
       playerData[i].lookQuaternion = [0, 0, 0, 1];
       playerData[i].forced = true;

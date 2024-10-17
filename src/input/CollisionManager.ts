@@ -43,7 +43,7 @@ export class CollisionManager {
     public collisionPeriodic(localPlayer: Player) {
         if (!this.mapLoaded || !this.colliderGeom || !this.colliderGeom.boundsTree) return; // Add checks
         let deltaTime: number = this.clock.getDelta();
-        if (deltaTime > 1 / 15) deltaTime = 1 / 15;
+        if (deltaTime > 1 / 30) deltaTime = 1 / 30;
         this.physics(localPlayer, deltaTime);
     }
 
@@ -52,7 +52,7 @@ export class CollisionManager {
 
         localPlayer.gravity += deltaTime * -30;
         localPlayer.velocity.y += localPlayer.gravity;
-        localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .5;
+        localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .25;
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
 
         const bvh: MeshBVH | undefined = this.colliderGeom?.boundsTree;
