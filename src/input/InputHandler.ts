@@ -57,7 +57,7 @@ export class InputHandler {
 
     }
 
-    private processScroll(e) {
+    private processScroll(e :WheelEvent) {
         if(e.deltaY >= 4)
             this.scrollClicksSinceLastCheck++;
         if(e.deltaY <= -4)
