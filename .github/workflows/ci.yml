@@ -52,6 +52,8 @@ jobs:
         uses: denoland/setup-deno@v1
         with:
           deno-version: 'latest'
+      - name: install
+        run: deno install
       - name: check src
         run: deno check src
 
