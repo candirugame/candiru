@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { Player } from '../core/Player.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
@@ -12,8 +11,6 @@ interface ChatMessage {
 }
 
 export class ChatOverlay {
-    private chatScene: THREE.Scene;
-    private chatCamera: THREE.PerspectiveCamera;
     private chatCanvas: HTMLCanvasElement;
     private chatCtx: CanvasRenderingContext2D;
     private chatMessages: ChatMessage[]; // Typed as ChatMessage[]
@@ -24,20 +21,19 @@ export class ChatOverlay {
     private localPlayer: Player;
     private renderer!: Renderer;
     private networking!: Networking;
-    private chatTexture!: THREE.CanvasTexture;
-    private chatPlane!: THREE.Mesh;
     private screenWidth: number;
     private inputHandler!: InputHandler;
     private debugTextHeight!: number;
+    private oldScreenWidth:number = 0;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
-        this.chatScene = new THREE.Scene();
-        this.chatCamera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
         this.chatCanvas = document.createElement('canvas');
         this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
         this.chatCtx.imageSmoothingEnabled = false;
-        this.chatCanvas.width = 1024;
+
+
+        this.chatCanvas.width = 200;
         this.chatCanvas.height = 200;
 
         this.chatMessages = [];
@@ -49,7 +45,16 @@ export class ChatOverlay {
         this.screenWidth = 100;
 
         this.setupEventListeners();
-        this.setupChatPlane();
+
+        this.chatCanvas.style.position = 'absolute';
+        this.chatCanvas.style.top = '0';
+        this.chatCanvas.style.left = '0';
+
+         this.chatCanvas.style.height = '100vh';
+         this.chatCanvas.style.width = '100vw';
+        document.body.style.margin = '0';
+        this.chatCanvas.style.imageRendering = 'pixelated';
+        document.body.appendChild(this.chatCanvas);
     }
 
     public setRenderer(renderer: Renderer) {
@@ -68,23 +73,7 @@ export class ChatOverlay {
         document.addEventListener('keydown', this.onKeyDown.bind(this));
     }
 
-    private setupChatPlane() {
-        const scaleFactor = 0.001;
 
-        this.chatTexture = new THREE.CanvasTexture(this.chatCanvas);
-        this.chatTexture.minFilter = THREE.NearestFilter;
-        this.chatTexture.magFilter = THREE.NearestFilter;
-
-        const chatGeometry = new THREE.PlaneGeometry(this.chatCanvas.width, this.chatCanvas.height);
-        const chatMaterial = new THREE.MeshBasicMaterial({
-            map: this.chatTexture,
-            transparent: true
-        });
-
-        this.chatPlane = new THREE.Mesh(chatGeometry, chatMaterial);
-        this.chatPlane.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        this.chatScene.add(this.chatPlane);
-    }
 
     public onFrame() {
         this.clearOldMessages();
@@ -95,19 +84,17 @@ export class ChatOverlay {
             this.renderPlayerList();
         this.renderEvil();
         this.renderCrosshair();
-        this.chatTexture.needsUpdate = true;
 
-        const distanceFromCamera = 0.1;
-        const frustumHeight = 2 * distanceFromCamera * Math.tan(THREE.MathUtils.degToRad(this.chatCamera.fov / 2));
-        const frustumWidth = frustumHeight * this.chatCamera.aspect;
-        const leftEdgeX = -frustumWidth / 2;
+        this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
-        const vector = new THREE.Vector3(leftEdgeX, 0, -distanceFromCamera);
-        vector.applyMatrix4(this.chatCamera.matrixWorld);
-        this.chatPlane.position.set(vector.x, vector.y, vector.z);
-        this.chatPlane.quaternion.copy(this.chatCamera.quaternion);
+        if(this.oldScreenWidth !== this.screenWidth){
+            this.chatCanvas.width = this.screenWidth;
+            this.oldScreenWidth = this.screenWidth;
+        }
 
-        this.screenWidth = this.renderer.getCamera().aspect * 200;
+
+        // this.chatCanvas.width = this.screenWidth;
+        // this.chatCtx.fillRect(0,0,10,10);
     }
 
     private renderChatMessages() {
@@ -187,7 +174,7 @@ export class ChatOverlay {
             const originIndex = lineOrigins[lineIndex];
             const pixOffset = isFirstWrappedLine[lineIndex] ? pixOffsets[originIndex] : 0;
 
-            ctx.fillText(text, this.chatCanvas.width / 2 + 3 + pixOffset, 200 - 20 - 8 * i);
+            ctx.fillText(text, 3 + pixOffset, 200 - 20 - 8 * i);
         }
 
         if ((usermsg !== '' && this.localPlayer.chatActive) || this.nameSettingActive) {
@@ -196,7 +183,7 @@ export class ChatOverlay {
             if (this.nameSettingActive) {
                 width = ctx.measureText('Enter your name: ' + usermsg).width;
             }
-            ctx.fillRect(this.chatCanvas.width / 2 + 2, 200 - 20 - 7, width + 1, 9);
+            ctx.fillRect( 2, 200 - 20 - 7, width + 1, 9);
         }
     }
 
@@ -227,7 +214,7 @@ export class ChatOverlay {
         // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
         for (let i = 0; i < linesToRender.length; i++) {
-            ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
+            ctx.fillText(linesToRender[i], 2, 7 + 7 * i);
         }
 
         this.debugTextHeight = 7 * linesToRender.length;
@@ -262,11 +249,11 @@ export class ChatOverlay {
             longestLinePix = Math.max(longestLinePix, ctx.measureText(linesToRender[i]).width);
 
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix / 2), 4, longestLinePix + 3, linesToRender.length * 7 + 2);
+        ctx.fillRect(Math.floor(this.screenWidth / 2 - longestLinePix / 2), 4, longestLinePix + 3, linesToRender.length * 7 + 2);
 
         for (let i = 0; i < linesToRender.length; i++) {
             ctx.fillStyle = colorsToRender[i];
-            ctx.fillText(linesToRender[i], Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix / 2 + 2), 11 + 7 * i);
+            ctx.fillText(linesToRender[i], Math.floor(this.screenWidth / 2 - longestLinePix / 2 + 2), 11 + 7 * i);
         }
     }
 
@@ -283,8 +270,8 @@ export class ChatOverlay {
         ctx.fillStyle = 'rgb(0,255,225)';
         if (this.renderer.crosshairIsFlashing)
             ctx.fillStyle = 'rgb(255,0,0)';
-        ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2), 100 - 3, 1, 7);
-        ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - 3), 100, 7, 1);
+        ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
+        ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
     }
 
     private onKeyDown(e: KeyboardEvent) {
@@ -342,14 +329,6 @@ export class ChatOverlay {
             timestamp: Date.now() / 1000,
         };
         this.chatMessages.push(chatMessage);
-    }
-
-    public getChatScene(): THREE.Scene {
-        return this.chatScene;
-    }
-
-    public getChatCamera(): THREE.PerspectiveCamera {
-        return this.chatCamera;
     }
 
     private clearOldMessages() {

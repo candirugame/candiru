@@ -36,7 +36,6 @@ export class Game {
         this.map = new MapLoader('maps/realmap1.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
-
     }
 
     init() {

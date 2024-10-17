@@ -173,23 +173,6 @@ export class Renderer {
         this.renderer.setScissorTest(false);
         this.renderer.setViewport(0, 0, screenWidth, screenHeight);
 
-        // Render the chat overlay
-        const chatScene = this.chatOverlay.getChatScene();
-        const chatCamera = this.chatOverlay.getChatCamera();
-        chatScene.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-                child.renderOrder = 999;
-                const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
-                    if (Array.isArray(material))
-                        material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
-                    else
-                        material.depthTest = false;
-                };
-                const mesh = child as THREE.Mesh;
-                applyDepthTest(mesh.material);
-            }
-        });
-        this.renderer.render(chatScene, chatCamera);
 
         // Restore autoClear to true if necessary
         this.renderer.autoClear = true;
@@ -247,11 +230,6 @@ export class Renderer {
         // Update held item camera aspect ratio
         this.heldItemCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
         this.heldItemCamera.updateProjectionMatrix();
-
-        // Update chat camera aspect ratio
-        const chatCamera = this.chatOverlay.getChatCamera();
-        chatCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-        chatCamera.updateProjectionMatrix();
     }
 
     public getRemotePlayerIDsInCrosshair(): number[] {

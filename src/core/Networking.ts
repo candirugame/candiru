@@ -101,7 +101,7 @@ export class Networking {
 
         if (this.localPlayer.gameVersion === '') return;
 
-        if (this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) && currentTime - this.lastUploadTime < 5)
+        if (this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) && currentTime - this.lastUploadTime < 4)
             return;
 
         this.socket.emit('playerData', this.localPlayer);
