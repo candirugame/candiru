@@ -20,9 +20,12 @@ export class Game {
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
     private remoteItemRenderer: RemoteItemRenderer;
+    private id: number;
+    private static nextId: number = 0;
 
 
     constructor() {
+        this.id = Game.nextId++;
         this.localPlayer = new Player();
         this.chatOverlay = new ChatOverlay(this.localPlayer);
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
