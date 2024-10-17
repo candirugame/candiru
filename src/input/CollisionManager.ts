@@ -52,7 +52,7 @@ export class CollisionManager {
 
         localPlayer.gravity += deltaTime * -30;
         localPlayer.velocity.y += localPlayer.gravity;
-        localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .5;
+        localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .25;
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
 
         const bvh: MeshBVH | undefined = this.colliderGeom?.boundsTree;
