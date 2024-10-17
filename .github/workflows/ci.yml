@@ -43,7 +43,7 @@ jobs:
       - name: Run lint
         run: deno lint
   # Check Job
-  typecheck:
+  types:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -58,7 +58,7 @@ jobs:
         run: deno check src
 
   # Healthcheck Job
-  healthcheck:
+  health:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
