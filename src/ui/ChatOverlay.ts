@@ -226,9 +226,9 @@ export class ChatOverlay {
          const playerY = Math.floor(this.localPlayer.position.y * 100)/100;
          const playerZ = Math.floor(this.localPlayer.position.z * 100)/100;
 
-        //const playerVelX = Math.floor(this.localPlayer.velocity.x * 100)/100;
-        //const playerVelY = Math.floor(this.localPlayer.velocity.y * 100)/100;
-        //const playerVelZ = Math.floor(this.localPlayer.velocity.z * 100)/100;
+        const playerVelX = Math.ceil(this.localPlayer.velocity.x * 100)/100;
+        const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
+        const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
 
 
         if(this.localPlayer.latency >=999)
@@ -239,7 +239,7 @@ export class ChatOverlay {
         //linesToRender.push(Math.floor(latency) + 'ms');
         //linesToRender.push('health: ' + health);
         linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
-        //linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
+        linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
         //linesToRender.push('inv: ' + this.localPlayer.inventory);
         //linesToRender.push('worldItems: ' + this.networking.getWorldItemsData().length);
 
