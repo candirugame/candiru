@@ -202,9 +202,6 @@ export class ChatOverlay {
         // const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
         // const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
 
-        if (this.localPlayer.latency >= 999) linesToRender.push('Disconnected :(');
-
-
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
 
