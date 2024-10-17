@@ -42,6 +42,18 @@ jobs:
           deno-version: 'latest'
       - name: Run lint
         run: deno lint
+  # Check Job
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: 'latest'
+      - name: check src
+        run: deno check src
 
   # Healthcheck Job
   healthcheck:
