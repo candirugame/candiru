@@ -176,10 +176,17 @@ export class Renderer {
         // Render the chat overlay
         const chatScene = this.chatOverlay.getChatScene();
         const chatCamera = this.chatOverlay.getChatCamera();
-        chatScene.traverse((obj) => {
-            if (obj.isObject3D) {
-                obj.renderOrder = 998; // Ensure it's rendered just before the held item
-                //obj.material.depthTest = false;
+        chatScene.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+                child.renderOrder = 999;
+                const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+                    if (Array.isArray(material))
+                        material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
+                    else
+                        material.depthTest = false;
+                };
+                const mesh = child as THREE.Mesh;
+                applyDepthTest(mesh.material);
             }
         });
         this.renderer.render(chatScene, chatCamera);

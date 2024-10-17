@@ -57,7 +57,7 @@ export class InputHandler {
 
     }
 
-    private processScroll(e) {
+    private processScroll(e: WheelEvent) {
         if(e.deltaY >= 4)
             this.scrollClicksSinceLastCheck++;
         if(e.deltaY <= -4)
@@ -102,7 +102,7 @@ export class InputHandler {
         if (this.inputX !== 0 || this.inputZ !== 0) dist = 1;
         if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
 
-        this.prevVelocity.clone(this.localPlayer.velocity);
+       // this.prevVelocity.clone(this.localPlayer.velocity);
 
         this.localPlayer.velocity.z = dist * this.inputZ;
         this.localPlayer.velocity.x = dist * this.inputX;

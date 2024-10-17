@@ -5,6 +5,7 @@ import { Networking } from '../core/Networking.ts';
 import { InputHandler } from '../input/InputHandler.ts';
 
 interface ChatMessage {
+    id: number;
     message: string;
     name: string;
     timestamp: number;
@@ -324,9 +325,14 @@ export class ChatOverlay {
             this.nameSettingActive = true;
     }
 
-    public addChatMessage(msg: ChatMessage) { // Typed as ChatMessage
-        msg.timestamp = Date.now() / 1000;
-        this.chatMessages.push(msg);
+    public addChatMessage(msg: { id: number; name: string; message: string; }) {
+        const chatMessage: ChatMessage = {
+            id: msg.id,
+            name: msg.name,
+            message: msg.message,
+            timestamp: Date.now() / 1000,
+        };
+        this.chatMessages.push(chatMessage);
     }
 
     public getChatScene(): THREE.Scene {

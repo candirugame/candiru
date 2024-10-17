@@ -47,7 +47,14 @@ export class BananaGun extends ItemBase {
                     this.object.traverse((child) => {
                         if ((child as THREE.Mesh).isMesh) {
                             child.renderOrder = 999;
-                            (child as THREE.Mesh).material.depthTest = false;
+                            const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+                                if (Array.isArray(material))
+                                    material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
+                                else
+                                    material.depthTest = false;
+                            };
+                            const mesh = child as THREE.Mesh;
+                            applyDepthTest(mesh.material);
                         }
                     });
                 }
