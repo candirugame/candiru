@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { Player } from '../core/Player.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
