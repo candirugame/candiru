@@ -7,13 +7,13 @@ export class ItemBase {
     protected timeAccum:number = 0;
     protected clock:THREE.Clock = new THREE.Clock();
 
-    protected object: THREE.Object3D;
+    protected object!: THREE.Object3D;
     protected itemType: ItemType;
 
     protected scene: THREE.Scene; // The scene to put the item in
 
     protected inventoryMenuScene: THREE.Scene; //Inventory menu scene
-    protected inventoryMenuObject:THREE.Object3D; //The object shown in the inventory menu (he do spin)
+    protected inventoryMenuObject!:THREE.Object3D; //The object shown in the inventory menu (he do spin)
     protected index:number; //The index of the item in the inventory
     protected shownInHand:boolean = false;
     protected angleAccum: number = 0;
@@ -42,7 +42,14 @@ export class ItemBase {
             this.object.traverse((child) => {
                 if ((child as THREE.Mesh).isMesh) {
                     child.renderOrder = 999;
-                    (child as THREE.Mesh).material.depthTest = false;
+                    const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+                        if (Array.isArray(material))
+                            material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
+                        else
+                            material.depthTest = false;
+                    };
+                    const mesh = child as THREE.Mesh;
+                    applyDepthTest(mesh.material);
                 }
             });
     }

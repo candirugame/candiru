@@ -23,16 +23,17 @@ export class BananaGun extends ItemBase {
     private lastFired: number = 0;
     private addedToHandScene: boolean = false;
 
+    // deno-lint-ignore constructor-super
     constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
         if(itemType === ItemType.WorldItem)
             super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
-        if(itemType === ItemType.InventoryItem)
+        else
             super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
         this.renderer = renderer;
         this.networking = networking;
     }
 
-    public init() {
+    public override init() {
         const loader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('/draco/');
@@ -46,7 +47,14 @@ export class BananaGun extends ItemBase {
                     this.object.traverse((child) => {
                         if ((child as THREE.Mesh).isMesh) {
                             child.renderOrder = 999;
-                            (child as THREE.Mesh).material.depthTest = false;
+                            const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+                                if (Array.isArray(material))
+                                    material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
+                                else
+                                    material.depthTest = false;
+                            };
+                            const mesh = child as THREE.Mesh;
+                            applyDepthTest(mesh.material);
                         }
                     });
                 }
@@ -63,7 +71,7 @@ export class BananaGun extends ItemBase {
         );
     }
 
-    public onFrame(input: HeldItemInput, selectedIndex: number) {
+    public override onFrame(input: HeldItemInput, selectedIndex: number) {
         if (!this.object) return;
         const deltaTime = this.clock.getDelta();
         this.timeAccum += deltaTime;
@@ -80,7 +88,7 @@ export class BananaGun extends ItemBase {
     // No need to override worldOnFrame if default behavior is sufficient
     // If specific behavior is needed, you can override it here
 
-    public inventoryOnFrame(deltaTime: number, selectedIndex: number) {
+    public override inventoryOnFrame(deltaTime: number, selectedIndex: number) {
         if (!this.addedToInventoryItemScenes) {
             this.inventoryMenuScene.add(this.inventoryMenuObject);
             this.addedToInventoryItemScenes = true;
@@ -99,7 +107,7 @@ export class BananaGun extends ItemBase {
         this.inventoryMenuObject.quaternion.slerp(targetQuaternion, 0.1 * 60 * deltaTime);
     }
 
-    public handOnFrame(deltaTime: number, input: HeldItemInput) {
+    public override handOnFrame(deltaTime: number, input: HeldItemInput) {
         if (!this.object) return;
 
         if (this.shownInHand && !this.addedToHandScene) {
@@ -147,7 +155,7 @@ export class BananaGun extends ItemBase {
         this.lastInput = input;
     }
 
-    public showInHand() {
+    public override showInHand() {
         if (this.shownInHand) return;
         this.shownInHand = true;
         this.shownInHandTimestamp = Date.now() / 1000;
@@ -157,7 +165,7 @@ export class BananaGun extends ItemBase {
         }
     }
 
-    public hideInHand() {
+    public override hideInHand() {
         if (!this.shownInHand) return;
         this.shownInHand = false;
     }
@@ -176,7 +184,7 @@ export class BananaGun extends ItemBase {
     }
 
     // Method to set world position when used as WorldItem
-    public setWorldPosition(vector: THREE.Vector3) {
+    public override setWorldPosition(vector: THREE.Vector3) {
         super.setWorldPosition(vector);
     }
 }

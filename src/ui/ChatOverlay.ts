@@ -2,33 +2,40 @@ import * as THREE from 'three';
 import { Player } from '../core/Player.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
-import {InputHandler} from "../input/InputHandler.ts";
+import { InputHandler } from '../input/InputHandler.ts';
+
+interface ChatMessage {
+    id: number;
+    message: string;
+    name: string;
+    timestamp: number;
+}
 
 export class ChatOverlay {
     private chatScene: THREE.Scene;
     private chatCamera: THREE.PerspectiveCamera;
     private chatCanvas: HTMLCanvasElement;
     private chatCtx: CanvasRenderingContext2D;
-    private chatMessages;//TODO: type this?
+    private chatMessages: ChatMessage[]; // Typed as ChatMessage[]
     private chatMessageLifespan: number;
     private charsToRemovePerSecond: number;
     private maxMessagesOnScreen: number;
     private nameSettingActive: boolean;
     private localPlayer: Player;
-    private renderer: Renderer;
-    private networking: Networking;
-    private chatTexture: THREE.CanvasTexture;
-    private chatPlane: THREE.Mesh;
+    private renderer!: Renderer;
+    private networking!: Networking;
+    private chatTexture!: THREE.CanvasTexture;
+    private chatPlane!: THREE.Mesh;
     private screenWidth: number;
-    private inputHandler : InputHandler;
-    private debugTextHeight: number;
+    private inputHandler!: InputHandler;
+    private debugTextHeight!: number;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
         this.chatScene = new THREE.Scene();
-        this.chatCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
+        this.chatCamera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
         this.chatCanvas = document.createElement('canvas');
-        this.chatCtx = this.chatCanvas.getContext('2d');
+        this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
         this.chatCtx.imageSmoothingEnabled = false;
         this.chatCanvas.width = 1024;
         this.chatCanvas.height = 200;
@@ -41,8 +48,6 @@ export class ChatOverlay {
         this.nameSettingActive = false;
         this.screenWidth = 100;
 
-
-
         this.setupEventListeners();
         this.setupChatPlane();
     }
@@ -54,7 +59,8 @@ export class ChatOverlay {
     public setNetworking(networking: Networking) {
         this.networking = networking;
     }
-    public setInputHandler(inputHandler: InputHandler){
+
+    public setInputHandler(inputHandler: InputHandler) {
         this.inputHandler = inputHandler;
     }
 
@@ -85,7 +91,7 @@ export class ChatOverlay {
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
         this.renderChatMessages();
         this.renderDebugText();
-        if(this.inputHandler.getKey('tab'))
+        if (this.inputHandler.getKey('tab'))
             this.renderPlayerList();
         this.renderEvil();
         this.renderCrosshair();
@@ -117,20 +123,17 @@ export class ChatOverlay {
         const pixOffsets: number[] = [];
         const messagesBeingTyped = this.networking.getMessagesBeingTyped();
 
-        // Collect chat messages in the correct order (oldest to newest)
         for (let i = 0; i < this.chatMessages.length; i++) {
-            let msg = this.chatMessages[i]['message'];
-            const name = this.chatMessages[i]['name'];
+            let msg = this.chatMessages[i].message;
+            const name = this.chatMessages[i].name;
             if (name.length > 0) msg = `${name}: ${msg}`;
 
             const duplicateFromPlayerData = messagesBeingTyped.includes(msg);
 
-            let charsToRemove =
-                Date.now() / 1000 - this.chatMessages[i]['timestamp'] - this.chatMessageLifespan;
+            let charsToRemove = Date.now() / 1000 - this.chatMessages[i].timestamp - this.chatMessageLifespan;
             charsToRemove = Math.max(0, charsToRemove * this.charsToRemovePerSecond);
             charsToRemove = Math.floor(charsToRemove);
 
-            // Remove characters carefully, accounting for spaces
             let removedSubstring = '';
             let remainingMsg = msg;
             if (charsToRemove > 0) {
@@ -149,13 +152,11 @@ export class ChatOverlay {
             }
         }
 
-        // Add messages being typed by others
         for (const msg of messagesBeingTyped) {
             linesToRender.push(msg + cursor);
             pixOffsets.push(0);
         }
 
-        // Add the user's message or name prompt if active
         if (this.localPlayer.chatActive) {
             linesToRender.push(usermsg + cursor);
             pixOffsets.push(0);
@@ -166,13 +167,11 @@ export class ChatOverlay {
             pixOffsets.push(0);
         }
 
-        // Wrap lines and keep track of their origins and whether they're the first wrapped line
         const wrappedLines: string[] = [];
         const lineOrigins: number[] = [];
         const isFirstWrappedLine: boolean[] = [];
 
         for (let i = 0; i < linesToRender.length; i++) {
-            // Modify wrapping function to prevent leading spaces
             const wrapped = this.doTextWrapping(ctx, [linesToRender[i]], this.screenWidth - 10);
             for (let j = 0; j < wrapped.length; j++) {
                 wrappedLines.push(wrapped[j]);
@@ -181,7 +180,6 @@ export class ChatOverlay {
             }
         }
 
-        // Render the wrapped lines from bottom to top
         const totalLines = wrappedLines.length;
         for (let i = 0; i < totalLines; i++) {
             const lineIndex = totalLines - i - 1;
@@ -189,29 +187,18 @@ export class ChatOverlay {
             const originIndex = lineOrigins[lineIndex];
             const pixOffset = isFirstWrappedLine[lineIndex] ? pixOffsets[originIndex] : 0;
 
-            ctx.fillText(
-                text,
-                this.chatCanvas.width / 2 + 3 + pixOffset,
-                200 - 20 - 8 * i
-            );
+            ctx.fillText(text, this.chatCanvas.width / 2 + 3 + pixOffset, 200 - 20 - 8 * i);
         }
 
-        // Render background for the input field if needed
         if ((usermsg !== '' && this.localPlayer.chatActive) || this.nameSettingActive) {
             ctx.fillStyle = 'rgba(145,142,118,0.3)';
             let width = ctx.measureText(usermsg).width;
             if (this.nameSettingActive) {
                 width = ctx.measureText('Enter your name: ' + usermsg).width;
             }
-            ctx.fillRect(
-                this.chatCanvas.width / 2 + 2,
-                200 - 20 - 7,
-                width + 1,
-                9
-            );
+            ctx.fillRect(this.chatCanvas.width / 2 + 2, 200 - 20 - 7, width + 1, 9);
         }
     }
-
 
     private renderDebugText() {
         const ctx = this.chatCtx;
@@ -220,15 +207,15 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        //const latency = this.localPlayer.latency;
-        //const health = Math.floor(this.localPlayer.health);
-         const playerX = Math.floor(this.localPlayer.position.x * 100)/100;
-         const playerY = Math.floor(this.localPlayer.position.y * 100)/100;
-         const playerZ = Math.floor(this.localPlayer.position.z * 100)/100;
+        const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
+        const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
+        const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
 
         const playerVelX = Math.ceil(this.localPlayer.velocity.x * 100)/100;
         const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
         const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
+
+        if (this.localPlayer.latency >= 999) linesToRender.push('Disconnected :(');
 
 
         if(this.localPlayer.latency >=999)
@@ -236,36 +223,33 @@ export class ChatOverlay {
 
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion);
         linesToRender.push(Math.floor(framerate) + 'FPS');
-        //linesToRender.push(Math.floor(latency) + 'ms');
-        //linesToRender.push('health: ' + health);
         linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
         linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
-        //linesToRender.push('inv: ' + this.localPlayer.inventory);
-        //linesToRender.push('worldItems: ' + this.networking.getWorldItemsData().length);
 
-        for (let i = 0; i < linesToRender.length; i++)
+        for (let i = 0; i < linesToRender.length; i++) {
             ctx.fillText(linesToRender[i], this.chatCanvas.width / 2 + 2, 7 + 7 * i);
+        }
 
         this.debugTextHeight = 7 * linesToRender.length;
     }
 
-    public getDebugTextHeight(){
+    public getDebugTextHeight(): number {
         return this.debugTextHeight;
     }
 
-    private renderPlayerList(){
+    private renderPlayerList() {
         const ctx = this.chatCtx;
-        const linesToRender:string[] = [];
-        const colorsToRender = [];
+        const linesToRender: string[] = [];
+        const colorsToRender: string[] = [];
         const playerData = this.networking.getRemotePlayerData();
 
         linesToRender.push(playerData.length + ' online - ' + Math.round(this.localPlayer.latency) + 'ms');
         colorsToRender.push('white');
-        for(let i = 0; i < playerData.length; i++){
+        for (let i = 0; i < playerData.length; i++) {
             linesToRender.push(playerData[i].name);
-            if(playerData[i].latency > 200)
+            if (playerData[i].latency > 200)
                 colorsToRender.push('red');
-            else if(playerData[i].latency > 50)
+            else if (playerData[i].latency > 50)
                 colorsToRender.push('orange');
             else
                 colorsToRender.push('green');
@@ -277,22 +261,18 @@ export class ChatOverlay {
         for (let i = 0; i < linesToRender.length; i++)
             longestLinePix = Math.max(longestLinePix, ctx.measureText(linesToRender[i]).width);
 
-
-        //rectangular background at top center
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix/2), 4, longestLinePix+3, linesToRender.length * 7 + 2);
+        ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix / 2), 4, longestLinePix + 3, linesToRender.length * 7 + 2);
 
-        for (let i = 0; i < linesToRender.length; i++){
+        for (let i = 0; i < linesToRender.length; i++) {
             ctx.fillStyle = colorsToRender[i];
-            ctx.fillText(linesToRender[i], Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix/2 +2), 11 + 7 * i);
+            ctx.fillText(linesToRender[i], Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - longestLinePix / 2 + 2), 11 + 7 * i);
         }
-
-
     }
 
-    private renderEvil(){
+    private renderEvil() {
         const ctx = this.chatCtx;
-        if(Date.now()/1000 - this.networking.getDamagedTimestamp() < 0.05){
+        if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.05) {
             ctx.fillStyle = 'rgba(255,0,0,0.1)';
             ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
         }
@@ -301,7 +281,7 @@ export class ChatOverlay {
     private renderCrosshair() {
         const ctx = this.chatCtx;
         ctx.fillStyle = 'rgb(0,255,225)';
-        if(this.renderer.crosshairIsFlashing)
+        if (this.renderer.crosshairIsFlashing)
             ctx.fillStyle = 'rgb(255,0,0)';
         ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2), 100 - 3, 1, 7);
         ctx.fillRect(Math.floor(this.chatCanvas.width / 2 + this.screenWidth / 2 - 3), 100, 7, 1);
@@ -354,30 +334,32 @@ export class ChatOverlay {
             this.nameSettingActive = true;
     }
 
-    public addChatMessage(msg) {//TODO: type this?
-        msg['timestamp'] = Date.now() / 1000;
-        this.chatMessages.push(msg);
+    public addChatMessage(msg: { id: number; name: string; message: string; }) {
+        const chatMessage: ChatMessage = {
+            id: msg.id,
+            name: msg.name,
+            message: msg.message,
+            timestamp: Date.now() / 1000,
+        };
+        this.chatMessages.push(chatMessage);
     }
 
-    public getChatScene() {
+    public getChatScene(): THREE.Scene {
         return this.chatScene;
     }
 
-    public getChatCamera() {
+    public getChatCamera(): THREE.PerspectiveCamera {
         return this.chatCamera;
     }
 
     private clearOldMessages() {
         for (let i = 0; i < this.chatMessages.length; i++)
-            if (Date.now() / 1000 - this.chatMessages[i]['timestamp'] > this.chatMessageLifespan + 5)
+            if (Date.now() / 1000 - this.chatMessages[i].timestamp > this.chatMessageLifespan + 5)
                 this.chatMessages.splice(i, 1);
 
         for (let i = this.chatMessages.length - 1; i >= 0; i--) {
             if (i < this.chatMessages.length - this.maxMessagesOnScreen)
-                this.chatMessages[i]['timestamp'] = Math.min(
-                    Date.now() / 1000 - this.chatMessageLifespan,
-                    this.chatMessages[i]['timestamp']
-                );
+                this.chatMessages[i].timestamp = Math.min(Date.now() / 1000 - this.chatMessageLifespan, this.chatMessages[i].timestamp);
         }
     }
 
@@ -419,5 +401,4 @@ export class ChatOverlay {
 
         return resultLines;
     }
-
 }

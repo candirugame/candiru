@@ -9,7 +9,7 @@ const clock = new THREE.Clock();
 
 export class HealthIndicator {
     private scene: THREE.Scene;
-    private possumObject: THREE.Object3D;
+    private possumObject!: THREE.Object3D;
     private sceneAdded: boolean = false;
     private renderer:Renderer;
     private targetQuaternion: THREE.Quaternion = new THREE.Quaternion(0,0,0,1);
@@ -40,8 +40,15 @@ export class HealthIndicator {
                 this.possumObject = gltf.scene;
                 this.possumObject.traverse((child) => {
                     if ((child as THREE.Mesh).isMesh) {
-                        child.renderOrder = 10006;
-                        (child as THREE.Mesh).material.depthTest = false;
+                        child.renderOrder = 999;
+                        const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+                            if (Array.isArray(material))
+                                material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
+                            else
+                                material.depthTest = false;
+                        };
+                        const mesh = child as THREE.Mesh;
+                        applyDepthTest(mesh.material);
                     }
                 });
             },
@@ -114,7 +121,7 @@ function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac
     source.slerp(target, frac);
 }
 
-function rgbToHex(r, g, b) {
+function rgbToHex(r:number, g:number, b:number) {
     return (r << 16) + (g << 8) + b;
 }
 

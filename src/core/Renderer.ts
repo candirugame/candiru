@@ -42,7 +42,7 @@ export class Renderer {
 
         this.clock = new THREE.Clock();
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
+        this.camera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
         this.renderer = new THREE.WebGLRenderer();
         document.body.appendChild(this.renderer.domElement);
         this.renderer.domElement.style.imageRendering = 'pixelated';
@@ -55,7 +55,7 @@ export class Renderer {
 
         // Create a new scene and camera for the held item
         this.heldItemScene = new THREE.Scene();
-        this.heldItemCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000);
+        this.heldItemCamera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
         this.heldItemCamera.position.set(0, 0, 5);
         this.heldItemCamera.lookAt(0, 0, 0);
 
@@ -104,7 +104,7 @@ export class Renderer {
         this.remotePlayerRenderer.getEntityScene().add(ambientLight3); // Add ambient light to remote players scene
 
         this.onWindowResize();
-        window.addEventListener('resize', this.onWindowResize.bind(this), false);
+        globalThis.addEventListener('resize', this.onWindowResize.bind(this), false);
     }
 
     public onFrame(localPlayer: Player) {
@@ -127,8 +127,8 @@ export class Renderer {
         this.renderer.render(this.heldItemScene, this.heldItemCamera);
 
         // Set up the scissor and viewport for the health indicator scene rendering
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
+        const screenWidth = globalThis.innerWidth;
+        const screenHeight = globalThis.innerHeight;
 
         const healthIndicatorWidth = 60; // native
         const healthIndicatorHeight = healthIndicatorWidth; // 1:1 aspect ratio
@@ -176,10 +176,17 @@ export class Renderer {
         // Render the chat overlay
         const chatScene = this.chatOverlay.getChatScene();
         const chatCamera = this.chatOverlay.getChatCamera();
-        chatScene.traverse((obj) => {
-            if (obj.isObject3D) {
-                obj.renderOrder = 998; // Ensure it's rendered just before the held item
-                //obj.material.depthTest = false;
+        chatScene.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+                child.renderOrder = 999;
+                const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+                    if (Array.isArray(material))
+                        material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
+                    else
+                        material.depthTest = false;
+                };
+                const mesh = child as THREE.Mesh;
+                applyDepthTest(mesh.material);
             }
         });
         this.renderer.render(chatScene, chatCamera);
@@ -231,19 +238,19 @@ export class Renderer {
     }
 
     private onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(200 / window.innerHeight);
+        this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
+        this.renderer.setPixelRatio(200 / globalThis.innerHeight);
 
-        this.screenPixelsInGamePixel = window.innerHeight / 200;
+        this.screenPixelsInGamePixel = globalThis.innerHeight / 200;
         // Update held item camera aspect ratio
-        this.heldItemCamera.aspect = window.innerWidth / window.innerHeight;
+        this.heldItemCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
         this.heldItemCamera.updateProjectionMatrix();
 
         // Update chat camera aspect ratio
         const chatCamera = this.chatOverlay.getChatCamera();
-        chatCamera.aspect = window.innerWidth / window.innerHeight;
+        chatCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
         chatCamera.updateProjectionMatrix();
     }
 
