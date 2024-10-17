@@ -194,9 +194,9 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
-        const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
-        const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
+        //const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
+        //const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
+        //const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
 
         //const playerQuatX = Math.floor(this.localPlayer.lookQuaternion.x * 100) / 100;
         //const playerQuatY = Math.floor(this.localPlayer.lookQuaternion.y * 100) / 100;
@@ -212,7 +212,7 @@ export class ChatOverlay {
 
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push(Math.floor(framerate) + 'FPS');
-        linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
         //linesToRender.push('qx: ' + playerQuatX + ' qy: ' + playerQuatY + ' qz: ' + playerQuatZ + ' qw: ' + playerQuatW);
         // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
