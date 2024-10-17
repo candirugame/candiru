@@ -43,7 +43,7 @@ jobs:
       - name: Run lint
         run: deno lint
   # Check Job
-  typecheck:
+  types:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -58,7 +58,7 @@ jobs:
         run: deno check src
 
   # Healthcheck Job
-  healthcheck:
+  health:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -69,10 +69,20 @@ jobs:
           deno-version: 'latest'
       - name: Start server
         run: deno task start &
-      - name: Wait for server to start
-        run: sleep 30
       - name: Health check
-        run: curl -f http://localhost:3000 || exit 1
+        run: |
+          retries=10
+          count=0
+          until curl -f http://localhost:3000; do
+            count=$((count + 1))
+            if [ $count -lt $retries ]; then
+              echo "Health check failed, retrying in 5 seconds... ($count/$retries)"
+              sleep 5
+            else
+              echo "Health check failed after $retries attempts, exiting."
+              exit 1
+            fi
+          done
 
   # Audit Job
   audit:
