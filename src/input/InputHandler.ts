@@ -6,6 +6,8 @@ import { Player } from '../core/Player.ts';
 export class InputHandler {
     private id: number;
     private mouse: PointerLockControls;
+    private gamepad: (Gamepad | null) = null;
+    private gamepadEuler ;
     private clock: THREE.Clock;
     private forward: THREE.Vector3;
     private keys: { [key: string]: boolean };
@@ -23,6 +25,7 @@ export class InputHandler {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
         this.prevVelocity = new THREE.Vector3();
+        this.gamepadEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 
         this.clock = new THREE.Clock();
         this.mouse = new PointerLockControls(this.localPlayer, document.body);
@@ -57,7 +60,12 @@ export class InputHandler {
         document.addEventListener('contextmenu', (event) => {event.preventDefault();});
 
         document.addEventListener('wheel', this.processScroll.bind(this));
-
+        if(navigator.getGamepads()) {
+            self.addEventListener('gamepadconnected', this.onGamepadChange.bind(this));
+            self.addEventListener('gamepaddisconnected', this.onGamepadChange.bind(this));
+        } else {
+            console.log("Browser does not support Gamepad API.")
+        }
     }
 
     private processScroll(e :WheelEvent) {
@@ -80,16 +88,33 @@ export class InputHandler {
         const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
 
         let dist = 0;
+        this.jump = false;
 
         const oldInputZ = this.inputZ;
         const oldInputX = this.inputX;
+
+        if(this.gamepad) {
+            if(this.gamepad.connected) {
+                console.log(this.gamepad.axes)
+                if (Math.abs(this.gamepad.axes[0]) >= .2) this.inputX += deltaTimeAcceleration * this.gamepad.axes[0];
+                if (Math.abs(this.gamepad.axes[1]) >= .2) this.inputZ += deltaTimeAcceleration * this.gamepad.axes[1];
+                if (this.gamepad.buttons[0].pressed) this.jump = true;
+                this.rightMouseDown = this.gamepad.axes[4] > .5;
+                this.leftMouseDown = this.gamepad.axes[5] > .5;
+                this.gamepadEuler.y -= this.gamepad.axes[2] * .08;
+                this.gamepadEuler.x -= this.gamepad.axes[3] * .08;
+                this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
+                this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
+            }
+        }
 
         if (!this.localPlayer.chatActive) {
             if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
             if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
             if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
             if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
-            this.jump = this.getKey(' ');
+            if (this.getKey(' ')) this.jump = true;
+
         }
 
         switch (this.inputZ - oldInputZ) {
@@ -167,6 +192,10 @@ export class InputHandler {
         const locked = document.pointerLockElement === document.body;
         if(!locked)
             this.keys = {};
+    }
+
+    private onGamepadChange(_event: GamepadEvent) {
+        this.gamepad = navigator.getGamepads()[this.id];
     }
 
     private static approachZero(input: number, step: number): number {
