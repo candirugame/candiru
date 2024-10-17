@@ -31,7 +31,7 @@ export class Game {
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
         this.renderer = new Renderer(this.networking, this.localPlayer, this.chatOverlay);
         this.chatOverlay.setRenderer(this.renderer);
-        this.inputHandler = new InputHandler(this.renderer, this.localPlayer);
+        this.inputHandler = new InputHandler(this.renderer, this.localPlayer, this.id);
         this.collisionManager = new CollisionManager(this.renderer, this.inputHandler);
         this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
