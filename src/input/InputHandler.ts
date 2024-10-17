@@ -106,7 +106,9 @@ export class InputHandler {
 
         this.localPlayer.velocity.z = dist * this.inputZ;
         this.localPlayer.velocity.x = dist * this.inputX;
+        this.localPlayer.velocity.y = 0;
         this.localPlayer.velocity.clampLength(0, this.localPlayer.speed);
+        this.localPlayer.velocity.y = this.prevVelocity.y;
         this.inputZ = this.localPlayer.velocity.z;
         this.inputX = this.localPlayer.velocity.x;
 
