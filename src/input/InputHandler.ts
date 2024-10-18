@@ -40,6 +40,10 @@ export class InputHandler {
 
         this.gameIndex = nextGameIndex;
 
+        if(!navigator.getGamepads()) {
+            console.log("Browser does not support Gamepad API.")
+        }
+
         this.setupEventListeners();
     }
 
@@ -60,12 +64,6 @@ export class InputHandler {
         document.addEventListener('contextmenu', (event) => {event.preventDefault();});
 
         document.addEventListener('wheel', this.processScroll.bind(this));
-        if(navigator.getGamepads()) {
-            self.addEventListener('gamepadconnected', this.onGamepadChange.bind(this));
-            self.addEventListener('gamepaddisconnected', this.onGamepadChange.bind(this));
-        } else {
-            console.log("Browser does not support Gamepad API.")
-        }
     }
 
     private processScroll(e :WheelEvent) {
@@ -93,14 +91,16 @@ export class InputHandler {
         const oldInputZ = this.inputZ;
         const oldInputX = this.inputX;
 
+        this.gamepad = navigator.getGamepads()[this.gameIndex];
         if(this.gamepad) {
             if(this.gamepad.connected) {
                 this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
+                console.log(this.gamepad);
                 if (Math.abs(this.gamepad.axes[0]) >= .2) this.inputX += deltaTimeAcceleration * this.gamepad.axes[0];
                 if (Math.abs(this.gamepad.axes[1]) >= .2) this.inputZ += deltaTimeAcceleration * this.gamepad.axes[1];
                 if (this.gamepad.buttons[0].pressed) this.jump = true;
-                this.rightMouseDown = this.gamepad.axes[4] > .5;
-                this.leftMouseDown = this.gamepad.axes[5] > .5;
+                this.rightMouseDown = this.gamepad.buttons[6].value > .5 || this.gamepad.axes[4] > .5;
+                this.leftMouseDown = this.gamepad.buttons[7].value > .5 || this.gamepad.axes[5] > .5;
                 this.gamepadEuler.y -= this.gamepad.axes[2] * .08;
                 this.gamepadEuler.x -= this.gamepad.axes[3] * .08;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
@@ -196,10 +196,6 @@ export class InputHandler {
         const locked = document.pointerLockElement === document.body;
         if(!locked)
             this.keys = {};
-    }
-
-    private onGamepadChange(_event: GamepadEvent) {
-        this.gamepad = navigator.getGamepads()[this.gameIndex];
     }
 
     private static approachZero(input: number, step: number): number {
