@@ -105,8 +105,8 @@ export class InputHandler {
                 speedMultiplier = Math.sqrt((this.gamepadInputs.leftJoyX * this.gamepadInputs.leftJoyX) + (this.gamepadInputs.leftJoyY * this.gamepadInputs.leftJoyY));
                 speedMultiplier = Math.min(Math.max(speedMultiplier, 0), 1)
                 if (this.gamepadInputs.A) this.jump = true;
-                this.rightMouseDown = this.gamepadInputs.leftTrigger > .5;
-                this.leftMouseDown = this.gamepadInputs.rightTrigger > .5;
+                if (this.gamepadInputs.leftTrigger > .5) this.rightMouseDown = true;
+                if (this.gamepadInputs.rightTrigger > .5) this.leftMouseDown = true;
                 this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * .08;
                 this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * .08;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
