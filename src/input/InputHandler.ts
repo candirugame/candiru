@@ -5,10 +5,8 @@ import { Player } from '../core/Player.ts';
 
 export class InputHandler {
     private readonly gameIndex: number;
-    // deno-lint-ignore no-explicit-any
-    private static isChrome: boolean = typeof (globalThis as any).chrome !== 'undefined';
-    // deno-lint-ignore no-explicit-any
-    private static isFirefox: boolean = typeof (globalThis as any).InstallTrigger !== 'undefined';
+    private static isChrome = /Chrome/.test(navigator.userAgent);
+    private static isFirefox: boolean = /Firefox/.test(navigator.userAgent);
     private mouse: PointerLockControls;
     private gamepad: (Gamepad | null) = null;
     private readonly gamepadEuler ;
