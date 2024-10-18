@@ -21,6 +21,8 @@ export class InputHandler {
     public prevVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
     private readonly gamepadInputs: GamepadInputs;
+    private shoot: boolean;
+    private aim: boolean;
 
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
@@ -38,6 +40,8 @@ export class InputHandler {
         this.inputX = 0;
         this.inputZ = 0;
         this.jump = false;
+        this.shoot = false;
+        this.aim = false;
 
         this.gamepadInputs = new GamepadInputs();
 
@@ -91,6 +95,8 @@ export class InputHandler {
         let dist = 0;
         let speedMultiplier: number = 1;
         this.jump = false;
+        this.aim = false;
+        this.shoot = false;
 
         const oldInputZ = this.inputZ;
         const oldInputX = this.inputX;
@@ -105,8 +111,8 @@ export class InputHandler {
                 speedMultiplier = Math.sqrt((this.gamepadInputs.leftJoyX * this.gamepadInputs.leftJoyX) + (this.gamepadInputs.leftJoyY * this.gamepadInputs.leftJoyY));
                 speedMultiplier = Math.min(Math.max(speedMultiplier, 0), 1)
                 if (this.gamepadInputs.A) this.jump = true;
-                if (this.gamepadInputs.leftTrigger > .5) this.rightMouseDown = true;
-                if (this.gamepadInputs.rightTrigger > .5) this.leftMouseDown = true;
+                if (this.gamepadInputs.leftTrigger > .5) this.aim = true;
+                if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
                 this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * .08;
                 this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * .08;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
@@ -152,6 +158,10 @@ export class InputHandler {
         euler.z = 0;
         this.localPlayer.quaternion.setFromEuler(euler);
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
+
+        if (this.leftMouseDown) this.shoot = true;
+        if (this.rightMouseDown) this.aim = true;
+
     }
 
     public getKey(key: string):boolean {
@@ -186,12 +196,12 @@ export class InputHandler {
         }
     }
 
-    public getLeftMouseDown() {
-        return this.leftMouseDown;
+    public getShoot() {
+        return this.shoot;
     }
 
-    public getRightMouseDown() {
-        return this.rightMouseDown;
+    public getAim() {
+        return this.aim;
     }
 
     public getGamepadInputs(): GamepadInputs {
@@ -214,7 +224,7 @@ export class InputHandler {
     }
 
     private updateGamepadInputArray(gamepad: Gamepad) {
-        if (gamepad.id == "045e-028e-Microsoft X-Box 360 pad") {
+        if (gamepad.axes[4]) {
             this.gamepadInputs.leftTrigger = gamepad.axes[4];
             this.gamepadInputs.rightTrigger = gamepad.axes[5];
         } else {
