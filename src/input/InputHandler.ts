@@ -5,8 +5,6 @@ import { Player } from '../core/Player.ts';
 
 export class InputHandler {
     private readonly gameIndex: number;
-    private static isChrome = /Chrome/.test(navigator.userAgent);
-    private static isFirefox: boolean = /Firefox/.test(navigator.userAgent);
     private mouse: PointerLockControls;
     private gamepad: (Gamepad | null) = null;
     private readonly gamepadEuler ;
@@ -213,19 +211,16 @@ export class InputHandler {
     }
 
     private updateGamepadInputArray(gamepad: Gamepad) {
-        if (InputHandler.isFirefox) {
-            this.gamepadInputs.leftJoyX = gamepad.axes[0];
-            this.gamepadInputs.leftJoyY = gamepad.axes[1];
-            this.gamepadInputs.A = gamepad.buttons[0].pressed;
+        if (gamepad.id == "045e-028e-Microsoft X-Box 360 pad") {
             this.gamepadInputs.leftTrigger = gamepad.axes[4];
             this.gamepadInputs.rightTrigger = gamepad.axes[5];
-        } else if (InputHandler.isChrome) {
-            this.gamepadInputs.leftJoyX = gamepad.axes[0];
-            this.gamepadInputs.leftJoyY = gamepad.axes[1];
-            this.gamepadInputs.A = gamepad.buttons[0].pressed;
+        } else {
             this.gamepadInputs.leftTrigger = gamepad.buttons[6].value;
             this.gamepadInputs.rightTrigger = gamepad.buttons[7].value;
         }
+        this.gamepadInputs.leftJoyX = gamepad.axes[0];
+        this.gamepadInputs.leftJoyY = gamepad.axes[1];
+        this.gamepadInputs.A = gamepad.buttons[0].pressed;
         this.gamepadInputs.rightJoyX = gamepad.axes[2];
         this.gamepadInputs.rightJoyY = gamepad.axes[3];
         this.gamepadInputs.leftShoulder = gamepad.buttons[4].pressed
