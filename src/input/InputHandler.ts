@@ -5,9 +5,10 @@ import { Player } from '../core/Player.ts';
 
 export class InputHandler {
     private readonly gameIndex: number;
-    // Deno doesn't like this, but I can't think of a better way.
-    private static isChrome: boolean = !!(globalThis as object).chrome;
-    private static isFirefox: boolean = typeof InstallTrigger !== 'undefined';
+    // deno-lint-ignore no-explicit-any
+    private static isChrome: boolean = typeof (globalThis as any).chrome !== 'undefined';
+    // deno-lint-ignore no-explicit-any
+    private static isFirefox: boolean = typeof (globalThis as any).InstallTrigger !== 'undefined';
     private mouse: PointerLockControls;
     private gamepad: (Gamepad | null) = null;
     private readonly gamepadEuler ;
