@@ -89,6 +89,7 @@ export class InputHandler {
         const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
 
         let dist = 0;
+        let speedMultiplier: number = 1;
         this.jump = false;
 
         const oldInputZ = this.inputZ;
@@ -99,8 +100,10 @@ export class InputHandler {
             if(this.gamepad.connected) {
                 this.updateGamepadInputArray(this.gamepad);
                 this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
-                if (Math.abs(this.gamepadInputs.leftJoyX) >= .2) this.inputX += deltaTimeAcceleration * this.gamepadInputs.leftJoyX;
-                if (Math.abs(this.gamepadInputs.leftJoyY) >= .2) this.inputZ += deltaTimeAcceleration * this.gamepadInputs.leftJoyY;
+                if (Math.abs(this.gamepadInputs.leftJoyX) >= .1) this.inputX += deltaTimeAcceleration * this.gamepadInputs.leftJoyX;
+                if (Math.abs(this.gamepadInputs.leftJoyY) >= .1) this.inputZ += deltaTimeAcceleration * this.gamepadInputs.leftJoyY;
+                speedMultiplier = Math.sqrt((this.gamepadInputs.leftJoyX * this.gamepadInputs.leftJoyX) + (this.gamepadInputs.leftJoyY * this.gamepadInputs.leftJoyY));
+                speedMultiplier = Math.min(Math.max(speedMultiplier, 0), 1)
                 if (this.gamepadInputs.A) this.jump = true;
                 this.rightMouseDown = this.gamepadInputs.leftTrigger > .5;
                 this.leftMouseDown = this.gamepadInputs.rightTrigger > .5;
@@ -138,7 +141,7 @@ export class InputHandler {
         this.localPlayer.velocity.z = dist * this.inputZ;
         this.localPlayer.velocity.x = dist * this.inputX;
         this.localPlayer.velocity.y = 0;
-        this.localPlayer.velocity.clampLength(0, this.localPlayer.speed);
+        this.localPlayer.velocity.clampLength(0, this.localPlayer.speed * speedMultiplier);
         this.localPlayer.velocity.y = this.prevVelocity.y;
         this.inputZ = this.localPlayer.velocity.z;
         this.inputX = this.localPlayer.velocity.x;
