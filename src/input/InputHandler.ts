@@ -2,24 +2,29 @@ import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControl.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
+import {Game} from "../core/Game.ts";
 
 export class InputHandler {
-    private gameIndex: number;
+    private readonly gameIndex: number;
+    // Deno doesn't like this, but I can't think of a better way.
+    private static isChrome: boolean = !!(globalThis as object).chrome;
+    private static isFirefox: boolean = typeof InstallTrigger !== 'undefined';
     private mouse: PointerLockControls;
     private gamepad: (Gamepad | null) = null;
-    private gamepadEuler ;
+    private readonly gamepadEuler ;
     private clock: THREE.Clock;
     private forward: THREE.Vector3;
     private keys: { [key: string]: boolean };
     private leftMouseDown: boolean;
     private rightMouseDown: boolean;
     private renderer: Renderer;
-    private localPlayer: Player;
+    private readonly localPlayer: Player;
     private inputX: number;
     private inputZ: number;
     public  jump;
     public prevVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
+    private readonly gamepadInputs: GamepadInputs;
 
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
@@ -37,6 +42,8 @@ export class InputHandler {
         this.inputX = 0;
         this.inputZ = 0;
         this.jump = false;
+
+        this.gamepadInputs = new GamepadInputs();
 
         this.gameIndex = nextGameIndex;
 
@@ -94,15 +101,15 @@ export class InputHandler {
         this.gamepad = navigator.getGamepads()[this.gameIndex];
         if(this.gamepad) {
             if(this.gamepad.connected) {
+                this.updateGamepadInputArray(this.gamepad);
                 this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
-                console.log(this.gamepad);
-                if (Math.abs(this.gamepad.axes[0]) >= .2) this.inputX += deltaTimeAcceleration * this.gamepad.axes[0];
-                if (Math.abs(this.gamepad.axes[1]) >= .2) this.inputZ += deltaTimeAcceleration * this.gamepad.axes[1];
-                if (this.gamepad.buttons[0].pressed) this.jump = true;
-                this.rightMouseDown = this.gamepad.buttons[6].value > .5 || this.gamepad.axes[4] > .5;
-                this.leftMouseDown = this.gamepad.buttons[7].value > .5 || this.gamepad.axes[5] > .5;
-                this.gamepadEuler.y -= this.gamepad.axes[2] * .08;
-                this.gamepadEuler.x -= this.gamepad.axes[3] * .08;
+                if (Math.abs(this.gamepadInputs.leftJoyX) >= .2) this.inputX += deltaTimeAcceleration * this.gamepadInputs.leftJoyX;
+                if (Math.abs(this.gamepadInputs.leftJoyY) >= .2) this.inputZ += deltaTimeAcceleration * this.gamepadInputs.leftJoyY;
+                if (this.gamepadInputs.A) this.jump = true;
+                this.rightMouseDown = this.gamepadInputs.leftTrigger > .5;
+                this.leftMouseDown = this.gamepadInputs.rightTrigger > .5;
+                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * .08;
+                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * .08;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
                 this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
             }
@@ -152,10 +159,6 @@ export class InputHandler {
         return this.keys[key];
     }
 
-    public getGamepad(): Gamepad | null {
-        return this.gamepad;
-    }
-
     private onKeyDown(event: KeyboardEvent) {
         //event.preventDefault();
         if(event.key === 'Tab' || event.key === "'"|| event.key === '/') event.preventDefault();
@@ -192,6 +195,10 @@ export class InputHandler {
         return this.rightMouseDown;
     }
 
+    public getGamepadInputs(): GamepadInputs {
+        return this.gamepadInputs;
+    }
+
     public deregisterAllKeys(){
         const locked = document.pointerLockElement === document.body;
         if(!locked)
@@ -206,4 +213,40 @@ export class InputHandler {
         if (output <= 0) {return  0;}
         return sign * output;
     }
+
+    private updateGamepadInputArray(gamepad: Gamepad) {
+        if (InputHandler.isFirefox) {
+            this.gamepadInputs.leftJoyX = gamepad.axes[0];
+            this.gamepadInputs.leftJoyY = gamepad.axes[1];
+            this.gamepadInputs.A = gamepad.buttons[0].pressed;
+            this.gamepadInputs.leftTrigger = gamepad.axes[4];
+            this.gamepadInputs.rightTrigger = gamepad.axes[5];
+        } else if (InputHandler.isChrome) {
+            this.gamepadInputs.leftJoyX = gamepad.axes[0];
+            this.gamepadInputs.leftJoyY = gamepad.axes[1];
+            this.gamepadInputs.A = gamepad.buttons[0].pressed;
+            this.gamepadInputs.leftTrigger = gamepad.buttons[6].value;
+            this.gamepadInputs.rightTrigger = gamepad.buttons[7].value;
+        }
+        this.gamepadInputs.rightJoyX = gamepad.axes[2];
+        this.gamepadInputs.rightJoyY = gamepad.axes[3];
+        this.gamepadInputs.leftShoulder = gamepad.buttons[4].pressed
+        this.gamepadInputs.rightShoulder= gamepad.buttons[5].pressed
+    }
+
+}
+
+class GamepadInputs {
+    leftJoyX: number = 0;
+    leftJoyY: number = 0;
+    rightJoyX: number = 0;
+    rightJoyY: number = 0;
+    leftTrigger: number= 0;
+    rightTrigger: number = 0;
+    leftShoulder: boolean = false;
+    rightShoulder: boolean = false;
+    A: boolean = false;
+    B: boolean = false;
+    X: boolean = false;
+    Y: boolean = false;
 }
