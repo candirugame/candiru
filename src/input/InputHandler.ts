@@ -151,6 +151,10 @@ export class InputHandler {
         return this.keys[key];
     }
 
+    public getGamepad(): Gamepad | null {
+        return this.gamepad;
+    }
+
     private onKeyDown(event: KeyboardEvent) {
         //event.preventDefault();
         if(event.key === 'Tab' || event.key === "'"|| event.key === '/') event.preventDefault();
