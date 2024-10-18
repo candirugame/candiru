@@ -4,7 +4,7 @@ import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
 
 export class InputHandler {
-    private id: number;
+    private gameIndex: number;
     private mouse: PointerLockControls;
     private gamepad: (Gamepad | null) = null;
     private gamepadEuler ;
@@ -21,7 +21,7 @@ export class InputHandler {
     public prevVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
 
-    constructor(renderer: Renderer, localPlayer: Player, id: number) {
+    constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
         this.prevVelocity = new THREE.Vector3();
@@ -38,7 +38,7 @@ export class InputHandler {
         this.inputZ = 0;
         this.jump = false;
 
-        this.id = id;
+        this.gameIndex = nextGameIndex;
 
         this.setupEventListeners();
     }
@@ -194,7 +194,7 @@ export class InputHandler {
     }
 
     private onGamepadChange(_event: GamepadEvent) {
-        this.gamepad = navigator.getGamepads()[this.id];
+        this.gamepad = navigator.getGamepads()[this.gameIndex];
     }
 
     private static approachZero(input: number, step: number): number {
