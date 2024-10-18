@@ -20,7 +20,7 @@ export class Player {
     public inventory: number[];
 
     constructor() {
-        this.position = new THREE.Vector3(2, 1, 0);
+        this.position = new THREE.Vector3(0,100,0);
         this.velocity = new THREE.Vector3();
         this.gravity = 0;
         this.lookQuaternion = new THREE.Quaternion();
