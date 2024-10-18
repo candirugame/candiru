@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControl.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
-import {Game} from "../core/Game.ts";
 
 export class InputHandler {
     private readonly gameIndex: number;
