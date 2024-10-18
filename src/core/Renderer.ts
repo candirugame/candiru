@@ -25,6 +25,7 @@ export class Renderer {
     private networking: Networking;
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
+    public scaredLevel: number = 0;
 
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
@@ -179,6 +180,15 @@ export class Renderer {
 
         // Update camera position and rotation for local player
         this.camera.position.copy(localPlayer.position);
+        this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+
+
+        let shakeAmount = 0.08 * Math.pow(this.scaredLevel,5);
+        //shakeAmount = 0.03;
+        this.camera.position.add(new THREE.Vector3((Math.random()-0.5) * shakeAmount, (Math.random()-0.5) *shakeAmount, (Math.random()-0.5) * shakeAmount));
+        this.camera.rotation.x += (Math.random()-0.5) * shakeAmount * 0.12;
+        this.camera.rotation.y += (Math.random()-0.5) * shakeAmount * 0.12;
+        this.camera.rotation.z += (Math.random()-0.5) * shakeAmount * 0.12;
 
         this.updateFramerate();
     }

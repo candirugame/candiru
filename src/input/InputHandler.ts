@@ -112,7 +112,6 @@ export class InputHandler {
         this.inputZ = this.localPlayer.velocity.z;
         this.inputX = this.localPlayer.velocity.x;
 
-        camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
         const euler = new THREE.Euler().setFromQuaternion(this.localPlayer.lookQuaternion, 'YXZ');
         euler.x = 0;
         euler.z = 0;
