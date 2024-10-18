@@ -21,6 +21,7 @@ const baseInventory:number[] = [];
 
 const itemCreationDelay = 10; // Create a new item every x seconds
 const maxItemsInWorld = 5;
+const serverTickRate = 15;
 
 interface Vector3 {
   x: number;
@@ -143,7 +144,7 @@ function serverTick() {
   playersTick();
   itemsTick();
 }
-setInterval(serverTick, 1000 / 15);
+setInterval(serverTick, 1000 / serverTickRate);
 
 let playerUpdateSinceLastEmit = false;
 let lastPlayerUpdateSentTimestamp = 0;
