@@ -33,7 +33,7 @@ export class ChatOverlay {
         this.chatCtx.imageSmoothingEnabled = false;
 
 
-        this.chatCanvas.width = 200;
+        this.chatCanvas.width = 400;
         this.chatCanvas.height = 200;
 
         this.chatMessages = [];
@@ -51,7 +51,6 @@ export class ChatOverlay {
         this.chatCanvas.style.left = '0';
 
          this.chatCanvas.style.height = '100vh';
-         this.chatCanvas.style.width = '100vw';
         document.body.style.margin = '0';
         this.chatCanvas.style.imageRendering = 'pixelated';
         document.body.appendChild(this.chatCanvas);
@@ -88,7 +87,8 @@ export class ChatOverlay {
         this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
         if(this.oldScreenWidth !== this.screenWidth){
-            this.chatCanvas.width = this.screenWidth;
+            if(this.chatCanvas.width < this.screenWidth)
+                this.chatCanvas.width = this.screenWidth;
             this.oldScreenWidth = this.screenWidth;
         }
 

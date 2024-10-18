@@ -38,6 +38,8 @@ export class RemotePlayerRenderer {
     private previousVelocity: { [id: number]: number };
     private lastRunningYOffset: { [id: number]: number };
 
+    private groundTruthPositions: { [id: number]: THREE.Vector3 };
+
     private networking: Networking;
     private localPlayer: Player;
     private deltaTime: number = 0; // Initialize deltaTime to avoid Deno error
@@ -82,6 +84,8 @@ export class RemotePlayerRenderer {
         this.animationPhase = {};
         this.previousVelocity = {};
         this.lastRunningYOffset = {};
+
+        this.groundTruthPositions = {};
     }
 
     public getEntityScene(): THREE.Scene {
@@ -125,36 +129,74 @@ export class RemotePlayerRenderer {
             Math.pow(remotePlayerData.velocity.z, 2)
         );
 
-        const prevVelocity = this.previousVelocity[remotePlayerData.id] || 0;
+        const playerId = remotePlayerData.id;
+        const prevVelocity = this.previousVelocity[playerId] || 0;
 
         if (prevVelocity === 0 && velocity > 0) {
-            this.isAnimating[remotePlayerData.id] = true;
-            this.animationPhase[remotePlayerData.id] = 0;
+            this.isAnimating[playerId] = true;
+            this.animationPhase[playerId] = 0;
         }
 
-        this.previousVelocity[remotePlayerData.id] = velocity;
+        this.previousVelocity[playerId] = velocity;
 
-        playerObject.position.x += remotePlayerData.velocity.x * this.deltaTime;
-        playerObject.position.y += remotePlayerData.velocity.y * this.deltaTime;
-        playerObject.position.z += remotePlayerData.velocity.z * this.deltaTime;
-
-        if (remotePlayerData.forced) {
-            playerObject.position.set(
+        // Get or initialize groundTruthPosition
+        if (!this.groundTruthPositions[playerId]) {
+            this.groundTruthPositions[playerId] = new THREE.Vector3(
                 remotePlayerData.position.x,
                 remotePlayerData.position.y,
                 remotePlayerData.position.z
             );
         }
 
-        playerObject.position.lerp(
+        const groundTruthPosition = this.groundTruthPositions[playerId];
+
+        // Apply velocity to groundTruthPosition
+        groundTruthPosition.x += remotePlayerData.velocity.x * this.deltaTime;
+        groundTruthPosition.y += remotePlayerData.velocity.y * this.deltaTime;
+        groundTruthPosition.z += remotePlayerData.velocity.z * this.deltaTime;
+
+        // If forced, set groundTruthPosition to remotePlayerData.position
+        if (remotePlayerData.forced) {
+            groundTruthPosition.set(
+                remotePlayerData.position.x,
+                remotePlayerData.position.y,
+                remotePlayerData.position.z
+            );
+        }
+
+        // Lerp groundTruthPosition towards remotePlayerData.position
+        groundTruthPosition.lerp(
             new THREE.Vector3(
                 remotePlayerData.position.x,
                 remotePlayerData.position.y,
                 remotePlayerData.position.z
             ),
-            0.3 * this.deltaTime * 60
+            0.1 * this.deltaTime * 60
         );
 
+        // Set playerObject.position to groundTruthPosition.clone()
+        playerObject.position.copy(groundTruthPosition);
+
+        // Apply animation offsets (e.g., yOffset)
+        if (this.isAnimating[playerId]) {
+            const frequency = 25;
+            this.animationPhase[playerId] += this.deltaTime * frequency;
+
+            const amplitude = 0.08;
+            const yOffset = amplitude * (1 + Math.cos(this.animationPhase[playerId]));
+
+            playerObject.position.y += yOffset;
+            this.lastRunningYOffset[playerId] = yOffset;
+
+            if (velocity === 0 && Math.cos(this.animationPhase[playerId]) <= 0) {
+                this.isAnimating[playerId] = false;
+                this.lastRunningYOffset[playerId] = 0;
+            }
+        } else {
+            this.lastRunningYOffset[playerId] = 0;
+        }
+
+        // Apply quaternion slerp as before
         const targetQuaternion = new THREE.Quaternion(
             remotePlayerData.quaternion[0],
             remotePlayerData.quaternion[1],
@@ -165,24 +207,6 @@ export class RemotePlayerRenderer {
         targetQuaternion.multiply(rotationQuaternion);
 
         playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
-
-        if (this.isAnimating[remotePlayerData.id]) {
-            const frequency = 25;
-            this.animationPhase[remotePlayerData.id] += this.deltaTime * frequency;
-
-            const amplitude = 0.02;
-            const yOffset = amplitude * (1 + Math.cos(this.animationPhase[remotePlayerData.id]));
-
-            playerObject.position.y += yOffset;
-            this.lastRunningYOffset[remotePlayerData.id] = yOffset;
-
-            if (velocity === 0 && Math.cos(this.animationPhase[remotePlayerData.id]) <= 0) {
-                this.isAnimating[remotePlayerData.id] = false;
-                this.lastRunningYOffset[remotePlayerData.id] = 0;
-            }
-        } else {
-            this.lastRunningYOffset[remotePlayerData.id] = 0;
-        }
     }
 
     private addNewPlayer(remotePlayerData: RemotePlayerData): void {
@@ -194,6 +218,13 @@ export class RemotePlayerRenderer {
         };
         this.playersToRender.push(newPlayer);
         this.entityScene.add(newPlayer.object);
+
+        // Initialize groundTruthPosition for the new player
+        this.groundTruthPositions[remotePlayerData.id] = new THREE.Vector3(
+            remotePlayerData.position.x,
+            remotePlayerData.position.y,
+            remotePlayerData.position.z
+        );
     }
 
     private removeInactivePlayers(remotePlayerData: RemotePlayer[]): void {
@@ -201,6 +232,12 @@ export class RemotePlayerRenderer {
             const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
             if (!isActive) {
                 this.entityScene.remove(player.object);
+                // Remove associated data for the player
+                delete this.groundTruthPositions[player.id];
+                delete this.isAnimating[player.id];
+                delete this.animationPhase[player.id];
+                delete this.previousVelocity[player.id];
+                delete this.lastRunningYOffset[player.id];
             }
             return isActive;
         });

@@ -5,7 +5,6 @@ import { Player } from '../core/Player.ts';
 
 export class InputHandler {
     private readonly gameIndex: number;
-    // Deno doesn't like this, but I can't think of a better way.
     private static isChrome = /Chrome/.test(navigator.userAgent);
     private static isFirefox: boolean = /Firefox/.test(navigator.userAgent);
     private mouse: PointerLockControls;
