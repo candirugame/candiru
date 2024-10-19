@@ -108,8 +108,8 @@ export class InputHandler {
                 this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
                 if (Math.abs(this.gamepadInputs.leftJoyX) >= .1) this.inputX += deltaTimeAcceleration * this.gamepadInputs.leftJoyX;
                 if (Math.abs(this.gamepadInputs.leftJoyY) >= .1) this.inputZ += deltaTimeAcceleration * this.gamepadInputs.leftJoyY;
-                speedMultiplier = Math.sqrt((this.gamepadInputs.leftJoyX * this.gamepadInputs.leftJoyX) + (this.gamepadInputs.leftJoyY * this.gamepadInputs.leftJoyY));
-                speedMultiplier = Math.min(Math.max(speedMultiplier, 0), 1)
+                const vectorLength = Math.sqrt((this.gamepadInputs.leftJoyX * this.gamepadInputs.leftJoyX) + (this.gamepadInputs.leftJoyY * this.gamepadInputs.leftJoyY));
+                if (vectorLength >= .1) speedMultiplier = Math.min(Math.max(vectorLength, 0), 1);
                 if (this.gamepadInputs.A) this.jump = true;
                 if (this.gamepadInputs.leftTrigger > .5) this.aim = true;
                 if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
