@@ -43,8 +43,14 @@ export class CollisionManager {
     public collisionPeriodic(localPlayer: Player) {
         if (!this.mapLoaded || !this.colliderGeom || !this.colliderGeom.boundsTree) return; // Add checks
         let deltaTime: number = this.clock.getDelta();
-        if (deltaTime > 1 / 30) deltaTime = 1 / 30;
-        this.physics(localPlayer, deltaTime);
+        let steps: number = 1;
+        while (deltaTime >= 1/120) {
+            deltaTime = deltaTime / 2
+            steps = steps * 2;
+        }
+        for (let i = 0; i < steps; i ++) {
+            this.physics(localPlayer, deltaTime);
+        }
     }
 
     private physics(localPlayer: Player, deltaTime: number) {
