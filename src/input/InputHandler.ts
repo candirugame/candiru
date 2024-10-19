@@ -4,24 +4,31 @@ import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
 
 export class InputHandler {
+    private readonly gameIndex: number;
     private mouse: PointerLockControls;
+    private gamepad: (Gamepad | null) = null;
+    private readonly gamepadEuler ;
     private clock: THREE.Clock;
     private forward: THREE.Vector3;
     private keys: { [key: string]: boolean };
     private leftMouseDown: boolean;
     private rightMouseDown: boolean;
     private renderer: Renderer;
-    private localPlayer: Player;
+    private readonly localPlayer: Player;
     private inputX: number;
     private inputZ: number;
     public  jump;
     public prevVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
+    private readonly gamepadInputs: GamepadInputs;
+    private shoot: boolean;
+    private aim: boolean;
 
-    constructor(renderer: Renderer, localPlayer: Player) {
+    constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
         this.prevVelocity = new THREE.Vector3();
+        this.gamepadEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 
         this.clock = new THREE.Clock();
         this.mouse = new PointerLockControls(this.localPlayer, document.body);
@@ -33,6 +40,16 @@ export class InputHandler {
         this.inputX = 0;
         this.inputZ = 0;
         this.jump = false;
+        this.shoot = false;
+        this.aim = false;
+
+        this.gamepadInputs = new GamepadInputs();
+
+        this.gameIndex = nextGameIndex;
+
+        if(!navigator.getGamepads()) {
+            console.log("Browser does not support Gamepad API.")
+        }
 
         this.setupEventListeners();
     }
@@ -54,7 +71,6 @@ export class InputHandler {
         document.addEventListener('contextmenu', (event) => {event.preventDefault();});
 
         document.addEventListener('wheel', this.processScroll.bind(this));
-
     }
 
     private processScroll(e :WheelEvent) {
@@ -76,16 +92,40 @@ export class InputHandler {
         const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
 
         let dist = 0;
+        let speedMultiplier: number = 1;
+        this.jump = false;
+        this.aim = false;
+        this.shoot = false;
 
         const oldInputZ = this.inputZ;
         const oldInputX = this.inputX;
+
+        this.gamepad = navigator.getGamepads()[this.gameIndex];
+        if(this.gamepad) {
+            if(this.gamepad.connected) {
+                this.updateGamepadInputArray(this.gamepad);
+                this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
+                if (Math.abs(this.gamepadInputs.leftJoyX) >= .1) this.inputX += deltaTimeAcceleration * this.gamepadInputs.leftJoyX;
+                if (Math.abs(this.gamepadInputs.leftJoyY) >= .1) this.inputZ += deltaTimeAcceleration * this.gamepadInputs.leftJoyY;
+                const vectorLength = Math.sqrt((this.gamepadInputs.leftJoyX * this.gamepadInputs.leftJoyX) + (this.gamepadInputs.leftJoyY * this.gamepadInputs.leftJoyY));
+                if (vectorLength >= .1) speedMultiplier = Math.min(Math.max(vectorLength, 0), 1);
+                if (this.gamepadInputs.A) this.jump = true;
+                if (this.gamepadInputs.leftTrigger > .5) this.aim = true;
+                if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
+                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * .08;
+                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * .08;
+                this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
+                this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
+            }
+        }
 
         if (!this.localPlayer.chatActive) {
             if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
             if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
             if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
             if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
-            this.jump = this.getKey(' ');
+            if (this.getKey(' ')) this.jump = true;
+
         }
 
         switch (this.inputZ - oldInputZ) {
@@ -106,7 +146,7 @@ export class InputHandler {
         this.localPlayer.velocity.z = dist * this.inputZ;
         this.localPlayer.velocity.x = dist * this.inputX;
         this.localPlayer.velocity.y = 0;
-        this.localPlayer.velocity.clampLength(0, this.localPlayer.speed);
+        this.localPlayer.velocity.clampLength(0, this.localPlayer.speed * speedMultiplier);
         this.localPlayer.velocity.y = this.prevVelocity.y;
         this.inputZ = this.localPlayer.velocity.z;
         this.inputX = this.localPlayer.velocity.x;
@@ -116,6 +156,10 @@ export class InputHandler {
         euler.z = 0;
         this.localPlayer.quaternion.setFromEuler(euler);
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
+
+        if (this.leftMouseDown) this.shoot = true;
+        if (this.rightMouseDown) this.aim = true;
+
     }
 
     public getKey(key: string):boolean {
@@ -150,12 +194,16 @@ export class InputHandler {
         }
     }
 
-    public getLeftMouseDown() {
-        return this.leftMouseDown;
+    public getShoot() {
+        return this.shoot;
     }
 
-    public getRightMouseDown() {
-        return this.rightMouseDown;
+    public getAim() {
+        return this.aim;
+    }
+
+    public getGamepadInputs(): GamepadInputs {
+        return this.gamepadInputs;
     }
 
     public deregisterAllKeys(){
@@ -172,4 +220,37 @@ export class InputHandler {
         if (output <= 0) {return  0;}
         return sign * output;
     }
+
+    private updateGamepadInputArray(gamepad: Gamepad) {
+        if (gamepad.axes[4]) {
+            this.gamepadInputs.leftTrigger = gamepad.axes[4];
+            this.gamepadInputs.rightTrigger = gamepad.axes[5];
+        } else {
+            this.gamepadInputs.leftTrigger = gamepad.buttons[6].value;
+            this.gamepadInputs.rightTrigger = gamepad.buttons[7].value;
+        }
+        this.gamepadInputs.leftJoyX = gamepad.axes[0];
+        this.gamepadInputs.leftJoyY = gamepad.axes[1];
+        this.gamepadInputs.A = gamepad.buttons[0].pressed;
+        this.gamepadInputs.rightJoyX = gamepad.axes[2];
+        this.gamepadInputs.rightJoyY = gamepad.axes[3];
+        this.gamepadInputs.leftShoulder = gamepad.buttons[4].pressed
+        this.gamepadInputs.rightShoulder= gamepad.buttons[5].pressed
+    }
+
+}
+
+class GamepadInputs {
+    leftJoyX: number = 0;
+    leftJoyY: number = 0;
+    rightJoyX: number = 0;
+    rightJoyY: number = 0;
+    leftTrigger: number= 0;
+    rightTrigger: number = 0;
+    leftShoulder: boolean = false;
+    rightShoulder: boolean = false;
+    A: boolean = false;
+    B: boolean = false;
+    X: boolean = false;
+    Y: boolean = false;
 }
