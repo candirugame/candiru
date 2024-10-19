@@ -397,16 +397,25 @@ function parseForCommand(msg: string, socket: Socket, id:number): boolean {
       whisperChatMessage(msg + ' -> nah i\'m good', socket);
       break;
     case '/kill':
-        for (let i = 0; i < playerData.length; i++)
-            if (playerData[i].id === id) {
-                whisperChatMessage(msg + ' -> killed ' + playerData[i].name, socket);
-                sendChatMessage(playerData[i].name + ' killed himself');
-                playerData[i].health = 0;
-                periodicCleanup();
-                playerUpdateSinceLastEmit = true;
-                return true;
-            }
-        break;
+      for (let i = 0; i < playerData.length; i++)
+        if (playerData[i].id === id) {
+          whisperChatMessage(msg + ' -> killed ' + playerData[i].name, socket);
+          sendChatMessage(playerData[i].name + ' killed himself');
+          playerData[i].health = 0;
+          periodicCleanup();
+          playerUpdateSinceLastEmit = true;
+        }
+      break;
+    case '/thumbsup':
+      for (let i = 0; i < playerData.length; i++)
+        if (playerData[i].id === id)
+          sendChatMessage(playerData[i].name + ': 👍');
+      break;
+    case '/thumbsdown':
+      for (let i = 0; i < playerData.length; i++)
+        if (playerData[i].id === id)
+          sendChatMessage(playerData[i].name + ': 👎');
+      break;
     case '/ping':
       whisperChatMessage(msg + ' -> pong!', socket);
       break;
