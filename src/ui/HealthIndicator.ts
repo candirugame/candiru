@@ -67,6 +67,7 @@ export class HealthIndicator {
         }
         const deltaTime = clock.getDelta();
         const scaredLevel = 1-Math.pow(this.localPlayer.health / 100,1); //0-1
+        this.renderer.scaredLevel = scaredLevel;
 
         this.targetPosition.copy(basePosition);
         this.targetPosition.y += scaredLevel * 0.5 * Math.sin(1.1 * Math.PI * this.rotatedAngle);
