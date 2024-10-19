@@ -18,6 +18,7 @@ export class Player {
     public forced: boolean;
     public forcedAcknowledged: boolean;
     public inventory: number[];
+    public idLastDamagedBy: number;
 
     constructor() {
         this.position = new THREE.Vector3(0,100,0);
@@ -37,6 +38,7 @@ export class Player {
         this.forced = false;
         this.forcedAcknowledged = false;
         this.inventory = [];
+        this.idLastDamagedBy = -1;
 
         if (this.name === '') {
             const storedName = localStorage.getItem('name');
