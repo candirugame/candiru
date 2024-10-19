@@ -73,6 +73,7 @@ interface Player {
   updateTimestamp?: number;
   lastDamageTime?: number;
   inventory: number[];
+  idLastDamagedBy?: number;
 
 }
 
@@ -358,6 +359,7 @@ io.on('connection', (socket: Socket) => {
     // Apply damage
     playerData[targetPlayerIndex].health -= data.damage;
     playerData[targetPlayerIndex].lastDamageTime = Date.now() / 1000;
+    playerData[targetPlayerIndex].idLastDamagedBy = data.localPlayer.id;
     playerUpdateSinceLastEmit = true;
 
     if (playerData[targetPlayerIndex].health <= 0) {
@@ -523,6 +525,7 @@ const playerDataSchema = Joi.object({
   updateTimestamp: Joi.number(),
   lastDamageTime: Joi.number(),
   inventory: Joi.array().items(Joi.number()).required(),
+  idLastDamagedBy: Joi.number(),
 });
 
 const chatMsgSchema = Joi.object({

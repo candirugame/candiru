@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Networking } from './Networking.ts';
+import { Networking, type RemotePlayer } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
@@ -26,6 +26,8 @@ export class Renderer {
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
     public scaredLevel: number = 0;
+    private lastPlayerHealth: number = 100;
+    private knockbackVector: THREE.Vector3 = new THREE.Vector3();
 
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
@@ -182,14 +184,27 @@ export class Renderer {
         this.camera.position.copy(localPlayer.position);
         this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
 
+        this.camera.position.add(this.knockbackVector);
+        this.knockbackVector.lerp(new THREE.Vector3(), 0.05 * this.deltaTime * 60);
 
-        let shakeAmount = 0.08 * Math.pow(this.scaredLevel,5);
-        //shakeAmount = 0.03;
+
+        if(this.localPlayer.health < this.lastPlayerHealth) {
+            const remotePlayer: RemotePlayer | undefined = this.networking.getRemotePlayerData().find((player) => player.id === this.localPlayer.idLastDamagedBy);
+            if(remotePlayer !== undefined) {
+                console.log("Player was damaged by " + remotePlayer.name);
+                const diff = new THREE.Vector3().subVectors(this.localPlayer.position, remotePlayer.position);
+                this.knockbackVector.copy(diff.normalize().multiplyScalar(0.2));
+            }
+        }
+
+
+        const shakeAmount = 0.08 * Math.pow(this.scaredLevel,5);
         this.camera.position.add(new THREE.Vector3((Math.random()-0.5) * shakeAmount, (Math.random()-0.5) *shakeAmount, (Math.random()-0.5) * shakeAmount));
         this.camera.rotation.x += (Math.random()-0.5) * shakeAmount * 0.12;
         this.camera.rotation.y += (Math.random()-0.5) * shakeAmount * 0.12;
         this.camera.rotation.z += (Math.random()-0.5) * shakeAmount * 0.12;
 
+        this.lastPlayerHealth = this.localPlayer.health;
         this.updateFramerate();
     }
 

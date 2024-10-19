@@ -3,7 +3,8 @@ import { Player } from './Player.ts';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import * as THREE from 'three';
 
-interface RemotePlayer {
+export interface RemotePlayer {
+    idLastDamagedBy: number;
     latency: number;
     id: number;
     position: { x: number, y: number, z: number };
@@ -144,6 +145,7 @@ export class Networking {
                 }
                 if (remotePlayer.health < this.localPlayer.health) this.damagedTimestamp = Date.now() / 1000;
                 this.localPlayer.health = remotePlayer.health;
+                this.localPlayer.idLastDamagedBy = remotePlayer.idLastDamagedBy;
                 this.localPlayer.inventory = remotePlayer.inventory;
                 continue;
             }
@@ -171,7 +173,7 @@ export class Networking {
         return this.messagesBeingTyped;
     }
 
-    public getRemotePlayerData() {
+    public getRemotePlayerData(): RemotePlayer[] {
         return this.remotePlayers;
     }
 

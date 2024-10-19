@@ -73,7 +73,6 @@ export class InputHandler {
 
     public handleInputs() {
         const deltaTime: number = this.clock.getDelta();
-        const camera = this.renderer.getCamera();
         const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
 
         let dist = 0;
