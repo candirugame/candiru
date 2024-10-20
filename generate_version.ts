@@ -1,32 +1,6 @@
-const decoder = new TextDecoder();
-
-async function runCommand(cmdArray: string[]): Promise<string | null> {
-    try {
-        const command = new Deno.Command(cmdArray[0], {
-            args: cmdArray.slice(1),
-            stdout: "piped",
-            stderr: "piped",
-        });
-        const { code, stdout, stderr } = await command.output();
-        if (code !== 0) {
-            throw new Error(decoder.decode(stderr));
-        }
-        return decoder.decode(stdout).trim();
-    } catch (error) {
-        return null;
-    }
-}
+const version = Deno.env.get('APP_VERSION') || 'unknown';
 
 try {
-    // Try to get the latest Git tag
-    const version = await runCommand(["git", "describe", "--tags", "--abbrev=0"]);
-
-    // If no tag is found or Git is unavailable, log and exit quietly
-    if (!version) {
-        console.log("No Git tags found or Git is unavailable. Skipping version generation.");
-        Deno.exit(0);
-    }
-
     // Create the public directory if it doesn't exist
     await Deno.mkdir("public", { recursive: true });
 

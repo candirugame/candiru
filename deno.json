@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "generate-version": "deno run --allow-run --allow-write --allow-read generate_version.ts",
+    "generate-version": "deno run --allow-run --allow-write --allow-env generate_version.ts",
     "dev": "deno run -A --node-modules-dir npm:vite",
     "build": "deno task generate-version && deno run -A --node-modules-dir npm:vite build",
     "preview": "deno run -A --node-modules-dir npm:vite preview",
