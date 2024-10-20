@@ -83,13 +83,7 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     };
 
     private onPointerLockChange = (): void => {
-        if (document.pointerLockElement === this.domElement) {
-           // this.dispatchEvent({ type: 'lock' });
-            this.isLocked = true;
-        } else {
-         //   this.dispatchEvent({ type: 'unlock' });
-            this.isLocked = false;
-        }
+        this.isLocked = document.pointerLockElement === this.domElement;
     };
 
     private onPointerLockError = (): void => {
