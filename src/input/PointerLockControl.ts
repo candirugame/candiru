@@ -13,7 +13,7 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     public localPlayer: Player;
     public domElement: Element;
     public isLocked: boolean = false;
-    private sensitivity: number = 0.002;
+    static sensitivity: number = 0.002;
 
     constructor(localPlayer: Player, domElement: Element) {
         super();
@@ -96,7 +96,7 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
         console.error('THREE.PointerLockControls: Unable to use Pointer Lock API');
     };
 
-    public setSensitivity(sensitivity: number): void {
-        this.sensitivity = sensitivity;
+    public static setSensitivity(sensitivity: number): void {
+        PointerLockControls.sensitivity = sensitivity;
     }
 }
