@@ -89,7 +89,6 @@ export class InputHandler {
 
     public handleInputs() {
         const deltaTime: number = this.clock.getDelta();
-        const camera = this.renderer.getCamera();
         const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
 
         let dist = 0;
@@ -152,7 +151,6 @@ export class InputHandler {
         this.inputZ = this.localPlayer.velocity.z;
         this.inputX = this.localPlayer.velocity.x;
 
-        camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
         const euler = new THREE.Euler().setFromQuaternion(this.localPlayer.lookQuaternion, 'YXZ');
         euler.x = 0;
         euler.z = 0;
