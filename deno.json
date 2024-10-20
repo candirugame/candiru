@@ -1,13 +1,14 @@
 {
   "tasks": {
+    "generate-version": "deno run --allow-run --allow-write --allow-read generate_version.ts",
     "dev": "deno run -A --node-modules-dir npm:vite",
-    "build": "deno run -A --node-modules-dir npm:vite build",
+    "build": "deno task generate-version && deno run -A --node-modules-dir npm:vite build",
     "preview": "deno run -A --node-modules-dir npm:vite preview",
     "serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/",
     "start": "deno task build && deno run --allow-read --allow-env --allow-net main.ts"
   },
   "compilerOptions": {
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "deno.ns"]
   },
   "imports": {
     "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.0",
@@ -16,6 +17,5 @@
   "lint": {
     "include": ["src/"],
     "exclude": ["dist/", "node_modules/", "public/"]
-
-    }
+  }
 }
