@@ -72,8 +72,8 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
-        euler.y -= movementX * this.sensitivity;
-        euler.x -= movementY * this.sensitivity;
+        euler.y -= movementX * PointerLockControls.sensitivity;
+        euler.x -= movementY * PointerLockControls.sensitivity;
 
         euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
 
