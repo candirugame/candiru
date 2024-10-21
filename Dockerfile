@@ -21,4 +21,4 @@ COPY . .
 EXPOSE 3000
 
 # Run the generate-version task before the start task
-CMD ["deno", "task", "start"]
+CMD ["deno", "task", "generate-version"]
