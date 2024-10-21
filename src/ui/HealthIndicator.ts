@@ -5,7 +5,6 @@ import {Renderer} from "../core/Renderer.ts";
 import {Player} from "../core/Player.ts";
 
 
-const clock = new THREE.Clock();
 
 export class HealthIndicator {
     private scene: THREE.Scene;
@@ -20,6 +19,7 @@ export class HealthIndicator {
     private lastHealth:number = 100;
     private lastHealthChangeWasDamage:boolean = false;
     private lightRGBI:number[] = [0,0,0,0];
+    private clock: THREE.Clock = new THREE.Clock();
 
     constructor(renderer: Renderer, localPlayer:Player) {
         this.renderer = renderer;
@@ -67,7 +67,7 @@ export class HealthIndicator {
             this.scene.add(this.possumObject);
             this.sceneAdded = true;
         }
-        const deltaTime = clock.getDelta();
+        const deltaTime = this.clock.getDelta();
         const scaredLevel = 1-Math.pow(this.localPlayer.health / 100,1); //0-1
         this.renderer.scaredLevel = scaredLevel;
 
