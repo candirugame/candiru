@@ -5,6 +5,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
 
 interface RemotePlayerData {
+    health: number;
     id: number;
     velocity: { x: number; y: number; z: number };
     position: { x: number; y: number; z: number };
@@ -195,6 +196,13 @@ export class RemotePlayerRenderer {
         } else {
             this.lastRunningYOffset[playerId] = 0;
         }
+
+        //Apply scared effect
+        const scaredLevel = 1-Math.pow(remotePlayerData.health / 100,2); //0-1
+        playerObject.position.x += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
+        playerObject.position.y += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
+        playerObject.position.z += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
+
 
         // Apply quaternion slerp as before
         const targetQuaternion = new THREE.Quaternion(
