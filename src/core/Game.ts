@@ -21,11 +21,11 @@ export class Game {
     private healthIndicator: HealthIndicator;
     private remoteItemRenderer: RemoteItemRenderer;
     private gameIndex: number;
-    private static nextGameIndex: number = 0;
+    private static gameCount: number = 0;
 
 
     constructor() {
-        this.gameIndex = Game.nextGameIndex++;
+        this.gameIndex = Game.gameCount++;
         this.localPlayer = new Player();
         this.chatOverlay = new ChatOverlay(this.localPlayer);
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
@@ -51,12 +51,10 @@ export class Game {
         this.chatOverlay.onFrame();
         this.inventoryManager.onFrame();
         this.healthIndicator.onFrame();
-        this.renderer.onFrame(this.localPlayer);
+        this.renderer.onFrame(this.localPlayer, this.gameIndex, Game.gameCount );
 
         this.remoteItemRenderer.onFrame();
         requestAnimationFrame(this.animate.bind(this));
     }
 
 }
-
-// Entry point

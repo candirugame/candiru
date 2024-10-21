@@ -29,6 +29,9 @@ export class Renderer {
     private lastPlayerHealth: number = 100;
     private knockbackVector: THREE.Vector3 = new THREE.Vector3();
 
+    private gameIndex: number = 0;
+    private gameCount: number = 0;
+
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
     private healthIndicatorScene: THREE.Scene;
@@ -43,6 +46,7 @@ export class Renderer {
         this.localPlayer = localPlayer;
         this.chatOverlay = chatOverlay;
 
+
         this.clock = new THREE.Clock();
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
@@ -50,6 +54,7 @@ export class Renderer {
         document.body.appendChild(this.renderer.domElement);
         this.renderer.domElement.style.imageRendering = 'pixelated';
         this.renderer.setAnimationLoop(null);
+
 
         this.loader = new GLTFLoader();
         this.dracoLoader = new DRACOLoader();
@@ -108,9 +113,11 @@ export class Renderer {
 
         this.onWindowResize();
         globalThis.addEventListener('resize', this.onWindowResize.bind(this), false);
+
+
     }
 
-    public onFrame(localPlayer: Player) {
+    public onFrame(localPlayer: Player, gameIndex: number, gameCount: number) {
         this.deltaTime = this.clock.getDelta();
 
         // Ensure the renderer clears the buffers before the first render
@@ -208,6 +215,14 @@ export class Renderer {
 
         this.lastPlayerHealth = this.localPlayer.health;
         this.updateFramerate();
+
+        if(this.gameCount != gameCount || this.gameIndex != gameIndex) {
+            this.gameCount = gameCount;
+            this.gameIndex = gameIndex;
+            this.onWindowResize();
+        }
+
+
     }
 
     private updateFramerate() {
@@ -248,15 +263,77 @@ export class Renderer {
     }
 
     private onWindowResize() {
-        this.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-        this.camera.updateProjectionMatrix();
+        let aspect = globalThis.innerWidth / globalThis.innerHeight;
+        let width = "100%";
+        let height = "100%";
+
+
+        this.renderer.domElement.style.position = "absolute";
+        this.chatOverlay.getChatCanvas().style.position = 'absolute';
+
+        this.chatOverlay.getChatCanvas().style.imageRendering = 'pixelated';
+        this.chatOverlay.getChatCanvas().style.zIndex = '1';
+
+
+        // this.gameCount = 3;
+        // this.gameIndex = 3;
+        if(this.gameCount === 2){
+            aspect/=2;
+            width = "50%";
+            this.renderer.domElement.style.top = "0";
+            this.chatOverlay.getChatCanvas().style.top = "0";
+
+            if(this.gameIndex === 1){
+                this.renderer.domElement.style.right = "0";
+                this.chatOverlay.getChatCanvas().style.right = "0";
+            }
+        }
+        if(this.gameCount === 3 || this.gameCount === 4){
+            width = "50%";
+            height = "50%";
+
+
+            if(this.gameIndex === 1){
+                this.renderer.domElement.style.right = "0";
+                this.renderer.domElement.style.top = "0";
+                this.chatOverlay.getChatCanvas().style.right = "0";
+                this.chatOverlay.getChatCanvas().style.top = "0";
+            }
+            if(this.gameIndex === 2){
+                this.renderer.domElement.style.left = "0";
+                this.renderer.domElement.style.bottom = "0";
+                this.chatOverlay.getChatCanvas().style.left = "0";
+                this.chatOverlay.getChatCanvas().style.bottom = "0";
+            }
+            if(this.gameIndex === 3){
+                this.renderer.domElement.style.right = "0";
+                this.renderer.domElement.style.bottom = "0";
+                this.chatOverlay.getChatCanvas().style.right = "0";
+                this.chatOverlay.getChatCanvas().style.bottom = "0";
+            }
+
+
+        }
+
+
         this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
         this.renderer.setPixelRatio(200 / globalThis.innerHeight);
 
-        this.screenPixelsInGamePixel = globalThis.innerHeight / 200;
-        // Update held item camera aspect ratio
-        this.heldItemCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
+        this.camera.aspect = aspect;
+        this.heldItemCamera.aspect = aspect;
+        this.camera.updateProjectionMatrix();
         this.heldItemCamera.updateProjectionMatrix();
+
+        this.renderer.domElement.style.width = width;
+        this.renderer.domElement.style.height = height;
+
+        this.chatOverlay.getChatCanvas().style.width = width;
+        this.chatOverlay.getChatCanvas().style.height = height;
+
+
+        this.screenPixelsInGamePixel = globalThis.innerHeight / 200;
+
+
     }
 
     public getRemotePlayerIDsInCrosshair(): number[] {

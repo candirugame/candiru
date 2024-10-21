@@ -46,18 +46,20 @@ export class ChatOverlay {
 
         this.setupEventListeners();
 
-        this.chatCanvas.style.position = 'absolute';
-        this.chatCanvas.style.top = '0';
-        this.chatCanvas.style.left = '0';
 
-         this.chatCanvas.style.height = '100vh';
-        document.body.style.margin = '0';
-        this.chatCanvas.style.imageRendering = 'pixelated';
         document.body.appendChild(this.chatCanvas);
     }
 
     public setRenderer(renderer: Renderer) {
         this.renderer = renderer;
+    }
+
+    public getRenderer(): Renderer {
+        return this.renderer;
+    }
+
+    public getChatCanvas(): HTMLCanvasElement {
+        return this.chatCanvas;
     }
 
     public setNetworking(networking: Networking) {
@@ -87,7 +89,7 @@ export class ChatOverlay {
         this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
         if(this.oldScreenWidth !== this.screenWidth){
-            if(this.chatCanvas.width < this.screenWidth)
+            if(this.chatCanvas.width != this.screenWidth)
                 this.chatCanvas.width = this.screenWidth;
             this.oldScreenWidth = this.screenWidth;
         }
