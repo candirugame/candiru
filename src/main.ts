@@ -1,4 +1,3 @@
 import {Game} from "./core/Game.ts";
 
-const game = new Game();
-game.start();
+const _game = new Game();

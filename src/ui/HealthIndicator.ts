@@ -27,9 +27,11 @@ export class HealthIndicator {
         this.scene = renderer.getHealthIndicatorScene();
         this.ambientLight = new THREE.AmbientLight(rgbToHex(0,0,0), 0);
         this.scene.add(this.ambientLight);
+
+        this.init();
     }
 
-    public init() {
+    private init() {
         const loader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('/draco/');

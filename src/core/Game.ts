@@ -39,14 +39,10 @@ export class Game {
         this.map = new MapLoader('maps/deathmatch_1/map.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
-    }
-
-    init() {
-        this.collisionManager.init();
-        this.inventoryManager.init();
-        this.healthIndicator.init();
+        this.animate();
 
     }
+
 
     animate() {
         this.inputHandler.handleInputs();
@@ -61,10 +57,6 @@ export class Game {
         requestAnimationFrame(this.animate.bind(this));
     }
 
-    start() {
-        this.init();
-        this.animate();
-    }
 }
 
 // Entry point

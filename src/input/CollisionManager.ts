@@ -36,9 +36,6 @@ export class CollisionManager {
         this.jumped = false;
     }
 
-    public init() {
-        // Initialization logic if any
-    }
 
     public collisionPeriodic(localPlayer: Player) {
         if (!this.mapLoaded || !this.colliderGeom || !this.colliderGeom.boundsTree) return; // Add checks

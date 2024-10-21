@@ -35,9 +35,7 @@ export class Inventory {
         this.localPlayer = localPlayer;
     }
 
-    public init() {
 
-    }
 
     private updateInventoryItems(){
         if(!this.arraysEqual(this.oldInventory, this.localPlayer.inventory)) {
