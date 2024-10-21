@@ -4,9 +4,9 @@ LABEL authors="isaacthoman"
 # Set working directory
 WORKDIR /app
 
-# Install curl
+# Install curl and git
 USER root
-RUN apt-get update && apt-get install -y curl  # or wget, depending on what you want
+RUN apt-get update && apt-get install -y curl git
 
 # Change ownership of /app to the deno user
 RUN chown -R deno:deno /app
@@ -20,5 +20,5 @@ COPY . .
 # Expose the port
 EXPOSE 3000
 
-# Run the task
-CMD ["task", "start"]
+# Run the generate-version task before the start task
+CMD ["deno", "task", "start"]
