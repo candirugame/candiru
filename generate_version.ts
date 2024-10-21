@@ -23,8 +23,7 @@ try {
 
     // If no tag is found or Git is unavailable, log and exit quietly
     if (!version) {
-        console.log("No Git tags found or Git is unavailable. Skipping version generation.");
-        Deno.exit(0);
+        console.log("No Git tags found or Git is unavailable. Skipping version generation.");//
     }
 
     // Create the public directory if it doesn't exist
@@ -37,5 +36,4 @@ try {
     console.log(`Generated gameVersion.json with version: ${version}`);
 } catch (error) {
     console.log("An error occurred while generating gameVersion.json, skipping version generation.");
-    Deno.exit(0); // Quietly exit without causing issues
 }
