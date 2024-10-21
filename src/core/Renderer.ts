@@ -140,8 +140,12 @@ export class Renderer {
         const screenWidth = globalThis.innerWidth;
         const screenHeight = globalThis.innerHeight;
 
-        const healthIndicatorWidth = 60; // native
+        let healthIndicatorWidth = 60; // native
         const healthIndicatorHeight = healthIndicatorWidth; // 1:1 aspect ratio
+
+        if(this.gameCount === 2)
+            healthIndicatorWidth*=2;
+
 
         // Set up scissor and viewport for a region from (0, 0) to (50, 50)
         this.renderer.setScissorTest(true);
@@ -162,8 +166,12 @@ export class Renderer {
         this.renderer.render(this.healthIndicatorScene, this.healthIndicatorCamera);
 
         // Render inventory view
-        const inventoryWidth = 20;
+        let inventoryWidth = 20;
         const inventoryHeight = inventoryWidth * 5;
+
+        if(this.gameCount === 2)
+            inventoryWidth*=2;
+
         this.renderer.setScissorTest(true);
         this.renderer.setScissor(
             screenWidth - (inventoryWidth + 4) * this.screenPixelsInGamePixel,
