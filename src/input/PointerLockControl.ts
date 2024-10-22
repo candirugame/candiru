@@ -13,7 +13,7 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     public localPlayer: Player;
     public domElement: Element;
     public isLocked: boolean = false;
-    private sensitivity: number = 0.002;
+    static sensitivity: number = 0.002;
 
     constructor(localPlayer: Player, domElement: Element) {
         super();
@@ -72,8 +72,8 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
-        euler.y -= movementX * this.sensitivity;
-        euler.x -= movementY * this.sensitivity;
+        euler.y -= movementX * PointerLockControls.sensitivity;
+        euler.x -= movementY * PointerLockControls.sensitivity;
 
         euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
 
@@ -83,20 +83,18 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     };
 
     private onPointerLockChange = (): void => {
-        if (document.pointerLockElement === this.domElement) {
-           // this.dispatchEvent({ type: 'lock' });
-            this.isLocked = true;
-        } else {
-         //   this.dispatchEvent({ type: 'unlock' });
-            this.isLocked = false;
-        }
+        this.isLocked = document.pointerLockElement === this.domElement;
     };
 
     private onPointerLockError = (): void => {
         console.error('THREE.PointerLockControls: Unable to use Pointer Lock API');
     };
 
-    public setSensitivity(sensitivity: number): void {
-        this.sensitivity = sensitivity;
+    public static setSensitivity(sensitivity: number): void {
+        PointerLockControls.sensitivity = sensitivity / 500;
+    }
+
+    public static getSensitivity(): number {
+        return  PointerLockControls.sensitivity * 500;
     }
 }
