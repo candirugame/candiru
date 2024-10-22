@@ -91,6 +91,10 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     };
 
     public static setSensitivity(sensitivity: number): void {
-        PointerLockControls.sensitivity = sensitivity;
+        PointerLockControls.sensitivity = sensitivity / 500;
+    }
+
+    public static getSensitivity(): number {
+        return  PointerLockControls.sensitivity * 500;
     }
 }
