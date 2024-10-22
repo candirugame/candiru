@@ -16,12 +16,15 @@ export class CommandManager {
 
     public init() {
         this.commands.push(new Command('sensitivity', (args: string[]) => {
+            if (args[1] == null) {
+                return "Sensitivity is currently " + PointerLockControls.getSensitivity();
+            }
             const sense: number = Number(args[1]);
-            if (sense > 0 && sense <= 1) {
+            if (sense > 0 && sense <= 10) {
                 PointerLockControls.setSensitivity(sense);
-                return "Sensitivity is now set to " + sense;
+                return "Sensitivity is now set to " + (sense);
             } else {
-                return "Sensitivity is not in the valid range of 0 to 1"
+                return "Sensitivity is not in the valid range of 0 to 5"
             }
         }));
     }
