@@ -24,7 +24,7 @@ export class CommandManager {
                 PointerLockControls.setSensitivity(sense);
                 return "Sensitivity is now set to " + (sense);
             } else {
-                return "Sensitivity is not in the valid range of 0 to 5"
+                return "Sensitivity is not in the valid range of 0 to 10"
             }
         }));
     }
