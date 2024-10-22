@@ -36,8 +36,8 @@ export class CommandManager {
 
                 const chatMessage = {
                     id: this.localPlayer.id,
-                    name: 'CLIENT',
-                    message: msg
+                    name: '',
+                    message: cmd + " -> " + msg
                 };
 
                 this.chatOverlay.addChatMessage(chatMessage);
