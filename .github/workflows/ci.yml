@@ -151,11 +151,12 @@ jobs:
       - name: Get latest tag
         id: get_latest_tag
         run: echo "latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)" >> $GITHUB_OUTPUT
-
       - name: Get last commit message
         id: get_last_commit_message
-        run: echo "last_commit_message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
-
+        run: |
+          echo "last_commit_message<<EOF" >> $GITHUB_OUTPUT
+          git log -1 --pretty=%B >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Check if commit is from GitHub Actions
         id: check_author
         run: |

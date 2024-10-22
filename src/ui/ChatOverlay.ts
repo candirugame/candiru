@@ -2,6 +2,7 @@ import { Player } from '../core/Player.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { InputHandler } from '../input/InputHandler.ts';
+import {CommandManager} from "../core/CommandManager.ts";
 
 interface ChatMessage {
     id: number;
@@ -25,6 +26,7 @@ export class ChatOverlay {
     private inputHandler!: InputHandler;
     private debugTextHeight!: number;
     private oldScreenWidth:number = 0;
+    private readonly commandManager: CommandManager;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -43,6 +45,8 @@ export class ChatOverlay {
 
         this.nameSettingActive = false;
         this.screenWidth = 100;
+
+        this.commandManager = new CommandManager(this.localPlayer, this);
 
         this.setupEventListeners();
 
@@ -284,7 +288,9 @@ export class ChatOverlay {
         }
 
         if (e.key === 'Enter') {
-            if (this.localPlayer.chatActive) this.networking.sendMessage(this.localPlayer.chatMsg);
+            if (this.localPlayer.chatActive) {
+                if(!this.commandManager.runCmd(this.localPlayer.chatMsg)) this.networking.sendMessage(this.localPlayer.chatMsg);
+            }
             if (this.nameSettingActive) {
                 this.localPlayer.name = this.localPlayer.chatMsg.toString();
                 localStorage.setItem('name', this.localPlayer.name);
