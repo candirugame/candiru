@@ -3,6 +3,7 @@ import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { InputHandler } from '../input/InputHandler.ts';
 import {CommandManager} from "../core/CommandManager.ts";
+import {SettingsManager} from "../core/SettingsManager.ts";
 
 interface ChatMessage {
     id: number;
@@ -293,7 +294,8 @@ export class ChatOverlay {
             }
             if (this.nameSettingActive) {
                 this.localPlayer.name = this.localPlayer.chatMsg.toString();
-                localStorage.setItem('name', this.localPlayer.name);
+                SettingsManager.settings.name = this.localPlayer.chatMsg.toString();
+                SettingsManager.write();
             }
             this.localPlayer.chatMsg = '';
             this.localPlayer.chatActive = false;

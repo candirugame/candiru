@@ -1,6 +1,7 @@
 import {Player} from "./Player.ts";
 import {PointerLockControls} from "../input/PointerLockControl.ts";
 import {ChatOverlay} from "../ui/ChatOverlay.ts";
+import {SettingsManager} from "./SettingsManager.ts";
 
 export class CommandManager {
     private localPlayer: Player;
@@ -15,17 +16,23 @@ export class CommandManager {
     }
 
     public init() {
-        this.commands.push(new Command('sensitivity', (args: string[]) => {
+        this.commands.push(new Command('sense', (args: string[]): string => {
             if (args[1] == null) {
-                return "Sensitivity is currently " + PointerLockControls.getSensitivity();
+                return "Sensitivity is currently " + (Number(SettingsManager.settings.sensitivity) * 500);
             }
             const sense: number = Number(args[1]);
             if (sense > 0 && sense <= 10) {
-                PointerLockControls.setSensitivity(sense);
+                SettingsManager.settings.sensitivity = sense / 500;
+                SettingsManager.write();
                 return "Sensitivity is now set to " + (sense);
             } else {
-                return "Sensitivity is not in the valid range of 0 to 10"
+                return "Sensitivity is not in the valid range of 0 to 10";
             }
+        }));
+        this.commands.push(new Command('resetSettings', (): string => {
+            SettingsManager.reset();
+            SettingsManager.write();
+            return "Settings have been reverted to their default states";
         }));
     }
 
