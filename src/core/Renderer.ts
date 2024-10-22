@@ -204,6 +204,8 @@ export class Renderer {
         this.camera.rotation.y += (Math.random()-0.5) * shakeAmount * 0.12;
         this.camera.rotation.z += (Math.random()-0.5) * shakeAmount * 0.12;
 
+        this.heldItemCamera.rotation.set((Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount );
+
         this.lastPlayerHealth = this.localPlayer.health;
         this.updateFramerate();
     }
