@@ -214,7 +214,7 @@ export class ChatOverlay {
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
 
-        linesToRender.push('Evil Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
+        linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push(Math.floor(framerate) + 'FPS');
         //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
         //linesToRender.push('qx: ' + playerQuatX + ' qy: ' + playerQuatY + ' qz: ' + playerQuatZ + ' qw: ' + playerQuatW);
