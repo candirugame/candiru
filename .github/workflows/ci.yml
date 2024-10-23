@@ -131,7 +131,7 @@ jobs:
   # Update Game Version (Only for main branch after release)
   update-game-version:
     needs: release
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
