@@ -65,7 +65,7 @@ export class CommandManager {
         let match: boolean = false;
         const args: string[] = cmd.substring(1).split(" ")
         for (let i = 0; i < this.commands.length; i++) {
-            if (args[0] === this.commands[i].getCmdName()) {
+            if (args[0].toLowerCase() === this.commands[i].getCmdName()) {
                 match = true;
                 const msg = this.commands[i].run(args);
 
@@ -87,7 +87,7 @@ class Command {
     private readonly cmdName: string;
     private readonly func: (args: string[]) => string;
     constructor(cmd: string, func: (args: string[]) => string) {
-        this.cmdName = cmd;
+        this.cmdName = cmd.toLowerCase();
         this.func = func;
     }
     public run(args: string[]): string {
