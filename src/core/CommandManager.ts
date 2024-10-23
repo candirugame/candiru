@@ -1,5 +1,4 @@
 import {Player} from "./Player.ts";
-import {PointerLockControls} from "../input/PointerLockControl.ts";
 import {ChatOverlay} from "../ui/ChatOverlay.ts";
 import {SettingsManager} from "./SettingsManager.ts";
 
