@@ -151,6 +151,12 @@ jobs:
       - name: Get latest tag
         id: get_latest_tag
         run: echo "latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)" >> $GITHUB_OUTPUT
+      - name: Get last commit message
+        id: get_last_commit_message
+        run: |
+          echo "last_commit_message<<EOF" >> $GITHUB_OUTPUT
+          git log -1 --pretty=%B >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Check if commit is from GitHub Actions
         id: check_author
         run: |
@@ -165,14 +171,14 @@ jobs:
         run: |
           mkdir -p public
           echo "{\"version\": \"${{ steps.get_latest_tag.outputs.latest_tag }}\"}" > public/gameVersion.json
+
       - name: Commit and push changes
         if: steps.check_author.outputs.skip == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         run: |
           git add public/gameVersion.json
-          git commit -m "Update gameVersion to ${{ steps.get_latest_tag.outputs.latest_tag }}" || echo "No changes to commit"
-          # Push to the branch that triggered the workflow (dev or main)
+          git commit -m "${{ steps.get_latest_tag.outputs.latest_tag }} - ${{ steps.get_last_commit_message.outputs.last_commit_message }}" || echo "No changes to commit"
           git push origin ${{ github.ref_name }}
 
       - name: Debugging List files in public after update
