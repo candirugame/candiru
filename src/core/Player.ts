@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {SettingsManager} from "./SettingsManager.ts";
 
 export class Player {
     public position: THREE.Vector3;
@@ -40,9 +41,7 @@ export class Player {
         this.inventory = [];
         this.idLastDamagedBy = -1;
 
-        if (this.name === '') {
-            const storedName = localStorage.getItem('name');
-            if (storedName) this.name = storedName;
-        }
+        const storedName = SettingsManager.settings.name;
+        if (storedName) this.name = storedName;
     }
 }

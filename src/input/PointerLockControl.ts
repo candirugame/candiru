@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Player } from "../core/Player.ts";
+import {SettingsManager} from "../core/SettingsManager.ts";
 
 // Define a custom event map interface
 interface PointerLockControlEventMap {
@@ -13,7 +14,6 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     public localPlayer: Player;
     public domElement: Element;
     public isLocked: boolean = false;
-    static sensitivity: number = 0.002;
 
     constructor(localPlayer: Player, domElement: Element) {
         super();
@@ -72,8 +72,8 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
-        euler.y -= movementX * PointerLockControls.sensitivity;
-        euler.x -= movementY * PointerLockControls.sensitivity;
+        euler.y -= movementX * SettingsManager.settings.sense;
+        euler.x -= movementY * SettingsManager.settings.sense;
 
         euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
 
@@ -89,12 +89,4 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
     private onPointerLockError = (): void => {
         console.error('THREE.PointerLockControls: Unable to use Pointer Lock API');
     };
-
-    public static setSensitivity(sensitivity: number): void {
-        PointerLockControls.sensitivity = sensitivity / 500;
-    }
-
-    public static getSensitivity(): number {
-        return  PointerLockControls.sensitivity * 500;
-    }
 }
