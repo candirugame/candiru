@@ -42,6 +42,6 @@ export class Player {
         this.idLastDamagedBy = -1;
 
         const storedName = SettingsManager.settings.name;
-        if (storedName) this.name = String(storedName);
+        if (storedName) this.name = storedName;
     }
 }

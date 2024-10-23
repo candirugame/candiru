@@ -17,11 +17,11 @@ export class CommandManager {
     public init() {
         this.commands.push(new Command('sense', (args: string[]): string => {
             if (args[1] == null) {
-                return "Sensitivity is currently " + (Number(SettingsManager.settings.sensitivity) * 500);
+                return "Sensitivity is currently " + (SettingsManager.settings.sense * 500);
             }
             const sense: number = Number(args[1]);
             if (sense > 0 && sense <= 10) {
-                SettingsManager.settings.sensitivity = sense / 500;
+                SettingsManager.settings.sense = sense / 500;
                 SettingsManager.write();
                 return "Sensitivity is now set to " + (sense);
             } else {

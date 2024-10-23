@@ -1,5 +1,5 @@
 export class SettingsManager {
-    static settings: { [key: string]: string | number | boolean | null};
+    static settings: Settings;
 
     static {
         SettingsManager.reset()
@@ -9,7 +9,6 @@ export class SettingsManager {
 
     public static write(): void {
         localStorage.setItem('settings', JSON.stringify(SettingsManager.settings));
-        console.log(localStorage.getItem('settings'));
     }
 
     public static reset() {
@@ -22,4 +21,9 @@ export class SettingsManager {
     constructor() {
         throw Error('Settings class is static.');
     }
+}
+
+interface Settings {
+    sense: number;
+    name: null | string;
 }
