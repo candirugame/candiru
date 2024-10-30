@@ -29,6 +29,7 @@ export class Renderer {
     public scaredLevel: number = 0;
     private lastPlayerHealth: number = 100;
     private knockbackVector: THREE.Vector3 = new THREE.Vector3();
+    private bobCycle: number;
 
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
@@ -94,6 +95,8 @@ export class Renderer {
         this.framesInFramerateSample = 30;
         this.sampleOn = 0;
         this.lastFramerateCalculation = 0;
+
+        this.bobCycle = 0;
 
         this.raycaster = new THREE.Raycaster();
 
@@ -209,6 +212,22 @@ export class Renderer {
         this.heldItemCamera.rotation.set((Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount );
 
         this.lastPlayerHealth = this.localPlayer.health;
+
+        const vel = Math.sqrt(Math.pow(this.localPlayer.velocity.x,2) + Math.pow(this.localPlayer.velocity.z,2))
+
+        if(vel == 0) {
+            this.bobCycle = 0;
+        } else {
+            this.bobCycle += this.deltaTime * 4.8 * vel;
+            this.camera.position.y = this.camera.position.y + Math.sin(this.bobCycle) * .04;
+        }
+
+        const xrot = this.inputHandler.getInputX() * -.016;
+        const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
+        euler.z += xrot;
+
+        this.camera.quaternion.setFromEuler(euler);
+
         this.updateFramerate();
     }
 
