@@ -212,6 +212,14 @@ export class InputHandler {
             this.keys = {};
     }
 
+    public getInputX() {
+        return this.inputX;
+    }
+
+    public getInputZ() {
+        return this.inputZ;
+    }
+
     private static approachZero(input: number, step: number): number {
         if (input == 0) {return 0;}
         let sign: number = 1;

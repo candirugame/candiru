@@ -5,6 +5,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
 import { ChatOverlay } from "../ui/ChatOverlay.ts";
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
+import {InputHandler} from "../input/InputHandler.ts";
 
 export class Renderer {
     private clock: THREE.Clock;
@@ -37,6 +38,7 @@ export class Renderer {
     private inventoryMenuScene: THREE.Scene;
     private inventoryMenuCamera: THREE.OrthographicCamera;
     private remotePlayerRenderer: RemotePlayerRenderer;
+    private inputHandler!: InputHandler;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -265,5 +267,9 @@ export class Renderer {
 
     public getEntityScene(): THREE.Scene {
         return this.remotePlayerRenderer.getEntityScene();
+    }
+
+    public setInputHandler(inputHandler: InputHandler) {
+        this.inputHandler = inputHandler;
     }
 }
