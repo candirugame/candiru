@@ -30,6 +30,7 @@ export class Renderer {
     private lastPlayerHealth: number = 100;
     private knockbackVector: THREE.Vector3 = new THREE.Vector3();
     private bobCycle: number;
+    private lastCameraRoll: number
 
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
@@ -97,6 +98,7 @@ export class Renderer {
         this.lastFramerateCalculation = 0;
 
         this.bobCycle = 0;
+        this.lastCameraRoll = 0;
 
         this.raycaster = new THREE.Raycaster();
 
@@ -219,7 +221,7 @@ export class Renderer {
             this.bobCycle = 0;
         } else {
             this.bobCycle += this.deltaTime * 4.8 * vel;
-            this.camera.position.y = this.camera.position.y + Math.sin(this.bobCycle) * .04;
+            this.camera.position.y = this.camera.position.y + Math.sin(this.bobCycle) * .03;
         }
 
         const xrot = this.inputHandler.getInputX() * -.016;
@@ -290,5 +292,18 @@ export class Renderer {
 
     public setInputHandler(inputHandler: InputHandler) {
         this.inputHandler = inputHandler;
+    }
+
+    private static approachNumber(input: number, step: number, approach: number): number {
+        if (input == approach) {return approach;}
+        let output: number;
+        if (input > approach) {
+            output = input - step;
+            if (output <= approach) {return  approach;}
+        } else {
+            output = input + step;
+            if (output >= approach) {return  approach;}
+        }
+        return output;
     }
 }
