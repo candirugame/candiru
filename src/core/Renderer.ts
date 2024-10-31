@@ -224,9 +224,13 @@ export class Renderer {
             this.camera.position.y = this.camera.position.y + Math.sin(this.bobCycle) * .03;
         }
 
-        const xrot = this.inputHandler.getInputX() * -.016;
+        const maxRollAmount = this.inputHandler.getInputX() * -.007;
+        const maxRollSpeed = this.deltaTime * .4;
+        let roll: number = this.lastCameraRoll;
+        roll = Renderer.approachNumber(roll, maxRollSpeed, maxRollAmount);
         const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
-        euler.z += xrot;
+        euler.z += roll;
+        this.lastCameraRoll = roll;
 
         this.camera.quaternion.setFromEuler(euler);
 
