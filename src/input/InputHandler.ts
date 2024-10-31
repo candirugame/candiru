@@ -91,7 +91,7 @@ export class InputHandler {
         const deltaTime: number = this.clock.getDelta();
         const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
 
-        let dist = 0;
+        let dist = 1;
         let speedMultiplier: number = 1;
         this.jump = false;
         this.aim = false;
@@ -138,7 +138,6 @@ export class InputHandler {
                 this.inputX = InputHandler.approachZero(this.inputX, deltaTimeAcceleration);
         }
 
-        if (this.inputX !== 0 || this.inputZ !== 0) dist = 1;
         if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
 
        this.prevVelocity.copy(this.localPlayer.velocity);
