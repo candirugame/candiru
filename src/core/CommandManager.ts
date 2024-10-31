@@ -1,7 +1,6 @@
 import {Player} from "./Player.ts";
 import {ChatOverlay} from "../ui/ChatOverlay.ts";
 import {SettingsManager} from "./SettingsManager.ts";
-import {string} from "joi";
 
 export class CommandManager {
     private localPlayer: Player;
