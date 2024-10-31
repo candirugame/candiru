@@ -6,6 +6,7 @@ import { Player } from './Player.ts';
 import { ChatOverlay } from "../ui/ChatOverlay.ts";
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
 import {InputHandler} from "../input/InputHandler.ts";
+import {SettingsManager} from "./SettingsManager.ts";
 
 export class Renderer {
     private clock: THREE.Clock;
@@ -221,7 +222,8 @@ export class Renderer {
             this.bobCycle = 0;
         } else {
             this.bobCycle += this.deltaTime * 4.8 * vel;
-            this.camera.position.y = this.camera.position.y + Math.sin(this.bobCycle) * .03;
+            this.camera.position.y = this.camera.position.y + (Math.sin(this.bobCycle) * .03 * SettingsManager.settings.viewBobbingStrength);
+            console.log(this.camera.position.y);
         }
 
         const maxRollAmount = this.inputHandler.getInputX() * -.007;

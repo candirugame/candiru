@@ -1,6 +1,7 @@
 import {Player} from "./Player.ts";
 import {ChatOverlay} from "../ui/ChatOverlay.ts";
 import {SettingsManager} from "./SettingsManager.ts";
+import {string} from "joi";
 
 export class CommandManager {
     private localPlayer: Player;
@@ -32,6 +33,15 @@ export class CommandManager {
             SettingsManager.reset();
             SettingsManager.write();
             return "Settings have been reverted to their default states";
+        }));
+        this.commands.push(new Command('bobbing', (args: string[]) : string => {
+            const bobbing = Number(args[1]);
+            if (bobbing < 0 || bobbing > 2) {
+                return args[1] + ' is not in range 0 to 2';
+            }
+            SettingsManager.settings.viewBobbingStrength = bobbing;
+            SettingsManager.write();
+            return 'View bobbing strength is now set to ' + args[1];
         }));
     }
 
