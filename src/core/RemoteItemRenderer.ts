@@ -3,6 +3,7 @@ import { Networking } from './Networking.ts';
 import { Renderer } from './Renderer.ts';
 import { ItemBase, ItemType } from '../items/ItemBase.ts';
 import { BananaGun } from '../items/BananaGun.ts';
+import { FishGun } from '../items/FishGun.ts';
 
 // Custom types
 type Vector3Data = {
@@ -82,6 +83,8 @@ export class RemoteItemRenderer {
         switch (itemType) {
             case 1:
                 return new BananaGun(this.renderer, this.networking, 0, ItemType.WorldItem);
+            case 2:
+                return new FishGun(this.renderer, this.networking, 0, ItemType.WorldItem);
             default:
                 // Return a generic item
                 return new ItemBase(ItemType.WorldItem, this.renderer.getEntityScene(), this.renderer.getInventoryMenuScene(), 0);
