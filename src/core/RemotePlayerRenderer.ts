@@ -251,26 +251,45 @@ export class RemotePlayerRenderer {
         });
     }
 
-    public getRemotePlayerObjectsInCrosshair(raycaster: THREE.Raycaster, camera: THREE.Camera): THREE.Object3D[] {
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-        return raycaster.intersectObjects(this.entityScene.children).map((intersect) => intersect.object);
-    }
+
 
     public getRemotePlayerIDsInCrosshair(): number[] {
-        const playerIDs: number[] = [];
+        const shotVectors = this.getShotVectorsToPlayersInCrosshair();
+        const playerIDs = shotVectors.map(shot => shot.playerID);
+        return playerIDs;
+    }
+
+    public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3 }[] {
+        const shotVectors: { playerID: number, vector: THREE.Vector3 }[] = [];
         const objectsInCrosshair = this.getPlayersInCrosshairWithWalls();
 
         for (const object of objectsInCrosshair) {
             for (const player of this.playersToRender) {
                 if (player.objectUUID === object.uuid) {
-                    if (!playerIDs.includes(player.id)) playerIDs.push(player.id);
+                    // Find the intersection point on the player
+                    const intersection = this.findIntersectionOnPlayer(object);
+                    if (intersection) {
+                        const vector = new THREE.Vector3().subVectors(intersection.point, this.camera.position);
+                        shotVectors.push({ playerID: player.id, vector });
+                    }
                     break;
                 }
             }
         }
 
-        return playerIDs;
+        return shotVectors;
     }
+
+    private findIntersectionOnPlayer(playerObject: THREE.Object3D): THREE.Intersection | null {
+        this.raycaster.setFromCamera(this.crosshairVec, this.camera);
+
+        const intersects = this.raycaster.intersectObject(playerObject, true);
+        if (intersects.length > 0) {
+            return intersects[0]; // Return the first intersection point
+        }
+        return null;
+    }
+
 
     private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
