@@ -202,7 +202,7 @@ export class Renderer {
         if(this.localPlayer.health < this.lastPlayerHealth) {
             const remotePlayer: RemotePlayer | undefined = this.networking.getRemotePlayerData().find((player) => player.id === this.localPlayer.idLastDamagedBy);
             if(remotePlayer !== undefined) {
-                console.log("Player was damaged by " + remotePlayer.name);
+                //console.log("Player was damaged by " + remotePlayer.name);
                 const diff = new THREE.Vector3().subVectors(this.localPlayer.position, remotePlayer.position);
                 this.knockbackVector.copy(diff.normalize().multiplyScalar(0.2));
             }
@@ -226,7 +226,7 @@ export class Renderer {
         } else {
             this.bobCycle += this.deltaTime * 4.8 * vel;
             this.camera.position.y = this.camera.position.y + (Math.sin(this.bobCycle) * .03 * SettingsManager.settings.viewBobbingStrength);
-            console.log(this.camera.position.y);
+            //console.log(this.camera.position.y);
         }
 
         const maxRollAmount = this.inputHandler.getInputX() * -.007 * SettingsManager.settings.viewBobbingStrength;

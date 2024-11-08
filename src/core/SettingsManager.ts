@@ -14,7 +14,10 @@ export class SettingsManager {
     public static reset() {
         SettingsManager.settings = {
             sense: .002,
+            controllerSense: 4,
             name: null,
+            crosshairColor: 'rgb(0,255,255)',
+            crosshairType: 0,
             viewBobbingStrength: 1,
         };
     }
@@ -26,6 +29,9 @@ export class SettingsManager {
 
 interface Settings {
     sense: number;
+    controllerSense: number;
     name: null | string;
+    crosshairColor: string;
+    crosshairType: number;
     viewBobbingStrength: number;
 }
