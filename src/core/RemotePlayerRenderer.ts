@@ -377,17 +377,36 @@ export class RemotePlayerRenderer {
         const shotVectors: { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] = [];
         const offsetDirection = this.calculateOffsetDirection(yawOffset, pitchOffset);
 
-        for (const player of this.playersToRender) {
-            const intersection = this.findIntersectionOnPlayerWithOffset(player.object, offsetDirection);
-            if (intersection) {
-                const vector = new THREE.Vector3().subVectors(intersection.point, this.camera.position);
-                const hitPoint = intersection.point.clone(); // World coordinates of the hit
+        // Set the raycaster with the offset direction
+        this.raycaster.set(this.camera.position, offsetDirection);
+
+        // Intersect with all potential targets (players and walls)
+        const playerIntersects = this.raycaster.intersectObjects(this.playersToRender.map(p => p.object), true);
+        const wallIntersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+        // Filter player intersections based on wall intersections
+        const filteredPlayerIntersects = playerIntersects.filter((playerIntersect) => {
+            for (const wallIntersect of wallIntersects) {
+                if (wallIntersect.distance < playerIntersect.distance) {
+                    return false; // A wall is blocking the player
+                }
+            }
+            return true; // No wall is blocking the player
+        });
+
+        // Process the filtered player intersections
+        for (const intersect of filteredPlayerIntersects) {
+            const player = this.playersToRender.find(p => p.object === intersect.object);
+            if (player) {
+                const vector = new THREE.Vector3().subVectors(intersect.point, this.camera.position);
+                const hitPoint = intersect.point.clone(); // World coordinates of the hit
                 shotVectors.push({ playerID: player.id, vector, hitPoint });
             }
         }
 
         return shotVectors;
     }
+
 
     private calculateOffsetDirection(yawOffset: number, pitchOffset: number): THREE.Vector3 {
         // Get the camera's current direction
