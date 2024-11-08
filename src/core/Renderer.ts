@@ -7,6 +7,7 @@ import { ChatOverlay } from "../ui/ChatOverlay.ts";
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
 import {InputHandler} from "../input/InputHandler.ts";
 import {SettingsManager} from "./SettingsManager.ts";
+import {CollisionManager} from "../input/CollisionManager.ts";
 
 export class Renderer {
     private clock: THREE.Clock;
@@ -42,6 +43,7 @@ export class Renderer {
     private inventoryMenuCamera: THREE.OrthographicCamera;
     private remotePlayerRenderer: RemotePlayerRenderer;
     private inputHandler!: InputHandler;
+    private collisionManager!: CollisionManager;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -218,7 +220,7 @@ export class Renderer {
 
         const vel = Math.sqrt(Math.pow(this.localPlayer.velocity.x,2) + Math.pow(this.localPlayer.velocity.z,2))
 
-        if(vel == 0) {
+        if(vel == 0 || this.collisionManager.isPlayerInAir()) {
             this.bobCycle = 0;
         } else {
             this.bobCycle += this.deltaTime * 4.8 * vel;
@@ -226,10 +228,10 @@ export class Renderer {
             console.log(this.camera.position.y);
         }
 
-        const maxRollAmount = this.inputHandler.getInputX() * -.007;
+        const maxRollAmount = this.inputHandler.getInputX() * -.007 * SettingsManager.settings.viewBobbingStrength;
         const maxRollSpeed = this.deltaTime * .4;
         let roll: number = this.lastCameraRoll;
-        roll = Renderer.approachNumber(roll, maxRollSpeed, maxRollAmount * SettingsManager.settings.viewBobbingStrength);
+        roll = Renderer.approachNumber(roll, maxRollSpeed, maxRollAmount);
         const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
         euler.z += roll;
         this.lastCameraRoll = roll;
@@ -298,6 +300,10 @@ export class Renderer {
 
     public setInputHandler(inputHandler: InputHandler) {
         this.inputHandler = inputHandler;
+    }
+
+    public setCollisionManager(collisionManager: CollisionManager) {
+        this.collisionManager = collisionManager;
     }
 
     private static approachNumber(input: number, step: number, approach: number): number {
