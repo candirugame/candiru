@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControl.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
+import {SettingsManager} from "../core/SettingsManager.ts";
 
 export class InputHandler {
     private readonly gameIndex: number;
@@ -112,8 +113,8 @@ export class InputHandler {
                 if (this.gamepadInputs.A) this.jump = true;
                 if (this.gamepadInputs.leftTrigger > .5) this.aim = true;
                 if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
-                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * 4 * deltaTime;
-                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * 4 * deltaTime;
+                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * SettingsManager.settings.controllerSense * deltaTime;
+                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * SettingsManager.settings.controllerSense * deltaTime;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
                 this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
             }

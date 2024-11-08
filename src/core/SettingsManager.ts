@@ -14,6 +14,7 @@ export class SettingsManager {
     public static reset() {
         SettingsManager.settings = {
             sense: .002,
+            controllerSense: 4,
             name: null,
         };
     }
@@ -25,5 +26,6 @@ export class SettingsManager {
 
 interface Settings {
     sense: number;
+    controllerSense: number;
     name: null | string;
 }
