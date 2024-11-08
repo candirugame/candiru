@@ -208,9 +208,9 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
-        const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
-        const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
+        // const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
+        // const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
+        // const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
 
         //const playerQuatX = Math.floor(this.localPlayer.lookQuaternion.x * 100) / 100;
         //const playerQuatY = Math.floor(this.localPlayer.lookQuaternion.y * 100) / 100;
@@ -222,26 +222,13 @@ export class ChatOverlay {
         // const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
 
 
-        const zero = new THREE.Vector3(0,0,0);
-        const projected = zero.project(this.renderer.getCamera());
-        const projectedX = Math.round((projected.x + 1) * this.screenWidth / 2);
-        const projectedY = Math.round((-projected.y + 1) * 200 / 2);
-        //linesToRender.push(this.renderer.);
-
-
-        if(projected.z <1){
-            ctx.fillRect(projectedX, projectedY-5, 1, 11);
-            ctx.fillRect(projectedX - 5, projectedY, 11, 1);
-        }
-
-
 
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
 
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push(Math.floor(framerate) + 'FPS');
-        linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
         //linesToRender.push('px: ' + projectedX + ' py: ' + projectedY + ' pz: ' + projected.z);
         //linesToRender.push('qx: ' + playerQuatX + ' qy: ' + playerQuatY + ' qz: ' + playerQuatZ + ' qw: ' + playerQuatW);
         // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
