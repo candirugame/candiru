@@ -23,6 +23,7 @@ export class CollisionManager {
     private triNormal: Vector3;
     private coyoteTime: number;
     private jumped: boolean;
+    private collided: boolean;
 
     constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.scene = renderer.getScene();
@@ -34,6 +35,7 @@ export class CollisionManager {
         this.triNormal = new THREE.Vector3();
         this.coyoteTime = 0;
         this.jumped = false;
+        this.collided = false;
     }
 
     public init() {
@@ -66,7 +68,7 @@ export class CollisionManager {
 
         this.colliderSphere.center = localPlayer.position.clone();
 
-        let collided: boolean = false;
+        this.collided = false;
 
         bvh.shapecast({
             intersectsBounds: (box: THREE.Box3) => {
@@ -94,7 +96,7 @@ export class CollisionManager {
                         localPlayer.velocity.y = 0;
                         localPlayer.gravity = 0;
                         this.coyoteTime = 0;
-                        collided = true;
+                        this.collided = true;
                     } else {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
                     }
@@ -106,7 +108,7 @@ export class CollisionManager {
             }
         });
 
-        if (!collided) {
+        if (!this.collided) {
             this.coyoteTime += deltaTime;
             if (jump && this.coyoteTime < 6 / 60 && !this.jumped) {
                 localPlayer.gravity = 8;
@@ -129,5 +131,9 @@ export class CollisionManager {
         this.colliderGeom.computeBoundsTree();
         this.mapLoaded = true;
         console.timeEnd("Building static geometry BVH");
+    }
+
+    public isPlayerInAir(): boolean {
+        return !this.collided;
     }
 }
