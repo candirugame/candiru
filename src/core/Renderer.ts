@@ -36,6 +36,7 @@ export class Renderer {
 
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
+    public playerHitMarkers: { hitPoint: THREE.Vector3, shotVector: THREE.Vector3, timestamp: number }[] = [];
     private healthIndicatorScene: THREE.Scene;
     private healthIndicatorCamera: THREE.PerspectiveCamera;
     private screenPixelsInGamePixel: number = 1;
@@ -290,8 +291,13 @@ export class Renderer {
         this.heldItemCamera.updateProjectionMatrix();
     }
 
-    public getRemotePlayerIDsInCrosshair(): number[] {
-        return this.remotePlayerRenderer.getRemotePlayerIDsInCrosshair();
+
+    public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        return this.remotePlayerRenderer.getShotVectorsToPlayersInCrosshair();
+    }
+
+    public getShotVectorsToPlayersWithOffset(yawOffset: number, pitchOffset: number): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset);
     }
 
     public getEntityScene(): THREE.Scene {

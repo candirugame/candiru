@@ -6,17 +6,17 @@ import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 
-const firingDelay = 0.12;
-const firingDelayHeld = 0.225; //longer firing delay when mouse is held down
+const firingDelay = 0.45;
+const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
 const showInHandDelay = 0.1;
 
 const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
-const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
+const unscopedPosition = new THREE.Vector3(0.75, -0.9, 3.2);
 const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
-const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
+const scopedQuaternion = new THREE.Quaternion(0,0.707,0,0.707);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
-export class BananaGun extends ItemBase {
+export class FishGun extends ItemBase {
     private renderer: Renderer;
     private networking: Networking;
     private lastInput: HeldItemInput = new HeldItemInput();
@@ -39,7 +39,7 @@ export class BananaGun extends ItemBase {
         dracoLoader.setDecoderPath('/draco/');
         loader.setDRACOLoader(dracoLoader);
         loader.load(
-            'models/simplified_banana_1.glb',
+            'models/simplified_fish.glb',
             (gltf) => {
                 this.object = gltf.scene;
                 // Adjust render order and depthTest based on itemType
@@ -57,6 +57,7 @@ export class BananaGun extends ItemBase {
                             applyDepthTest(mesh.material);
                         }
                     });
+                    this.object.scale.set(1.5, 1.5, 1.5);
                 }
                 this.inventoryMenuObject = this.object.clone();
                 this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
@@ -147,7 +148,7 @@ export class BananaGun extends ItemBase {
             if (Date.now() / 1000 - this.lastFired > firingDelay) {
                 this.lastFired = Date.now() / 1000;
                 this.shootBanana();
-                this.handPosition.add(new THREE.Vector3(0, 0, 0.6));
+                this.handPosition.add(new THREE.Vector3(0, 0, 2));
                 rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
             }
         }
@@ -174,20 +175,40 @@ export class BananaGun extends ItemBase {
     }
 
     private shootBanana() {
-        const processShots = () => {
-            const shotVectors = this.renderer.getShotVectorsToPlayersInCrosshair();
-            if (shotVectors.length > 0) {
-                for (const shot of shotVectors) {
-                    const { playerID, hitPoint } = shot;
-                    this.networking.applyDamage(playerID, 10);
-                    this.renderer.playerHitMarkers.push({hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1 });
-                }
-                this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
-            }
-        }
-        requestIdleCallback(processShots);
+        const totalShots = 25;
+        let processedShots = 0;
 
+        const processShots = (deadline: IdleDeadline) => {
+            while (processedShots < totalShots && deadline.timeRemaining() > 0) {
+                const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                );
+                if (shotVectors.length > 0) {
+                    for (const shot of shotVectors) {
+                        const { playerID, hitPoint } = shot;
+                        this.networking.applyDamage(playerID, 3);
+                        this.renderer.playerHitMarkers.push({
+                            hitPoint: hitPoint,
+                            shotVector: shot.vector,
+                            timestamp: -1,
+                        });
+                    }
+                    this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+                }
+                processedShots++;
+            }
+
+            if (processedShots < totalShots) {
+                requestIdleCallback(processShots);
+            }
+        };
+
+        requestIdleCallback(processShots);
     }
+
+
+
 
 
     // Method to set world position when used as WorldItem

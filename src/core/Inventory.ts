@@ -6,6 +6,7 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 import {Networking} from "./Networking.ts";
 import {Player} from "./Player.ts";
 import {ItemBase, ItemType} from "../items/ItemBase.ts";
+import {FishGun} from "../items/FishGun.ts";
 
 export class Inventory {
     private inventoryItems: ItemBase[] = [];
@@ -51,9 +52,14 @@ export class Inventory {
                 const num = this.localPlayer.inventory[i];
                 switch(num) {
                     case 1: {
-                            const banana = new BananaGun(this.renderer, this.networking, i, ItemType.InventoryItem);
-                            this.inventoryItems.push(banana);
-                            break;
+                        const banana = new BananaGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+                        this.inventoryItems.push(banana);
+                        break;
+                    }
+                    case 2: {
+                        const fish = new FishGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+                        this.inventoryItems.push(fish);
+                        break;
                     }
                     default: {
                             const testItem = new ItemBase(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, i);

@@ -251,26 +251,46 @@ export class RemotePlayerRenderer {
         });
     }
 
-    public getRemotePlayerObjectsInCrosshair(raycaster: THREE.Raycaster, camera: THREE.Camera): THREE.Object3D[] {
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-        return raycaster.intersectObjects(this.entityScene.children).map((intersect) => intersect.object);
-    }
+
 
     public getRemotePlayerIDsInCrosshair(): number[] {
-        const playerIDs: number[] = [];
+        const shotVectors = this.getShotVectorsToPlayersInCrosshair();
+        const playerIDs = shotVectors.map(shot => shot.playerID);
+        return playerIDs;
+    }
+
+    public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        const shotVectors: { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] = [];
         const objectsInCrosshair = this.getPlayersInCrosshairWithWalls();
 
         for (const object of objectsInCrosshair) {
             for (const player of this.playersToRender) {
                 if (player.objectUUID === object.uuid) {
-                    if (!playerIDs.includes(player.id)) playerIDs.push(player.id);
+                    // Find the intersection point on the player
+                    const intersection = this.findIntersectionOnPlayer(object);
+                    if (intersection) {
+                        const vector = new THREE.Vector3().subVectors(intersection.point, this.camera.position);
+                        const hitPoint = intersection.point.clone(); // World coordinates of the hit
+                        shotVectors.push({ playerID: player.id, vector, hitPoint });
+                    }
                     break;
                 }
             }
         }
 
-        return playerIDs;
+        return shotVectors;
     }
+
+    private findIntersectionOnPlayer(playerObject: THREE.Object3D): THREE.Intersection | null {
+        this.raycaster.setFromCamera(this.crosshairVec, this.camera);
+
+        const intersects = this.raycaster.intersectObject(playerObject, true);
+        if (intersects.length > 0) {
+            return intersects[0]; // Return the first intersection point
+        }
+        return null;
+    }
+
 
     private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
@@ -289,4 +309,68 @@ export class RemotePlayerRenderer {
 
         return filteredIntersects.map((intersect) => intersect.object);
     }
+
+    public getShotVectorsToPlayersWithOffset(yawOffset: number, pitchOffset: number): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        const shotVectors: { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] = [];
+        const offsetDirection = this.calculateOffsetDirection(yawOffset, pitchOffset);
+
+        // Set the raycaster with the offset direction
+        this.raycaster.set(this.camera.position, offsetDirection);
+
+        // Intersect with all potential targets (players and walls)
+        const playerIntersects = this.raycaster.intersectObjects(this.playersToRender.map(p => p.object), true);
+        const wallIntersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+        // Filter player intersections based on wall intersections
+        const filteredPlayerIntersects = playerIntersects.filter((playerIntersect) => {
+            for (const wallIntersect of wallIntersects) {
+                if (wallIntersect.distance < playerIntersect.distance) {
+                    return false; // A wall is blocking the player
+                }
+            }
+            return true; // No wall is blocking the player
+        });
+
+        // Process the filtered player intersections
+        for (const intersect of filteredPlayerIntersects) {
+            const player = this.playersToRender.find(p => p.object === intersect.object);
+            if (player) {
+                const vector = new THREE.Vector3().subVectors(intersect.point, this.camera.position);
+                const hitPoint = intersect.point.clone(); // World coordinates of the hit
+                shotVectors.push({ playerID: player.id, vector, hitPoint });
+            }
+        }
+
+        return shotVectors;
+    }
+
+
+    private calculateOffsetDirection(yawOffset: number, pitchOffset: number): THREE.Vector3 {
+        // Get the camera's current direction
+        const direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+
+        // Create a quaternion for the yaw and pitch offsets
+        const yawQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawOffset);
+        const pitchQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitchOffset);
+
+        // Apply the rotations
+        direction.applyQuaternion(yawQuaternion);
+        direction.applyQuaternion(pitchQuaternion);
+
+        return direction.normalize();
+    }
+
+    private findIntersectionOnPlayerWithOffset(playerObject: THREE.Object3D, offsetDirection: THREE.Vector3): THREE.Intersection | null {
+        // Set the raycaster with the offset direction
+        this.raycaster.set(this.camera.position, offsetDirection);
+
+        const intersects = this.raycaster.intersectObject(playerObject, true);
+        if (intersects.length > 0) {
+            return intersects[0]; // Return the first intersection point
+        }
+        return null;
+    }
+
+
 }

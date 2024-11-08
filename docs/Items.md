@@ -4,3 +4,4 @@ Item ID list with implementation info
 |----|--------------|---------------------------------------|-------------|-------|
 | 0  | ItemBase.ts  | Base item template (freaky green cube)| ✅          | ✅    |
 | 1  | BananaGun.ts | Banana gun                            | ✅          | ✅    |
+| 1  | FishGun.ts   | Fish gun >:)                          | ✅          | ✅    |
