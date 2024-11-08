@@ -65,23 +65,23 @@
     },
     {
       "position": {"x": 36.5, "y": 0.25, "z": -18.3},
-      "itemId": 1
+      "itemId": 2
     },
     {
       "position": {"x": 19, "y": 0.25, "z": -11},
-      "itemId": 1
+      "itemId": 2
     },
     {
       "position": {"x": -14, "y": 0.25, "z": 9.5},
-      "itemId": 1
+      "itemId": 2
     },
     {
       "position": {"x": 18, "y": 0.25, "z": 0},
-      "itemId": 1
+      "itemId": 2
     },
     {
       "position": {"x": -1, "y": 0.25, "z": -6},
-      "itemId": 1
+      "itemId": 2
     }
 
   ]
