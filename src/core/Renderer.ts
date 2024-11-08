@@ -1,10 +1,13 @@
 import * as THREE from 'three';
-import { Networking } from './Networking.ts';
+import { Networking, type RemotePlayer } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
 import { ChatOverlay } from "../ui/ChatOverlay.ts";
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
+import {InputHandler} from "../input/InputHandler.ts";
+import {SettingsManager} from "./SettingsManager.ts";
+import {CollisionManager} from "../input/CollisionManager.ts";
 
 export class Renderer {
     private clock: THREE.Clock;
@@ -25,15 +28,23 @@ export class Renderer {
     private networking: Networking;
     private localPlayer: Player;
     private raycaster: THREE.Raycaster;
+    public scaredLevel: number = 0;
+    private lastPlayerHealth: number = 100;
+    private knockbackVector: THREE.Vector3 = new THREE.Vector3();
+    private bobCycle: number;
+    private lastCameraRoll: number
 
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
+    public playerHitMarkers: { hitPoint: THREE.Vector3, shotVector: THREE.Vector3, timestamp: number }[] = [];
     private healthIndicatorScene: THREE.Scene;
     private healthIndicatorCamera: THREE.PerspectiveCamera;
     private screenPixelsInGamePixel: number = 1;
     private inventoryMenuScene: THREE.Scene;
     private inventoryMenuCamera: THREE.OrthographicCamera;
     private remotePlayerRenderer: RemotePlayerRenderer;
+    private inputHandler!: InputHandler;
+    private collisionManager!: CollisionManager;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -89,6 +100,9 @@ export class Renderer {
         this.framesInFramerateSample = 30;
         this.sampleOn = 0;
         this.lastFramerateCalculation = 0;
+
+        this.bobCycle = 0;
+        this.lastCameraRoll = 0;
 
         this.raycaster = new THREE.Raycaster();
 
@@ -179,6 +193,51 @@ export class Renderer {
 
         // Update camera position and rotation for local player
         this.camera.position.copy(localPlayer.position);
+        this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+
+        this.camera.position.add(this.knockbackVector);
+        this.knockbackVector.lerp(new THREE.Vector3(), 0.05 * this.deltaTime * 60);
+
+
+        if(this.localPlayer.health < this.lastPlayerHealth) {
+            const remotePlayer: RemotePlayer | undefined = this.networking.getRemotePlayerData().find((player) => player.id === this.localPlayer.idLastDamagedBy);
+            if(remotePlayer !== undefined) {
+                //console.log("Player was damaged by " + remotePlayer.name);
+                const diff = new THREE.Vector3().subVectors(this.localPlayer.position, remotePlayer.position);
+                this.knockbackVector.copy(diff.normalize().multiplyScalar(0.2));
+            }
+        }
+
+
+        const shakeAmount = 0.08 * Math.pow(this.scaredLevel,5);
+        this.camera.position.add(new THREE.Vector3((Math.random()-0.5) * shakeAmount, (Math.random()-0.5) *shakeAmount, (Math.random()-0.5) * shakeAmount));
+        this.camera.rotation.x += (Math.random()-0.5) * shakeAmount * 0.12;
+        this.camera.rotation.y += (Math.random()-0.5) * shakeAmount * 0.12;
+        this.camera.rotation.z += (Math.random()-0.5) * shakeAmount * 0.12;
+
+        this.heldItemCamera.rotation.set((Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount );
+
+        this.lastPlayerHealth = this.localPlayer.health;
+
+        const vel = Math.sqrt(Math.pow(this.localPlayer.velocity.x,2) + Math.pow(this.localPlayer.velocity.z,2))
+
+        if(vel == 0 || this.collisionManager.isPlayerInAir()) {
+            this.bobCycle = 0;
+        } else {
+            this.bobCycle += this.deltaTime * 4.8 * vel;
+            this.camera.position.y = this.camera.position.y + (Math.sin(this.bobCycle) * .03 * SettingsManager.settings.viewBobbingStrength);
+            //console.log(this.camera.position.y);
+        }
+
+        const maxRollAmount = this.inputHandler.getInputX() * -.007 * SettingsManager.settings.viewBobbingStrength;
+        const maxRollSpeed = this.deltaTime * .4;
+        let roll: number = this.lastCameraRoll;
+        roll = Renderer.approachNumber(roll, maxRollSpeed, maxRollAmount);
+        const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
+        euler.z += roll;
+        this.lastCameraRoll = roll;
+
+        this.camera.quaternion.setFromEuler(euler);
 
         this.updateFramerate();
     }
@@ -232,11 +291,37 @@ export class Renderer {
         this.heldItemCamera.updateProjectionMatrix();
     }
 
-    public getRemotePlayerIDsInCrosshair(): number[] {
-        return this.remotePlayerRenderer.getRemotePlayerIDsInCrosshair();
+
+    public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        return this.remotePlayerRenderer.getShotVectorsToPlayersInCrosshair();
+    }
+
+    public getShotVectorsToPlayersWithOffset(yawOffset: number, pitchOffset: number): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset);
     }
 
     public getEntityScene(): THREE.Scene {
         return this.remotePlayerRenderer.getEntityScene();
+    }
+
+    public setInputHandler(inputHandler: InputHandler) {
+        this.inputHandler = inputHandler;
+    }
+
+    public setCollisionManager(collisionManager: CollisionManager) {
+        this.collisionManager = collisionManager;
+    }
+
+    private static approachNumber(input: number, step: number, approach: number): number {
+        if (input == approach) {return approach;}
+        let output: number;
+        if (input > approach) {
+            output = input - step;
+            if (output <= approach) {return  approach;}
+        } else {
+            output = input + step;
+            if (output >= approach) {return  approach;}
+        }
+        return output;
     }
 }

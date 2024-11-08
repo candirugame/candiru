@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {SettingsManager} from "./SettingsManager.ts";
 
 export class Player {
     public position: THREE.Vector3;
@@ -18,9 +19,10 @@ export class Player {
     public forced: boolean;
     public forcedAcknowledged: boolean;
     public inventory: number[];
+    public idLastDamagedBy: number;
 
     constructor() {
-        this.position = new THREE.Vector3(2, 1, 0);
+        this.position = new THREE.Vector3(0,100,0);
         this.velocity = new THREE.Vector3();
         this.gravity = 0;
         this.lookQuaternion = new THREE.Quaternion();
@@ -37,10 +39,9 @@ export class Player {
         this.forced = false;
         this.forcedAcknowledged = false;
         this.inventory = [];
+        this.idLastDamagedBy = -1;
 
-        if (this.name === '') {
-            const storedName = localStorage.getItem('name');
-            if (storedName) this.name = storedName;
-        }
+        const storedName = SettingsManager.settings.name;
+        if (storedName) this.name = storedName;
     }
 }

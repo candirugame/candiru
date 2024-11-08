@@ -20,20 +20,25 @@ export class Game {
     private map: MapLoader;
     private healthIndicator: HealthIndicator;
     private remoteItemRenderer: RemoteItemRenderer;
+    private gameIndex: number;
+    private static nextGameIndex: number = 0;
 
 
     constructor() {
+        this.gameIndex = Game.nextGameIndex++;
         this.localPlayer = new Player();
         this.chatOverlay = new ChatOverlay(this.localPlayer);
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
         this.renderer = new Renderer(this.networking, this.localPlayer, this.chatOverlay);
         this.chatOverlay.setRenderer(this.renderer);
-        this.inputHandler = new InputHandler(this.renderer, this.localPlayer);
+        this.inputHandler = new InputHandler(this.renderer, this.localPlayer, this.gameIndex);
+        this.renderer.setInputHandler(this.inputHandler);
         this.collisionManager = new CollisionManager(this.renderer, this.inputHandler);
+        this.renderer.setCollisionManager(this.collisionManager);
         this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new MapLoader('maps/realmap1.glb', this.renderer, this.collisionManager);
+        this.map = new MapLoader('maps/deathmatch_1/map.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
     }

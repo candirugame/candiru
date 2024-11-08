@@ -17,12 +17,40 @@ const playerKickTime = 5; // Kick players after 5 seconds of no ping
 const healthRegenRate = 3; // Regen 3 health per second
 const healthRegenDelay = 5; // Regen after 5 seconds of no damage
 const maxHealth = 100;
-const baseInventory = [1];
+const baseInventory:number[] = [];
+
+const itemCreationDelay = 10; // Create a new item every x seconds
+const maxItemsInWorld = 6;
+const serverTickRate = 15;
 
 interface Vector3 {
   x: number;
   y: number;
   z: number;
+}
+
+interface Quaternion {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+interface RespawnPoint {
+  position: Vector3;
+  quaternion: Quaternion;
+}
+
+interface ItemRespawnPoint {
+  position: Vector3;
+  itemId: number;
+  spawnChancePerTick: number;
+}
+
+interface MapData {
+  name: string;
+  respawnPoints: RespawnPoint[];
+  itemRespawnPoints: ItemRespawnPoint[];
 }
 
 interface Player {
@@ -45,6 +73,7 @@ interface Player {
   updateTimestamp?: number;
   lastDamageTime?: number;
   inventory: number[];
+  idLastDamagedBy?: number;
 
 }
 
@@ -73,7 +102,7 @@ class WorldItem {
 }
 
 let playerData: Player[] = [];
-let worldItemData: WorldItem[] = [new WorldItem(6.12, 0.25, 3.05, 1)];
+let worldItemData: WorldItem[] = [];
 
 interface GameVersionData {
   version?: string | number;
@@ -90,6 +119,24 @@ try {
   console.error('error getting server version:', error);
 }
 
+let mapProperties: MapData | undefined = undefined;
+try {
+  const jsonData = JSON.parse(readFileSync('public/maps/deathmatch_1/map.json', 'utf8'));
+  mapProperties = jsonData;
+    console.log('🐙 Map data loaded for ' + jsonData.name);
+}
+catch (error) {
+    console.error('error getting map properties:', error);
+}
+
+function getRandomSpawnpoint(): {vec: Vector3, quaternion: Quaternion}{
+  if(mapProperties === undefined) return {vec: {x: 2, y: 1, z: 0}, quaternion: {x: 0, y: 0, z: 0, w: 1}};
+    let randomIndex = Math.floor(Math.random() * mapProperties.respawnPoints.length);
+    return {vec: mapProperties.respawnPoints[randomIndex].position, quaternion: mapProperties.respawnPoints[randomIndex].quaternion};
+}
+
+
+
 app.use(express.static(join(__dirname, 'dist')));
 
 
@@ -98,7 +145,7 @@ function serverTick() {
   playersTick();
   itemsTick();
 }
-setInterval(serverTick, 1000 / 15);
+setInterval(serverTick, 1000 / serverTickRate);
 
 let playerUpdateSinceLastEmit = false;
 let lastPlayerUpdateSentTimestamp = 0;
@@ -124,12 +171,35 @@ function playersTick() {
 
 let itemUpdateSinceLastEmit = false;
 let lastItemUpdateSentTimestamp = 0;
+let lastItemCreationTimestamp = Date.now() / 1000;
 function itemsTick() {
   checkForPickups();
+  if(Date.now() / 1000 - lastItemCreationTimestamp > itemCreationDelay) {
+    createItem();
+    lastItemCreationTimestamp = Date.now() / 1000;
+  }
   if (!itemUpdateSinceLastEmit && Date.now() / 1000 - lastItemUpdateSentTimestamp < 5) return;
   io.emit('worldItemData', worldItemData);
   itemUpdateSinceLastEmit = false;
   lastItemUpdateSentTimestamp = Date.now() / 1000;
+}
+
+function createItem(){
+    if(mapProperties === undefined) return;
+    let randomIndex = Math.floor(Math.random() * mapProperties.itemRespawnPoints.length);
+    let newItem = new WorldItem(
+        mapProperties.itemRespawnPoints[randomIndex].position.x,
+        mapProperties.itemRespawnPoints[randomIndex].position.y,
+        mapProperties.itemRespawnPoints[randomIndex].position.z,
+        mapProperties.itemRespawnPoints[randomIndex].itemId
+    );
+
+    if(worldItemCloseToPoint(newItem.vector.x, newItem.vector.y, newItem.vector.z, 1) !== -1) return; //return if another item is too close
+    if(worldItemData.length >= maxItemsInWorld) return; //return if max items in world
+
+    worldItemData.push(newItem);
+    itemUpdateSinceLastEmit = true;
+
 }
 
 function checkForPickups() {
@@ -140,16 +210,31 @@ function checkForPickups() {
         playerData[i].position.z,
         0.5
     );
-    if (itemIndex !== -1) {
+    if(itemIndex === -1) continue;
+    if (playerData[i].inventory.includes(1) === false) {
       let item = worldItemData[itemIndex];
       if (item.itemType === 1) {
         playerData[i].inventory.push(1);
         worldItemData.splice(itemIndex, 1);
         itemUpdateSinceLastEmit = true;
         console.log('🍌 ' + playerData[i].name + ' picked up banana!');
-        sendChatMessage(playerData[i].name + ' picked up banana!');
+        //sendChatMessage(playerData[i].name + ' picked up banana!');
+        continue;
       }
     }
+
+    if (playerData[i].inventory.includes(2) === false) {
+      let item = worldItemData[itemIndex];
+      if (item.itemType === 2) {
+        playerData[i].inventory.push(2);
+        worldItemData.splice(itemIndex, 1);
+        itemUpdateSinceLastEmit = true;
+        console.log('🍌 ' + playerData[i].name + ' picked up fish!');
+        //sendChatMessage(playerData[i].name + ' picked up fish!');
+        continue;
+      }
+    }
+
   }
 }
 
@@ -185,12 +270,7 @@ function periodicCleanup() {
 
     // Respawn people
     if (playerData[i].health <= 0) {
-      playerData[i].health = 100;
-      playerData[i].gravity = 0;
-      playerData[i].position = { x: 2, y: 1, z: 0 }; // 0, 2, 0
-      playerData[i].velocity = { x: 0, y: 0, z: 0 };
-      playerData[i].lookQuaternion = [0, 0, 0, 1];
-      playerData[i].forced = true;
+      doPlayerDeath(playerData[i]);
     }
 
     // Kick logged-out players
@@ -204,6 +284,23 @@ function periodicCleanup() {
 }
 
 setInterval(periodicCleanup, 500);
+
+function doPlayerDeath(player:Player){
+
+  for(let i = 0; i < player.inventory.length; i++){
+    worldItemData.push(new WorldItem(player.position.x + 2*(Math.random() - 0.5), player.position.y + 0.05, player.position.z + 2*(Math.random() - 0.5), player.inventory[i]));
+  }
+  itemUpdateSinceLastEmit = true;
+  player.inventory = [];
+
+  let spawnPoint = getRandomSpawnpoint();
+  player.position = spawnPoint.vec;
+  player.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
+  player.health = 100;
+  player.gravity = 0;
+  player.velocity = { x: 0, y: 0, z: 0 };
+  player.forced = true;
+}
 
 io.on('connection', (socket: Socket) => {
   socket.on('playerData', (data: Player) => {
@@ -260,23 +357,24 @@ io.on('connection', (socket: Socket) => {
     );
 
     if (localDistance > 1 || targetDistance > 1) {
-      console.log(
-          '⚠️ client out of sync - name:' +
-          data.localPlayer.name +
-          ' latency: ' +
-          Math.floor(data.localPlayer.latency) +
-          ' localDistance: ' +
-          localDistance +
-          ' targetDistance: ' +
-          targetDistance
-      );
-      whisperChatMessage('⚠️ shot not registered (client out of sync)', socket);
+      // console.log(
+      //     '⚠️ client out of sync - name:' +
+      //     data.localPlayer.name +
+      //     ' latency: ' +
+      //     Math.floor(data.localPlayer.latency) +
+      //     ' localDistance: ' +
+      //     localDistance +
+      //     ' targetDistance: ' +
+      //     targetDistance
+      // );
+      //whisperChatMessage('⚠️ shot not registered (client out of sync)', socket);
       return;
     }
 
     // Apply damage
     playerData[targetPlayerIndex].health -= data.damage;
     playerData[targetPlayerIndex].lastDamageTime = Date.now() / 1000;
+    playerData[targetPlayerIndex].idLastDamagedBy = data.localPlayer.id;
     playerUpdateSinceLastEmit = true;
 
     if (playerData[targetPlayerIndex].health <= 0) {
@@ -300,7 +398,7 @@ function addChatMessageSafe(data: ChatMessage, socket: Socket): void {
     return;
   }
   // TODO: verify ID is in player list
-  let isCommand = parseForCommand(data.message, socket);
+  let isCommand = parseForCommand(data.message, socket, data.id);
 
   if (!isCommand) {
     console.log('💬 ' + data.name + ':' + data.message);
@@ -308,12 +406,32 @@ function addChatMessageSafe(data: ChatMessage, socket: Socket): void {
   }
 }
 
-function parseForCommand(msg: string, socket: Socket): boolean {
+function parseForCommand(msg: string, socket: Socket, id:number): boolean {
   if (msg.charAt(0) !== '/') return false;
 
   switch (msg) {
     case '/help':
       whisperChatMessage(msg + ' -> nah i\'m good', socket);
+      break;
+    case '/kill':
+      for (let i = 0; i < playerData.length; i++)
+        if (playerData[i].id === id) {
+          whisperChatMessage(msg + ' -> killed ' + playerData[i].name, socket);
+          sendChatMessage(playerData[i].name + ' killed himself');
+          playerData[i].health = 0;
+          periodicCleanup();
+          playerUpdateSinceLastEmit = true;
+        }
+      break;
+    case '/thumbsup':
+      for (let i = 0; i < playerData.length; i++)
+        if (playerData[i].id === id)
+          sendChatMessage(playerData[i].name + ': 👍');
+      break;
+    case '/thumbsdown':
+      for (let i = 0; i < playerData.length; i++)
+        if (playerData[i].id === id)
+          sendChatMessage(playerData[i].name + ': 👎');
       break;
     case '/ping':
       whisperChatMessage(msg + ' -> pong!', socket);
@@ -381,6 +499,11 @@ function addPlayerToDataSafe(data: Player, socket: Socket): void {
 
   // At this point the player data is valid but not already in the list (new player join)
   data.inventory = baseInventory.slice();
+  // Set initial position
+    let spawnPoint = getRandomSpawnpoint();
+    data.position = spawnPoint.vec;
+    data.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
+    data.forced = true;
 
   playerData.push(data);
 
@@ -417,6 +540,7 @@ const playerDataSchema = Joi.object({
   updateTimestamp: Joi.number(),
   lastDamageTime: Joi.number(),
   inventory: Joi.array().items(Joi.number()).required(),
+  idLastDamagedBy: Joi.number(),
 });
 
 const chatMsgSchema = Joi.object({

@@ -1,7 +1,9 @@
-import { Player } from '../core/Player.ts';
-import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
-import { InputHandler } from '../input/InputHandler.ts';
+import {Player} from '../core/Player.ts';
+import {Renderer} from '../core/Renderer.ts';
+import {Networking} from '../core/Networking.ts';
+import {InputHandler} from '../input/InputHandler.ts';
+import {CommandManager} from "../core/CommandManager.ts";
+import {SettingsManager} from "../core/SettingsManager.ts";
 
 interface ChatMessage {
     id: number;
@@ -9,6 +11,8 @@ interface ChatMessage {
     name: string;
     timestamp: number;
 }
+
+const hitMarkerLifetime = 0.3;
 
 export class ChatOverlay {
     private chatCanvas: HTMLCanvasElement;
@@ -25,6 +29,7 @@ export class ChatOverlay {
     private inputHandler!: InputHandler;
     private debugTextHeight!: number;
     private oldScreenWidth:number = 0;
+    private readonly commandManager: CommandManager;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -33,7 +38,7 @@ export class ChatOverlay {
         this.chatCtx.imageSmoothingEnabled = false;
 
 
-        this.chatCanvas.width = 200;
+        this.chatCanvas.width = 400;
         this.chatCanvas.height = 200;
 
         this.chatMessages = [];
@@ -44,6 +49,8 @@ export class ChatOverlay {
         this.nameSettingActive = false;
         this.screenWidth = 100;
 
+        this.commandManager = new CommandManager(this.localPlayer, this);
+
         this.setupEventListeners();
 
         this.chatCanvas.style.position = 'absolute';
@@ -51,9 +58,10 @@ export class ChatOverlay {
         this.chatCanvas.style.left = '0';
 
          this.chatCanvas.style.height = '100vh';
-         this.chatCanvas.style.width = '100vw';
         document.body.style.margin = '0';
         this.chatCanvas.style.imageRendering = 'pixelated';
+        this.chatCanvas.style.textRendering = 'pixelated';
+
         document.body.appendChild(this.chatCanvas);
     }
 
@@ -78,6 +86,7 @@ export class ChatOverlay {
     public onFrame() {
         this.clearOldMessages();
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+        this.renderHitMarkers();
         this.renderChatMessages();
         this.renderDebugText();
         if (this.inputHandler.getKey('tab'))
@@ -85,16 +94,21 @@ export class ChatOverlay {
         this.renderEvil();
         this.renderCrosshair();
 
+
         this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
         if(this.oldScreenWidth !== this.screenWidth){
-            this.chatCanvas.width = this.screenWidth;
+            if(this.chatCanvas.width < this.screenWidth)
+                this.chatCanvas.width = this.screenWidth;
             this.oldScreenWidth = this.screenWidth;
         }
 
 
         // this.chatCanvas.width = this.screenWidth;
         // this.chatCtx.fillRect(0,0,10,10);
+
+
+        this.inputHandler.nameSettingActive = this.nameSettingActive;
     }
 
     private renderChatMessages() {
@@ -152,6 +166,9 @@ export class ChatOverlay {
         if (this.nameSettingActive) {
             linesToRender.push('Enter your name: ' + usermsg + cursor);
             pixOffsets.push(0);
+            this.localPlayer.name = usermsg + cursor;
+            if(this.localPlayer.name.length == 0) this.localPlayer.name = ' ';
+
         }
 
         const wrappedLines: string[] = [];
@@ -194,13 +211,20 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        //const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
-        //const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
-        //const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
+        // const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
+        // const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
+        // const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
+
+        //const playerQuatX = Math.floor(this.localPlayer.lookQuaternion.x * 100) / 100;
+        //const playerQuatY = Math.floor(this.localPlayer.lookQuaternion.y * 100) / 100;
+        //const playerQuatZ = Math.floor(this.localPlayer.lookQuaternion.z * 100) / 100;
+        //const playerQuatW = Math.floor(this.localPlayer.lookQuaternion.w * 100) / 100;
 
         // const playerVelX = Math.ceil(this.localPlayer.velocity.x * 100)/100;
         // const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
         // const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
+
+
 
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
@@ -208,6 +232,8 @@ export class ChatOverlay {
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push(Math.floor(framerate) + 'FPS');
         //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        //linesToRender.push('px: ' + projectedX + ' py: ' + projectedY + ' pz: ' + projected.z);
+        //linesToRender.push('qx: ' + playerQuatX + ' qy: ' + playerQuatY + ' qz: ' + playerQuatZ + ' qw: ' + playerQuatW);
         // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
         for (let i = 0; i < linesToRender.length; i++) {
@@ -216,6 +242,46 @@ export class ChatOverlay {
 
         this.debugTextHeight = 7 * linesToRender.length;
     }
+
+    public renderHitMarkers() {
+        const numDots = 10; // Number of dots to render around each hit point
+
+        for (let i = this.renderer.playerHitMarkers.length - 1; i >= 0; i--) {
+            if (this.renderer.playerHitMarkers[i].timestamp === -1)
+                this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000; // Set timestamp if not set
+
+            const timeSinceHit = Date.now() / 1000 - this.renderer.playerHitMarkers[i].timestamp;
+            const lifePercent = timeSinceHit / hitMarkerLifetime;
+
+            if (timeSinceHit > hitMarkerLifetime) {
+                this.renderer.playerHitMarkers.splice(i, 1);
+                continue;
+            }
+
+            const hitVec = this.renderer.playerHitMarkers[i].hitPoint;
+            const projected = hitVec.clone().project(this.renderer.getCamera());
+            const projectedX = Math.round((projected.x + 1) * this.screenWidth / 2);
+            const projectedY = Math.round((-projected.y + 1) * 200 / 2);
+
+            if (projected.z < 1) {
+                this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+
+                // Calculate sizeMultiplier
+                const sizeMultiplier = 1 + 2 / this.renderer.playerHitMarkers[i].shotVector.length();
+
+                // Calculate and render dots
+                const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier; // Radius of the circle in which dots are placed
+                for (let j = 0; j < numDots; j++) {
+                    const angle = (Math.PI * 2 / numDots) * j;
+                    const dotX = Math.round(projectedX + radius * Math.cos(angle));
+                    const dotY = Math.round(projectedY + radius * Math.sin(angle));
+
+                    this.chatCtx.fillRect(dotX, dotY, 1, 1); // Render a 1px by 1px dot
+                }
+            }
+        }
+    }
+
 
     public getDebugTextHeight(): number {
         return this.debugTextHeight;
@@ -264,11 +330,18 @@ export class ChatOverlay {
 
     private renderCrosshair() {
         const ctx = this.chatCtx;
-        ctx.fillStyle = 'rgb(0,255,225)';
+        ctx.fillStyle = SettingsManager.settings.crosshairColor;
         if (this.renderer.crosshairIsFlashing)
-            ctx.fillStyle = 'rgb(255,0,0)';
-        ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
-        ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+            ctx.fillStyle = '#FF0000';
+        switch (SettingsManager.settings.crosshairType) {
+            case 0:
+                ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
+                ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+                break;
+            case 1:
+                ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
+                break;
+        }
     }
 
     private onKeyDown(e: KeyboardEvent) {
@@ -278,10 +351,13 @@ export class ChatOverlay {
         }
 
         if (e.key === 'Enter') {
-            if (this.localPlayer.chatActive) this.networking.sendMessage(this.localPlayer.chatMsg);
+            if (this.localPlayer.chatActive) {
+                if(!this.commandManager.runCmd(this.localPlayer.chatMsg)) this.networking.sendMessage(this.localPlayer.chatMsg);
+            }
             if (this.nameSettingActive) {
                 this.localPlayer.name = this.localPlayer.chatMsg.toString();
-                localStorage.setItem('name', this.localPlayer.name);
+                SettingsManager.settings.name = this.localPlayer.chatMsg.toString();
+                SettingsManager.write();
             }
             this.localPlayer.chatMsg = '';
             this.localPlayer.chatActive = false;
@@ -377,4 +453,6 @@ export class ChatOverlay {
 
         return resultLines;
     }
+
+
 }

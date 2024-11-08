@@ -43,7 +43,7 @@ jobs:
       - name: Run lint
         run: deno lint
   # Check Job
-  typecheck:
+  types:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -58,7 +58,7 @@ jobs:
         run: deno check src
 
   # Healthcheck Job
-  healthcheck:
+  health:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -69,10 +69,20 @@ jobs:
           deno-version: 'latest'
       - name: Start server
         run: deno task start &
-      - name: Wait for server to start
-        run: sleep 30
       - name: Health check
-        run: curl -f http://localhost:3000 || exit 1
+        run: |
+          retries=10
+          count=0
+          until curl -f http://localhost:3000; do
+            count=$((count + 1))
+            if [ $count -lt $retries ]; then
+              echo "Health check failed, retrying in 5 seconds... ($count/$retries)"
+              sleep 5
+            else
+              echo "Health check failed after $retries attempts, exiting."
+              exit 1
+            fi
+          done
 
   # Audit Job
   audit:
@@ -141,6 +151,12 @@ jobs:
       - name: Get latest tag
         id: get_latest_tag
         run: echo "latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)" >> $GITHUB_OUTPUT
+      - name: Get last commit message
+        id: get_last_commit_message
+        run: |
+          echo "last_commit_message<<EOF" >> $GITHUB_OUTPUT
+          git log -1 --pretty=%B >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Check if commit is from GitHub Actions
         id: check_author
         run: |
@@ -155,14 +171,16 @@ jobs:
         run: |
           mkdir -p public
           echo "{\"version\": \"${{ steps.get_latest_tag.outputs.latest_tag }}\"}" > public/gameVersion.json
+
       - name: Commit and push changes
         if: steps.check_author.outputs.skip == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         run: |
           git add public/gameVersion.json
-          git commit -m "Update gameVersion to ${{ steps.get_latest_tag.outputs.latest_tag }}" || echo "No changes to commit"
-          git push origin main
+          git commit -m "${{ steps.get_latest_tag.outputs.latest_tag }} - ${{ steps.get_last_commit_message.outputs.last_commit_message }}" || echo "No changes to commit"
+          git push origin ${{ github.ref_name }}
+
       - name: Debugging List files in public after update
         if: steps.check_author.outputs.skip == 'false'
         run: ls -al public

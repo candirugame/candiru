@@ -3,7 +3,8 @@ import { Player } from './Player.ts';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import * as THREE from 'three';
 
-interface RemotePlayer {
+export interface RemotePlayer {
+    idLastDamagedBy: number;
     latency: number;
     id: number;
     position: { x: number, y: number, z: number };
@@ -29,6 +30,7 @@ interface LastUploadedLocalPlayer {
     quaternion: THREE.Quaternion;
     chatMsg: string;
     velocity: THREE.Vector3;
+    name: string;
 }
 
 export class Networking {
@@ -110,6 +112,7 @@ export class Networking {
             quaternion: this.localPlayer.quaternion.clone(),
             chatMsg: this.localPlayer.chatMsg,
             velocity: this.localPlayer.velocity.clone(),
+            name: this.localPlayer.name,
         };
 
         this.lastUploadTime = currentTime;
@@ -144,6 +147,7 @@ export class Networking {
                 }
                 if (remotePlayer.health < this.localPlayer.health) this.damagedTimestamp = Date.now() / 1000;
                 this.localPlayer.health = remotePlayer.health;
+                this.localPlayer.idLastDamagedBy = remotePlayer.idLastDamagedBy;
                 this.localPlayer.inventory = remotePlayer.inventory;
                 continue;
             }
@@ -159,6 +163,7 @@ export class Networking {
         out = out && player1.quaternion.equals(player2.quaternion);
         out = out && player1.chatMsg === player2.chatMsg;
         out = out && player1.velocity.equals(player2.velocity);
+        out = out && player1.name === player2.name;
 
         return out;
     }
@@ -171,7 +176,7 @@ export class Networking {
         return this.messagesBeingTyped;
     }
 
-    public getRemotePlayerData() {
+    public getRemotePlayerData(): RemotePlayer[] {
         return this.remotePlayers;
     }
 

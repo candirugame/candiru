@@ -23,6 +23,7 @@ export class CollisionManager {
     private triNormal: Vector3;
     private coyoteTime: number;
     private jumped: boolean;
+    private collided: boolean;
 
     constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.scene = renderer.getScene();
@@ -34,6 +35,7 @@ export class CollisionManager {
         this.triNormal = new THREE.Vector3();
         this.coyoteTime = 0;
         this.jumped = false;
+        this.collided = false;
     }
 
     public init() {
@@ -43,8 +45,14 @@ export class CollisionManager {
     public collisionPeriodic(localPlayer: Player) {
         if (!this.mapLoaded || !this.colliderGeom || !this.colliderGeom.boundsTree) return; // Add checks
         let deltaTime: number = this.clock.getDelta();
-        if (deltaTime > 1 / 30) deltaTime = 1 / 30;
-        this.physics(localPlayer, deltaTime);
+        let steps: number = 1;
+        while (deltaTime >= 1/120) {
+            deltaTime = deltaTime / 2
+            steps = steps * 2;
+        }
+        for (let i = 0; i < steps; i ++) {
+            this.physics(localPlayer, deltaTime);
+        }
     }
 
     private physics(localPlayer: Player, deltaTime: number) {
@@ -60,7 +68,7 @@ export class CollisionManager {
 
         this.colliderSphere.center = localPlayer.position.clone();
 
-        let collided: boolean = false;
+        this.collided = false;
 
         bvh.shapecast({
             intersectsBounds: (box: THREE.Box3) => {
@@ -88,7 +96,7 @@ export class CollisionManager {
                         localPlayer.velocity.y = 0;
                         localPlayer.gravity = 0;
                         this.coyoteTime = 0;
-                        collided = true;
+                        this.collided = true;
                     } else {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
                     }
@@ -100,7 +108,7 @@ export class CollisionManager {
             }
         });
 
-        if (!collided) {
+        if (!this.collided) {
             this.coyoteTime += deltaTime;
             if (jump && this.coyoteTime < 6 / 60 && !this.jumped) {
                 localPlayer.gravity = 8;
@@ -123,5 +131,9 @@ export class CollisionManager {
         this.colliderGeom.computeBoundsTree();
         this.mapLoaded = true;
         console.timeEnd("Building static geometry BVH");
+    }
+
+    public isPlayerInAir(): boolean {
+        return !this.collided;
     }
 }

@@ -6,6 +6,7 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 import {Networking} from "./Networking.ts";
 import {Player} from "./Player.ts";
 import {ItemBase, ItemType} from "../items/ItemBase.ts";
+import {FishGun} from "../items/FishGun.ts";
 
 export class Inventory {
     private inventoryItems: ItemBase[] = [];
@@ -51,9 +52,14 @@ export class Inventory {
                 const num = this.localPlayer.inventory[i];
                 switch(num) {
                     case 1: {
-                            const banana = new BananaGun(this.renderer, this.networking, i, ItemType.InventoryItem);
-                            this.inventoryItems.push(banana);
-                            break;
+                        const banana = new BananaGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+                        this.inventoryItems.push(banana);
+                        break;
+                    }
+                    case 2: {
+                        const fish = new FishGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+                        this.inventoryItems.push(fish);
+                        break;
                     }
                     default: {
                             const testItem = new ItemBase(ItemType.InventoryItem, this.renderer.getHeldItemScene(), this.inventoryScene, i);
@@ -79,9 +85,12 @@ export class Inventory {
 
     public onFrame() {
         this.updateInventoryItems();
-        const heldItemInput = new HeldItemInput(this.inputHandler.getLeftMouseDown(), this.inputHandler.getRightMouseDown(), false);
+        const gamepadInputs = this.inputHandler.getGamepadInputs();
+        const heldItemInput = new HeldItemInput(this.inputHandler.getShoot(), this.inputHandler.getAim(), false);
         let downPressed = this.inputHandler.getKey('[') && !this.localPlayer.chatActive;
         let upPressed = this.inputHandler.getKey(']') && !this.localPlayer.chatActive;
+        if (gamepadInputs.leftShoulder && !this.localPlayer.chatActive) upPressed = true;
+        if (gamepadInputs.rightShoulder && !this.localPlayer.chatActive) downPressed = true;
         const lastScroll = this.inputHandler.getScrollClicks();
         if(lastScroll > 0) upPressed = true;
         if(lastScroll < 0) downPressed = true;
