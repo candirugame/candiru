@@ -229,7 +229,7 @@ export class Renderer {
         const maxRollAmount = this.inputHandler.getInputX() * -.007;
         const maxRollSpeed = this.deltaTime * .4;
         let roll: number = this.lastCameraRoll;
-        roll = Renderer.approachNumber(roll, maxRollSpeed, maxRollAmount);
+        roll = Renderer.approachNumber(roll, maxRollSpeed, maxRollAmount * SettingsManager.settings.viewBobbingStrength);
         const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
         euler.z += roll;
         this.lastCameraRoll = roll;
