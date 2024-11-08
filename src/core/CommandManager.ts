@@ -20,13 +20,15 @@ export class CommandManager {
                 return "Sensitivity is currently " + (SettingsManager.settings.sense * 500);
             }
             const sense: number = Number(args[1]);
-            if (sense > 0 && sense <= 10) {
-                SettingsManager.settings.sense = sense / 500;
-                SettingsManager.write();
-                return "Sensitivity is now set to " + (sense);
-            } else {
+            if (Number.isNaN(sense)) {
+                return args[1] + " is not a number";
+            }
+            if (sense > 10 || sense <= 0) {
                 return "Sensitivity is not in the valid range of 0 to 10";
             }
+            SettingsManager.settings.sense = sense / 500;
+            SettingsManager.write();
+            return "Sensitivity is now set to " + (sense);
         }));
         this.commands.push(new Command('resetSettings', (): string => {
             SettingsManager.reset();
