@@ -24,6 +24,7 @@ export class InputHandler {
     private readonly gamepadInputs: GamepadInputs;
     private shoot: boolean;
     private aim: boolean;
+    public nameSettingActive: boolean = false;
 
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
@@ -120,7 +121,7 @@ export class InputHandler {
             }
         }
 
-        if (!this.localPlayer.chatActive) {
+        if (!this.localPlayer.chatActive && !this.nameSettingActive) {
             if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
             if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
             if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;

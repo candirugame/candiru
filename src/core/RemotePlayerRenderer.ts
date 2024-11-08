@@ -11,6 +11,7 @@ interface RemotePlayerData {
     position: { x: number; y: number; z: number };
     quaternion: [number, number, number, number]; // Add quaternion as required
     forced: boolean;
+    name: string;
 }
 
 interface RemotePlayer extends Omit<RemotePlayerData, 'quaternion'> {
@@ -21,6 +22,8 @@ interface PlayerToRender {
     id: number;
     object: THREE.Object3D;
     objectUUID: string;
+    nameLabel: THREE.Sprite;
+    name: string;
 }
 
 export class RemotePlayerRenderer {
@@ -197,12 +200,11 @@ export class RemotePlayerRenderer {
             this.lastRunningYOffset[playerId] = 0;
         }
 
-        //Apply scared effect
-        const scaredLevel = 1-Math.pow(remotePlayerData.health / 100,2); //0-1
-        playerObject.position.x += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
-        playerObject.position.y += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
-        playerObject.position.z += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
-
+        // Apply scared effect
+        const scaredLevel = 1 - Math.pow(remotePlayerData.health / 100, 2); // 0-1
+        playerObject.position.x += (Math.random() - 0.5) * 0.05 * scaredLevel;
+        playerObject.position.y += (Math.random() - 0.5) * 0.05 * scaredLevel;
+        playerObject.position.z += (Math.random() - 0.5) * 0.05 * scaredLevel;
 
         // Apply quaternion slerp as before
         const targetQuaternion = new THREE.Quaternion(
@@ -215,17 +217,51 @@ export class RemotePlayerRenderer {
         targetQuaternion.multiply(rotationQuaternion);
 
         playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
+
+        // Update the position of the name label
+        const player = this.playersToRender.find(p => p.id === remotePlayerData.id);
+        if (player) {
+            player.nameLabel.position.set(
+                playerObject.position.x,
+                playerObject.position.y + 0.40, // Adjust the Y offset as needed
+                playerObject.position.z
+            );
+            player.nameLabel.lookAt(this.camera.position);
+
+            // Check if the name has changed
+            if (player.name !== remotePlayerData.name) {
+                player.name = remotePlayerData.name; // Update stored name
+                // Remove old label
+                this.entityScene.remove(player.nameLabel);
+                // Create and add new label
+                player.nameLabel = this.createTextSprite(remotePlayerData.name.toString());
+                player.nameLabel.position.set(
+                    playerObject.position.x,
+                    playerObject.position.y + 0.40,
+                    playerObject.position.z
+                );
+                this.entityScene.add(player.nameLabel);
+            }
+        }
     }
 
     private addNewPlayer(remotePlayerData: RemotePlayerData): void {
         const object = this.possumGLTFScene!.children[0].clone();
+
+        // Create a text sprite for the player's name
+        const nameLabel = this.createTextSprite(remotePlayerData.name.toString());
+
         const newPlayer: PlayerToRender = {
             id: remotePlayerData.id,
             object: object,
             objectUUID: object.uuid,
+            nameLabel: nameLabel,
+            name: remotePlayerData.name,
         };
+
         this.playersToRender.push(newPlayer);
         this.entityScene.add(newPlayer.object);
+        this.entityScene.add(newPlayer.nameLabel);
 
         // Initialize groundTruthPosition for the new player
         this.groundTruthPositions[remotePlayerData.id] = new THREE.Vector3(
@@ -240,6 +276,7 @@ export class RemotePlayerRenderer {
             const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
             if (!isActive) {
                 this.entityScene.remove(player.object);
+                this.entityScene.remove(player.nameLabel);
                 // Remove associated data for the player
                 delete this.groundTruthPositions[player.id];
                 delete this.isAnimating[player.id];
@@ -251,6 +288,33 @@ export class RemotePlayerRenderer {
         });
     }
 
+    private createTextSprite(text: string): THREE.Sprite {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        const fontSize = 64;
+        context.font = `${fontSize}px Comic Sans MS`;
+
+        // Measure the text width and set canvas size accordingly
+        const textWidth = context.measureText(text).width;
+        canvas.width = textWidth * 2; // Increase resolution
+        canvas.height = fontSize * 2; // Increase resolution
+
+        // Redraw the text on the canvas
+        context.font = `${fontSize}px Comic Sans MS`;
+        context.fillStyle = 'rgba(255,255,255,1)';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        // Adjust the sprite scale to match the canvas aspect ratio
+        sprite.scale.set((textWidth / fontSize ) * 0.4 , 0.4, 0.4);
+
+        return sprite;
+    }
 
 
     public getRemotePlayerIDsInCrosshair(): number[] {
@@ -290,7 +354,6 @@ export class RemotePlayerRenderer {
         }
         return null;
     }
-
 
     private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
@@ -371,6 +434,4 @@ export class RemotePlayerRenderer {
         }
         return null;
     }
-
-
 }

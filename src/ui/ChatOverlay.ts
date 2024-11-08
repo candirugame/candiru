@@ -60,6 +60,8 @@ export class ChatOverlay {
          this.chatCanvas.style.height = '100vh';
         document.body.style.margin = '0';
         this.chatCanvas.style.imageRendering = 'pixelated';
+        this.chatCanvas.style.textRendering = 'pixelated';
+
         document.body.appendChild(this.chatCanvas);
     }
 
@@ -106,7 +108,7 @@ export class ChatOverlay {
         // this.chatCtx.fillRect(0,0,10,10);
 
 
-
+        this.inputHandler.nameSettingActive = this.nameSettingActive;
     }
 
     private renderChatMessages() {
@@ -164,6 +166,9 @@ export class ChatOverlay {
         if (this.nameSettingActive) {
             linesToRender.push('Enter your name: ' + usermsg + cursor);
             pixOffsets.push(0);
+            this.localPlayer.name = usermsg + cursor;
+            if(this.localPlayer.name.length == 0) this.localPlayer.name = ' ';
+
         }
 
         const wrappedLines: string[] = [];
