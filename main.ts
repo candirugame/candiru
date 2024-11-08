@@ -218,7 +218,7 @@ function checkForPickups() {
         worldItemData.splice(itemIndex, 1);
         itemUpdateSinceLastEmit = true;
         console.log('🍌 ' + playerData[i].name + ' picked up banana!');
-        sendChatMessage(playerData[i].name + ' picked up banana!');
+        //sendChatMessage(playerData[i].name + ' picked up banana!');
         continue;
       }
     }
@@ -230,7 +230,7 @@ function checkForPickups() {
         worldItemData.splice(itemIndex, 1);
         itemUpdateSinceLastEmit = true;
         console.log('🍌 ' + playerData[i].name + ' picked up fish!');
-        sendChatMessage(playerData[i].name + ' picked up fish!');
+        //sendChatMessage(playerData[i].name + ' picked up fish!');
         continue;
       }
     }
