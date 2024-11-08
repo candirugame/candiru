@@ -33,6 +33,18 @@ export class CommandManager {
             SettingsManager.write();
             return "Settings have been reverted to their default states";
         }));
+        this.commands.push(new Command('bobbing', (args: string[]) : string => {
+            const bobbing = Number(args[1]);
+            if (Number.isNaN(bobbing)) {
+                return args[1] + ' is not a number'
+            }
+            if (bobbing < 0 || bobbing > 2) {
+                return args[1] + ' is not in range 0 to 2';
+            }
+            SettingsManager.settings.viewBobbingStrength = bobbing;
+            SettingsManager.write();
+            return 'View bobbing strength is now set to ' + args[1];
+        }));
     }
 
     public runCmd(cmd: string): boolean {

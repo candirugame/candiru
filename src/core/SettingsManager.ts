@@ -15,6 +15,7 @@ export class SettingsManager {
         SettingsManager.settings = {
             sense: .002,
             name: null,
+            viewBobbingStrength: 1,
         };
     }
 
@@ -26,4 +27,5 @@ export class SettingsManager {
 interface Settings {
     sense: number;
     name: null | string;
+    viewBobbingStrength: number;
 }
