@@ -14,7 +14,7 @@ interface ChatMessage {
     timestamp: number;
 }
 
-const hitMarkerLifetime = 0.2;
+const hitMarkerLifetime = 0.3;
 
 export class ChatOverlay {
     private chatCanvas: HTMLCanvasElement;
@@ -254,34 +254,44 @@ export class ChatOverlay {
     }
 
     public renderHitMarkers() {
-        for(let i = this.renderer.playerHitMarkers.length - 1; i >= 0; i--) {
-            if(this.renderer.playerHitMarkers[i].timestamp === -1)
-                this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000; //have timestamp be set in chatOverlay
+        const numDots = 10; // Number of dots to render around each hit point
+
+        for (let i = this.renderer.playerHitMarkers.length - 1; i >= 0; i--) {
+            if (this.renderer.playerHitMarkers[i].timestamp === -1)
+                this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000; // Set timestamp if not set
+
             const timeSinceHit = Date.now() / 1000 - this.renderer.playerHitMarkers[i].timestamp;
             const lifePercent = timeSinceHit / hitMarkerLifetime;
-            if(timeSinceHit > hitMarkerLifetime){
+
+            if (timeSinceHit > hitMarkerLifetime) {
                 this.renderer.playerHitMarkers.splice(i, 1);
                 continue;
             }
+
             const hitVec = this.renderer.playerHitMarkers[i].hitPoint;
             const projected = hitVec.clone().project(this.renderer.getCamera());
             const projectedX = Math.round((projected.x + 1) * this.screenWidth / 2);
             const projectedY = Math.round((-projected.y + 1) * 200 / 2);
 
-            if(projected.z < 1){
-                this.chatCtx.fillStyle = 'rgba(255,0,0,1)';
-                this.chatCtx.strokeStyle = 'rgba(255,0,0,'+ (1 - Math.pow(lifePercent,1.25))+')';
-                //this.chatCtx.fillRect(projectedX - 1, projectedY - 1, 3, 3);
-                this.chatCtx.beginPath();
-                const sizeMultiplier = 1 + 2/this.renderer.playerHitMarkers[i].shotVector.length();
-                this.chatCtx.arc(projectedX - 1, projectedY - 1, Math.pow(lifePercent,0.7)*6 * sizeMultiplier, 0, Math.PI * 2);
-                this.chatCtx.stroke();
+            if (projected.z < 1) {
+                this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+
+                // Calculate sizeMultiplier
+                const sizeMultiplier = 1 + 2 / this.renderer.playerHitMarkers[i].shotVector.length();
+
+                // Calculate and render dots
+                const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier; // Radius of the circle in which dots are placed
+                for (let j = 0; j < numDots; j++) {
+                    const angle = (Math.PI * 2 / numDots) * j;
+                    const dotX = Math.round(projectedX + radius * Math.cos(angle));
+                    const dotY = Math.round(projectedY + radius * Math.sin(angle));
+
+                    this.chatCtx.fillRect(dotX, dotY, 1, 1); // Render a 1px by 1px dot
+                }
             }
-
-
-
         }
     }
+
 
     public getDebugTextHeight(): number {
         return this.debugTextHeight;
