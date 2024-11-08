@@ -33,6 +33,21 @@ export class CommandManager {
             SettingsManager.write();
             return "Settings have been reverted to their default states";
         }));
+        this.commands.push(new Command('controllerSense', (args: string[]): string => {
+            if (args[1] == null) {
+                return "Controller sensitivity is currently " + (SettingsManager.settings.controllerSense);
+            }
+            const sense = Number(args[1]);
+            if (Number.isNaN(sense)) {
+                return args[1] + " is not a number";
+            }
+            if (sense > 10 || sense <= 0) {
+                return "Controller sensitivity is not in the valid range of 0 to 10";
+            }
+            SettingsManager.settings.controllerSense = sense;
+            SettingsManager.write();
+            return "Controller sensitivity is now set to " + (sense);
+        }));
     }
 
     public runCmd(cmd: string): boolean {
