@@ -79,7 +79,9 @@ export class RemotePlayerRenderer {
         this.loader.load(
             'models/simplified_possum.glb',
             (gltf) => {
+                console.time("computing possum bounds tree")
                 gltf.scene.children[0].geometry.computeBoundsTree();
+                console.timeEnd("computing possum bounds tree")
                 this.possumGLTFScene = gltf.scene;
             },
             undefined,
