@@ -148,7 +148,7 @@ export class FishGun extends ItemBase {
             if (Date.now() / 1000 - this.lastFired > firingDelay) {
                 this.lastFired = Date.now() / 1000;
                 this.shootBanana();
-                this.handPosition.add(new THREE.Vector3(0, 0, 0.6));
+                this.handPosition.add(new THREE.Vector3(0, 0, 2));
                 rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
             }
         }
@@ -175,13 +175,18 @@ export class FishGun extends ItemBase {
     }
 
     private shootBanana() {
-        const targets = this.renderer.getRemotePlayerIDsInCrosshair();
-        if (targets.length > 0) {
-            for (const id of targets) {
-                this.networking.applyDamage(id, 10);
-            }
-            this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+        for(let i = 0; i < 25; i++) {
+                const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5);
+                if (shotVectors.length > 0) {
+                    for (const shot of shotVectors) {
+                        const { playerID, hitPoint } = shot;
+                        this.networking.applyDamage(playerID, 3);
+                        this.renderer.playerHitMarkers.push({hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1 });
+                    }
+                    this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+                }
         }
+
     }
 
     // Method to set world position when used as WorldItem

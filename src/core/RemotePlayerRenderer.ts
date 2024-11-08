@@ -309,4 +309,49 @@ export class RemotePlayerRenderer {
 
         return filteredIntersects.map((intersect) => intersect.object);
     }
+
+    public getShotVectorsToPlayersWithOffset(yawOffset: number, pitchOffset: number): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        const shotVectors: { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] = [];
+        const offsetDirection = this.calculateOffsetDirection(yawOffset, pitchOffset);
+
+        for (const player of this.playersToRender) {
+            const intersection = this.findIntersectionOnPlayerWithOffset(player.object, offsetDirection);
+            if (intersection) {
+                const vector = new THREE.Vector3().subVectors(intersection.point, this.camera.position);
+                const hitPoint = intersection.point.clone(); // World coordinates of the hit
+                shotVectors.push({ playerID: player.id, vector, hitPoint });
+            }
+        }
+
+        return shotVectors;
+    }
+
+    private calculateOffsetDirection(yawOffset: number, pitchOffset: number): THREE.Vector3 {
+        // Get the camera's current direction
+        const direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+
+        // Create a quaternion for the yaw and pitch offsets
+        const yawQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawOffset);
+        const pitchQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitchOffset);
+
+        // Apply the rotations
+        direction.applyQuaternion(yawQuaternion);
+        direction.applyQuaternion(pitchQuaternion);
+
+        return direction.normalize();
+    }
+
+    private findIntersectionOnPlayerWithOffset(playerObject: THREE.Object3D, offsetDirection: THREE.Vector3): THREE.Intersection | null {
+        // Set the raycaster with the offset direction
+        this.raycaster.set(this.camera.position, offsetDirection);
+
+        const intersects = this.raycaster.intersectObject(playerObject, true);
+        if (intersects.length > 0) {
+            return intersects[0]; // Return the first intersection point
+        }
+        return null;
+    }
+
+
 }

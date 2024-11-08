@@ -291,12 +291,13 @@ export class Renderer {
         this.heldItemCamera.updateProjectionMatrix();
     }
 
-    public getRemotePlayerIDsInCrosshair(): number[] {
-        return this.remotePlayerRenderer.getRemotePlayerIDsInCrosshair();
-    }
 
     public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
         return this.remotePlayerRenderer.getShotVectorsToPlayersInCrosshair();
+    }
+
+    public getShotVectorsToPlayersWithOffset(yawOffset: number, pitchOffset: number): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset);
     }
 
     public getEntityScene(): THREE.Scene {

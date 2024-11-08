@@ -357,17 +357,17 @@ io.on('connection', (socket: Socket) => {
     );
 
     if (localDistance > 1 || targetDistance > 1) {
-      console.log(
-          '⚠️ client out of sync - name:' +
-          data.localPlayer.name +
-          ' latency: ' +
-          Math.floor(data.localPlayer.latency) +
-          ' localDistance: ' +
-          localDistance +
-          ' targetDistance: ' +
-          targetDistance
-      );
-      whisperChatMessage('⚠️ shot not registered (client out of sync)', socket);
+      // console.log(
+      //     '⚠️ client out of sync - name:' +
+      //     data.localPlayer.name +
+      //     ' latency: ' +
+      //     Math.floor(data.localPlayer.latency) +
+      //     ' localDistance: ' +
+      //     localDistance +
+      //     ' targetDistance: ' +
+      //     targetDistance
+      // );
+      //whisperChatMessage('⚠️ shot not registered (client out of sync)', socket);
       return;
     }
 
