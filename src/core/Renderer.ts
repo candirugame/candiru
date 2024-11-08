@@ -5,6 +5,9 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
 import { ChatOverlay } from "../ui/ChatOverlay.ts";
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
+import {InputHandler} from "../input/InputHandler.ts";
+import {SettingsManager} from "./SettingsManager.ts";
+import {CollisionManager} from "../input/CollisionManager.ts";
 
 export class Renderer {
     private clock: THREE.Clock;
@@ -28,6 +31,8 @@ export class Renderer {
     public scaredLevel: number = 0;
     private lastPlayerHealth: number = 100;
     private knockbackVector: THREE.Vector3 = new THREE.Vector3();
+    private bobCycle: number;
+    private lastCameraRoll: number
 
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
@@ -38,6 +43,8 @@ export class Renderer {
     private inventoryMenuScene: THREE.Scene;
     private inventoryMenuCamera: THREE.OrthographicCamera;
     private remotePlayerRenderer: RemotePlayerRenderer;
+    private inputHandler!: InputHandler;
+    private collisionManager!: CollisionManager;
 
     constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
@@ -93,6 +100,9 @@ export class Renderer {
         this.framesInFramerateSample = 30;
         this.sampleOn = 0;
         this.lastFramerateCalculation = 0;
+
+        this.bobCycle = 0;
+        this.lastCameraRoll = 0;
 
         this.raycaster = new THREE.Raycaster();
 
@@ -208,6 +218,27 @@ export class Renderer {
         this.heldItemCamera.rotation.set((Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount, (Math.random()-0.5) * shakeAmount );
 
         this.lastPlayerHealth = this.localPlayer.health;
+
+        const vel = Math.sqrt(Math.pow(this.localPlayer.velocity.x,2) + Math.pow(this.localPlayer.velocity.z,2))
+
+        if(vel == 0 || this.collisionManager.isPlayerInAir()) {
+            this.bobCycle = 0;
+        } else {
+            this.bobCycle += this.deltaTime * 4.8 * vel;
+            this.camera.position.y = this.camera.position.y + (Math.sin(this.bobCycle) * .03 * SettingsManager.settings.viewBobbingStrength);
+            console.log(this.camera.position.y);
+        }
+
+        const maxRollAmount = this.inputHandler.getInputX() * -.007 * SettingsManager.settings.viewBobbingStrength;
+        const maxRollSpeed = this.deltaTime * .4;
+        let roll: number = this.lastCameraRoll;
+        roll = Renderer.approachNumber(roll, maxRollSpeed, maxRollAmount);
+        const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
+        euler.z += roll;
+        this.lastCameraRoll = roll;
+
+        this.camera.quaternion.setFromEuler(euler);
+
         this.updateFramerate();
     }
 
@@ -270,5 +301,26 @@ export class Renderer {
 
     public getEntityScene(): THREE.Scene {
         return this.remotePlayerRenderer.getEntityScene();
+    }
+
+    public setInputHandler(inputHandler: InputHandler) {
+        this.inputHandler = inputHandler;
+    }
+
+    public setCollisionManager(collisionManager: CollisionManager) {
+        this.collisionManager = collisionManager;
+    }
+
+    private static approachNumber(input: number, step: number, approach: number): number {
+        if (input == approach) {return approach;}
+        let output: number;
+        if (input > approach) {
+            output = input - step;
+            if (output <= approach) {return  approach;}
+        } else {
+            output = input + step;
+            if (output >= approach) {return  approach;}
+        }
+        return output;
     }
 }
