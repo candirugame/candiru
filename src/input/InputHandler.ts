@@ -112,8 +112,8 @@ export class InputHandler {
                 if (this.gamepadInputs.A) this.jump = true;
                 if (this.gamepadInputs.leftTrigger > .5) this.aim = true;
                 if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
-                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * .08;
-                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * .08;
+                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * 4 * deltaTime;
+                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * 4 * deltaTime;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
                 this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
             }
