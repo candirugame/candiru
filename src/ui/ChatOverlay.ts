@@ -1,7 +1,7 @@
-import { Player } from '../core/Player.ts';
-import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
-import { InputHandler } from '../input/InputHandler.ts';
+import {Player} from '../core/Player.ts';
+import {Renderer} from '../core/Renderer.ts';
+import {Networking} from '../core/Networking.ts';
+import {InputHandler} from '../input/InputHandler.ts';
 import {CommandManager} from "../core/CommandManager.ts";
 import {SettingsManager} from "../core/SettingsManager.ts";
 
@@ -275,11 +275,18 @@ export class ChatOverlay {
 
     private renderCrosshair() {
         const ctx = this.chatCtx;
-        ctx.fillStyle = 'rgb(0,255,225)';
+        ctx.fillStyle = SettingsManager.settings.crosshairColor;
         if (this.renderer.crosshairIsFlashing)
-            ctx.fillStyle = 'rgb(255,0,0)';
-        ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
-        ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+            ctx.fillStyle = '#FF0000';
+        switch (SettingsManager.settings.crosshairType) {
+            case 0:
+                ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
+                ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+                break;
+            case 1:
+                ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
+                break;
+        }
     }
 
     private onKeyDown(e: KeyboardEvent) {

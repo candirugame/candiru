@@ -15,6 +15,8 @@ export class SettingsManager {
         SettingsManager.settings = {
             sense: .002,
             name: null,
+            crosshairColor: 'rgb(0,255,255)',
+            crosshairType: 0,
             viewBobbingStrength: 1,
         };
     }
@@ -27,5 +29,7 @@ export class SettingsManager {
 interface Settings {
     sense: number;
     name: null | string;
+    crosshairColor: string;
+    crosshairType: number;
     viewBobbingStrength: number;
 }

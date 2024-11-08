@@ -28,11 +28,43 @@ export class CommandManager {
                 return "Sensitivity is not in the valid range of 0 to 10";
             }
         }));
+
         this.commands.push(new Command('resetSettings', (): string => {
             SettingsManager.reset();
             SettingsManager.write();
             return "Settings have been reverted to their default states";
         }));
+
+        this.commands.push(new Command('crosshairColor', (args: string[]): string => {
+            if ((args[1] && args[2] && args[3])) {
+                for (let i = 1; i < args.length; i++) {
+                    if (Number.isNaN(Number(args[i]))) return args[i] + " is not a number";
+                    if (Number(args[i]) < 0 || Number(args[i]) > 255) {
+                        return args[i] + ' is not in range 0-255';
+                    }
+                }
+                SettingsManager.settings.crosshairColor = '#' + componentToHex(Number(args[1])) + componentToHex(Number(args[2])) + componentToHex(Number(args[3]));
+            } else if (args[1]) {
+                const color : string | null = cssToHex(args[1]);
+                if(!color) {
+                    return args[1] + ' is not a valid color';
+                }
+                SettingsManager.settings.crosshairColor = color;
+            } else {
+                return 'invalid input';
+            }
+            SettingsManager.write();
+            return 'Crosshair color set'
+        }));
+
+        this.commands.push(new Command('crosshairType', (args: string[]): string => {
+            if (args[1] == 'cross') SettingsManager.settings.crosshairType = 0;
+            else if (args[1] == 'dot') SettingsManager.settings.crosshairType = 1;
+            else return 'not a valid type (dot or cross)';
+            SettingsManager.write();
+            return 'Crosshair type set'
+        } ));
+
         this.commands.push(new Command('bobbing', (args: string[]) : string => {
             const bobbing = Number(args[1]);
             if (Number.isNaN(bobbing)) {
@@ -51,7 +83,7 @@ export class CommandManager {
         let match: boolean = false;
         const args: string[] = cmd.substring(1).split(" ")
         for (let i = 0; i < this.commands.length; i++) {
-            if (args[0] === this.commands[i].getCmdName()) {
+            if (args[0].toLowerCase() === this.commands[i].getCmdName()) {
                 match = true;
                 const msg = this.commands[i].run(args);
 
@@ -73,7 +105,7 @@ class Command {
     private readonly cmdName: string;
     private readonly func: (args: string[]) => string;
     constructor(cmd: string, func: (args: string[]) => string) {
-        this.cmdName = cmd;
+        this.cmdName = cmd.toLowerCase();
         this.func = func;
     }
     public run(args: string[]): string {
@@ -83,4 +115,34 @@ class Command {
     public getCmdName() {
         return this.cmdName;
     }
+}
+
+function componentToHex(c: number): string {
+    const hex = c.toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+}
+
+function cssToHex(color: string) {
+    // Create a dummy div to get computed color style
+    if (!isColor(color)) return null;
+    const div = document.createElement('div');
+    div.style.color = color;
+    document.body.appendChild(div);
+    const computedColor = getComputedStyle(div).color;
+    document.body.removeChild(div);
+
+    // Extract rgb values
+    const rgbMatch = computedColor.match(/\d+/g);
+    if (rgbMatch) {
+        const [r, g, b] = rgbMatch.map(Number);
+        return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+    return null;
+}
+
+function isColor(strColor: string) {
+    const s = new Option().style;
+    s.color = strColor;
+    // If the color is recognized, s.color won't be empty
+    return s.color !== '';
 }
