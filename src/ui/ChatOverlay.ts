@@ -60,6 +60,8 @@ export class ChatOverlay {
          this.chatCanvas.style.height = '100vh';
         document.body.style.margin = '0';
         this.chatCanvas.style.imageRendering = 'pixelated';
+        this.chatCanvas.style.textRendering = 'pixelated';
+
         document.body.appendChild(this.chatCanvas);
     }
 
