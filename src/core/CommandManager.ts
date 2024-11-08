@@ -43,7 +43,6 @@ export class CommandManager {
                         return args[i] + ' is not in range 0-255';
                     }
                 }
-
                 SettingsManager.settings.crosshairColor = '#' + componentToHex(Number(args[1])) + componentToHex(Number(args[2])) + componentToHex(Number(args[3]));
             } else if (args[1]) {
                 const color : string | null = cssToHex(args[1]);
