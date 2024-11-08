@@ -16,7 +16,6 @@ export class CollisionManager {
     private raycaster: THREE.Raycaster;
     private scene: THREE.Scene;
     public static mapLoaded: boolean = false;
-    private static staticGenerator?: StaticGeometryGenerator; // Mark as possibly undefined
     private static colliderGeom?: THREE.BufferGeometry; // Mark as possibly undefined
     private inputHandler: InputHandler;
     private static maxAngle: number = Math.cos(45 * Math.PI / 180);
@@ -126,9 +125,9 @@ export class CollisionManager {
     public static staticGeometry(group: Group) {
         if (!this.mapLoaded) {
             console.time("Building static geometry BVH");
-            this.staticGenerator = new StaticGeometryGenerator(group);
-            this.staticGenerator.attributes = ['position'];
-            this.colliderGeom = this.staticGenerator.generate();
+            const staticGenerator = new StaticGeometryGenerator(group);
+            staticGenerator.attributes = ['position'];
+            this.colliderGeom = staticGenerator.generate();
             this.colliderGeom.computeBoundsTree();
             this.mapLoaded = true;
             console.timeEnd("Building static geometry BVH");
