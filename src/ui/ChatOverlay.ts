@@ -4,8 +4,6 @@ import {Networking} from '../core/Networking.ts';
 import {InputHandler} from '../input/InputHandler.ts';
 import {CommandManager} from "../core/CommandManager.ts";
 import {SettingsManager} from "../core/SettingsManager.ts";
-import * as THREE from 'three';
-
 
 interface ChatMessage {
     id: number;
