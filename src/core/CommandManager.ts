@@ -37,9 +37,8 @@ export class CommandManager {
 
         this.commands.push(new Command('crosshairColor', (args: string[]): string => {
             if ((args[1] && args[2] && args[3])) {
-
-
                 for (let i = 1; i < args.length; i++) {
+                    if (Number.isNaN(Number(args[i]))) return args[i] + " is not a number";
                     if (Number(args[i]) < 0 || Number(args[i]) > 255) {
                         return args[i] + ' is not in range 0-255';
                     }
