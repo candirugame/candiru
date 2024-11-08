@@ -3,7 +3,7 @@ import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
-import {acceleratedRaycast, computeBoundsTree} from "three-mesh-bvh";
+import {acceleratedRaycast, computeBoundsTree, StaticGeometryGenerator} from "three-mesh-bvh";
 import {CollisionManager} from "../input/CollisionManager.ts";
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -34,7 +34,7 @@ interface PlayerToRender {
 export class RemotePlayerRenderer {
     private entityScene: THREE.Scene;
     private playersToRender: PlayerToRender[];
-    private possumGLTFScene: THREE.Group | undefined;
+    private possumMesh: THREE.Mesh | undefined;
     private loader: GLTFLoader;
     private dracoLoader: DRACOLoader;
 
@@ -75,14 +75,14 @@ export class RemotePlayerRenderer {
         this.dracoLoader.setDecoderPath('/draco/');
         this.loader.setDRACOLoader(this.dracoLoader);
 
-        this.possumGLTFScene = undefined;
+        this.possumMesh = undefined;
         this.loader.load(
             'models/simplified_possum.glb',
             (gltf) => {
                 console.time("Computing possum BVH");
-                gltf.scene.children[0].geometry.computeBoundsTree();
+                (<THREE.Mesh>gltf.scene.children[0]).geometry.computeBoundsTree();
                 console.timeEnd("Computing possum BVH");
-                this.possumGLTFScene = gltf.scene;
+                this.possumMesh = (<THREE.Mesh>gltf.scene.children[0]);
             },
             undefined,
             () => {
@@ -110,7 +110,7 @@ export class RemotePlayerRenderer {
     }
 
     private updateRemotePlayers(): void {
-        if (!this.possumGLTFScene) return;
+        if (!this.possumMesh) return;
 
         const remotePlayerData: RemotePlayer[] = this.networking.getRemotePlayerData();
         const localPlayerId = this.localPlayer.id;
@@ -254,7 +254,7 @@ export class RemotePlayerRenderer {
     }
 
     private addNewPlayer(remotePlayerData: RemotePlayerData): void {
-        const object = this.possumGLTFScene!.children[0].clone();
+        const object = this.possumMesh!.clone();
 
         // Create a text sprite for the player's name
         const nameLabel = this.createTextSprite(remotePlayerData.name.toString());
