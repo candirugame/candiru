@@ -277,7 +277,7 @@ export class ChatOverlay {
         const ctx = this.chatCtx;
         ctx.fillStyle = SettingsManager.settings.crosshairColor;
         if (this.renderer.crosshairIsFlashing)
-            ctx.fillStyle = SettingsManager.settings.crosshairColorFlashing;
+            ctx.fillStyle = '#FF0000';
         switch (SettingsManager.settings.crosshairType) {
             case 0:
                 ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);

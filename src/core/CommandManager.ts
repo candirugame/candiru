@@ -51,12 +51,10 @@ export class CommandManager {
                 if(!color) {
                     return args[1] + ' is not a valid color';
                 }
-
                 SettingsManager.settings.crosshairColor = color;
             } else {
                 return 'invalid input';
             }
-            SettingsManager.settings.crosshairColorFlashing = invertColor(SettingsManager.settings.crosshairColor);
             SettingsManager.write();
             return 'Crosshair color set'
         }));
