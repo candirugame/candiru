@@ -35,6 +35,9 @@ export class CommandManager {
         }));
         this.commands.push(new Command('bobbing', (args: string[]) : string => {
             const bobbing = Number(args[1]);
+            if (Number.isNaN(bobbing)) {
+                return args[1] + ' is not a number'
+            }
             if (bobbing < 0 || bobbing > 2) {
                 return args[1] + ' is not in range 0 to 2';
             }
