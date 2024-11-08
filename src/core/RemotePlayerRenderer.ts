@@ -3,6 +3,11 @@ import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
+import {acceleratedRaycast, computeBoundsTree} from "three-mesh-bvh";
+import {CollisionManager} from "../input/CollisionManager.ts";
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 interface RemotePlayerData {
     health: number;
@@ -74,6 +79,7 @@ export class RemotePlayerRenderer {
         this.loader.load(
             'models/simplified_possum.glb',
             (gltf) => {
+                gltf.scene.children[0].geometry.computeBoundsTree();
                 this.possumGLTFScene = gltf.scene;
             },
             undefined,
@@ -358,8 +364,15 @@ export class RemotePlayerRenderer {
     private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
 
+        const geom = CollisionManager.getColliderGeom();
+        const map = new THREE.Mesh(geom);
+        const mapobj = new THREE.Object3D;
+        mapobj.add(map);
+
         const playerIntersects = this.raycaster.intersectObjects(this.entityScene.children);
-        const wallIntersects = this.raycaster.intersectObjects(this.scene.children);
+        this.raycaster.firstHitOnly = true;
+        const wallIntersects = this.raycaster.intersectObjects([mapobj]);
+        this.raycaster.firstHitOnly = false;
 
         const filteredIntersects = playerIntersects.filter((playerIntersect) => {
             for (const wallIntersect of wallIntersects) {
@@ -380,9 +393,16 @@ export class RemotePlayerRenderer {
         // Set the raycaster with the offset direction
         this.raycaster.set(this.camera.position, offsetDirection);
 
+        const geom = CollisionManager.getColliderGeom();
+        const map = new THREE.Mesh(geom);
+        const mapobj = new THREE.Object3D;
+        mapobj.add(map);
+
         // Intersect with all potential targets (players and walls)
         const playerIntersects = this.raycaster.intersectObjects(this.playersToRender.map(p => p.object), true);
-        const wallIntersects = this.raycaster.intersectObjects(this.scene.children, true);
+        this.raycaster.firstHitOnly = true;
+        const wallIntersects = this.raycaster.intersectObjects([mapobj]);
+        this.raycaster.firstHitOnly = false;
 
         // Filter player intersections based on wall intersections
         const filteredPlayerIntersects = playerIntersects.filter((playerIntersect) => {

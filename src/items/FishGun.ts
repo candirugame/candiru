@@ -180,6 +180,7 @@ export class FishGun extends ItemBase {
 
         const processShots = (deadline: IdleDeadline) => {
             while (processedShots < totalShots && deadline.timeRemaining() > 0) {
+                console.time("FishShot")
                 const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
                     (Math.random() - 0.5) * 0.5,
                     (Math.random() - 0.5) * 0.5
@@ -201,6 +202,8 @@ export class FishGun extends ItemBase {
 
             if (processedShots < totalShots) {
                 requestIdleCallback(processShots);
+            } else {
+                console.timeEnd("FishShot")
             }
         };
 
