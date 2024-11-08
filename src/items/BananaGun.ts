@@ -174,14 +174,17 @@ export class BananaGun extends ItemBase {
     }
 
     private shootBanana() {
-        const targets = this.renderer.getRemotePlayerIDsInCrosshair();
-        if (targets.length > 0) {
-            for (const id of targets) {
-                this.networking.applyDamage(id, 10);
+        const shotVectors = this.renderer.getShotVectorsToPlayersInCrosshair();
+        if (shotVectors.length > 0) {
+            for (const shot of shotVectors) {
+                const { playerID, hitPoint } = shot;
+                this.networking.applyDamage(playerID, 10);
+                this.renderer.playerHitMarkers.push({hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1 });
             }
             this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
         }
     }
+
 
     // Method to set world position when used as WorldItem
     public override setWorldPosition(vector: THREE.Vector3) {

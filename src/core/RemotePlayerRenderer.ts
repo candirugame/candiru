@@ -259,8 +259,8 @@ export class RemotePlayerRenderer {
         return playerIDs;
     }
 
-    public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3 }[] {
-        const shotVectors: { playerID: number, vector: THREE.Vector3 }[] = [];
+    public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        const shotVectors: { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] = [];
         const objectsInCrosshair = this.getPlayersInCrosshairWithWalls();
 
         for (const object of objectsInCrosshair) {
@@ -270,7 +270,8 @@ export class RemotePlayerRenderer {
                     const intersection = this.findIntersectionOnPlayer(object);
                     if (intersection) {
                         const vector = new THREE.Vector3().subVectors(intersection.point, this.camera.position);
-                        shotVectors.push({ playerID: player.id, vector });
+                        const hitPoint = intersection.point.clone(); // World coordinates of the hit
+                        shotVectors.push({ playerID: player.id, vector, hitPoint });
                     }
                     break;
                 }

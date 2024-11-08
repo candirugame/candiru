@@ -4,6 +4,8 @@ import { Networking } from '../core/Networking.ts';
 import { InputHandler } from '../input/InputHandler.ts';
 import {CommandManager} from "../core/CommandManager.ts";
 import {SettingsManager} from "../core/SettingsManager.ts";
+import * as THREE from 'three';
+
 
 interface ChatMessage {
     id: number;
@@ -11,6 +13,8 @@ interface ChatMessage {
     name: string;
     timestamp: number;
 }
+
+const hitMarkerLifetime = 0.2;
 
 export class ChatOverlay {
     private chatCanvas: HTMLCanvasElement;
@@ -82,12 +86,14 @@ export class ChatOverlay {
     public onFrame() {
         this.clearOldMessages();
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+        this.renderHitMarkers();
         this.renderChatMessages();
         this.renderDebugText();
         if (this.inputHandler.getKey('tab'))
             this.renderPlayerList();
         this.renderEvil();
         this.renderCrosshair();
+
 
         this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
@@ -100,6 +106,9 @@ export class ChatOverlay {
 
         // this.chatCanvas.width = this.screenWidth;
         // this.chatCtx.fillRect(0,0,10,10);
+
+
+
     }
 
     private renderChatMessages() {
@@ -199,9 +208,9 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        //const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
-        //const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
-        //const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
+        const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
+        const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
+        const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
 
         //const playerQuatX = Math.floor(this.localPlayer.lookQuaternion.x * 100) / 100;
         //const playerQuatY = Math.floor(this.localPlayer.lookQuaternion.y * 100) / 100;
@@ -212,12 +221,28 @@ export class ChatOverlay {
         // const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
         // const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
 
+
+        const zero = new THREE.Vector3(0,0,0);
+        const projected = zero.project(this.renderer.getCamera());
+        const projectedX = Math.round((projected.x + 1) * this.screenWidth / 2);
+        const projectedY = Math.round((-projected.y + 1) * 200 / 2);
+        //linesToRender.push(this.renderer.);
+
+
+        if(projected.z <1){
+            ctx.fillRect(projectedX, projectedY-5, 1, 11);
+            ctx.fillRect(projectedX - 5, projectedY, 11, 1);
+        }
+
+
+
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
 
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push(Math.floor(framerate) + 'FPS');
-        //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        //linesToRender.push('px: ' + projectedX + ' py: ' + projectedY + ' pz: ' + projected.z);
         //linesToRender.push('qx: ' + playerQuatX + ' qy: ' + playerQuatY + ' qz: ' + playerQuatZ + ' qw: ' + playerQuatW);
         // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
@@ -226,6 +251,36 @@ export class ChatOverlay {
         }
 
         this.debugTextHeight = 7 * linesToRender.length;
+    }
+
+    public renderHitMarkers() {
+        for(let i = this.renderer.playerHitMarkers.length - 1; i >= 0; i--) {
+            if(this.renderer.playerHitMarkers[i].timestamp === -1)
+                this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000; //have timestamp be set in chatOverlay
+            const timeSinceHit = Date.now() / 1000 - this.renderer.playerHitMarkers[i].timestamp;
+            const lifePercent = timeSinceHit / hitMarkerLifetime;
+            if(timeSinceHit > hitMarkerLifetime){
+                this.renderer.playerHitMarkers.splice(i, 1);
+                continue;
+            }
+            const hitVec = this.renderer.playerHitMarkers[i].hitPoint;
+            const projected = hitVec.clone().project(this.renderer.getCamera());
+            const projectedX = Math.round((projected.x + 1) * this.screenWidth / 2);
+            const projectedY = Math.round((-projected.y + 1) * 200 / 2);
+
+            if(projected.z < 1){
+                this.chatCtx.fillStyle = 'rgba(255,0,0,1)';
+                this.chatCtx.strokeStyle = 'rgba(255,0,0,'+ (1 - Math.pow(lifePercent,1.25))+')';
+                //this.chatCtx.fillRect(projectedX - 1, projectedY - 1, 3, 3);
+                this.chatCtx.beginPath();
+                const sizeMultiplier = 1 + 2/this.renderer.playerHitMarkers[i].shotVector.length();
+                this.chatCtx.arc(projectedX - 1, projectedY - 1, Math.pow(lifePercent,0.7)*6 * sizeMultiplier, 0, Math.PI * 2);
+                this.chatCtx.stroke();
+            }
+
+
+
+        }
     }
 
     public getDebugTextHeight(): number {
@@ -391,4 +446,6 @@ export class ChatOverlay {
 
         return resultLines;
     }
+
+
 }
