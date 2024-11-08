@@ -108,7 +108,7 @@ export class ChatOverlay {
         // this.chatCtx.fillRect(0,0,10,10);
 
 
-
+        this.inputHandler.nameSettingActive = this.nameSettingActive;
     }
 
     private renderChatMessages() {
