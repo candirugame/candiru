@@ -166,6 +166,9 @@ export class ChatOverlay {
         if (this.nameSettingActive) {
             linesToRender.push('Enter your name: ' + usermsg + cursor);
             pixOffsets.push(0);
+            this.localPlayer.name = usermsg + cursor;
+            if(this.localPlayer.name.length == 0) this.localPlayer.name = ' ';
+
         }
 
         const wrappedLines: string[] = [];
