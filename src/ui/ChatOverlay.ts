@@ -4,6 +4,7 @@ import {Networking} from '../core/Networking.ts';
 import {InputHandler} from '../input/InputHandler.ts';
 import {CommandManager} from "../core/CommandManager.ts";
 import {SettingsManager} from "../core/SettingsManager.ts";
+import {TouchInputHandler} from "../input/TouchInputHandler.ts";
 
 interface ChatMessage {
     id: number;
@@ -31,6 +32,9 @@ export class ChatOverlay {
     private oldScreenWidth:number = 0;
     private readonly commandManager: CommandManager;
     private lastTouchTimestamp: number = 0;
+    private touchJoystickEngaged: boolean = false;
+    private joystickX: number = 0;
+    private joystickY: number = 0;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -260,19 +264,24 @@ export class ChatOverlay {
     }
 
     public renderTouchControls() {
-        console.log(this.lastTouchTimestamp - Date.now()/1000);
-
-        if(Date.now()/1000 - this.lastTouchTimestamp > 5) return;
+        if(!this.touchJoystickEngaged) return;
         //draw circle for movement
-        this.chatCtx.fillStyle = 'rgba(255,255,255,0.5)';
+        this.chatCtx.fillStyle = 'rgba(255,255,255,0.25)';
         this.chatCtx.beginPath();
-        this.chatCtx.arc(100, 130, 30, 0, 2 * Math.PI);
+        this.chatCtx.arc(this.joystickX, this.joystickY, TouchInputHandler.joystickRadius, 0, 2 * Math.PI);
         this.chatCtx.fill();
 
     }
 
     public setLastTouchTimestamp(timestamp: number) {
         this.lastTouchTimestamp = timestamp;
+    }
+    public setTouchJoystickEngaged(value: boolean) {
+        this.touchJoystickEngaged = value;
+    }
+    public setJoystickPosition(x: number, y: number) {
+        this.joystickX = x;
+        this.joystickY = y;
     }
 
     public renderHitMarkers() {

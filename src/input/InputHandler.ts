@@ -11,20 +11,22 @@ export class InputHandler {
     private readonly gamepadEuler ;
     private clock: THREE.Clock;
     private forward: THREE.Vector3;
-    private keys: { [key: string]: boolean };
-    private leftMouseDown: boolean;
-    private rightMouseDown: boolean;
+    private keys: { [key: string]: boolean } = {};
+    private leftMouseDown: boolean = false;
+    private rightMouseDown: boolean = false;
     private renderer: Renderer;
     private readonly localPlayer: Player;
-    private inputX: number;
-    private inputZ: number;
-    public  jump;
+    private inputX: number = 0;
+    private inputZ: number = 0;
+    public  jump = false;
     public prevVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
     private readonly gamepadInputs: GamepadInputs;
-    private shoot: boolean;
-    private aim: boolean;
+    private shoot: boolean = false;
+    private aim: boolean = false;
     public nameSettingActive: boolean = false;
+    private touchJoyX: number = 0;
+    private touchJoyY: number = 0;
 
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
@@ -35,15 +37,6 @@ export class InputHandler {
         this.clock = new THREE.Clock();
         this.mouse = new PointerLockControls(this.localPlayer, document.body);
         this.forward = new THREE.Vector3(0, 0, -1);
-
-        this.keys = {};
-        this.leftMouseDown = false;
-        this.rightMouseDown = false;
-        this.inputX = 0;
-        this.inputZ = 0;
-        this.jump = false;
-        this.shoot = false;
-        this.aim = false;
 
         this.gamepadInputs = new GamepadInputs();
 
@@ -121,6 +114,10 @@ export class InputHandler {
             }
         }
 
+        this.inputX += deltaTimeAcceleration * this.touchJoyX;
+        this.inputZ += deltaTimeAcceleration * this.touchJoyY;
+
+
         if (!this.localPlayer.chatActive && !this.nameSettingActive) {
             if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
             if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
@@ -165,6 +162,11 @@ export class InputHandler {
 
     public getKey(key: string):boolean {
         return this.keys[key];
+    }
+
+    public setTouchJoyInput(x: number, y: number) {
+        this.touchJoyX = x;
+        this.touchJoyY = y;
     }
 
     private onKeyDown(event: KeyboardEvent) {
