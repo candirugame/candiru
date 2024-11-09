@@ -191,8 +191,8 @@ export class InputHandler {
         this.touchLookY = y;
     }
     public setButtonsHeld(buttons: number[]) {
-        this.leftMouseDown =  buttons.includes(-1);
-        this.jump = this.jump || buttons.includes(0);
+        this.leftMouseDown =  buttons.includes(0);
+        this.jump = this.jump || buttons.includes(-1);
         this.inventoryIterationTouched = buttons.includes(1);
 
     }

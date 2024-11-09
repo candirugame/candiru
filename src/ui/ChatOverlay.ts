@@ -291,9 +291,9 @@ export class ChatOverlay {
         const x = this.chatCanvas.width - squareWidth - 12; // 10px from the right edge
         let y = (this.chatCanvas.height - squareHeight) / 2 ; // Center vertically
 
-        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1);
-        y-= squareHeight + 4;
         this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'●',1);
+        y-= squareHeight + 4;
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1);
         y+= squareHeight + 4;
         y+= squareHeight + 4;
         this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'[]',1);
