@@ -37,6 +37,7 @@ export class ChatOverlay {
     private joystickY: number = 0;
     private joystickInputX: number = 0;
     private joystickInputY: number = 0;
+    private buttonsHeld: number[] = [];
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -291,17 +292,25 @@ export class ChatOverlay {
         const x = this.chatCanvas.width - squareWidth - 12; // 10px from the right edge
         let y = (this.chatCanvas.height - squareHeight) / 2 ; // Center vertically
 
-        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'●',1);
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'●',1,0);
         y-= squareHeight + 4;
-        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1);
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1,-1);
         y+= squareHeight + 4;
         y+= squareHeight + 4;
-        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'[]',1);
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'[]',1,1);
 
     }
 
-    private drawButton(x:number, y:number, width:number, height:number, cornerRadius:number, text:string,textOffset:number){
-        this.chatCtx.fillStyle = 'rgba(255,255,255,0.15)';
+    public setButtonsHeld(buttons: number[]) {
+        this.buttonsHeld = buttons;
+    }
+
+    private drawButton(x:number, y:number, width:number, height:number, cornerRadius:number, text:string,textOffset:number, index:number) {
+        if(this.buttonsHeld.includes(index))
+            this.chatCtx.fillStyle = 'rgba(100,100,100,0.3)';
+        else
+            this.chatCtx.fillStyle = 'rgba(255,255,255,0.15)';
+
         this.drawRoundedSquare(x, y, width, height, cornerRadius);
         //draw character inside square
         this.chatCtx.fillStyle = 'rgba(0,0,0,0.5)';
