@@ -30,6 +30,7 @@ export class InputHandler {
     private touchLookX: number = 0;
     private touchLookY: number = 0;
     private inventoryIterationTouched: boolean = false;
+    private touchButtons: number[] = [];
 
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
@@ -172,7 +173,7 @@ export class InputHandler {
         this.localPlayer.quaternion.setFromEuler(euler);
         this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
 
-        if (this.leftMouseDown) this.shoot = true;
+        if (this.leftMouseDown || this.touchButtons.includes(0)) this.shoot = true;
         if (this.rightMouseDown) this.aim = true;
 
     }
@@ -191,7 +192,7 @@ export class InputHandler {
         this.touchLookY = y;
     }
     public setButtonsHeld(buttons: number[]) {
-        this.leftMouseDown =  buttons.includes(0);
+        this.touchButtons = buttons;
         this.jump = this.jump || buttons.includes(-1);
         this.inventoryIterationTouched = buttons.includes(1);
 
