@@ -15,9 +15,13 @@ export class TouchInputHandler {
     private joystickInputY: number = 0;
 
     private joystickFingerId: number = -1;
+    private lookFingerId: number = -1;
 
+    private lastLookX: number = 0;
+    private lastLookY: number = 0;
 
-    private currentlyEngagedWithJoystick: boolean = false;
+    private lastLookChangeX: number = 0;
+    private lastLookChangeY: number = 0;
 
 
     constructor(inputHandler: InputHandler, chatOverlay: ChatOverlay) {
@@ -30,10 +34,12 @@ export class TouchInputHandler {
 
     public onFrame() {
         this.chatOverlay.setLastTouchTimestamp(this.lastTouchTimestamp);
-        this.chatOverlay.setTouchJoystickEngaged(this.currentlyEngagedWithJoystick);
+        this.chatOverlay.setTouchJoystickEngaged(this.joystickFingerId !== -1);
         this.chatOverlay.setJoystickPosition(this.joystickX, this.joystickY);
         this.inputHandler.setTouchJoyInput(this.joystickInputX, this.joystickInputY);
-        if(!this.currentlyEngagedWithJoystick) {
+        this.inputHandler.setLastTouchLookDelta(this.lastLookChangeX, this.lastLookChangeY);
+        this.lastLookChangeX = 0; this.lastLookChangeY = 0;
+        if(this.joystickFingerId == -1) {
             this.joystickInputX = 0;
             this.joystickInputY = 0;
         }
@@ -55,21 +61,20 @@ export class TouchInputHandler {
             const touchY = event.touches[i].clientY * pixelRatio;
            // console.log(touchX, touchY);
 
-            if(!this.currentlyEngagedWithJoystick){
-                // const touchedExistingJoystick = Math.sqrt(Math.pow(touchX - this.joystickX, 2) + Math.pow(touchY - this.joystickY, 2)) < TouchInputHandler.joystickRadius;
-                //
-                // if (touchedExistingJoystick) {
-                //     this.currentlyEngagedWithJoystick = true;
-                //     this.joystickFingerId = event.touches[i].identifier;
-                //     continue;
-                // }
-
+            if(this.joystickFingerId == -1){
                 if (touchX < globalThis.innerWidth * pixelRatio / 2.5) {
-                    this.currentlyEngagedWithJoystick = true;
+
                     this.joystickFingerId = event.touches[i].identifier;
                     this.joystickX = touchX;
                     this.joystickY = touchY;
                     continue;
+                }
+            }
+            if(this.lookFingerId == -1){
+                if (touchX > globalThis.innerWidth * pixelRatio / 2.5) {
+                    this.lookFingerId = event.touches[i].identifier;
+                    this.lastLookX = touchX;
+                    this.lastLookY = touchY;
                 }
             }
 
@@ -96,22 +101,38 @@ export class TouchInputHandler {
                     this.joystickInputX = Math.cos(dir);
                     this.joystickInputY = Math.sin(dir);
                 }
+                continue;
             }
+
+            if (event.touches[i].identifier === this.lookFingerId) {
+
+                this.lastLookChangeX = touchX - this.lastLookX;
+                this.lastLookChangeY = touchY - this.lastLookY;
+
+                this.lastLookX = touchX;
+                this.lastLookY = touchY;
             }
+
+
+
+
+        }
 
     }
 
     private onTouchEnd(event: TouchEvent) {
         if(event.touches.length === 0) {
-            this.currentlyEngagedWithJoystick = false;
             this.joystickFingerId = -1;
+            this.lookFingerId = -1;
         }
         for(let i = 0; i < event.changedTouches.length; i++) {
-            if (event.changedTouches[i].identifier === this.joystickFingerId) {
-                this.currentlyEngagedWithJoystick = false;
+            if (event.changedTouches[i].identifier === this.joystickFingerId)
                 this.joystickFingerId = -1;
-            }
+            if (event.changedTouches[i].identifier === this.lookFingerId)
+                this.lookFingerId = -1;
+
         }
+
     }
 
     private getPixelRatio(): number {

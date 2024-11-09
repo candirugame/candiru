@@ -27,6 +27,8 @@ export class InputHandler {
     public nameSettingActive: boolean = false;
     private touchJoyX: number = 0;
     private touchJoyY: number = 0;
+    private touchLookX: number = 0;
+    private touchLookY: number = 0;
 
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
@@ -117,6 +119,17 @@ export class InputHandler {
         this.inputX += deltaTimeAcceleration * this.touchJoyX;
         this.inputZ += deltaTimeAcceleration * this.touchJoyY;
 
+        //HERE i want to use this.touchLookX and this.touchLookY to move the camera
+
+        const touchSensitivity = 0.03; // Adjust sensitivity as needed
+        this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
+        this.gamepadEuler.y -= this.touchLookX * touchSensitivity;
+        this.gamepadEuler.x -= this.touchLookY * touchSensitivity;
+        this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
+        this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
+
+
+
 
         if (!this.localPlayer.chatActive && !this.nameSettingActive) {
             if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
@@ -167,6 +180,11 @@ export class InputHandler {
     public setTouchJoyInput(x: number, y: number) {
         this.touchJoyX = x;
         this.touchJoyY = y;
+    }
+
+    public setLastTouchLookDelta(x: number, y: number) {
+        this.touchLookX = x;
+        this.touchLookY = y;
     }
 
     private onKeyDown(event: KeyboardEvent) {
