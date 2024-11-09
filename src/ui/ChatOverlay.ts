@@ -264,13 +264,54 @@ export class ChatOverlay {
     }
 
     public renderTouchControls() {
-        if(!this.touchJoystickEngaged) return;
-        //draw circle for movement
-        this.chatCtx.fillStyle = 'rgba(255,255,255,0.25)';
-        this.chatCtx.beginPath();
-        this.chatCtx.arc(this.joystickX, this.joystickY, TouchInputHandler.joystickRadius, 0, 2 * Math.PI);
-        this.chatCtx.fill();
+        if(Date.now() / 1000 - this.lastTouchTimestamp > 10) return;
+        if(this.touchJoystickEngaged) {
+            //draw circle for movement
+            this.chatCtx.fillStyle = 'rgba(255,255,255,0.25)';
+            this.chatCtx.beginPath();
+            this.chatCtx.arc(this.joystickX, this.joystickY, TouchInputHandler.joystickRadius, 0, 2 * Math.PI);
+            this.chatCtx.fill();
 
+
+        }
+
+        // Draw rounded square center right for jumping
+        const squareWidth = 24;
+        const squareHeight = 24;
+        const cornerRadius = 6;
+        const x = this.chatCanvas.width - squareWidth - 12; // 10px from the right edge
+        let y = (this.chatCanvas.height - squareHeight) / 2 ; // Center vertically
+
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1);
+        y-= squareHeight + 4;
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'●',1);
+
+    }
+
+    private drawButton(x:number, y:number, width:number, height:number, cornerRadius:number, text:string,textOffset:number){
+        this.chatCtx.fillStyle = 'rgba(255,255,255,0.15)';
+        this.drawRoundedSquare(x, y, width, height, cornerRadius);
+        //draw character inside square
+        this.chatCtx.fillStyle = 'rgba(0,0,0,0.5)';
+        this.chatCtx.font = '16px Tiny5';
+        const textWidth = this.chatCtx.measureText(text).width;
+        this.chatCtx.fillText(text, Math.floor(x + width / 2 - textWidth / 2 + textOffset),Math.floor( y + height / 2 + 16 / 2 - 2));
+
+    }
+
+    private drawRoundedSquare(x: number, y: number, width: number, height: number, cornerRadius: number) {
+        this.chatCtx.beginPath();
+        this.chatCtx.moveTo(x + cornerRadius, y);
+        this.chatCtx.lineTo(x + width - cornerRadius, y);
+        this.chatCtx.quadraticCurveTo(x + width, y, x + width, y + cornerRadius);
+        this.chatCtx.lineTo(x + width, y + height - cornerRadius);
+        this.chatCtx.quadraticCurveTo(x + width, y + height, x + width - cornerRadius, y + height);
+        this.chatCtx.lineTo(x + cornerRadius, y + height);
+        this.chatCtx.quadraticCurveTo(x, y + height, x, y + height - cornerRadius);
+        this.chatCtx.lineTo(x, y + cornerRadius);
+        this.chatCtx.quadraticCurveTo(x, y, x + cornerRadius, y);
+        this.chatCtx.closePath();
+        this.chatCtx.fill();
     }
 
     public setLastTouchTimestamp(timestamp: number) {
