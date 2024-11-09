@@ -150,18 +150,25 @@ export class TouchInputHandler {
             this.joystickFingerId = -1;
             this.lookFingerId = -1;
         }
-        for(let i = 0; i < event.changedTouches.length; i++) {
-            if (event.changedTouches[i].identifier === this.joystickFingerId)
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            if (event.changedTouches[i].identifier === this.joystickFingerId) {
                 this.joystickFingerId = -1;
-            if (event.changedTouches[i].identifier === this.lookFingerId)
+            }
+            if (event.changedTouches[i].identifier === this.lookFingerId) {
                 this.lookFingerId = -1;
+            }
 
-            for(let j = 0; j < this.buttonsHeld.length; j++)
-                if(this.buttonsHeld[j].fingerId === event.changedTouches[i].identifier)
+            const touchY = event.changedTouches[i].clientY * this.getPixelRatio();
+            const buttonClosestTo = Math.round((touchY - 100) / 30);
+
+            // Iterate backwards to safely remove elements
+            for (let j = this.buttonsHeld.length - 1; j >= 0; j--) {
+                if (this.buttonsHeld[j].fingerId === event.changedTouches[i].identifier || this.buttonsHeld[j].button === buttonClosestTo) {
                     this.buttonsHeld.splice(j, 1);
-                    //this.buttonsHeld[j].fingerId = -1;
-
+                }
+            }
         }
+
 
     }
 
