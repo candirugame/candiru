@@ -285,6 +285,9 @@ export class ChatOverlay {
         this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1);
         y-= squareHeight + 4;
         this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'●',1);
+        y+= squareHeight + 4;
+        y+= squareHeight + 4;
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'[]',1);
 
     }
 

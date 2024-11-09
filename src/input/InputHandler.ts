@@ -29,6 +29,7 @@ export class InputHandler {
     private touchJoyY: number = 0;
     private touchLookX: number = 0;
     private touchLookY: number = 0;
+    private inventoryIterationTouched: boolean = false;
 
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
@@ -116,17 +117,20 @@ export class InputHandler {
             }
         }
 
+        //touch joystick controls
         this.inputX += deltaTimeAcceleration * this.touchJoyX;
         this.inputZ += deltaTimeAcceleration * this.touchJoyY;
 
-        //HERE i want to use this.touchLookX and this.touchLookY to move the camera
-
+        //touch look controls
         const touchSensitivity = 0.03; // Adjust sensitivity as needed
         this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
         this.gamepadEuler.y -= this.touchLookX * touchSensitivity;
         this.gamepadEuler.x -= this.touchLookY * touchSensitivity;
         this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
         this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
+
+        //touch buttons
+
 
 
 
@@ -185,6 +189,16 @@ export class InputHandler {
     public setLastTouchLookDelta(x: number, y: number) {
         this.touchLookX = x;
         this.touchLookY = y;
+    }
+    public setButtonsHeld(buttons: number[]) {
+        this.leftMouseDown = buttons.includes(-1);
+        this.jump = buttons.includes(0);
+        this.inventoryIterationTouched = buttons.includes(1);
+
+    }
+
+    public getInventoryIterationTouched() {
+        return this.inventoryIterationTouched;
     }
 
     private onKeyDown(event: KeyboardEvent) {

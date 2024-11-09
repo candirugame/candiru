@@ -184,10 +184,16 @@ export class BananaGun extends ItemBase {
                 }
                 this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
             }
-        }
-        requestIdleCallback(processShots);
+        };
 
+        if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(processShots);
+        } else {
+            // Fallback for environments without requestIdleCallback
+            setTimeout(processShots, 0);
+        }
     }
+
 
 
     // Method to set world position when used as WorldItem

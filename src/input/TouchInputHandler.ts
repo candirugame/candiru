@@ -23,6 +23,8 @@ export class TouchInputHandler {
     private lastLookChangeX: number = 0;
     private lastLookChangeY: number = 0;
 
+    private buttonsHeld: {button:number, fingerId: number}[] = [];
+
 
     constructor(inputHandler: InputHandler, chatOverlay: ChatOverlay) {
         this.inputHandler = inputHandler;
@@ -38,6 +40,7 @@ export class TouchInputHandler {
         this.chatOverlay.setJoystickPosition(this.joystickX, this.joystickY);
         this.inputHandler.setTouchJoyInput(this.joystickInputX, this.joystickInputY);
         this.inputHandler.setLastTouchLookDelta(this.lastLookChangeX, this.lastLookChangeY);
+        this.inputHandler.setButtonsHeld(this.buttonsHeld.map((button) => button.button));
         this.lastLookChangeX = 0; this.lastLookChangeY = 0;
         if(this.joystickFingerId == -1) {
             this.joystickInputX = 0;
@@ -71,15 +74,17 @@ export class TouchInputHandler {
                 }
             }
             if(this.lookFingerId == -1){
-                if (touchX > globalThis.innerWidth * pixelRatio / 2.5) {
+                if (touchX > globalThis.innerWidth * pixelRatio / 2.5 && touchX < globalThis.innerWidth * pixelRatio - 30) {
                     this.lookFingerId = event.touches[i].identifier;
                     this.lastLookX = touchX;
                     this.lastLookY = touchY;
+                    continue;
                 }
             }
 
 
         }
+        this.onTouchMove(event);
     }
 
     private onTouchMove(event: TouchEvent) {
@@ -111,6 +116,23 @@ export class TouchInputHandler {
 
                 this.lastLookX = touchX;
                 this.lastLookY = touchY;
+                continue;
+            }
+
+            if(touchX > globalThis.innerWidth * pixelRatio - 30) {
+                const buttonClosestTo = Math.round((touchY - 100) / 30);
+
+                let found = false;
+                for(let j = 0; j < this.buttonsHeld.length; j++)
+                    if(this.buttonsHeld[j].button === buttonClosestTo){
+                        this.buttonsHeld[j].fingerId = event.touches[i].identifier;
+                        found = true;
+                    }
+                if(!found)
+                    this.buttonsHeld.push({button: buttonClosestTo, fingerId: event.touches[i].identifier});
+
+
+
             }
 
 
@@ -131,7 +153,20 @@ export class TouchInputHandler {
             if (event.changedTouches[i].identifier === this.lookFingerId)
                 this.lookFingerId = -1;
 
+            for(let j = 0; j < this.buttonsHeld.length; j++)
+                if(this.buttonsHeld[j].fingerId === event.changedTouches[i].identifier)
+                    this.buttonsHeld.splice(j, 1);
+                    //this.buttonsHeld[j].fingerId = -1;
+
         }
+
+    }
+
+    public getButtonState(button: number): boolean {
+        for(let i = 0; i < this.buttonsHeld.length; i++)
+            if(this.buttonsHeld[i].button === button && this.buttonsHeld[i].fingerId !== -1)
+                return true;
+        return false;
 
     }
 
