@@ -116,9 +116,11 @@ export class Renderer {
         );
         this.remotePlayerRenderer.getEntityScene().fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
         this.remotePlayerRenderer.getEntityScene().add(ambientLight3); // Add ambient light to remote players scene
-
+        this.renderer.domElement.style.touchAction = 'none';
+        this.renderer.domElement.style.position = 'absolute';
         this.onWindowResize();
         globalThis.addEventListener('resize', this.onWindowResize.bind(this), false);
+        globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this), false);
     }
 
     public onFrame(localPlayer: Player) {

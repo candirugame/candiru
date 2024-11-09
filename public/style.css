@@ -2,6 +2,8 @@ html, body {
     margin: 0;
     padding: 0;
     overflow: hidden; /* Prevents scrollbars */
+
+    background-color: black; /* Ensure the background is black to match your theme */
 }
 
 @font-face {

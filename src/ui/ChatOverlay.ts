@@ -30,6 +30,7 @@ export class ChatOverlay {
     private debugTextHeight!: number;
     private oldScreenWidth:number = 0;
     private readonly commandManager: CommandManager;
+    private lastTouchTimestamp: number = 0;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -54,6 +55,8 @@ export class ChatOverlay {
         this.setupEventListeners();
 
         this.chatCanvas.style.position = 'absolute';
+        this.chatCanvas.style.display = 'block';
+        this.chatCanvas.style.zIndex = '100';
         this.chatCanvas.style.top = '0';
         this.chatCanvas.style.left = '0';
 
@@ -61,6 +64,8 @@ export class ChatOverlay {
         document.body.style.margin = '0';
         this.chatCanvas.style.imageRendering = 'pixelated';
         this.chatCanvas.style.textRendering = 'pixelated';
+
+        this.chatCanvas.style.touchAction = 'none';
 
         document.body.appendChild(this.chatCanvas);
     }
@@ -93,12 +98,14 @@ export class ChatOverlay {
             this.renderPlayerList();
         this.renderEvil();
         this.renderCrosshair();
+        this.renderTouchControls();
+
 
 
         this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
         if(this.oldScreenWidth !== this.screenWidth){
-            if(this.chatCanvas.width < this.screenWidth)
+            //if(this.chatCanvas.width < this.screenWidth)
                 this.chatCanvas.width = this.screenWidth;
             this.oldScreenWidth = this.screenWidth;
         }
@@ -106,9 +113,18 @@ export class ChatOverlay {
 
         // this.chatCanvas.width = this.screenWidth;
         // this.chatCtx.fillRect(0,0,10,10);
+        globalThis.addEventListener('resize', this.onWindowResize.bind(this));
+        globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this));
 
+        this.onWindowResize();
 
         this.inputHandler.nameSettingActive = this.nameSettingActive;
+    }
+    private onWindowResize() {
+
+        this.chatCanvas.style.width = globalThis.innerWidth + 'px';
+        this.chatCanvas.style.height = globalThis.innerHeight+ 'px';
+
     }
 
     private renderChatMessages() {
@@ -241,6 +257,22 @@ export class ChatOverlay {
         }
 
         this.debugTextHeight = 7 * linesToRender.length;
+    }
+
+    public renderTouchControls() {
+        console.log(this.lastTouchTimestamp - Date.now()/1000);
+
+        if(Date.now()/1000 - this.lastTouchTimestamp > 5) return;
+        //draw circle for movement
+        this.chatCtx.fillStyle = 'rgba(255,255,255,0.5)';
+        this.chatCtx.beginPath();
+        this.chatCtx.arc(100, 130, 30, 0, 2 * Math.PI);
+        this.chatCtx.fill();
+
+    }
+
+    public setLastTouchTimestamp(timestamp: number) {
+        this.lastTouchTimestamp = timestamp;
     }
 
     public renderHitMarkers() {
