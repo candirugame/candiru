@@ -35,6 +35,8 @@ export class ChatOverlay {
     private touchJoystickEngaged: boolean = false;
     private joystickX: number = 0;
     private joystickY: number = 0;
+    private joystickInputX: number = 0;
+    private joystickInputY: number = 0;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -272,6 +274,13 @@ export class ChatOverlay {
             this.chatCtx.arc(this.joystickX, this.joystickY, TouchInputHandler.joystickRadius, 0, 2 * Math.PI);
             this.chatCtx.fill();
 
+            //smaller circle for joystick-- offset from center
+            this.chatCtx.fillStyle = 'rgba(255,255,255,0.5)';
+            this.chatCtx.beginPath();
+            this.chatCtx.arc(this.joystickX + this.joystickInputX * TouchInputHandler.joystickRadius, this.joystickY + this.joystickInputY * TouchInputHandler.joystickRadius, 10, 0, 2 * Math.PI);
+            this.chatCtx.fill();
+
+
 
         }
 
@@ -326,6 +335,10 @@ export class ChatOverlay {
     public setJoystickPosition(x: number, y: number) {
         this.joystickX = x;
         this.joystickY = y;
+    }
+    public setJoystickInput(x: number, y: number) {
+        this.joystickInputX = x;
+        this.joystickInputY = y;
     }
 
     public renderHitMarkers() {

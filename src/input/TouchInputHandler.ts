@@ -38,6 +38,7 @@ export class TouchInputHandler {
         this.chatOverlay.setLastTouchTimestamp(this.lastTouchTimestamp);
         this.chatOverlay.setTouchJoystickEngaged(this.joystickFingerId !== -1);
         this.chatOverlay.setJoystickPosition(this.joystickX, this.joystickY);
+        this.chatOverlay.setJoystickInput(this.joystickInputX, this.joystickInputY);
         this.inputHandler.setTouchJoyInput(this.joystickInputX, this.joystickInputY);
         this.inputHandler.setLastTouchLookDelta(this.lastLookChangeX, this.lastLookChangeY);
         this.inputHandler.setButtonsHeld(this.buttonsHeld.map((button) => button.button));
