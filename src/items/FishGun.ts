@@ -178,8 +178,11 @@ export class FishGun extends ItemBase {
         const totalShots = 25;
         let processedShots = 0;
 
-        const processShots = (deadline: IdleDeadline) => {
-            while (processedShots < totalShots && deadline.timeRemaining() > 0) {
+        const processShots = (deadline?: IdleDeadline) => {
+            // Use a default value for timeRemaining if deadline is undefined
+            const timeRemaining = deadline ? deadline.timeRemaining() : Number.MAX_VALUE;
+
+            while (processedShots < totalShots && timeRemaining > 0) {
                 const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
                     (Math.random() - 0.5) * 0.5,
                     (Math.random() - 0.5) * 0.5
@@ -200,12 +203,23 @@ export class FishGun extends ItemBase {
             }
 
             if (processedShots < totalShots) {
-                requestIdleCallback(processShots);
+                if (typeof requestIdleCallback === 'function') {
+                    requestIdleCallback(processShots);
+                } else {
+                    // Fallback for environments without requestIdleCallback
+                    setTimeout(() => processShots(), 0);
+                }
             }
         };
 
-        requestIdleCallback(processShots);
+        if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(processShots);
+        } else {
+            // Initial call for environments without requestIdleCallback
+            setTimeout(() => processShots(), 0);
+        }
     }
+
 
 
 

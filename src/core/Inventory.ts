@@ -87,7 +87,7 @@ export class Inventory {
         this.updateInventoryItems();
         const gamepadInputs = this.inputHandler.getGamepadInputs();
         const heldItemInput = new HeldItemInput(this.inputHandler.getShoot(), this.inputHandler.getAim(), false);
-        let downPressed = this.inputHandler.getKey('[') && !this.localPlayer.chatActive;
+        let downPressed =( this.inputHandler.getKey('[') || this.inputHandler.getInventoryIterationTouched()) && !this.localPlayer.chatActive;
         let upPressed = this.inputHandler.getKey(']') && !this.localPlayer.chatActive;
         if (gamepadInputs.leftShoulder && !this.localPlayer.chatActive) upPressed = true;
         if (gamepadInputs.rightShoulder && !this.localPlayer.chatActive) downPressed = true;

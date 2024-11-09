@@ -2,6 +2,14 @@ html, body {
     margin: 0;
     padding: 0;
     overflow: hidden; /* Prevents scrollbars */
+    touch-action: none; /* Disables touch interactions like panning and zooming */
+    background-color: black; /* Ensure the background is black to match your theme */
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 @font-face {
