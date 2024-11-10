@@ -1,7 +1,10 @@
-import { Player } from '../core/Player.ts';
-import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
-import { InputHandler } from '../input/InputHandler.ts';
+import {Player} from '../core/Player.ts';
+import {Renderer} from '../core/Renderer.ts';
+import {Networking} from '../core/Networking.ts';
+import {InputHandler} from '../input/InputHandler.ts';
+import {CommandManager} from "../core/CommandManager.ts";
+import {SettingsManager} from "../core/SettingsManager.ts";
+import {TouchInputHandler} from "../input/TouchInputHandler.ts";
 
 interface ChatMessage {
     id: number;
@@ -9,6 +12,8 @@ interface ChatMessage {
     name: string;
     timestamp: number;
 }
+
+const hitMarkerLifetime = 0.3;
 
 export class ChatOverlay {
     private chatCanvas: HTMLCanvasElement;
@@ -25,6 +30,14 @@ export class ChatOverlay {
     private inputHandler!: InputHandler;
     private debugTextHeight!: number;
     private oldScreenWidth:number = 0;
+    private readonly commandManager: CommandManager;
+    private lastTouchTimestamp: number = 0;
+    private touchJoystickEngaged: boolean = false;
+    private joystickX: number = 0;
+    private joystickY: number = 0;
+    private joystickInputX: number = 0;
+    private joystickInputY: number = 0;
+    private buttonsHeld: number[] = [];
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -44,8 +57,22 @@ export class ChatOverlay {
         this.nameSettingActive = false;
         this.screenWidth = 100;
 
+        this.commandManager = new CommandManager(this.localPlayer, this);
+
         this.setupEventListeners();
 
+        this.chatCanvas.style.position = 'absolute';
+        this.chatCanvas.style.display = 'block';
+        this.chatCanvas.style.zIndex = '100';
+        this.chatCanvas.style.top = '0';
+        this.chatCanvas.style.left = '0';
+
+         this.chatCanvas.style.height = '100vh';
+        document.body.style.margin = '0';
+        this.chatCanvas.style.imageRendering = 'pixelated';
+        this.chatCanvas.style.textRendering = 'pixelated';
+
+        this.chatCanvas.style.touchAction = 'none';
 
         document.body.appendChild(this.chatCanvas);
     }
@@ -79,17 +106,21 @@ export class ChatOverlay {
     public onFrame() {
         this.clearOldMessages();
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+        this.renderHitMarkers();
         this.renderChatMessages();
         this.renderDebugText();
         if (this.inputHandler.getKey('tab'))
             this.renderPlayerList();
         this.renderEvil();
         this.renderCrosshair();
+        this.renderTouchControls();
+
+
 
         this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
         if(this.oldScreenWidth !== this.screenWidth){
-            if(this.chatCanvas.width != this.screenWidth)
+            //if(this.chatCanvas.width < this.screenWidth)
                 this.chatCanvas.width = this.screenWidth;
             this.oldScreenWidth = this.screenWidth;
         }
@@ -97,6 +128,18 @@ export class ChatOverlay {
 
         // this.chatCanvas.width = this.screenWidth;
         // this.chatCtx.fillRect(0,0,10,10);
+        globalThis.addEventListener('resize', this.onWindowResize.bind(this));
+        globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this));
+
+        this.onWindowResize();
+
+        this.inputHandler.nameSettingActive = this.nameSettingActive;
+    }
+    private onWindowResize() {
+
+        this.chatCanvas.style.width = globalThis.innerWidth + 'px';
+        this.chatCanvas.style.height = globalThis.innerHeight+ 'px';
+
     }
 
     private renderChatMessages() {
@@ -154,6 +197,9 @@ export class ChatOverlay {
         if (this.nameSettingActive) {
             linesToRender.push('Enter your name: ' + usermsg + cursor);
             pixOffsets.push(0);
+            this.localPlayer.name = usermsg + cursor;
+            if(this.localPlayer.name.length == 0) this.localPlayer.name = ' ';
+
         }
 
         const wrappedLines: string[] = [];
@@ -196,9 +242,9 @@ export class ChatOverlay {
 
         const linesToRender = [];
         const framerate = this.renderer.getFramerate();
-        //const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
-        //const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
-        //const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
+        // const playerX = Math.floor(this.localPlayer.position.x * 100) / 100;
+        // const playerY = Math.floor(this.localPlayer.position.y * 100) / 100;
+        // const playerZ = Math.floor(this.localPlayer.position.z * 100) / 100;
 
         //const playerQuatX = Math.floor(this.localPlayer.lookQuaternion.x * 100) / 100;
         //const playerQuatY = Math.floor(this.localPlayer.lookQuaternion.y * 100) / 100;
@@ -209,12 +255,15 @@ export class ChatOverlay {
         // const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
         // const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
 
+
+
         if(this.localPlayer.latency >=999)
             linesToRender.push('Disconnected :(');
 
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push(Math.floor(framerate) + 'FPS');
         //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
+        //linesToRender.push('px: ' + projectedX + ' py: ' + projectedY + ' pz: ' + projected.z);
         //linesToRender.push('qx: ' + playerQuatX + ' qy: ' + playerQuatY + ' qz: ' + playerQuatZ + ' qw: ' + playerQuatW);
         // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
@@ -224,6 +273,130 @@ export class ChatOverlay {
 
         this.debugTextHeight = 7 * linesToRender.length;
     }
+
+    public renderTouchControls() {
+        if(Date.now() / 1000 - this.lastTouchTimestamp > 10) return;
+        if(this.touchJoystickEngaged) {
+            //draw circle for movement
+            this.chatCtx.fillStyle = 'rgba(255,255,255,0.25)';
+            this.chatCtx.beginPath();
+            this.chatCtx.arc(this.joystickX, this.joystickY, TouchInputHandler.joystickRadius, 0, 2 * Math.PI);
+            this.chatCtx.fill();
+
+            //smaller circle for joystick-- offset from center
+            this.chatCtx.fillStyle = 'rgba(255,255,255,0.5)';
+            this.chatCtx.beginPath();
+            this.chatCtx.arc(this.joystickX + this.joystickInputX * TouchInputHandler.joystickRadius, this.joystickY + this.joystickInputY * TouchInputHandler.joystickRadius, 10, 0, 2 * Math.PI);
+            this.chatCtx.fill();
+
+
+
+        }
+
+        // Draw rounded square center right for jumping
+        const squareWidth = 24;
+        const squareHeight = 24;
+        const cornerRadius = 6;
+        const x = this.chatCanvas.width - squareWidth - 12; // 10px from the right edge
+        let y = (this.chatCanvas.height - squareHeight) / 2 ; // Center vertically
+
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'●',1,0);
+        y-= squareHeight + 4;
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1,-1);
+        y+= squareHeight + 4;
+        y+= squareHeight + 4;
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'[]',1,1);
+
+    }
+
+    public setButtonsHeld(buttons: number[]) {
+        this.buttonsHeld = buttons;
+    }
+
+    private drawButton(x:number, y:number, width:number, height:number, cornerRadius:number, text:string,textOffset:number, index:number) {
+        if(this.buttonsHeld.includes(index))
+            this.chatCtx.fillStyle = 'rgba(100,100,100,0.3)';
+        else
+            this.chatCtx.fillStyle = 'rgba(255,255,255,0.15)';
+
+        this.drawRoundedSquare(x, y, width, height, cornerRadius);
+        //draw character inside square
+        this.chatCtx.fillStyle = 'rgba(0,0,0,0.5)';
+        this.chatCtx.font = '16px Tiny5';
+        const textWidth = this.chatCtx.measureText(text).width;
+        this.chatCtx.fillText(text, Math.floor(x + width / 2 - textWidth / 2 + textOffset),Math.floor( y + height / 2 + 16 / 2 - 2));
+
+    }
+
+    private drawRoundedSquare(x: number, y: number, width: number, height: number, cornerRadius: number) {
+        this.chatCtx.beginPath();
+        this.chatCtx.moveTo(x + cornerRadius, y);
+        this.chatCtx.lineTo(x + width - cornerRadius, y);
+        this.chatCtx.quadraticCurveTo(x + width, y, x + width, y + cornerRadius);
+        this.chatCtx.lineTo(x + width, y + height - cornerRadius);
+        this.chatCtx.quadraticCurveTo(x + width, y + height, x + width - cornerRadius, y + height);
+        this.chatCtx.lineTo(x + cornerRadius, y + height);
+        this.chatCtx.quadraticCurveTo(x, y + height, x, y + height - cornerRadius);
+        this.chatCtx.lineTo(x, y + cornerRadius);
+        this.chatCtx.quadraticCurveTo(x, y, x + cornerRadius, y);
+        this.chatCtx.closePath();
+        this.chatCtx.fill();
+    }
+
+    public setLastTouchTimestamp(timestamp: number) {
+        this.lastTouchTimestamp = timestamp;
+    }
+    public setTouchJoystickEngaged(value: boolean) {
+        this.touchJoystickEngaged = value;
+    }
+    public setJoystickPosition(x: number, y: number) {
+        this.joystickX = x;
+        this.joystickY = y;
+    }
+    public setJoystickInput(x: number, y: number) {
+        this.joystickInputX = x;
+        this.joystickInputY = y;
+    }
+
+    public renderHitMarkers() {
+        const numDots = 10; // Number of dots to render around each hit point
+
+        for (let i = this.renderer.playerHitMarkers.length - 1; i >= 0; i--) {
+            if (this.renderer.playerHitMarkers[i].timestamp === -1)
+                this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000; // Set timestamp if not set
+
+            const timeSinceHit = Date.now() / 1000 - this.renderer.playerHitMarkers[i].timestamp;
+            const lifePercent = timeSinceHit / hitMarkerLifetime;
+
+            if (timeSinceHit > hitMarkerLifetime) {
+                this.renderer.playerHitMarkers.splice(i, 1);
+                continue;
+            }
+
+            const hitVec = this.renderer.playerHitMarkers[i].hitPoint;
+            const projected = hitVec.clone().project(this.renderer.getCamera());
+            const projectedX = Math.round((projected.x + 1) * this.screenWidth / 2);
+            const projectedY = Math.round((-projected.y + 1) * 200 / 2);
+
+            if (projected.z < 1) {
+                this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+
+                // Calculate sizeMultiplier
+                const sizeMultiplier = 1 + 2 / this.renderer.playerHitMarkers[i].shotVector.length();
+
+                // Calculate and render dots
+                const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier; // Radius of the circle in which dots are placed
+                for (let j = 0; j < numDots; j++) {
+                    const angle = (Math.PI * 2 / numDots) * j;
+                    const dotX = Math.round(projectedX + radius * Math.cos(angle));
+                    const dotY = Math.round(projectedY + radius * Math.sin(angle));
+
+                    this.chatCtx.fillRect(dotX, dotY, 1, 1); // Render a 1px by 1px dot
+                }
+            }
+        }
+    }
+
 
     public getDebugTextHeight(): number {
         return this.debugTextHeight;
@@ -272,11 +445,18 @@ export class ChatOverlay {
 
     private renderCrosshair() {
         const ctx = this.chatCtx;
-        ctx.fillStyle = 'rgb(0,255,225)';
+        ctx.fillStyle = SettingsManager.settings.crosshairColor;
         if (this.renderer.crosshairIsFlashing)
-            ctx.fillStyle = 'rgb(255,0,0)';
-        ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
-        ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+            ctx.fillStyle = '#FF0000';
+        switch (SettingsManager.settings.crosshairType) {
+            case 0:
+                ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
+                ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+                break;
+            case 1:
+                ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
+                break;
+        }
     }
 
     private onKeyDown(e: KeyboardEvent) {
@@ -286,10 +466,13 @@ export class ChatOverlay {
         }
 
         if (e.key === 'Enter') {
-            if (this.localPlayer.chatActive) this.networking.sendMessage(this.localPlayer.chatMsg);
+            if (this.localPlayer.chatActive) {
+                if(!this.commandManager.runCmd(this.localPlayer.chatMsg)) this.networking.sendMessage(this.localPlayer.chatMsg);
+            }
             if (this.nameSettingActive) {
                 this.localPlayer.name = this.localPlayer.chatMsg.toString();
-                localStorage.setItem('name', this.localPlayer.name);
+                SettingsManager.settings.name = this.localPlayer.chatMsg.toString();
+                SettingsManager.write();
             }
             this.localPlayer.chatMsg = '';
             this.localPlayer.chatActive = false;
@@ -385,4 +568,6 @@ export class ChatOverlay {
 
         return resultLines;
     }
+
+
 }

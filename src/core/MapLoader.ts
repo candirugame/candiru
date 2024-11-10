@@ -29,7 +29,7 @@ export class MapLoader {
             this.mapUrl,
             (gltf: { scene: THREE.Group; }) => {
                 this.mapObject = gltf.scene;
-                    this.collisionManager.staticGeometry(gltf.scene);
+                CollisionManager.staticGeometry(gltf.scene);
                 this.scene.add(this.mapObject);
             },
             undefined,

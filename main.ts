@@ -20,7 +20,7 @@ const maxHealth = 100;
 const baseInventory:number[] = [];
 
 const itemCreationDelay = 10; // Create a new item every x seconds
-const maxItemsInWorld = 5;
+const maxItemsInWorld = 6;
 const serverTickRate = 15;
 
 interface Vector3 {
@@ -210,7 +210,8 @@ function checkForPickups() {
         playerData[i].position.z,
         0.5
     );
-    if (itemIndex !== -1 && playerData[i].inventory.includes(1) === false) {
+    if(itemIndex === -1) continue;
+    if (playerData[i].inventory.includes(1) === false) {
       let item = worldItemData[itemIndex];
       if (item.itemType === 1) {
         playerData[i].inventory.push(1);
@@ -218,8 +219,22 @@ function checkForPickups() {
         itemUpdateSinceLastEmit = true;
         console.log('🍌 ' + playerData[i].name + ' picked up banana!');
         //sendChatMessage(playerData[i].name + ' picked up banana!');
+        continue;
       }
     }
+
+    if (playerData[i].inventory.includes(2) === false) {
+      let item = worldItemData[itemIndex];
+      if (item.itemType === 2) {
+        playerData[i].inventory.push(2);
+        worldItemData.splice(itemIndex, 1);
+        itemUpdateSinceLastEmit = true;
+        console.log('🍌 ' + playerData[i].name + ' picked up fish!');
+        //sendChatMessage(playerData[i].name + ' picked up fish!');
+        continue;
+      }
+    }
+
   }
 }
 
@@ -342,17 +357,17 @@ io.on('connection', (socket: Socket) => {
     );
 
     if (localDistance > 1 || targetDistance > 1) {
-      console.log(
-          '⚠️ client out of sync - name:' +
-          data.localPlayer.name +
-          ' latency: ' +
-          Math.floor(data.localPlayer.latency) +
-          ' localDistance: ' +
-          localDistance +
-          ' targetDistance: ' +
-          targetDistance
-      );
-      whisperChatMessage('⚠️ shot not registered (client out of sync)', socket);
+      // console.log(
+      //     '⚠️ client out of sync - name:' +
+      //     data.localPlayer.name +
+      //     ' latency: ' +
+      //     Math.floor(data.localPlayer.latency) +
+      //     ' localDistance: ' +
+      //     localDistance +
+      //     ' targetDistance: ' +
+      //     targetDistance
+      // );
+      //whisperChatMessage('⚠️ shot not registered (client out of sync)', socket);
       return;
     }
 

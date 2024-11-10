@@ -3,6 +3,11 @@ import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
+import {acceleratedRaycast, computeBoundsTree} from "three-mesh-bvh";
+import {CollisionManager} from "../input/CollisionManager.ts";
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 interface RemotePlayerData {
     health: number;
@@ -11,6 +16,7 @@ interface RemotePlayerData {
     position: { x: number; y: number; z: number };
     quaternion: [number, number, number, number]; // Add quaternion as required
     forced: boolean;
+    name: string;
 }
 
 interface RemotePlayer extends Omit<RemotePlayerData, 'quaternion'> {
@@ -21,12 +27,14 @@ interface PlayerToRender {
     id: number;
     object: THREE.Object3D;
     objectUUID: string;
+    nameLabel: THREE.Sprite;
+    name: string;
 }
 
 export class RemotePlayerRenderer {
     private entityScene: THREE.Scene;
     private playersToRender: PlayerToRender[];
-    private possumGLTFScene: THREE.Group | undefined;
+    private possumMesh: THREE.Mesh | undefined;
     private loader: GLTFLoader;
     private dracoLoader: DRACOLoader;
 
@@ -67,11 +75,14 @@ export class RemotePlayerRenderer {
         this.dracoLoader.setDecoderPath('/draco/');
         this.loader.setDRACOLoader(this.dracoLoader);
 
-        this.possumGLTFScene = undefined;
+        this.possumMesh = undefined;
         this.loader.load(
             'models/simplified_possum.glb',
             (gltf) => {
-                this.possumGLTFScene = gltf.scene;
+                console.time("Computing possum BVH");
+                (<THREE.Mesh>gltf.scene.children[0]).geometry.computeBoundsTree();
+                console.timeEnd("Computing possum BVH");
+                this.possumMesh = (<THREE.Mesh>gltf.scene.children[0]);
             },
             undefined,
             () => {
@@ -99,7 +110,7 @@ export class RemotePlayerRenderer {
     }
 
     private updateRemotePlayers(): void {
-        if (!this.possumGLTFScene) return;
+        if (!this.possumMesh) return;
 
         const remotePlayerData: RemotePlayer[] = this.networking.getRemotePlayerData();
         const localPlayerId = this.localPlayer.id;
@@ -197,12 +208,11 @@ export class RemotePlayerRenderer {
             this.lastRunningYOffset[playerId] = 0;
         }
 
-        //Apply scared effect
-        const scaredLevel = 1-Math.pow(remotePlayerData.health / 100,2); //0-1
-        playerObject.position.x += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
-        playerObject.position.y += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
-        playerObject.position.z += (Math.random() - 0.5 ) * 0.05 * scaredLevel;
-
+        // Apply scared effect
+        const scaredLevel = 1 - Math.pow(remotePlayerData.health / 100, 2); // 0-1
+        playerObject.position.x += (Math.random() - 0.5) * 0.05 * scaredLevel;
+        playerObject.position.y += (Math.random() - 0.5) * 0.05 * scaredLevel;
+        playerObject.position.z += (Math.random() - 0.5) * 0.05 * scaredLevel;
 
         // Apply quaternion slerp as before
         const targetQuaternion = new THREE.Quaternion(
@@ -215,17 +225,51 @@ export class RemotePlayerRenderer {
         targetQuaternion.multiply(rotationQuaternion);
 
         playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
+
+        // Update the position of the name label
+        const player = this.playersToRender.find(p => p.id === remotePlayerData.id);
+        if (player) {
+            player.nameLabel.position.set(
+                playerObject.position.x,
+                playerObject.position.y + 0.40, // Adjust the Y offset as needed
+                playerObject.position.z
+            );
+            player.nameLabel.lookAt(this.camera.position);
+
+            // Check if the name has changed
+            if (player.name !== remotePlayerData.name) {
+                player.name = remotePlayerData.name; // Update stored name
+                // Remove old label
+                this.entityScene.remove(player.nameLabel);
+                // Create and add new label
+                player.nameLabel = this.createTextSprite(remotePlayerData.name.toString());
+                player.nameLabel.position.set(
+                    playerObject.position.x,
+                    playerObject.position.y + 0.40,
+                    playerObject.position.z
+                );
+                this.entityScene.add(player.nameLabel);
+            }
+        }
     }
 
     private addNewPlayer(remotePlayerData: RemotePlayerData): void {
-        const object = this.possumGLTFScene!.children[0].clone();
+        const object = this.possumMesh!.clone();
+
+        // Create a text sprite for the player's name
+        const nameLabel = this.createTextSprite(remotePlayerData.name.toString());
+
         const newPlayer: PlayerToRender = {
             id: remotePlayerData.id,
             object: object,
             objectUUID: object.uuid,
+            nameLabel: nameLabel,
+            name: remotePlayerData.name,
         };
+
         this.playersToRender.push(newPlayer);
         this.entityScene.add(newPlayer.object);
+        this.entityScene.add(newPlayer.nameLabel);
 
         // Initialize groundTruthPosition for the new player
         this.groundTruthPositions[remotePlayerData.id] = new THREE.Vector3(
@@ -240,6 +284,7 @@ export class RemotePlayerRenderer {
             const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
             if (!isActive) {
                 this.entityScene.remove(player.object);
+                this.entityScene.remove(player.nameLabel);
                 // Remove associated data for the player
                 delete this.groundTruthPositions[player.id];
                 delete this.isAnimating[player.id];
@@ -251,32 +296,85 @@ export class RemotePlayerRenderer {
         });
     }
 
-    public getRemotePlayerObjectsInCrosshair(raycaster: THREE.Raycaster, camera: THREE.Camera): THREE.Object3D[] {
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-        return raycaster.intersectObjects(this.entityScene.children).map((intersect) => intersect.object);
+    private createTextSprite(text: string): THREE.Sprite {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        const fontSize = 64;
+        context.font = `${fontSize}px Comic Sans MS`;
+
+        // Measure the text width and set canvas size accordingly
+        const textWidth = context.measureText(text).width;
+        canvas.width = textWidth * 2; // Increase resolution
+        canvas.height = fontSize * 2; // Increase resolution
+
+        // Redraw the text on the canvas
+        context.font = `${fontSize}px Comic Sans MS`;
+        context.fillStyle = 'rgba(255,255,255,1)';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        // Adjust the sprite scale to match the canvas aspect ratio
+        sprite.scale.set((textWidth / fontSize ) * 0.4 , 0.4, 0.4);
+
+        return sprite;
     }
 
+
     public getRemotePlayerIDsInCrosshair(): number[] {
-        const playerIDs: number[] = [];
+        const shotVectors = this.getShotVectorsToPlayersInCrosshair();
+        const playerIDs = shotVectors.map(shot => shot.playerID);
+        return playerIDs;
+    }
+
+    public getShotVectorsToPlayersInCrosshair(): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        const shotVectors: { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] = [];
         const objectsInCrosshair = this.getPlayersInCrosshairWithWalls();
 
         for (const object of objectsInCrosshair) {
             for (const player of this.playersToRender) {
                 if (player.objectUUID === object.uuid) {
-                    if (!playerIDs.includes(player.id)) playerIDs.push(player.id);
+                    // Find the intersection point on the player
+                    const intersection = this.findIntersectionOnPlayer(object);
+                    if (intersection) {
+                        const vector = new THREE.Vector3().subVectors(intersection.point, this.camera.position);
+                        const hitPoint = intersection.point.clone(); // World coordinates of the hit
+                        shotVectors.push({ playerID: player.id, vector, hitPoint });
+                    }
                     break;
                 }
             }
         }
 
-        return playerIDs;
+        return shotVectors;
+    }
+
+    private findIntersectionOnPlayer(playerObject: THREE.Object3D): THREE.Intersection | null {
+        this.raycaster.setFromCamera(this.crosshairVec, this.camera);
+
+        const intersects = this.raycaster.intersectObject(playerObject, true);
+        if (intersects.length > 0) {
+            return intersects[0]; // Return the first intersection point
+        }
+        return null;
     }
 
     private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
 
+        const geom = CollisionManager.getColliderGeom();
+        const map = new THREE.Mesh(geom);
+        const mapobj = new THREE.Object3D;
+        mapobj.add(map);
+
         const playerIntersects = this.raycaster.intersectObjects(this.entityScene.children);
-        const wallIntersects = this.raycaster.intersectObjects(this.scene.children);
+        this.raycaster.firstHitOnly = true;
+        const wallIntersects = this.raycaster.intersectObjects([mapobj]);
+        this.raycaster.firstHitOnly = false;
 
         const filteredIntersects = playerIntersects.filter((playerIntersect) => {
             for (const wallIntersect of wallIntersects) {
@@ -288,5 +386,74 @@ export class RemotePlayerRenderer {
         });
 
         return filteredIntersects.map((intersect) => intersect.object);
+    }
+
+    public getShotVectorsToPlayersWithOffset(yawOffset: number, pitchOffset: number): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
+        const shotVectors: { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] = [];
+        const offsetDirection = this.calculateOffsetDirection(yawOffset, pitchOffset);
+
+        // Set the raycaster with the offset direction
+        this.raycaster.set(this.camera.position, offsetDirection);
+
+        const geom = CollisionManager.getColliderGeom();
+        const map = new THREE.Mesh(geom);
+        const mapobj = new THREE.Object3D;
+        mapobj.add(map);
+
+        // Intersect with all potential targets (players and walls)
+        const playerIntersects = this.raycaster.intersectObjects(this.playersToRender.map(p => p.object), true);
+        this.raycaster.firstHitOnly = true;
+        const wallIntersects = this.raycaster.intersectObjects([mapobj]);
+        this.raycaster.firstHitOnly = false;
+
+        // Filter player intersections based on wall intersections
+        const filteredPlayerIntersects = playerIntersects.filter((playerIntersect) => {
+            for (const wallIntersect of wallIntersects) {
+                if (wallIntersect.distance < playerIntersect.distance) {
+                    return false; // A wall is blocking the player
+                }
+            }
+            return true; // No wall is blocking the player
+        });
+
+        // Process the filtered player intersections
+        for (const intersect of filteredPlayerIntersects) {
+            const player = this.playersToRender.find(p => p.object === intersect.object);
+            if (player) {
+                const vector = new THREE.Vector3().subVectors(intersect.point, this.camera.position);
+                const hitPoint = intersect.point.clone(); // World coordinates of the hit
+                shotVectors.push({ playerID: player.id, vector, hitPoint });
+            }
+        }
+
+        return shotVectors;
+    }
+
+
+    private calculateOffsetDirection(yawOffset: number, pitchOffset: number): THREE.Vector3 {
+        // Get the camera's current direction
+        const direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+
+        // Create a quaternion for the yaw and pitch offsets
+        const yawQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawOffset);
+        const pitchQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitchOffset);
+
+        // Apply the rotations
+        direction.applyQuaternion(yawQuaternion);
+        direction.applyQuaternion(pitchQuaternion);
+
+        return direction.normalize();
+    }
+
+    private findIntersectionOnPlayerWithOffset(playerObject: THREE.Object3D, offsetDirection: THREE.Vector3): THREE.Intersection | null {
+        // Set the raycaster with the offset direction
+        this.raycaster.set(this.camera.position, offsetDirection);
+
+        const intersects = this.raycaster.intersectObject(playerObject, true);
+        if (intersects.length > 0) {
+            return intersects[0]; // Return the first intersection point
+        }
+        return null;
     }
 }

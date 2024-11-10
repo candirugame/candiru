@@ -15,14 +15,14 @@ export class CollisionManager {
     private deltaVec: THREE.Vector3;
     private raycaster: THREE.Raycaster;
     private scene: THREE.Scene;
-    public mapLoaded: boolean = false;
-    private staticGenerator?: StaticGeometryGenerator; // Mark as possibly undefined
-    private colliderGeom?: THREE.BufferGeometry; // Mark as possibly undefined
+    public static mapLoaded: boolean = false;
+    private static colliderGeom?: THREE.BufferGeometry; // Mark as possibly undefined
     private inputHandler: InputHandler;
     private static maxAngle: number = Math.cos(45 * Math.PI / 180);
     private triNormal: Vector3;
     private coyoteTime: number;
     private jumped: boolean;
+    private collided: boolean;
 
     constructor(renderer: Renderer, inputHandler: InputHandler) {
         this.scene = renderer.getScene();
@@ -34,11 +34,12 @@ export class CollisionManager {
         this.triNormal = new THREE.Vector3();
         this.coyoteTime = 0;
         this.jumped = false;
+        this.collided = false;
     }
 
 
     public collisionPeriodic(localPlayer: Player) {
-        if (!this.mapLoaded || !this.colliderGeom || !this.colliderGeom.boundsTree) return; // Add checks
+        if (!CollisionManager.mapLoaded || !CollisionManager.colliderGeom || !CollisionManager.colliderGeom.boundsTree) return; // Add checks
         let deltaTime: number = this.clock.getDelta();
         let steps: number = 1;
         while (deltaTime >= 1/120) {
@@ -58,12 +59,12 @@ export class CollisionManager {
         localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .25;
         localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
 
-        const bvh: MeshBVH | undefined = this.colliderGeom?.boundsTree;
+        const bvh: MeshBVH | undefined = CollisionManager.colliderGeom?.boundsTree;
         if (!bvh) return; // Ensure bvh exists
 
         this.colliderSphere.center = localPlayer.position.clone();
 
-        let collided: boolean = false;
+        this.collided = false;
 
         bvh.shapecast({
             intersectsBounds: (box: THREE.Box3) => {
@@ -91,7 +92,7 @@ export class CollisionManager {
                         localPlayer.velocity.y = 0;
                         localPlayer.gravity = 0;
                         this.coyoteTime = 0;
-                        collided = true;
+                        this.collided = true;
                     } else {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
                     }
@@ -103,7 +104,7 @@ export class CollisionManager {
             }
         });
 
-        if (!collided) {
+        if (!this.collided) {
             this.coyoteTime += deltaTime;
             if (jump && this.coyoteTime < 6 / 60 && !this.jumped) {
                 localPlayer.gravity = 8;
@@ -118,13 +119,23 @@ export class CollisionManager {
         }
     }
 
-    public staticGeometry(group: Group) {
-        console.time("Building static geometry BVH");
-        this.staticGenerator = new StaticGeometryGenerator(group);
-        this.staticGenerator.attributes = ['position'];
-        this.colliderGeom = this.staticGenerator.generate();
-        this.colliderGeom.computeBoundsTree();
-        this.mapLoaded = true;
-        console.timeEnd("Building static geometry BVH");
+    public static staticGeometry(group: Group) {
+        if (!this.mapLoaded) {
+            console.time("Building static geometry BVH");
+            const staticGenerator = new StaticGeometryGenerator(group);
+            staticGenerator.attributes = ['position'];
+            this.colliderGeom = staticGenerator.generate();
+            this.colliderGeom.computeBoundsTree();
+            this.mapLoaded = true;
+            console.timeEnd("Building static geometry BVH");
+        }
+    }
+
+    public isPlayerInAir(): boolean {
+        return !this.collided;
+    }
+
+    public static getColliderGeom() {
+        return this.colliderGeom!;
     }
 }

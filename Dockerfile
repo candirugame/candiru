@@ -1,4 +1,4 @@
-FROM denoland/deno:2.0.0
+FROM denoland/deno:2.0.5
 LABEL authors="isaacthoman"
 
 # Set working directory
