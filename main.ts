@@ -121,7 +121,7 @@ try {
 
 let mapProperties: MapData | undefined = undefined;
 try {
-  const jsonData = JSON.parse(readFileSync('public/maps/deathmatch_1/map.json', 'utf8'));
+  const jsonData = JSON.parse(readFileSync('public/maps/crackhouse_1/map.json', 'utf8'));
   mapProperties = jsonData;
     console.log('🐙 Map data loaded for ' + jsonData.name);
 }
