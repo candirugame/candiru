@@ -1,41 +1,9 @@
 {
-  "name": "deathmatch_1",
+  "name": "crackhouse_1",
   "respawnPoints": [
     {
-      "position": {"x": 22.5, "y": 0.5, "z": -9},
-      "quaternion": {"x": 0, "y": 0.92, "z": 0, "w": 0.37}
-    },
-    {
-      "position": {"x": 2.6, "y": 0.5, "z": -17.4},
-      "quaternion": {"x": 0, "y": -0.95, "z": 0, "w": 0.33}
-    },
-    {
-      "position": {"x": -22.42, "y": 0.5, "z": -8.35},
-      "quaternion": {"x": 0, "y": -0.91, "z": 0, "w": 0.41}
-    },
-    {
-      "position": {"x": -6, "y": 0.5, "z": -10.4},
-      "quaternion": {"x": 0, "y": -0.92, "z": 0, "w": 0.4}
-    },
-    {
-      "position": {"x": -0.38, "y": 5.5, "z": 18.45},
-      "quaternion": {"x": 0, "y": 0, "z": 0, "w": 1}
-    },
-    {
-      "position": {"x": 5.75, "y": 0.5, "z": -9.75},
-      "quaternion": {"x": 0, "y": 0.94, "z": 0, "w": 0.32}
-    },
-    {
-      "position": {"x": -5.88, "y": 5.5, "z": 9.1},
-      "quaternion": {"x": 0, "y": -0.22, "z": 0, "w": 0.96}
-    },
-    {
-      "position": {"x": 33.1, "y": 0.5, "z": -0.22},
-      "quaternion": {"x": 0, "y": 0.73, "z": 0, "w": 0.67}
-    },
-    {
-      "position": {"x": 20, "y": 0.5, "z": 17},
-      "quaternion": {"x": 0, "y": 0.43, "z": 0, "w": 0.89}
+      "position": {"x": 7.6, "y": 2, "z": -6.9},
+      "quaternion": {"x": 0, "y": 0.95, "z": 0, "w": 0.33}
     }
   ],
   "itemRespawnPoints": [
