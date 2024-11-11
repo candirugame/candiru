@@ -128,7 +128,7 @@ export class CollisionManager {
             const staticGenerator = new StaticGeometryGenerator(group);
             staticGenerator.attributes = ['position'];
             this.colliderGeom = staticGenerator.generate();
-            this.colliderGeom.computeBoundsTree();
+            this.colliderGeom.computeBoundsTree({maxDepth: 1000000, maxLeafTris: 4});
             this.mapLoaded = true;
             console.timeEnd("Building static geometry BVH");
         }
