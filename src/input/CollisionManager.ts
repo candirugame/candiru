@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { Renderer } from '../core/Renderer.ts';
 import { Player } from '../core/Player.ts';
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree, StaticGeometryGenerator, MeshBVH } from 'three-mesh-bvh';
 import { Group, Vector3 } from "three";
@@ -11,13 +10,13 @@ THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
 export class CollisionManager {
     private clock: THREE.Clock;
-    private colliderSphere: THREE.Sphere;
-    private deltaVec: THREE.Vector3;
+    private readonly colliderSphere: THREE.Sphere;
+    private readonly deltaVec: THREE.Vector3;
     public static mapLoaded: boolean = false;
     private static colliderGeom?: THREE.BufferGeometry; // Mark as possibly undefined
     private inputHandler: InputHandler;
     private static maxAngle: number = Math.cos(45 * Math.PI / 180);
-    private triNormal: Vector3;
+    private readonly triNormal: Vector3;
     private coyoteTime: number;
     private jumped: boolean;
     private collided: boolean;
