@@ -487,7 +487,6 @@ function addPlayerToDataSafe(data: Player, socket: Socket): void {
           socket
       );
       console.log('⚠️ invalid player data received');
-      console.log(error.message);
       updateLastInvalidMessageTime = true;
     }
     return;
