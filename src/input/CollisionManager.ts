@@ -22,7 +22,7 @@ export class CollisionManager {
     private jumped: boolean;
     private collided: boolean;
 
-    constructor(renderer: Renderer, inputHandler: InputHandler) {
+    constructor(inputHandler: InputHandler) {
         this.inputHandler = inputHandler;
         this.clock = new THREE.Clock();
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
