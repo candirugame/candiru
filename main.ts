@@ -293,6 +293,11 @@ function periodicCleanup() {
       sendChatMessage(nameToSend + ' left');
       playerData.splice(i, 1);
     }
+
+    //delete all items below y=-5
+    worldItemData = worldItemData.filter(item => item.vector.y >= -5);
+
+
   }
 }
 
