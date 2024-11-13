@@ -13,8 +13,6 @@ export class CollisionManager {
     private clock: THREE.Clock;
     private colliderSphere: THREE.Sphere;
     private deltaVec: THREE.Vector3;
-    private raycaster: THREE.Raycaster;
-    private scene: THREE.Scene;
     public static mapLoaded: boolean = false;
     private static colliderGeom?: THREE.BufferGeometry; // Mark as possibly undefined
     private inputHandler: InputHandler;
@@ -25,10 +23,8 @@ export class CollisionManager {
     private collided: boolean;
 
     constructor(renderer: Renderer, inputHandler: InputHandler) {
-        this.scene = renderer.getScene();
         this.inputHandler = inputHandler;
         this.clock = new THREE.Clock();
-        this.raycaster = new THREE.Raycaster();
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
         this.deltaVec = new THREE.Vector3();
         this.triNormal = new THREE.Vector3();
@@ -100,6 +96,9 @@ export class CollisionManager {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
                     }
                 }
+
+                this.colliderSphere.center = localPlayer.position.clone();
+                return false;
             },
 
             boundsTraverseOrder: (box: THREE.Box3) => {
