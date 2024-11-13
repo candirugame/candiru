@@ -19,7 +19,7 @@ export class InputHandler {
     private inputX: number = 0;
     private inputZ: number = 0;
     public  jump = false;
-    public prevVelocity: THREE.Vector3;
+    public prevInputVelocity: THREE.Vector3;
     private scrollClicksSinceLastCheck: number = 0;
     private readonly gamepadInputs: GamepadInputs;
     private shoot: boolean = false;
@@ -35,7 +35,7 @@ export class InputHandler {
     constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
         this.renderer = renderer;
         this.localPlayer = localPlayer;
-        this.prevVelocity = new THREE.Vector3();
+        this.prevInputVelocity = new THREE.Vector3();
         this.gamepadEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 
         this.clock = new THREE.Clock();
@@ -157,21 +157,21 @@ export class InputHandler {
 
         if(this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
 
-       this.prevVelocity.copy(this.localPlayer.velocity);
+       this.prevInputVelocity.copy(this.localPlayer.inputVelocity);
 
-        this.localPlayer.velocity.z = dist * this.inputZ;
-        this.localPlayer.velocity.x = dist * this.inputX;
-        this.localPlayer.velocity.y = 0;
-        this.localPlayer.velocity.clampLength(0, this.localPlayer.speed * speedMultiplier);
-        this.localPlayer.velocity.y = this.prevVelocity.y;
-        this.inputZ = this.localPlayer.velocity.z;
-        this.inputX = this.localPlayer.velocity.x;
+        this.localPlayer.inputVelocity.z = dist * this.inputZ;
+        this.localPlayer.inputVelocity.x = dist * this.inputX;
+        this.localPlayer.inputVelocity.y = 0;
+        this.localPlayer.inputVelocity.clampLength(0, this.localPlayer.speed * speedMultiplier);
+        this.localPlayer.inputVelocity.y = this.prevInputVelocity.y;
+        this.inputZ = this.localPlayer.inputVelocity.z;
+        this.inputX = this.localPlayer.inputVelocity.x;
 
         const euler = new THREE.Euler().setFromQuaternion(this.localPlayer.lookQuaternion, 'YXZ');
         euler.x = 0;
         euler.z = 0;
         this.localPlayer.quaternion.setFromEuler(euler);
-        this.localPlayer.velocity.applyQuaternion(this.localPlayer.quaternion);
+        this.localPlayer.inputVelocity.applyQuaternion(this.localPlayer.quaternion);
 
         if (this.leftMouseDown || this.touchButtons.includes(0)) this.shoot = true;
         if (this.rightMouseDown) this.aim = true;
