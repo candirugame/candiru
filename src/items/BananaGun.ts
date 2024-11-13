@@ -1,10 +1,10 @@
-import { ItemBase, ItemType } from './ItemBase.ts';
-import { HeldItemInput } from '../input/HeldItemInput.ts';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import {ItemBase, ItemType} from './ItemBase.ts';
+import {HeldItemInput} from '../input/HeldItemInput.ts';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
+import {Renderer} from '../core/Renderer.ts';
+import {Networking} from '../core/Networking.ts';
 
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225; //longer firing delay when mouse is held down
@@ -58,6 +58,10 @@ export class BananaGun extends ItemBase {
                         }
                     });
                 }
+                if(this.itemType === ItemType.WorldItem)
+                    this.object.scale.set(0.66, 0.66, 0.66);
+
+
                 this.inventoryMenuObject = this.object.clone();
                 this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
 
