@@ -12,6 +12,7 @@ export class CollisionManager {
     private clock: THREE.Clock;
     private readonly colliderSphere: THREE.Sphere;
     private readonly deltaVec: THREE.Vector3;
+    private readonly prevPosition: THREE.Vector3;
     public static mapLoaded: boolean = false;
     private static colliderGeom?: THREE.BufferGeometry; // Mark as possibly undefined
     private inputHandler: InputHandler;
@@ -26,6 +27,7 @@ export class CollisionManager {
         this.clock = new THREE.Clock();
         this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
         this.deltaVec = new THREE.Vector3();
+        this.prevPosition = new THREE.Vector3();
         this.triNormal = new THREE.Vector3();
         this.coyoteTime = 0;
         this.jumped = false;
@@ -50,12 +52,13 @@ export class CollisionManager {
     }
 
     private physics(localPlayer: Player, deltaTime: number) {
+        this.prevPosition.copy(localPlayer.position);
         const jump: boolean = this.inputHandler.jump;
 
         localPlayer.gravity += deltaTime * -30;
-        localPlayer.velocity.y += localPlayer.gravity;
-        localPlayer.velocity.y = (localPlayer.velocity.y + this.inputHandler.prevVelocity.y) * .25;
-        localPlayer.position.add(localPlayer.velocity.clone().multiplyScalar(deltaTime));
+        localPlayer.inputVelocity.y += localPlayer.gravity;
+        localPlayer.inputVelocity.y = (localPlayer.inputVelocity.y + this.inputHandler.prevInputVelocity.y) * .25;
+        localPlayer.position.add(localPlayer.inputVelocity.clone().multiplyScalar(deltaTime));
 
         const bvh: MeshBVH | undefined = CollisionManager.colliderGeom?.boundsTree;
         if (!bvh) return; // Ensure bvh exists
@@ -87,7 +90,7 @@ export class CollisionManager {
 
                     if (angle >= CollisionManager.maxAngle) {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
-                        localPlayer.velocity.y = 0;
+                        localPlayer.inputVelocity.y = 0;
                         localPlayer.gravity = 0;
                         this.coyoteTime = 0;
                         this.collided = true;
@@ -117,6 +120,9 @@ export class CollisionManager {
             } else {
                 this.jumped = false;
             }
+        }
+        if (!(deltaTime == 0)) {
+            localPlayer.velocity.copy(localPlayer.position.clone().sub(this.prevPosition).divideScalar(deltaTime));
         }
     }
 

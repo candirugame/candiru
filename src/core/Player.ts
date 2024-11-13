@@ -4,6 +4,7 @@ import {SettingsManager} from "./SettingsManager.ts";
 export class Player {
     public position: THREE.Vector3;
     public velocity: THREE.Vector3;
+    public inputVelocity: THREE.Vector3;
     public gravity: number;
     public lookQuaternion: THREE.Quaternion;
     public quaternion: THREE.Quaternion;
@@ -23,7 +24,8 @@ export class Player {
 
     constructor() {
         this.position = new THREE.Vector3(0,100,0);
-        this.velocity = new THREE.Vector3();
+        this.velocity = new THREE.Vector3(0,0,0);
+        this.inputVelocity = new THREE.Vector3();
         this.gravity = 0;
         this.lookQuaternion = new THREE.Quaternion();
         this.quaternion = new THREE.Quaternion();

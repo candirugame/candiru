@@ -61,6 +61,7 @@ interface Player {
   gameVersion: string;
   position: Vector3;
   velocity: Vector3;
+  inputVelocity: Vector3;
   gravity: number;
   lookQuaternion: [number, number, number, number];
   quaternion: [number, number, number, number];
@@ -486,6 +487,7 @@ function addPlayerToDataSafe(data: Player, socket: Socket): void {
           socket
       );
       console.log('⚠️ invalid player data received');
+      console.log(error.message);
       updateLastInvalidMessageTime = true;
     }
     return;
@@ -546,6 +548,7 @@ const playerDataSchema = Joi.object({
   gameVersion: Joi.string().required().valid(SERVER_VERSION),
   position: vector3Schema.required(),
   velocity: vector3Schema.required(),
+  inputVelocity: vector3Schema.required(),
   gravity: Joi.number().required(),
   lookQuaternion: Joi.array().items(Joi.number()).length(4).required(),
   quaternion: Joi.array().items(Joi.number()).length(4).required(),

@@ -243,9 +243,9 @@ export class ChatOverlay {
         //const playerQuatZ = Math.floor(this.localPlayer.lookQuaternion.z * 100) / 100;
         //const playerQuatW = Math.floor(this.localPlayer.lookQuaternion.w * 100) / 100;
 
-        // const playerVelX = Math.ceil(this.localPlayer.velocity.x * 100)/100;
-        // const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
-        // const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
+        const playerVelX = Math.ceil(this.localPlayer.velocity.x * 100)/100;
+        const playerVelY = Math.ceil(this.localPlayer.velocity.y * 100)/100;
+        const playerVelZ = Math.ceil(this.localPlayer.velocity.z * 100)/100;
 
 
 
@@ -257,7 +257,7 @@ export class ChatOverlay {
         //linesToRender.push('x: ' + playerX + ' y: ' + playerY + ' z: ' + playerZ);
         //linesToRender.push('px: ' + projectedX + ' py: ' + projectedY + ' pz: ' + projected.z);
         //linesToRender.push('qx: ' + playerQuatX + ' qy: ' + playerQuatY + ' qz: ' + playerQuatZ + ' qw: ' + playerQuatW);
-        // linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
+        linesToRender.push('vx: ' + playerVelX + ' vy: ' + playerVelY + ' vz: ' + playerVelZ);
 
         for (let i = 0; i < linesToRender.length; i++) {
             ctx.fillText(linesToRender[i], 2, 7 + 7 * i);
