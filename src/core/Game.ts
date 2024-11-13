@@ -36,12 +36,12 @@ export class Game {
         this.inputHandler = new InputHandler(this.renderer, this.localPlayer, this.gameIndex);
         this.touchInputHandler = new TouchInputHandler(this.inputHandler, this.chatOverlay);
         this.renderer.setInputHandler(this.inputHandler);
-        this.collisionManager = new CollisionManager(this.renderer, this.inputHandler);
+        this.collisionManager = new CollisionManager(this.inputHandler);
         this.renderer.setCollisionManager(this.collisionManager);
         this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new MapLoader('maps/deathmatch_1/map.glb', this.renderer, this.collisionManager);
+        this.map = new MapLoader('maps/crackhouse_1/map.glb', this.renderer, this.collisionManager);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
     }

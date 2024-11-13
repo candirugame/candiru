@@ -121,7 +121,7 @@ try {
 
 let mapProperties: MapData | undefined = undefined;
 try {
-  const jsonData = JSON.parse(readFileSync('public/maps/deathmatch_1/map.json', 'utf8'));
+  const jsonData = JSON.parse(readFileSync('public/maps/crackhouse_1/map.json', 'utf8'));
   mapProperties = jsonData;
     console.log('🐙 Map data loaded for ' + jsonData.name);
 }
@@ -211,6 +211,19 @@ function checkForPickups() {
         0.5
     );
     if(itemIndex === -1) continue;
+
+
+      let item = worldItemData[itemIndex];
+      if (item.itemType === 0) {
+        playerData[i].inventory.push(0);
+        worldItemData.splice(itemIndex, 1);
+        itemUpdateSinceLastEmit = true;
+        console.log('🍌 ' + playerData[i].name + ' picked up cube!');
+        sendChatMessage(playerData[i].name + ' picked up [Object]!');
+        continue;
+      }
+
+
     if (playerData[i].inventory.includes(1) === false) {
       let item = worldItemData[itemIndex];
       if (item.itemType === 1) {

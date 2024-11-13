@@ -1,0 +1,111 @@
+{
+  "name": "crackhouse_1",
+  "respawnPoints": [
+    {
+      "position": {"x": 7.6, "y": 2, "z": -6.9},
+      "quaternion": {"x": 0, "y": 0.95, "z": 0, "w": 0.33}
+    }
+  ],
+  "itemRespawnPoints": [
+    {
+      "position": {"x": -8.83, "y": 1, "z": -4.33},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -4.81, "y": 0.94, "z": -10.33},
+      "itemId": 2
+    },
+    {
+      "position": {"x": -8.42, "y": 1.68, "z": -6.31},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 14.77, "y": 0.94, "z": 7.29},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 2.74, "y": 2.62, "z": 5.21},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 2.74, "y": 2.62, "z": 5.21},
+      "itemId": 2
+    },
+    {
+      "position": {"x": 0.85, "y": 2.62, "z": 6.38},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 0.85, "y": 2.62, "z": 6.38},
+      "itemId": 2
+    },
+    {
+      "position": {"x": -2.86, "y": 2.62, "z": 4.77},
+      "itemId": 2
+    },
+    {
+      "position": {"x": 0.71, "y": 2.62, "z": 0.73},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -0.18, "y": 1.25, "z": 1.08},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 0.27, "y": 1.12, "z": -8.04},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -13.1, "y": 1.37, "z": 0.38},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 1.43, "y": 2.9, "z": -8.51},
+      "itemId": 0
+    },
+    {
+      "position": {"x": -4.62, "y": 2.62, "z": 6.02},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -4.11, "y": 1.25, "z": 1.11},
+      "itemId": 2
+    },
+    {
+      "position": {"x": -1.75, "y": 1.25, "z": 7.98},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -4.3, "y": 1.25, "z": 6.95},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 11.29, "y": 0.94, "z": 4.6},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 15.15, "y": 1.36, "z": -3.06},
+      "itemId": 2
+    },
+    {
+      "position": {"x": 7.27, "y": 1.42, "z": -3.21},
+      "itemId": 2
+    },
+    {
+      "position": {"x": 3.67, "y": 1.46, "z": -4.13},
+      "itemId": 2
+    },
+    {
+      "position": {"x": 7.27, "y": 1.42, "z": -3.21},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 3.67, "y": 1.46, "z": -4.13},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -8.95, "y": 0.94, "z": 4.83},
+      "itemId": 1
+    }
+  ]
+}
