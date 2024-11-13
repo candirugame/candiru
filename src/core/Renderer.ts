@@ -221,7 +221,7 @@ export class Renderer {
 
         this.lastPlayerHealth = this.localPlayer.health;
 
-        const vel = Math.sqrt(Math.pow(this.localPlayer.velocity.x,2) + Math.pow(this.localPlayer.velocity.z,2))
+        const vel = Math.sqrt(Math.pow(this.localPlayer.inputVelocity.x,2) + Math.pow(this.localPlayer.inputVelocity.z,2))
 
         if(vel == 0 || this.collisionManager.isPlayerInAir()) {
             this.bobCycle = 0;
