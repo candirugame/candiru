@@ -2,110 +2,103 @@
   "name": "crackhouse_1",
   "respawnPoints": [
     {
-      "position": {"x": 7.6, "y": 2, "z": -6.9},
+      "position": {"x": 12, "y": 2, "z": -7.2},
       "quaternion": {"x": 0, "y": 0.95, "z": 0, "w": 0.33}
     }
   ],
   "itemRespawnPoints": [
     {
-      "position": {"x": -8.83, "y": 1, "z": -4.33},
+      "position": {"x": 5.71, "y": 1.31, "z": -4.16},
       "itemId": 1
     },
     {
-      "position": {"x": -4.81, "y": 0.94, "z": -10.33},
+      "position": {"x": -0.22, "y": 1.05, "z": 4.48},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -7.17, "y": 1.05, "z": 13.79},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -6.79, "y": 1.05, "z": 4.31},
       "itemId": 2
     },
     {
-      "position": {"x": -8.42, "y": 1.68, "z": -6.31},
-      "itemId": 1
-    },
-    {
-      "position": {"x": 14.77, "y": 0.94, "z": 7.29},
-      "itemId": 1
-    },
-    {
-      "position": {"x": 2.74, "y": 2.62, "z": 5.21},
-      "itemId": 1
-    },
-    {
-      "position": {"x": 2.74, "y": 2.62, "z": 5.21},
+      "position": {"x": -7.03, "y": 3.24, "z": 14.89},
       "itemId": 2
     },
     {
-      "position": {"x": 0.85, "y": 2.62, "z": 6.38},
-      "itemId": 1
-    },
-    {
-      "position": {"x": 0.85, "y": 2.62, "z": 6.38},
+      "position": {"x": 4.71, "y": 3.24, "z": 10.77},
       "itemId": 2
     },
     {
-      "position": {"x": -2.86, "y": 2.62, "z": 4.77},
+      "position": {"x": 4.71, "y": 3.24, "z": 10.77},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 3.38, "y": 3.24, "z": 4.12},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 12.14, "y": 0.53, "z": 13.78},
+      "itemId": 1
+    },
+    {
+      "position": {"x": 23.68, "y": 0.45, "z": 14.57},
       "itemId": 2
     },
     {
-      "position": {"x": 0.71, "y": 2.62, "z": 0.73},
-      "itemId": 1
-    },
-    {
-      "position": {"x": -0.18, "y": 1.25, "z": 1.08},
-      "itemId": 1
-    },
-    {
-      "position": {"x": 0.27, "y": 1.12, "z": -8.04},
-      "itemId": 1
-    },
-    {
-      "position": {"x": -13.1, "y": 1.37, "z": 0.38},
-      "itemId": 1
-    },
-    {
-      "position": {"x": 1.43, "y": 2.9, "z": -8.51},
-      "itemId": 0
-    },
-    {
-      "position": {"x": -4.62, "y": 2.62, "z": 6.02},
-      "itemId": 1
-    },
-    {
-      "position": {"x": -4.11, "y": 1.25, "z": 1.11},
+      "position": {"x": 24.3, "y": 1.2, "z": -2.25},
       "itemId": 2
     },
     {
-      "position": {"x": -1.75, "y": 1.25, "z": 7.98},
+      "position": {"x": 0.5, "y": 0.83, "z": -10.2},
       "itemId": 1
     },
     {
-      "position": {"x": -4.3, "y": 1.25, "z": 6.95},
+      "position": {"x": -13.38, "y": 0.83, "z": -10.2},
       "itemId": 1
     },
     {
-      "position": {"x": 11.29, "y": 0.94, "z": 4.6},
-      "itemId": 1
-    },
-    {
-      "position": {"x": 15.15, "y": 1.36, "z": -3.06},
+      "position": {"x": 3.68, "y": 1.05, "z": 4.08},
       "itemId": 2
     },
     {
-      "position": {"x": 7.27, "y": 1.42, "z": -3.21},
+      "position": {"x": -0.62, "y": 0.55, "z": 16.68},
       "itemId": 2
     },
     {
-      "position": {"x": 3.67, "y": 1.46, "z": -4.13},
+      "position": {"x": -0.62, "y": 0.55, "z": 16.68},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -18.04, "y": 0.55, "z": 3.17},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -13.9, "y": 0.76, "z": -3.94},
+      "itemId": 1
+    },
+    {
+      "position": {"x": -13.9, "y": 0.76, "z": -3.94},
       "itemId": 2
     },
     {
-      "position": {"x": 7.27, "y": 1.42, "z": -3.21},
-      "itemId": 1
+      "position": {"x": 6.83, "y": 0.55, "z": -13.59},
+      "itemId": 2
     },
     {
-      "position": {"x": 3.67, "y": 1.46, "z": -4.13},
-      "itemId": 1
+      "position": {"x": -6.65, "y": 3.24, "z": 2.28},
+      "itemId": 2
     },
     {
-      "position": {"x": -8.95, "y": 0.94, "z": 4.83},
+      "position": {"x": -4.71, "y": 3.24, "z": 10.22},
+      "itemId": 2
+    },
+    {
+      "position": {"x": -4.71, "y": 3.24, "z": 10.22},
       "itemId": 1
     }
+
   ]
 }
