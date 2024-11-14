@@ -8,16 +8,18 @@ import {Inventory} from './Inventory.ts';
 import {HealthIndicator} from '../ui/HealthIndicator.ts';
 import {MapLoader} from './MapLoader.ts';
 import {RemoteItemRenderer} from "./RemoteItemRenderer.ts";
+import { TouchInputHandler } from "../input/TouchInputHandler.ts";
 
 export class Game {
     private localPlayer: Player;
     private renderer: Renderer;
     private chatOverlay: ChatOverlay;
     private inputHandler: InputHandler;
+    private touchInputHandler: TouchInputHandler;
     private networking: Networking;
     private collisionManager: CollisionManager;
     private inventoryManager: Inventory;
-    private map: MapLoader;
+    private mapLoader: MapLoader;
     private healthIndicator: HealthIndicator;
     private remoteItemRenderer: RemoteItemRenderer;
     private gameIndex: number;
@@ -32,26 +34,27 @@ export class Game {
         this.renderer = new Renderer(this.networking, this.localPlayer, this.chatOverlay);
         this.chatOverlay.setRenderer(this.renderer);
         this.inputHandler = new InputHandler(this.renderer, this.localPlayer, this.gameIndex);
+        this.touchInputHandler = new TouchInputHandler(this.inputHandler, this.chatOverlay);
         this.renderer.setInputHandler(this.inputHandler);
-        this.collisionManager = new CollisionManager(this.renderer, this.inputHandler);
+        this.collisionManager = new CollisionManager(this.inputHandler);
         this.renderer.setCollisionManager(this.collisionManager);
         this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new MapLoader('maps/deathmatch_1/map.glb', this.renderer, this.collisionManager);
+        this.mapLoader = new MapLoader(this.renderer);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
     }
 
     init() {
-        this.collisionManager.init();
+        this.mapLoader.load('maps/crackhouse_1/map.glb');
         this.inventoryManager.init();
         this.healthIndicator.init();
-
     }
 
     animate() {
         this.inputHandler.handleInputs();
+        this.touchInputHandler.onFrame();
         this.collisionManager.collisionPeriodic(this.localPlayer);
         this.networking.updatePlayerData();
         this.chatOverlay.onFrame();

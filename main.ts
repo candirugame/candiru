@@ -61,6 +61,7 @@ interface Player {
   gameVersion: string;
   position: Vector3;
   velocity: Vector3;
+  inputVelocity: Vector3;
   gravity: number;
   lookQuaternion: [number, number, number, number];
   quaternion: [number, number, number, number];
@@ -121,7 +122,7 @@ try {
 
 let mapProperties: MapData | undefined = undefined;
 try {
-  const jsonData = JSON.parse(readFileSync('public/maps/deathmatch_1/map.json', 'utf8'));
+  const jsonData = JSON.parse(readFileSync('public/maps/crackhouse_1/map.json', 'utf8'));
   mapProperties = jsonData;
     console.log('🐙 Map data loaded for ' + jsonData.name);
 }
@@ -211,6 +212,19 @@ function checkForPickups() {
         0.5
     );
     if(itemIndex === -1) continue;
+
+
+      let item = worldItemData[itemIndex];
+      if (item.itemType === 0) {
+        playerData[i].inventory.push(0);
+        worldItemData.splice(itemIndex, 1);
+        itemUpdateSinceLastEmit = true;
+        console.log('🍌 ' + playerData[i].name + ' picked up cube!');
+        sendChatMessage(playerData[i].name + ' picked up [Object]!');
+        continue;
+      }
+
+
     if (playerData[i].inventory.includes(1) === false) {
       let item = worldItemData[itemIndex];
       if (item.itemType === 1) {
@@ -280,6 +294,11 @@ function periodicCleanup() {
       sendChatMessage(nameToSend + ' left');
       playerData.splice(i, 1);
     }
+
+    //delete all items below y=-5
+    worldItemData = worldItemData.filter(item => item.vector.y >= -5);
+
+
   }
 }
 
@@ -528,6 +547,7 @@ const playerDataSchema = Joi.object({
   gameVersion: Joi.string().required().valid(SERVER_VERSION),
   position: vector3Schema.required(),
   velocity: vector3Schema.required(),
+  inputVelocity: vector3Schema.required(),
   gravity: Joi.number().required(),
   lookQuaternion: Joi.array().items(Joi.number()).length(4).required(),
   quaternion: Joi.array().items(Joi.number()).length(4).required(),

@@ -1,10 +1,10 @@
-import { ItemBase, ItemType } from './ItemBase.ts';
-import { HeldItemInput } from '../input/HeldItemInput.ts';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import {ItemBase, ItemType} from './ItemBase.ts';
+import {HeldItemInput} from '../input/HeldItemInput.ts';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
-import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
+import {Renderer} from '../core/Renderer.ts';
+import {Networking} from '../core/Networking.ts';
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -57,7 +57,8 @@ export class FishGun extends ItemBase {
                             applyDepthTest(mesh.material);
                         }
                     });
-                    this.object.scale.set(1.5, 1.5, 1.5);
+                    if(this.itemType === ItemType.InventoryItem)
+                        this.object.scale.set(1.5, 1.5, 1.5);
                 }
                 this.inventoryMenuObject = this.object.clone();
                 this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
@@ -178,8 +179,11 @@ export class FishGun extends ItemBase {
         const totalShots = 25;
         let processedShots = 0;
 
-        const processShots = (deadline: IdleDeadline) => {
-            while (processedShots < totalShots && deadline.timeRemaining() > 0) {
+        const processShots = (deadline?: IdleDeadline) => {
+            // Use a default value for timeRemaining if deadline is undefined
+            const timeRemaining = deadline ? deadline.timeRemaining() : Number.MAX_VALUE;
+
+            while (processedShots < totalShots && timeRemaining > 0) {
                 const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
                     (Math.random() - 0.5) * 0.5,
                     (Math.random() - 0.5) * 0.5
@@ -200,12 +204,23 @@ export class FishGun extends ItemBase {
             }
 
             if (processedShots < totalShots) {
-                requestIdleCallback(processShots);
+                if (typeof requestIdleCallback === 'function') {
+                    requestIdleCallback(processShots);
+                } else {
+                    // Fallback for environments without requestIdleCallback
+                    setTimeout(() => processShots(), 0);
+                }
             }
         };
 
-        requestIdleCallback(processShots);
+        if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(processShots);
+        } else {
+            // Initial call for environments without requestIdleCallback
+            setTimeout(() => processShots(), 0);
+        }
     }
+
 
 
 

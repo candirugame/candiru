@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 import { Networking, type RemotePlayer } from './Networking.ts';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
 import { ChatOverlay } from "../ui/ChatOverlay.ts";
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
@@ -16,8 +14,6 @@ export class Renderer {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
-    private loader: GLTFLoader;
-    private dracoLoader: DRACOLoader;
     private heldItemScene: THREE.Scene;
     private heldItemCamera: THREE.PerspectiveCamera;
     private ambientLight: THREE.AmbientLight;
@@ -58,11 +54,6 @@ export class Renderer {
         document.body.appendChild(this.renderer.domElement);
         this.renderer.domElement.style.imageRendering = 'pixelated';
         this.renderer.setAnimationLoop(null);
-
-        this.loader = new GLTFLoader();
-        this.dracoLoader = new DRACOLoader();
-        this.dracoLoader.setDecoderPath('/draco/');
-        this.loader.setDRACOLoader(this.dracoLoader);
 
         // Create a new scene and camera for the held item
         this.heldItemScene = new THREE.Scene();
@@ -116,9 +107,11 @@ export class Renderer {
         );
         this.remotePlayerRenderer.getEntityScene().fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
         this.remotePlayerRenderer.getEntityScene().add(ambientLight3); // Add ambient light to remote players scene
-
+        this.renderer.domElement.style.touchAction = 'none';
+        this.renderer.domElement.style.position = 'absolute';
         this.onWindowResize();
         globalThis.addEventListener('resize', this.onWindowResize.bind(this), false);
+        globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this), false);
     }
 
     public onFrame(localPlayer: Player) {
@@ -219,7 +212,7 @@ export class Renderer {
 
         this.lastPlayerHealth = this.localPlayer.health;
 
-        const vel = Math.sqrt(Math.pow(this.localPlayer.velocity.x,2) + Math.pow(this.localPlayer.velocity.z,2))
+        const vel = Math.sqrt(Math.pow(this.localPlayer.inputVelocity.x,2) + Math.pow(this.localPlayer.inputVelocity.z,2))
 
         if(vel == 0 || this.collisionManager.isPlayerInAir()) {
             this.bobCycle = 0;
