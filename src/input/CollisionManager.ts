@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { Player } from '../core/Player.ts';
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree, StaticGeometryGenerator, MeshBVH } from 'three-mesh-bvh';
-import { Group, Vector3 } from "three";
 import { InputHandler } from "./InputHandler.ts";
 
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -16,8 +15,9 @@ export class CollisionManager {
     public static mapLoaded: boolean = false;
     private static colliderGeom?: THREE.BufferGeometry; // Mark as possibly undefined
     private inputHandler: InputHandler;
-    private static maxAngle: number = Math.cos(45 * Math.PI / 180);
-    private readonly triNormal: Vector3;
+    private static readonly maxAngle: number = Math.cos(45 * Math.PI / 180);
+    private readonly triNormal: THREE.Vector3;
+    private readonly upVector: THREE.Vector3;
     private coyoteTime: number;
     private jumped: boolean;
     private collided: boolean;
@@ -25,10 +25,11 @@ export class CollisionManager {
     constructor(inputHandler: InputHandler) {
         this.inputHandler = inputHandler;
         this.clock = new THREE.Clock();
-        this.colliderSphere = new THREE.Sphere(new Vector3(), .2);
+        this.colliderSphere = new THREE.Sphere(new THREE.Vector3(), .2);
         this.deltaVec = new THREE.Vector3();
         this.prevPosition = new THREE.Vector3();
         this.triNormal = new THREE.Vector3();
+        this.upVector = new THREE.Vector3(0,1,0)
         this.coyoteTime = 0;
         this.jumped = false;
         this.collided = false;
@@ -69,10 +70,6 @@ export class CollisionManager {
             },
 
             intersectsTriangle: (tri: THREE.Triangle) => {
-                tri.getNormal(this.triNormal);
-
-                const angle: number = this.triNormal.dot(new THREE.Vector3(0, 1, 0));
-
                 // Get delta between the closest point and center
                 tri.closestPointToPoint(this.colliderSphere.center, this.deltaVec);
                 this.deltaVec.sub(this.colliderSphere.center);
@@ -83,6 +80,9 @@ export class CollisionManager {
                     const radius: number = this.colliderSphere.radius;
                     const depth: number = distance - radius;
                     this.deltaVec.multiplyScalar(1 / distance);
+
+                    tri.getNormal(this.triNormal);
+                    const angle: number = this.triNormal.dot(this.upVector);
 
                     if (angle >= CollisionManager.maxAngle) {
                         localPlayer.position.addScaledVector(this.deltaVec, depth);
@@ -122,7 +122,7 @@ export class CollisionManager {
         }
     }
 
-    public static staticGeometry(group: Group) {
+    public static staticGeometry(group: THREE.Group) {
         if (!this.mapLoaded) {
             console.time("Building static geometry BVH");
             const staticGenerator = new StaticGeometryGenerator(group);
