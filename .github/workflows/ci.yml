@@ -181,6 +181,15 @@ jobs:
           git commit -m "${{ steps.get_latest_tag.outputs.latest_tag }} - ${{ steps.get_last_commit_message.outputs.last_commit_message }}" || echo "No changes to commit"
           git push origin ${{ github.ref_name }}
 
-      - name: Debugging List files in public after update
+      - name: Move tag to latest commit
         if: steps.check_author.outputs.skip == 'false'
-        run: ls -al public
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
+        run: |
+          # Delete the existing tag locally and remotely
+          git tag -d ${{ steps.get_latest_tag.outputs.latest_tag }}
+          git push origin :refs/tags/${{ steps.get_latest_tag.outputs.latest_tag }}
+          # Create a new tag at the latest commit
+          git tag ${{ steps.get_latest_tag.outputs.latest_tag }}
+          # Push the new tag to the remote repository
+          git push origin ${{ steps.get_latest_tag.outputs.latest_tag }}
