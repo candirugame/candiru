@@ -193,3 +193,14 @@ jobs:
           git tag ${{ steps.get_latest_tag.outputs.latest_tag }}
           # Push the new tag to the remote repository
           git push origin ${{ steps.get_latest_tag.outputs.latest_tag }}
+
+      - name: Create GitHub Release
+        if: steps.check_author.outputs.skip == 'false'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
+          release_name: Release ${{ steps.get_latest_tag.outputs.latest_tag }}
+          draft: false  # Set to false to publish the release
+          prerelease: false  # Set to true if this is a pre-release
