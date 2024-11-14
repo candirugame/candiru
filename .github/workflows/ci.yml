@@ -127,7 +127,7 @@ jobs:
       - name: Extract new version
         id: get_version
         run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
-        
+
   # Update Game Version (Only for main branch after release)
   update-game-version:
     needs: release
@@ -181,26 +181,6 @@ jobs:
           git commit -m "${{ steps.get_latest_tag.outputs.latest_tag }} - ${{ steps.get_last_commit_message.outputs.last_commit_message }}" || echo "No changes to commit"
           git push origin ${{ github.ref_name }}
 
-      - name: Move tag to latest commit
+      - name: Debugging List files in public after update
         if: steps.check_author.outputs.skip == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: |
-          # Delete the existing tag locally and remotely
-          git tag -d ${{ steps.get_latest_tag.outputs.latest_tag }}
-          git push origin :refs/tags/${{ steps.get_latest_tag.outputs.latest_tag }}
-          # Create a new tag at the latest commit
-          git tag ${{ steps.get_latest_tag.outputs.latest_tag }}
-          # Push the new tag to the remote repository
-          git push origin ${{ steps.get_latest_tag.outputs.latest_tag }}
-
-      - name: Create GitHub Release
-        if: steps.check_author.outputs.skip == 'false'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
-          release_name: Release ${{ steps.get_latest_tag.outputs.latest_tag }}
-          draft: false  # Set to false to publish the release
-          prerelease: false  # Set to true if this is a pre-release
+        run: ls -al public
