@@ -201,6 +201,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         with:
           tag_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
-          release_name: Release ${{ steps.get_latest_tag.outputs.latest_tag }}
+          release_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
           draft: false  # Set to false to publish the release
           prerelease: false  # Set to true if this is a pre-release
