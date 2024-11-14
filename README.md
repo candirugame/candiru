@@ -1,6 +1,8 @@
 # candiru
 
 This is a simple game where you play as a possum and try to eat as many bugs as you can before you get eaten by a snake.\
+A live version of the last stable release can be found [here](https://candiru.xyz).\
+You can also check out the live [dev branch](https://dev.candiru.xyz) to see the latest changes.\
 ![really cool gameplay screenshot](https://raw.githubusercontent.com/candirugame/candiru/refs/heads/dev/assets/screenshot.png)
 
 ## Installation
