@@ -34,10 +34,6 @@ export class CollisionManager {
         this.collided = false;
     }
 
-    public init() {
-        // Initialization logic if any
-    }
-
     public collisionPeriodic(localPlayer: Player) {
         if (!CollisionManager.mapLoaded || !CollisionManager.colliderGeom || !CollisionManager.colliderGeom.boundsTree) return; // Add checks
         let deltaTime: number = this.clock.getDelta();
