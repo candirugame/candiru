@@ -19,7 +19,7 @@ export class Game {
     private networking: Networking;
     private collisionManager: CollisionManager;
     private inventoryManager: Inventory;
-    private map: MapLoader;
+    private mapLoader: MapLoader;
     private healthIndicator: HealthIndicator;
     private remoteItemRenderer: RemoteItemRenderer;
     private gameIndex: number;
@@ -41,16 +41,15 @@ export class Game {
         this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
-        this.map = new MapLoader('maps/crackhouse_1/map.glb', this.renderer, this.collisionManager);
+        this.mapLoader = new MapLoader(this.renderer);
         this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
     }
 
     init() {
-        this.collisionManager.init();
+        this.mapLoader.load('maps/crackhouse_1/map.glb');
         this.inventoryManager.init();
         this.healthIndicator.init();
-
     }
 
     animate() {
