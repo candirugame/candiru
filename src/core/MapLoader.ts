@@ -10,23 +10,18 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 export class MapLoader {
     private scene: THREE.Scene;
     private mapObject: THREE.Group | undefined;
-    private mapUrl: string;
-    private collisionManager: CollisionManager;
 
-    constructor(mapUrl: string, renderer: Renderer, collisionManager: CollisionManager) {
-        this.mapUrl = mapUrl;
+    constructor(renderer: Renderer) {
         this.scene = renderer.getScene();
-        this.collisionManager = collisionManager;
-        this.init();
     }
 
-    private init() {
+    public load(mapUrl: string) {
         const loader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('/draco/');
         loader.setDRACOLoader(dracoLoader);
         loader.load(
-            this.mapUrl,
+            mapUrl,
             (gltf: { scene: THREE.Group; }) => {
                 this.mapObject = gltf.scene;
                 CollisionManager.staticGeometry(gltf.scene);
