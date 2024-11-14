@@ -1,5 +1,5 @@
 FROM denoland/deno:2.0.5
-LABEL authors="isaacthoman"
+LABEL authors="Candiru <team@candiru.xyz>"
 
 # Set working directory
 WORKDIR /app
