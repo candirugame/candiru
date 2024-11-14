@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 import { Networking, type RemotePlayer } from './Networking.ts';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
 import { ChatOverlay } from "../ui/ChatOverlay.ts";
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
@@ -16,8 +14,6 @@ export class Renderer {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
-    private loader: GLTFLoader;
-    private dracoLoader: DRACOLoader;
     private heldItemScene: THREE.Scene;
     private heldItemCamera: THREE.PerspectiveCamera;
     private ambientLight: THREE.AmbientLight;
@@ -58,11 +54,6 @@ export class Renderer {
         document.body.appendChild(this.renderer.domElement);
         this.renderer.domElement.style.imageRendering = 'pixelated';
         this.renderer.setAnimationLoop(null);
-
-        this.loader = new GLTFLoader();
-        this.dracoLoader = new DRACOLoader();
-        this.dracoLoader.setDecoderPath('/draco/');
-        this.loader.setDRACOLoader(this.dracoLoader);
 
         // Create a new scene and camera for the held item
         this.heldItemScene = new THREE.Scene();
