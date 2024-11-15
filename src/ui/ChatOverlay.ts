@@ -38,6 +38,10 @@ export class ChatOverlay {
     private joystickInputX: number = 0;
     private joystickInputY: number = 0;
     private buttonsHeld: number[] = [];
+    private lastRoutineMs = 0;
+
+    private offscreenCanvas: HTMLCanvasElement;
+    private offscreenCtx: CanvasRenderingContext2D;
 
     constructor(localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -74,7 +78,12 @@ export class ChatOverlay {
 
         this.chatCanvas.style.touchAction = 'none';
 
+        this.offscreenCanvas = document.createElement('canvas');
+        this.offscreenCtx = this.offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
+
         document.body.appendChild(this.chatCanvas);
+
+
     }
 
     public setRenderer(renderer: Renderer) {
@@ -96,6 +105,7 @@ export class ChatOverlay {
 
 
     public onFrame() {
+        const startTime = Date.now();
         this.clearOldMessages();
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
         this.renderHitMarkers();
@@ -126,6 +136,8 @@ export class ChatOverlay {
         this.onWindowResize();
 
         this.inputHandler.nameSettingActive = this.nameSettingActive;
+        if(Math.random()<0.03)
+            this.lastRoutineMs = Date.now() - startTime;
     }
     private onWindowResize() {
 
@@ -234,47 +246,44 @@ export class ChatOverlay {
 
 
     private renderPixelText(text: string, x: number, y: number, color: string) {
-        // Create an offscreen canvas
-        const offscreenCanvas = document.createElement('canvas');
-        const offscreenCtx = offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
-
         // Set font to measure text
-        offscreenCtx.font = '8px Tiny5';
+        this.offscreenCtx.font = '8px Tiny5';
 
         // Measure the text to determine the canvas size
-        const textMetrics = offscreenCtx.measureText(text);
-        const textWidth = Math.max(Math.ceil(textMetrics.width), 1); // Ensure width is at least 1
-        const textHeight = 8; // Assuming a fixed height for the font size
+        const textMetrics = this.offscreenCtx.measureText(text);
+        const textWidth = Math.max(Math.ceil(textMetrics.width), 1);
+        const textHeight = 8;
 
-        // Set the dimensions of the offscreen canvas based on the text size
-        offscreenCanvas.width = textWidth;
-        offscreenCanvas.height = textHeight;
+        // Resize the offscreen canvas if necessary
+        if (this.offscreenCanvas.width !== textWidth || this.offscreenCanvas.height !== textHeight) {
+            this.offscreenCanvas.width = textWidth;
+            this.offscreenCanvas.height = textHeight;
+        }
 
-        // Set the font and fill style again for drawing
-        offscreenCtx.font = '8px Tiny5';
-        offscreenCtx.fillStyle = color;
+        // Clear the canvas before drawing
+        this.offscreenCtx.clearRect(0, 0, textWidth, textHeight);
+
+        // Set the font and fill style for drawing
+        this.offscreenCtx.font = '8px Tiny5';
+        this.offscreenCtx.fillStyle = color;
 
         // Draw the text onto the offscreen canvas
-        offscreenCtx.fillText(text, 0, textHeight-1);
+        this.offscreenCtx.fillText(text, 0, textHeight - 1);
 
         // Get the image data to apply pixelation
-        const imageData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+        const imageData = this.offscreenCtx.getImageData(0, 0, textWidth, textHeight);
         const data = imageData.data;
 
         // Apply a simple pixelation effect by adjusting the alpha channel
         for (let i = 0; i < data.length; i += 4) {
-            if (data[i + 3] > 200) {
-                data[i + 3] = 255; // Make the pixel fully opaque
-            } else {
-                data[i + 3] = 0; // Make the pixel fully transparent
-            }
+            data[i + 3] = data[i + 3] > 200 ? 255 : 0;
         }
 
         // Put the modified image data back onto the offscreen canvas
-        offscreenCtx.putImageData(imageData, 0, 0);
+        this.offscreenCtx.putImageData(imageData, 0, 0);
 
         // Draw the offscreen canvas onto the main chat canvas at the specified coordinates
-        this.chatCtx.drawImage(offscreenCanvas, x, y - textHeight+1);
+        this.chatCtx.drawImage(this.offscreenCanvas, x, y - textHeight + 1);
     }
 
 
@@ -294,6 +303,7 @@ export class ChatOverlay {
         //const playerX = Math.round(this.localPlayer.position.x);
 
         linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
+        //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
         for (let i = 0; i < linesToRender.length; i++) {
             this.renderPixelText(linesToRender[i], 2, 7 + 7 * i, 'teal');
