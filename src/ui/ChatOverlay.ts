@@ -136,8 +136,14 @@ export class ChatOverlay {
 
     private renderChatMessages() {
         const ctx = this.chatCtx;
-        ctx.font = '8px Tiny5';
-        ctx.fillStyle = 'white';
+        const offscreenCanvas = document.createElement('canvas');
+        const offscreenCtx = offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
+
+        offscreenCanvas.width = this.chatCanvas.width;
+        offscreenCanvas.height = this.chatCanvas.height;
+
+        offscreenCtx.font = '8px Tiny5';
+        offscreenCtx.fillStyle = 'white';
 
         const usermsg = this.localPlayer.chatMsg;
         let cursor = '';
@@ -172,7 +178,7 @@ export class ChatOverlay {
 
             if (!duplicateFromPlayerData) {
                 linesToRender.push(remainingMsg);
-                pixOffsets.push(ctx.measureText(removedSubstring).width);
+                pixOffsets.push(offscreenCtx.measureText(removedSubstring).width);
             }
         }
 
@@ -190,8 +196,7 @@ export class ChatOverlay {
             linesToRender.push('Enter your name: ' + usermsg + cursor);
             pixOffsets.push(0);
             this.localPlayer.name = usermsg + cursor;
-            if(this.localPlayer.name.length == 0) this.localPlayer.name = ' ';
-
+            if (this.localPlayer.name.length == 0) this.localPlayer.name = ' ';
         }
 
         const wrappedLines: string[] = [];
@@ -199,7 +204,7 @@ export class ChatOverlay {
         const isFirstWrappedLine: boolean[] = [];
 
         for (let i = 0; i < linesToRender.length; i++) {
-            const wrapped = this.doTextWrapping(ctx, [linesToRender[i]], this.screenWidth - 10);
+            const wrapped = this.doTextWrapping(offscreenCtx, [linesToRender[i]], this.screenWidth - 10);
             for (let j = 0; j < wrapped.length; j++) {
                 wrappedLines.push(wrapped[j]);
                 lineOrigins.push(i);
@@ -214,8 +219,25 @@ export class ChatOverlay {
             const originIndex = lineOrigins[lineIndex];
             const pixOffset = isFirstWrappedLine[lineIndex] ? pixOffsets[originIndex] : 0;
 
-            ctx.fillText(text, 3 + pixOffset, 200 - 20 - 8 * i);
+            offscreenCtx.fillText(text, 3 + pixOffset, 200 - 20 - 8 * i);
         }
+
+        // Apply alpha filter to the offscreen canvas
+        const imageData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] > 127) {
+                data[i + 3] = 255;
+            } else {
+                data[i + 3] = 0;
+            }
+        }
+
+        offscreenCtx.putImageData(imageData, 0, 0);
+
+        // Draw the processed offscreen canvas onto the main canvas
+        ctx.drawImage(offscreenCanvas, 0, 0);
 
         if ((usermsg !== '' && this.localPlayer.chatActive) || this.nameSettingActive) {
             ctx.fillStyle = 'rgba(145,142,118,0.3)';
@@ -223,9 +245,10 @@ export class ChatOverlay {
             if (this.nameSettingActive) {
                 width = ctx.measureText('Enter your name: ' + usermsg).width;
             }
-            ctx.fillRect( 2, 200 - 20 - 7, width + 1, 9);
+            ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
         }
     }
+
 
     private renderDebugText() {
         const ctx = this.chatCtx;
