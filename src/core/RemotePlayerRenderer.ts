@@ -72,7 +72,7 @@ export class RemotePlayerRenderer {
 
         this.entityScene = new THREE.Scene();
 
-        this.sphere = new THREE.Mesh(new THREE.SphereGeometry(.4), new THREE.MeshBasicMaterial());
+        this.sphere = new THREE.Mesh(new THREE.SphereGeometry(.6), new THREE.MeshBasicMaterial());
         this.sphere.geometry.computeBoundsTree();
 
         this.loader = new GLTFLoader();
