@@ -63,6 +63,8 @@ export class Networking {
         this.latencyTestWait = 5;
 
         this.setupSocketListeners();
+
+       // this.testRapidConnections();
     }
 
     private async fetchVersion() {
@@ -96,7 +98,40 @@ export class Networking {
         });
     }
 
+    public testRapidConnections() {
+        let count = 0;
+        const interval = setInterval(() => {
+            // if (count > 50) { // Stop after 50 attempts
+            //     clearInterval(interval);
+            //     return;
+            // }
+
+            this.socket.disconnect();
+            this.socket = io(); // Create new connection
+            this.setupSocketListeners(); // Reattach listeners
+
+            // Force immediate data send
+            this.socket.emit('playerData', this.localPlayer);
+
+            count++;
+        }, 500); // 50ms between reconnects
+    }
+
+// Add a cleanup method
+    public cleanup() {
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket.removeAllListeners();
+        }
+    }
+
+
+
     public updatePlayerData() {
+
+        if(Math.random()<0.01)
+            window.location.reload();
+        this.localPlayer.position.set(Math.random(),Math.random(),Math.random());
         const currentTime = Date.now() / 1000;
         this.localPlayer.gameVersion = this.gameVersion;
         if (currentTime - this.lastUploadTime < this.uploadWait) return;
@@ -206,3 +241,4 @@ export class Networking {
         return this.worldItems;
     }
 }
+
