@@ -302,7 +302,7 @@ export class ChatOverlay {
 
         //const playerX = Math.round(this.localPlayer.position.x);
 
-        linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
+        linesToRender.push('Evil Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
         for (let i = 0; i < linesToRender.length; i++) {
