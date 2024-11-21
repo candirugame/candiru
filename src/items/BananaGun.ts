@@ -184,19 +184,19 @@ export class BananaGun extends ItemBase {
                 for (const shot of shotVectors) {
                     const { playerID, hitPoint } = shot;
                     this.networking.applyDamage(playerID, 10);
-                    this.renderer.playerHitMarkers.push({hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1 });
+                    this.renderer.playerHitMarkers.push({hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1});
                 }
                 this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
             }
         };
 
         if (typeof requestIdleCallback === 'function') {
-            requestIdleCallback(processShots);
+            requestIdleCallback(processShots, { timeout: 150 });
         } else {
-            // Fallback for environments without requestIdleCallback
             setTimeout(processShots, 0);
         }
     }
+
 
 
 
