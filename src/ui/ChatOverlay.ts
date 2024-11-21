@@ -243,9 +243,8 @@ export class ChatOverlay {
             ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
         }
     }
+    private renderPrettyText(text: string, x: number, y: number, color: string) {
 
-
-    private renderPixelText(text: string, x: number, y: number, color: string) {
         // Set font to measure text
         this.offscreenCtx.font = '8px Tiny5';
 
@@ -286,10 +285,26 @@ export class ChatOverlay {
         this.chatCtx.drawImage(this.offscreenCanvas, x, y - textHeight + 1);
     }
 
+    private renderUglyText(text: string, x: number, y: number, color: string) {
+        this.chatCtx.font = '8px Tiny5';
+        this.chatCtx.fillStyle = color;
+        this.chatCtx.fillText(text, x, y);
+    }
+
+    private renderPixelText(text: string, x: number, y: number, color: string) {
+
+        if(SettingsManager.settings.doPrettyText)
+            this.renderPrettyText(text, x, y, color);
+        else
+            this.renderUglyText(text, x, y, color);
+
+    }
+
 
 
 
     private renderDebugText() {
+
         const ctx = this.chatCtx;
         ctx.font = '8px Tiny5';
         ctx.fillStyle = 'teal';

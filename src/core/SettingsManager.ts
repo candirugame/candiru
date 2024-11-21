@@ -19,6 +19,7 @@ export class SettingsManager {
             crosshairColor: 'rgb(0,255,255)',
             crosshairType: 0,
             viewBobbingStrength: 1,
+            doPrettyText: false,
         };
     }
 
@@ -34,4 +35,5 @@ interface Settings {
     crosshairColor: string;
     crosshairType: number;
     viewBobbingStrength: number;
+    doPrettyText: boolean;
 }
