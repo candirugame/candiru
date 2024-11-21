@@ -313,11 +313,11 @@ export class ChatOverlay {
         const framerate = this.renderer.getFramerate();
 
         if (this.localPlayer.latency >= 999)
-            linesToRender.push('Disconnected :(');
+            linesToRender.push('disconnected :(');
 
         //const playerX = Math.round(this.localPlayer.position.x);
 
-        linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
+        linesToRender.push('candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
         for (let i = 0; i < linesToRender.length; i++) {
