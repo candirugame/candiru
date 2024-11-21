@@ -17,40 +17,40 @@ export class CommandManager {
     public init() {
         this.commands.push(new Command('sense', (args: string[]): string => {
             if (args[1] == null) {
-                return "Sensitivity is currently " + (SettingsManager.settings.sense * 500);
+                return "sensitivity is currently " + (SettingsManager.settings.sense * 500);
             }
             const sense: number = Number(args[1]);
             if (Number.isNaN(sense)) {
                 return args[1] + " is not a number";
             }
             if (sense > 10 || sense <= 0) {
-                return "Sensitivity is not in the valid range of 0 to 10";
+                return "sensitivity is not in the valid range of 0 to 10";
             }
             SettingsManager.settings.sense = sense / 500;
             SettingsManager.write();
-            return "Sensitivity is now set to " + (sense);
+            return "sensitivity is now set to " + (sense);
         }));
 
         this.commands.push(new Command('resetSettings', (): string => {
             SettingsManager.reset();
             SettingsManager.write();
-            return "Settings have been reverted to their default states";
+            return "settings have been reverted to their default states";
         }));
 
         this.commands.push(new Command('controllerSense', (args: string[]): string => {
             if (args[1] == null) {
-                return "Controller sensitivity is currently " + (SettingsManager.settings.controllerSense);
+                return "controller sensitivity is currently " + (SettingsManager.settings.controllerSense);
             }
             const sense = Number(args[1]);
             if (Number.isNaN(sense)) {
                 return args[1] + " is not a number";
             }
             if (sense > 10 || sense <= 0) {
-                return "Controller sensitivity is not in the valid range of 0 to 10";
+                return "controller sensitivity is not in the valid range of 0 to 10";
             }
             SettingsManager.settings.controllerSense = sense;
             SettingsManager.write();
-            return "Controller sensitivity is now set to " + (sense);
+            return "controller sensitivity is now set to " + (sense);
         }));
 
         this.commands.push(new Command('crosshairColor', (args: string[]): string => {
@@ -72,7 +72,7 @@ export class CommandManager {
                 return 'invalid input';
             }
             SettingsManager.write();
-            return 'Crosshair color set'
+            return 'crosshair color set to ' + SettingsManager.settings.crosshairColor;
         }));
 
         this.commands.push(new Command('crosshairType', (args: string[]): string => {
@@ -80,7 +80,7 @@ export class CommandManager {
             else if (args[1] == 'dot') SettingsManager.settings.crosshairType = 1;
             else return 'not a valid type (dot or cross)';
             SettingsManager.write();
-            return 'Crosshair type set'
+            return 'crosshair type set to ' + args[1];
         } ));
 
         this.commands.push(new Command('bobbing', (args: string[]) : string => {
@@ -93,8 +93,17 @@ export class CommandManager {
             }
             SettingsManager.settings.viewBobbingStrength = bobbing;
             SettingsManager.write();
-            return 'View bobbing strength is now set to ' + args[1];
+            return 'view bobbing strength is now set to ' + args[1];
         }));
+
+        this.commands.push(new Command('prettyText', (args: string[]): string => {
+            if(args[1] == null) return 'prettyText is currently ' + SettingsManager.settings.doPrettyText;
+            if (args[1] == 'true') SettingsManager.settings.doPrettyText = true;
+            else if (args[1] == 'false') SettingsManager.settings.doPrettyText = false;
+            else return 'invalid input (true/false)';
+            SettingsManager.write();
+            return 'prettyText set to ' + args[1];
+        } ));
     }
 
     public runCmd(cmd: string): boolean {

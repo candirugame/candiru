@@ -243,9 +243,8 @@ export class ChatOverlay {
             ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
         }
     }
+    private renderPrettyText(text: string, x: number, y: number, color: string) {
 
-
-    private renderPixelText(text: string, x: number, y: number, color: string) {
         // Set font to measure text
         this.offscreenCtx.font = '8px Tiny5';
 
@@ -286,10 +285,26 @@ export class ChatOverlay {
         this.chatCtx.drawImage(this.offscreenCanvas, x, y - textHeight + 1);
     }
 
+    private renderUglyText(text: string, x: number, y: number, color: string) {
+        this.chatCtx.font = '8px Tiny5';
+        this.chatCtx.fillStyle = color;
+        this.chatCtx.fillText(text, x, y);
+    }
+
+    private renderPixelText(text: string, x: number, y: number, color: string) {
+
+        if(SettingsManager.settings.doPrettyText)
+            this.renderPrettyText(text, x, y, color);
+        else
+            this.renderUglyText(text, x, y, color);
+
+    }
+
 
 
 
     private renderDebugText() {
+
         const ctx = this.chatCtx;
         ctx.font = '8px Tiny5';
         ctx.fillStyle = 'teal';
@@ -298,11 +313,11 @@ export class ChatOverlay {
         const framerate = this.renderer.getFramerate();
 
         if (this.localPlayer.latency >= 999)
-            linesToRender.push('Disconnected :(');
+            linesToRender.push('disconnected :(');
 
         //const playerX = Math.round(this.localPlayer.position.x);
 
-        linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
+        linesToRender.push('candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
         //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
         for (let i = 0; i < linesToRender.length; i++) {
