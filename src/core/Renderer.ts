@@ -222,6 +222,10 @@ export class Renderer {
             //console.log(this.camera.position.y);
         }
 
+        const newHandX = Math.sin(this.bobCycle / 1.9) * .02 * SettingsManager.settings.viewBobbingStrength;
+        const newHandY = -(Math.sin(this.bobCycle) * .07 * SettingsManager.settings.viewBobbingStrength) + localPlayer.velocity.y * 0.04 * SettingsManager.settings.viewBobbingStrength;
+        this.heldItemCamera.position.lerp(new THREE.Vector3(newHandX, newHandY, 5),0.15 * this.deltaTime * 60);
+
         const maxRollAmount = this.inputHandler.getInputX() * -.007 * SettingsManager.settings.viewBobbingStrength;
         const maxRollSpeed = this.deltaTime * .4;
         let roll: number = this.lastCameraRoll;
