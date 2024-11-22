@@ -222,9 +222,24 @@ export class Renderer {
             //console.log(this.camera.position.y);
         }
 
-        const newHandX = Math.sin(this.bobCycle / 1.9) * .02 * SettingsManager.settings.viewBobbingStrength;
-        const newHandY = -(Math.sin(this.bobCycle) * .07 * SettingsManager.settings.viewBobbingStrength) + localPlayer.velocity.y * 0.04 * SettingsManager.settings.viewBobbingStrength;
-        this.heldItemCamera.position.lerp(new THREE.Vector3(newHandX, newHandY, 5),0.15 * this.deltaTime * 60);
+        let newHandX = Math.sin(this.bobCycle / 1.9) * .02 * SettingsManager.settings.viewBobbingStrength;
+        let newHandY = -(Math.sin(this.bobCycle) * .07 * SettingsManager.settings.viewBobbingStrength);
+        let newHandZ = Math.sin(this.bobCycle / 1.8) * .015 * SettingsManager.settings.viewBobbingStrength;
+        newHandY += localPlayer.velocity.y * 0.04 * SettingsManager.settings.viewBobbingStrength; //move hand up when falling, down when jumping
+
+        //banana lags behind player slightly
+        const playerVelocity = new THREE.Vector3().copy(localPlayer.velocity);
+        playerVelocity.applyQuaternion(localPlayer.lookQuaternion.clone().invert());
+        newHandX += playerVelocity.x * 0.02 * SettingsManager.settings.viewBobbingStrength;
+        newHandZ -= -playerVelocity.z * 0.02 * SettingsManager.settings.viewBobbingStrength;
+
+        if(this.inputHandler.getAim()) {
+            newHandX *= 0.25;
+            newHandY *= 0.25;
+            newHandZ *= 0.25;
+        }
+
+        this.heldItemCamera.position.lerp(new THREE.Vector3(newHandX, newHandY, 5 + newHandZ),0.15 * this.deltaTime * 60);
 
         const maxRollAmount = this.inputHandler.getInputX() * -.007 * SettingsManager.settings.viewBobbingStrength;
         const maxRollSpeed = this.deltaTime * .4;
