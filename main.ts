@@ -505,7 +505,7 @@ function addPlayerToDataSafe(data: Player, socket: Socket): void {
   playerUpdateSinceLastEmit = true;
   data.updateTimestamp = Date.now() / 1000;
 
-  if (data.name.length < 1) data.name = 'possum' + data.id;
+  if (data.name.length < 1) data.name = 'possum' + data.id.toString().substring(0,3);
 
   for (let i = 0; i < playerData.length; i++)
     if (playerData[i].id === data.id) {
