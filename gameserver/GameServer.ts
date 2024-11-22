@@ -50,14 +50,14 @@ export class GameServer {
         // console.log(config.health.regenRate);
 
         await Deno.serve({
-            hostname: "localhost",
+            hostname: "0.0.0.0",
             port: config.server.port,
         }, async (request: Request, connectInfo: Deno.ServeHandlerInfo) => {
             // Convert ServeHandlerInfo to ConnInfo
             const connInfo: ConnInfo = {
                 localAddr: {
                     transport: "tcp",
-                    hostname: "localhost",
+                    hostname: "0.0.0.0",
                     port: config.server.port
                 },
                 remoteAddr: connectInfo.remoteAddr
