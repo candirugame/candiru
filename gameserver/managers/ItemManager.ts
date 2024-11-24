@@ -3,6 +3,8 @@ import { Player } from '../models/Player.ts';
 import { MapData } from '../models/MapData.ts';
 import { Vector3 } from '../models/Vector3.ts';
 import config from "../config.ts";
+import {PlayerManager} from "./PlayerManager.ts";
+import {ChatManager} from "./ChatManager.ts";
 
 
 export class ItemManager {
@@ -10,7 +12,7 @@ export class ItemManager {
     private lastItemCreationTimestamp: number = Date.now() / 1000;
     private itemUpdateFlag: boolean = false;
 
-    constructor(private mapData: MapData) {}
+    constructor(private mapData: MapData, private playerManager:PlayerManager, private chatManager:ChatManager) {}
 
     tick(currentTime: number) {
         this.checkForPickups();

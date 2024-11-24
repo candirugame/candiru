@@ -1,15 +1,21 @@
-import { DataValidator } from "../DataValidator.ts";
-import { DamageRequest } from "../models/DamageRequest.ts";
-import { ChatManager } from "./ChatManager.ts";
+// DamageSystem.ts
 import { PlayerManager } from "./PlayerManager.ts";
+import { ChatManager } from "./ChatManager.ts";
+import { DamageRequest } from "../models/DamageRequest.ts";
+import { DataValidator } from "../DataValidator.ts";
+import config from "../config.ts";
+import { Vector3 } from "../models/Vector3.ts";
 
 export class DamageSystem {
-    constructor(private playerManager: PlayerManager, private chatManager: ChatManager) {}
+    constructor(
+        private playerManager: PlayerManager,
+        private chatManager: ChatManager
+    ) {}
 
     handleDamageRequest(data: DamageRequest) {
-        const { error } = DataValidator.validateDamageRequest(data);
-        if (error) {
-            console.warn(`Invalid damage request: ${error.message}`);
+        const validationResult = DataValidator.validateDamageRequest(data);
+        if (!validationResult.success) {
+            console.warn(`Invalid damage request: ${validationResult.error?.message}`);
             return;
         }
 
@@ -20,10 +26,22 @@ export class DamageSystem {
             console.warn('Target or local player not found.');
             return;
         }
-        // Calculate distance
-        const distance = targetPlayer.position.distanceTo(localPlayer.position);
-        if (distance > 1) {
-            console.warn('Players are out of range.');
+
+        // Validate positions
+        const localPlayerSentPosition = data.localPlayer.position;
+        const localPlayerServerPosition = localPlayer.position;
+        const localDistance = Vector3.distanceTo(localPlayerSentPosition, localPlayerServerPosition);
+
+        const targetPlayerSentPosition = data.targetPlayer.position;
+        const targetPlayerServerPosition = targetPlayer.position;
+        const targetDistance = Vector3.distanceTo(targetPlayerSentPosition, targetPlayerServerPosition);
+
+        const MAX_DESYNC_DISTANCE = 1; // Threshold for considering positions in sync
+
+        if (localDistance > MAX_DESYNC_DISTANCE || targetDistance > MAX_DESYNC_DISTANCE) {
+            console.warn(`⚠️ Client out of sync - localDistance: ${localDistance}, targetDistance: ${targetDistance}`);
+            // Optionally, send a message back to the client
+            // this.chatManager.whisperChatMessage('⚠️ Shot not registered (client out of sync)', localPlayer.socket);
             return;
         }
 
@@ -36,6 +54,7 @@ export class DamageSystem {
             const killerName = localPlayer.name;
             const killedName = targetPlayer.name;
             this.chatManager.broadcastChat(`${killerName} killed ${killedName}`);
+            console.log(`💔 ${killerName} killed ${killedName}`);
             this.playerManager.respawnPlayer(targetPlayer);
         }
 

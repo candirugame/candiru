@@ -30,8 +30,8 @@ export class GameServer {
 
         // Initialize Managers
         this.playerManager = new PlayerManager(this.mapData);
-        this.itemManager = new ItemManager(this.mapData);
         this.chatManager = new ChatManager(this.io);
+        this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
         this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
 
         // Set up Socket.IO and Routes
@@ -61,7 +61,7 @@ export class GameServer {
                 try {
                     const result = this.playerManager.addOrUpdatePlayer(data);
                     if (result.isNew && result.player) {
-                        this.chatManager.broadcastChat(`${result.player.name} joined the game.`);
+                        this.chatManager.broadcastChat(`${result.player.name} joined`);
                     }
                 } catch (err) {
                     console.error(`Error updating player data` + err);
@@ -72,8 +72,14 @@ export class GameServer {
             socket.on("chatMsg", (data) => this.chatManager.handleChatMessage(data, socket));
 
             // Handle damage requests
-            socket.on("damageRequest", (data) => {
+            socket.on("applyDamage", (data) => {
                 this.damageSystem.handleDamageRequest(data);
+            });
+
+            // In GameServer.ts, inside setupSocketIO()
+
+            socket.on('latencyTest', () => {
+                socket.emit('latencyTest', 'response :)');
             });
 
             // Handle disconnections

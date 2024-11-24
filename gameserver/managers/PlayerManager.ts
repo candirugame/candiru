@@ -22,19 +22,24 @@ export class PlayerManager {
         const existingPlayer = this.players.get(data.id);
         if (existingPlayer) {
             // Handle forced acknowledgment
-            if (existingPlayer.forced && !existingPlayer.forcedAcknowledged) {
+            if (existingPlayer.forced && !data.forcedAcknowledged) {
                 return { isNew: false };
+            }
+            if (existingPlayer.forced && data.forcedAcknowledged) {
+                existingPlayer.forced = false;
+                console.log(`🟢 ${data.name}(${data.id}) acknowledged force`);
             }
 
             // Update existing player, preserving certain fields
             data.health = existingPlayer.health;
             data.inventory = existingPlayer.inventory;
             data.lastDamageTime = existingPlayer.lastDamageTime;
+            data.updateTimestamp = Date.now() / 1000;
 
             this.players.set(data.id, data);
             return { isNew: false };
         } else {
-            // New player
+            // New playera
             data.inventory = [...config.player.baseInventory];
             const spawnPoint = this.getRandomSpawnPoint();
             data.position = spawnPoint.vec;
