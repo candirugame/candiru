@@ -6,8 +6,15 @@ import { DamageRequest } from "./models/DamageRequest.ts";
 
 
 export class DataValidator {
-    private static SERVER_VERSION = "v1.7.3";
-    //TODO: add server version
+    private static SERVER_VERSION = '';
+
+    public static async updateServerVersion() {
+        const versionFile = await Deno.readTextFile("public/gameVersion.json");
+        const versionData = JSON.parse(versionFile);
+        this.SERVER_VERSION = versionData.version;
+        return this.SERVER_VERSION;
+    }
+
 
     private static vector3Schema = z.object({
         x: z.number(),

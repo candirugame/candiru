@@ -27,7 +27,7 @@ export class PlayerManager {
             }
             if (existingPlayer.forced && data.forcedAcknowledged) {
                 existingPlayer.forced = false;
-                console.log(`🟢 ${data.name}(${data.id}) acknowledged force`);
+                //console.log(`🟢 ${data.name}(${data.id}) acknowledged force`);
             }
 
             // Update existing player, preserving certain fields

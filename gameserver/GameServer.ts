@@ -10,6 +10,7 @@ import { ItemManager } from './managers/ItemManager.ts';
 import { ChatManager } from './managers/ChatManager.ts';
 import { DamageSystem } from './managers/DamageSystem.ts';
 import { MapData } from './models/MapData.ts';
+import {DataValidator} from "./DataValidator.ts";
 
 export class GameServer {
     router: Router = new Router();
@@ -49,12 +50,13 @@ export class GameServer {
         this.gameEngine.start();
 
         // Start the Server
+        DataValidator.updateServerVersion();
         this.start();
     }
 
     private setupSocketIO() {
         this.io.on("connection", (socket: Socket) => {
-            console.log(`Socket connected: ${socket.id}`);
+            //console.log(`Socket connected: ${socket.id}`);
 
             // Handle player data updates
             socket.on("playerData", (data) => {
@@ -62,6 +64,7 @@ export class GameServer {
                     const result = this.playerManager.addOrUpdatePlayer(data);
                     if (result.isNew && result.player) {
                         this.chatManager.broadcastChat(`${result.player.name} joined`);
+                        console.log(`🟢 ${result.player.name}(${result.player.id}) joined`);
                     }
                 } catch (err) {
                     console.error(`Error updating player data` + err);
@@ -84,14 +87,7 @@ export class GameServer {
 
             // Handle disconnections
             socket.on("disconnect", (reason) => {
-                // Assuming player ID is mapped to socket ID
-                const playerId = Number(socket.id); // Adjust based on your implementation
-                const player = this.playerManager.getPlayerById(playerId);
-                if (player) {
-                    this.playerManager.removePlayer(playerId);
-                    this.chatManager.broadcastChat(`${player.name} left the game.`);
-                    console.log(`🟠 ${player.name}(${player.id}) disconnected: ${reason}`);
-                }
+
             });
         });
     }
