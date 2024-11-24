@@ -13,7 +13,11 @@ const defaults = {
 
     // Health settings
     HEALTH_REGEN_DELAY: '5',
-    HEALTH_REGEN_RATE: '3'
+    HEALTH_REGEN_RATE: '3',
+
+    //Item settings
+    MAX_ITEMS_IN_WORLD: '7',
+    ITEM_RESPAWN_TIME: '10',
 };
 
 async function updateEnvFile(defaults: Record<string, string>) {
@@ -64,6 +68,10 @@ function parseConfig(env: Record<string, string>) {
         health: {
             regenDelay: parseInt(env.HEALTH_REGEN_DELAY),
             regenRate: parseInt(env.HEALTH_REGEN_RATE)
+        },
+        items: {
+            maxItemsInWorld: parseInt(env.MAX_ITEMS_IN_WORLD),
+            respawnTime: parseInt(env.ITEM_RESPAWN_TIME)
         }
     };
 }

@@ -1,0 +1,93 @@
+import { Player } from "../models/Player.ts";
+import { Vector3 } from '../models/Vector3.ts';
+import { Quaternion } from '../models/Quaternion.ts';
+import { DataValidator } from '../DataValidator.ts';
+import { MapData } from "../models/MapData.ts";
+import config from "../config.ts";
+
+export class PlayerManager {
+    private players: Map<number, Player> = new Map();
+    private mapData: MapData;
+
+    constructor(mapData: MapData) {
+        this.mapData = mapData;
+    }
+
+    addOrUpdatePlayer(data: Player): { isNew: boolean; player?: Player } {
+        const { error } = DataValidator.validatePlayerData(data);
+        if (error) {
+            throw new Error(`Invalid player data: ${error.message}`);
+        }
+
+        const existingPlayer = this.players.get(data.id);
+        if (existingPlayer) {
+            // Handle forced acknowledgment
+            if (existingPlayer.forced && !existingPlayer.forcedAcknowledged) {
+                return { isNew: false };
+            }
+
+            // Update existing player, preserving certain fields
+            data.health = existingPlayer.health;
+            data.inventory = existingPlayer.inventory;
+            data.lastDamageTime = existingPlayer.lastDamageTime;
+
+            this.players.set(data.id, data);
+            return { isNew: false };
+        } else {
+            // New player
+            data.inventory = [...config.player.baseInventory];
+            const spawnPoint = this.getRandomSpawnPoint();
+            data.position = spawnPoint.vec;
+            data.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
+            data.forced = true;
+
+            this.players.set(data.id, data);
+            return { isNew: true, player: data };
+        }
+    }
+
+    removePlayer(playerId: number) {
+        this.players.delete(playerId);
+    }
+
+    getAllPlayers(): Player[] {
+        return Array.from(this.players.values());
+    }
+
+    getPlayerById(playerId: number): Player | undefined {
+        return this.players.get(playerId);
+    }
+
+    respawnPlayer(player: Player) {
+        const spawnPoint = this.getRandomSpawnPoint();
+        player.position = spawnPoint.vec;
+        player.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
+        player.health = config.player.maxHealth;
+        player.gravity = 0;
+        player.velocity = new Vector3(0, 0, 0);
+        player.forced = true;
+        this.players.set(player.id, player);
+    }
+
+    regenerateHealth() {
+        const currentTime = Date.now() / 1000;
+        for (let player of this.players.values()) {
+            const lastDamage = player.lastDamageTime ?? 0;
+            if (player.health < config.player.maxHealth && (lastDamage + config.health.regenDelay < currentTime)) {
+                player.health += config.health.regenRate / config.server.tickRate; // Adjusted per tick
+                if (player.health > config.player.maxHealth) player.health = config.player.maxHealth;
+            }
+        }
+    }
+
+    private getRandomSpawnPoint(): { vec: Vector3; quaternion: Quaternion } {
+        if (!this.mapData) {
+            // Default spawn point if map data is unavailable
+            return { vec: new Vector3(2, 1, 0), quaternion: new Quaternion(0, 0, 0, 1) };
+        }
+
+        const randomIndex = Math.floor(Math.random() * this.mapData.respawnPoints.length);
+        const respawnPoint = this.mapData.respawnPoints[randomIndex];
+        return { vec: respawnPoint.position, quaternion: respawnPoint.quaternion };
+    }
+}
