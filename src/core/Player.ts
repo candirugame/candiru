@@ -29,7 +29,7 @@ export class Player {
         this.gravity = 0;
         this.lookQuaternion = new THREE.Quaternion();
         this.quaternion = new THREE.Quaternion();
-        this.id = Math.floor(Math.random() * 10000);
+        this.id = Math.floor(Math.random() * 1000000000);
         this.gameVersion = '';
         this.name = '';
         this.speed = 5;
