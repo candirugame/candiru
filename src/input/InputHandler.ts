@@ -282,8 +282,10 @@ export class InputHandler {
     }
 
     private calculateAimAssist(): number {
-        if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0 && (Math.abs(this.gamepadInputs.rightJoyX) >= .1 || Math.abs(this.gamepadInputs.rightJoyY) >= .1)) {
-            return .5;
+        if ((Math.abs(this.gamepadInputs.rightJoyX) >= .1 || Math.abs(this.gamepadInputs.rightJoyY) >= .1)) {
+            if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0) {
+                return .5;
+            }
         }
         return 1;
     }

@@ -57,6 +57,7 @@ export class RemotePlayerRenderer {
     private localPlayer: Player;
     private deltaTime: number = 0; // Initialize deltaTime to avoid Deno error
     private static minVelocityToAnimate = 0.1;
+    private static map: THREE.Mesh = new THREE.Mesh();
 
     private crosshairVec = new THREE.Vector2();
 
@@ -237,8 +238,6 @@ export class RemotePlayerRenderer {
 
         playerObject.quaternion.slerp(targetQuaternion, 0.5 * this.deltaTime * 60);
 
-        playerSphere.updateMatrixWorld();
-
         // Update the position of the name label
         const player = this.playersToRender.find(p => p.id === remotePlayerData.id);
         if (player) {
@@ -383,12 +382,9 @@ export class RemotePlayerRenderer {
     private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
 
-        const geom = CollisionManager.getColliderGeom();
-        const map = new THREE.Mesh(geom);
-
         const playerIntersects = this.raycaster.intersectObjects(this.entityScene.children);
         this.raycaster.firstHitOnly = true;
-        const wallIntersects = this.raycaster.intersectObjects([map]);
+        const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
         this.raycaster.firstHitOnly = false;
 
         const filteredIntersects = playerIntersects.filter((playerIntersect) => {
@@ -406,12 +402,11 @@ export class RemotePlayerRenderer {
     public getPlayerSpheresInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
 
-        const geom = CollisionManager.getColliderGeom();
-        const map = new THREE.Mesh(geom);
+        this.sphereScene.updateMatrixWorld();
 
         this.raycaster.firstHitOnly = true;
-        const playerIntersects = this.raycaster.intersectObjects(this.sphereScene.children, true);
-        const wallIntersects = this.raycaster.intersectObjects([map]);
+        const playerIntersects = this.raycaster.intersectObjects(this.sphereScene.children);
+        const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
         this.raycaster.firstHitOnly = false;
 
         const filteredIntersects = playerIntersects.filter((playerIntersect) => {
@@ -433,13 +428,10 @@ export class RemotePlayerRenderer {
         // Set the raycaster with the offset direction
         this.raycaster.set(this.camera.position, offsetDirection);
 
-        const geom = CollisionManager.getColliderGeom();
-        const map = new THREE.Mesh(geom);
-
         // Intersect with all potential targets (players and walls)
         const playerIntersects = this.raycaster.intersectObjects(this.playersToRender.map(p => p.object), true);
         this.raycaster.firstHitOnly = true;
-        const wallIntersects = this.raycaster.intersectObjects([map]);
+        const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
         this.raycaster.firstHitOnly = false;
 
         // Filter player intersections based on wall intersections
@@ -491,5 +483,9 @@ export class RemotePlayerRenderer {
             return intersects[0]; // Return the first intersection point
         }
         return null;
+    }
+
+    public static setMap(map: THREE.Mesh) {
+        this.map = map;
     }
 }
