@@ -6,7 +6,6 @@ import { Server } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
 import config from "./config.ts";
 import { Vector3 } from "./models/Vector3.ts";
 
-
 export class GameEngine {
     private lastPlayerTickTimestamp: number = Date.now() / 1000;
     private lastItemUpdateTimestamp: number = Date.now() / 1000;
@@ -27,57 +26,69 @@ export class GameEngine {
     }
 
     private serverTick() {
-        const currentTime = Date.now() / 1000;
-        this.playerManager.regenerateHealth();
-        this.itemManager.tick(currentTime);
+        try {
+            const currentTime = Date.now() / 1000;
+            this.playerManager.regenerateHealth();
+            this.itemManager.tick(currentTime);
 
-        // Emit player data
-        if (this.playerUpdateSinceLastEmit || currentTime - this.lastPlayerTickTimestamp > 1 / config.server.tickRate) {
-            this.io.emit('remotePlayerData', this.playerManager.getAllPlayers());
-            this.playerUpdateSinceLastEmit = false;
-            this.lastPlayerTickTimestamp = currentTime;
-        }
+            // Emit player data if there are updates or enough time has passed
+            if (this.playerUpdateSinceLastEmit || currentTime - this.lastPlayerTickTimestamp > 1 / config.server.tickRate) {
+                try {
+                    this.io.emit('remotePlayerData', this.playerManager.getAllPlayers());
+                    this.playerUpdateSinceLastEmit = false;
+                    this.lastPlayerTickTimestamp = currentTime;
+                } catch (err) {
+                    console.error('Error emitting player data:', err);
+                }
+            }
 
-        // Emit item data
-        if (this.itemUpdateSinceLastEmit || this.itemManager.hasUpdates()) {
-            this.io.emit('worldItemData', this.itemManager.getAllItems());
-            this.itemUpdateSinceLastEmit = false;
+            // Emit item data if there are updates
+            if (this.itemUpdateSinceLastEmit || this.itemManager.hasUpdates()) {
+                try {
+                    this.io.emit('worldItemData', this.itemManager.getAllItems());
+                    this.itemUpdateSinceLastEmit = false;
+                } catch (err) {
+                    console.error('Error emitting item data:', err);
+                }
+            }
+        } catch (error) {
+            console.error('Error in serverTick:', error);
         }
     }
 
     private periodicCleanup() {
-        const currentTime = Date.now() / 1000;
-        const players = this.playerManager.getAllPlayers();
+        try {
+            const currentTime = Date.now() / 1000;
+            const players = this.playerManager.getAllPlayers();
 
-        players.forEach(player => {
-            // Handle players falling below y = -150
-            if (player.position.y < -150) {
-                player.health = 0;
-                player.velocity = new Vector3(0, 0, 0);
-                this.chatManager.broadcastChat(`${player.name} fell off :'(`);
-                console.log(`💔 ${player.name}(${player.id}) fell off the map`);
-            }
+            players.forEach(player => {
+                if (player.position.y < -150) {
+                    player.health = 0;
+                    player.velocity = new Vector3(0, 0, 0);
+                    this.chatManager.broadcastChat(`${player.name} fell off :'(`);
+                    console.log(`💔 ${player.name}(${player.id}) fell off the map`);
+                }
 
-            // Respawn players with health <= 0
-            if (player.health <= 0) {
-                this.playerManager.respawnPlayer(player);
-            }
+                if (player.health <= 0) {
+                    this.playerManager.respawnPlayer(player);
+                }
 
-            // Kick players who haven't updated recently
-            if ((player.updateTimestamp || 0) + config.player.disconnectTime < currentTime) {
-                console.log(`🟠 ${player.name}(${player.id}) left`);
-                this.chatManager.broadcastChat(`${player.name} left`);
-                this.playerManager.removePlayer(player.id);
-            }
-        });
+                if ((player.updateTimestamp || 0) + config.player.disconnectTime < currentTime) {
+                    console.log(`🟠 ${player.name}(${player.id}) left`);
+                    this.chatManager.broadcastChat(`${player.name} left`);
+                    this.playerManager.removePlayer(player.id);
+                }
+            });
 
-        // Remove items below y = -5
-        const items = this.itemManager.getAllItems();
-        items.forEach(item => {
-            if (item.vector.y < -5) {
-                this.itemManager.removeItem(item.id);
-                this.itemUpdateSinceLastEmit = true;
-            }
-        });
+            const items = this.itemManager.getAllItems();
+            items.forEach(item => {
+                if (item.vector.y < -5) {
+                    this.itemManager.removeItem(item.id);
+                    this.itemUpdateSinceLastEmit = true;
+                }
+            });
+        } catch (error) {
+            console.error('Error in periodicCleanup:', error);
+        }
     }
 }
