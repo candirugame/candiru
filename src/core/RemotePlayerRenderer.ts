@@ -56,6 +56,7 @@ export class RemotePlayerRenderer {
     private networking: Networking;
     private localPlayer: Player;
     private deltaTime: number = 0; // Initialize deltaTime to avoid Deno error
+    private static minVelocityToAnimate = 0.1;
 
     private crosshairVec = new THREE.Vector2();
 
@@ -152,7 +153,7 @@ export class RemotePlayerRenderer {
         const playerId = remotePlayerData.id;
         const prevVelocity = this.previousVelocity[playerId] || 0;
 
-        if (prevVelocity === 0 && velocity > 0) {
+        if (prevVelocity <= RemotePlayerRenderer.minVelocityToAnimate && velocity > RemotePlayerRenderer.minVelocityToAnimate) {
             this.isAnimating[playerId] = true;
             this.animationPhase[playerId] = 0;
         }
@@ -210,7 +211,7 @@ export class RemotePlayerRenderer {
             playerSphere.position.y += yOffset;
             this.lastRunningYOffset[playerId] = yOffset;
 
-            if (velocity === 0 && Math.cos(this.animationPhase[playerId]) <= 0) {
+            if (velocity <= RemotePlayerRenderer.minVelocityToAnimate && Math.cos(this.animationPhase[playerId]) <= 0) {
                 this.isAnimating[playerId] = false;
                 this.lastRunningYOffset[playerId] = 0;
             }

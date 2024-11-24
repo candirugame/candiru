@@ -148,7 +148,7 @@ export class FishGun extends ItemBase {
         if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
             if (Date.now() / 1000 - this.lastFired > firingDelay) {
                 this.lastFired = Date.now() / 1000;
-                this.shootBanana();
+                this.shootFish();
                 this.handPosition.add(new THREE.Vector3(0, 0, 2));
                 rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
             }
@@ -175,13 +175,13 @@ export class FishGun extends ItemBase {
         return false;
     }
 
-    private shootBanana() {
+    private shootFish() {
         const totalShots = 25;
         let processedShots = 0;
+        const TIMEOUT = 150;
 
         const processShots = (deadline?: IdleDeadline) => {
-            // Use a default value for timeRemaining if deadline is undefined
-            const timeRemaining = deadline ? deadline.timeRemaining() : Number.MAX_VALUE;
+            const timeRemaining = deadline ? deadline.timeRemaining() : 16;
 
             while (processedShots < totalShots && timeRemaining > 0) {
                 const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
@@ -203,23 +203,38 @@ export class FishGun extends ItemBase {
                 processedShots++;
             }
 
+            // If we still have shots to process, schedule the next batch
             if (processedShots < totalShots) {
                 if (typeof requestIdleCallback === 'function') {
-                    requestIdleCallback(processShots);
+                    const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
+
+                    // Ensure completion within timeout
+                    setTimeout(() => {
+                        cancelIdleCallback(idleCallbackId);
+                        processShots();
+                    }, TIMEOUT);
                 } else {
-                    // Fallback for environments without requestIdleCallback
                     setTimeout(() => processShots(), 0);
                 }
             }
         };
 
+        // Initial call
         if (typeof requestIdleCallback === 'function') {
-            requestIdleCallback(processShots);
+            const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
+
+            // Ensure first batch starts within timeout
+            setTimeout(() => {
+                cancelIdleCallback(idleCallbackId);
+                processShots();
+            }, TIMEOUT);
         } else {
-            // Initial call for environments without requestIdleCallback
             setTimeout(() => processShots(), 0);
         }
     }
+
+
+
 
 
 

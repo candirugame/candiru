@@ -83,6 +83,10 @@ export class ChatOverlay {
 
         document.body.appendChild(this.chatCanvas);
 
+        globalThis.addEventListener('resize', this.onWindowResize.bind(this));
+        globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this));
+
+
 
     }
 
@@ -130,8 +134,6 @@ export class ChatOverlay {
 
         // this.chatCanvas.width = this.screenWidth;
         // this.chatCtx.fillRect(0,0,10,10);
-        globalThis.addEventListener('resize', this.onWindowResize.bind(this));
-        globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this));
 
         this.onWindowResize();
 
@@ -148,14 +150,9 @@ export class ChatOverlay {
 
     private renderChatMessages() {
         const ctx = this.chatCtx;
-        const offscreenCanvas = document.createElement('canvas');
-        const offscreenCtx = offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
 
-        offscreenCanvas.width = this.chatCanvas.width;
-        offscreenCanvas.height = this.chatCanvas.height;
-
-        offscreenCtx.font = '8px Tiny5';
-        offscreenCtx.fillStyle = 'white';
+        this.offscreenCtx.font = '8px Tiny5';
+        this.offscreenCtx.fillStyle = 'white';
 
         const usermsg = this.localPlayer.chatMsg;
         let cursor = '';
@@ -190,7 +187,7 @@ export class ChatOverlay {
 
             if (!duplicateFromPlayerData) {
                 linesToRender.push(remainingMsg);
-                pixOffsets.push(offscreenCtx.measureText(removedSubstring).width);
+                pixOffsets.push(this.offscreenCtx.measureText(removedSubstring).width);
             }
         }
 
@@ -216,7 +213,7 @@ export class ChatOverlay {
         const isFirstWrappedLine: boolean[] = [];
 
         for (let i = 0; i < linesToRender.length; i++) {
-            const wrapped = this.doTextWrapping(offscreenCtx, [linesToRender[i]], this.screenWidth - 10);
+            const wrapped = this.doTextWrapping(this.offscreenCtx, [linesToRender[i]], this.screenWidth - 10);
             for (let j = 0; j < wrapped.length; j++) {
                 wrappedLines.push(wrapped[j]);
                 lineOrigins.push(i);
@@ -243,9 +240,8 @@ export class ChatOverlay {
             ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
         }
     }
+    private renderPrettyText(text: string, x: number, y: number, color: string) {
 
-
-    private renderPixelText(text: string, x: number, y: number, color: string) {
         // Set font to measure text
         this.offscreenCtx.font = '8px Tiny5';
 
@@ -286,10 +282,26 @@ export class ChatOverlay {
         this.chatCtx.drawImage(this.offscreenCanvas, x, y - textHeight + 1);
     }
 
+    private renderUglyText(text: string, x: number, y: number, color: string) {
+        this.chatCtx.font = '8px Tiny5';
+        this.chatCtx.fillStyle = color;
+        this.chatCtx.fillText(text, x, y);
+    }
+
+    private renderPixelText(text: string, x: number, y: number, color: string) {
+
+        if(SettingsManager.settings.doPrettyText)
+            this.renderPrettyText(text, x, y, color);
+        else
+            this.renderUglyText(text, x, y, color);
+
+    }
+
 
 
 
     private renderDebugText() {
+
         const ctx = this.chatCtx;
         ctx.font = '8px Tiny5';
         ctx.fillStyle = 'teal';
@@ -298,11 +310,11 @@ export class ChatOverlay {
         const framerate = this.renderer.getFramerate();
 
         if (this.localPlayer.latency >= 999)
-            linesToRender.push('Disconnected :(');
+            linesToRender.push('disconnected :(');
 
         //const playerX = Math.round(this.localPlayer.position.x);
 
-        linesToRender.push('Candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'FPS');
+        linesToRender.push('candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps');
         //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
         for (let i = 0; i < linesToRender.length; i++) {

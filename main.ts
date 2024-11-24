@@ -442,16 +442,21 @@ function parseForCommand(msg: string, socket: Socket, id:number): boolean {
           playerUpdateSinceLastEmit = true;
         }
       break;
-    case '/thumbsup':
-      for (let i = 0; i < playerData.length; i++)
-        if (playerData[i].id === id)
-          sendChatMessage(playerData[i].name + ': 👍');
-      break;
+      case '/thumbsup':
+          for (let i = 0; i < playerData.length; i++)
+              if (playerData[i].id === id)
+                  sendChatMessage(playerData[i].name + ': 👍');
+          break;
     case '/thumbsdown':
       for (let i = 0; i < playerData.length; i++)
         if (playerData[i].id === id)
           sendChatMessage(playerData[i].name + ': 👎');
       break;
+      case '/octopus':
+          for (let i = 0; i < playerData.length; i++)
+              if (playerData[i].id === id)
+                  sendChatMessage(playerData[i].name + ': 🐙');
+          break;
     case '/ping':
       whisperChatMessage(msg + ' -> pong!', socket);
       break;
@@ -505,7 +510,7 @@ function addPlayerToDataSafe(data: Player, socket: Socket): void {
   playerUpdateSinceLastEmit = true;
   data.updateTimestamp = Date.now() / 1000;
 
-  if (data.name.length < 1) data.name = 'possum' + data.id;
+  if (data.name.length < 1) data.name = 'possum' + data.id.toString().substring(0,3);
 
   for (let i = 0; i < playerData.length; i++)
     if (playerData[i].id === data.id) {
