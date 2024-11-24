@@ -4,11 +4,12 @@ import { DataValidator } from "../DataValidator.ts";
 import { ChatMessage } from '../models/ChatMessage.ts';
 import { Socket } from 'socket.io';
 import config from "../config.ts";
+import {PlayerManager} from "./PlayerManager.ts";
 
 
 
 export class ChatManager {
-    constructor(private io: Server) {}
+    constructor(private io: Server, private playerManager:PlayerManager) {}
 
     handleChatMessage(data: ChatMessage, socket) {
         const { error } = DataValidator.validateChatMessage(data);
@@ -38,10 +39,13 @@ export class ChatManager {
                 // Implement kill logic by emitting an event or calling DamageSystem
                 break;
             case 'thumbsup':
-                this.broadcastChat(`${playerId}: 👍`);
+                this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👍`);
                 break;
             case 'thumbsdown':
-                this.broadcastChat(`${playerId}: 👎`);
+                this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👎`);
+                break;
+            case 'octopus':
+                this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
                 break;
             case 'ping':
                 this.whisperChatMessage('Pong!', socket);

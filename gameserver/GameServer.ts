@@ -26,7 +26,7 @@ export class GameServer {
     constructor() {
         this.mapData = this.loadMapData();
         this.playerManager = new PlayerManager(this.mapData);
-        this.chatManager = new ChatManager(this.io);
+        this.chatManager = new ChatManager(this.io, this.playerManager);
         this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
         this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
 

@@ -39,12 +39,51 @@ export class ItemManager {
         this.worldItems.push(newItem);
         this.itemUpdateFlag = true;
     }
-
     checkForPickups() {
-        // This function would require access to PlayerManager and ChatManager
-        // To keep it decoupled, consider using event emitters or passing necessary references
-        // For simplicity, it's left as a stub here
+        const players = this.playerManager.getAllPlayers();
+
+        for (const player of players) {
+            const itemIndex = this.worldItems.findIndex(item =>
+                item.vector.distanceTo(player.position) < 0.5
+            );
+
+            if (itemIndex === -1) continue;
+
+            const item = this.worldItems[itemIndex];
+            let shouldPickup = false;
+
+            switch (item.itemType) {
+                case 0: // Cube
+                    player.inventory.push(0);
+                    shouldPickup = true;
+                    this.chatManager.broadcastChat(`${player.name} picked up [Object]!`);
+                    console.log(`🍌 ${player.name} picked up cube!`);
+                    break;
+
+                case 1: // Banana
+                    if (!player.inventory.includes(1)) {
+                        player.inventory.push(1);
+                        shouldPickup = true;
+                        console.log(`🍌 ${player.name} picked up banana!`);
+                    }
+                    break;
+
+                case 2: // Fish
+                    if (!player.inventory.includes(2)) {
+                        player.inventory.push(2);
+                        shouldPickup = true;
+                        console.log(`🍌 ${player.name} picked up fish!`);
+                    }
+                    break;
+            }
+
+            if (shouldPickup) {
+                this.worldItems.splice(itemIndex, 1);
+                this.itemUpdateFlag = true;
+            }
+        }
     }
+
 
     isItemCloseToPoint(vector: Vector3, distance: number): boolean {
         return this.worldItems.some(item => item.vector.distanceTo(vector) < distance);
