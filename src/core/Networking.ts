@@ -139,7 +139,7 @@ export class Networking {
                     this.localPlayer.position.set(remotePlayer.position.x, remotePlayer.position.y, remotePlayer.position.z);
                     this.localPlayer.velocity.set(remotePlayer.velocity.x, remotePlayer.velocity.y, remotePlayer.velocity.z);
                     this.localPlayer.lookQuaternion.set(...remotePlayer.lookQuaternion);
-                    this.localPlayer.name = remotePlayer.name;
+                    //this.localPlayer.name = remotePlayer.name;
                     this.localPlayer.gravity = remotePlayer.gravity;
                     this.localPlayer.forcedAcknowledged = true;
                 } else {
