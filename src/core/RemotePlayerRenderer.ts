@@ -298,6 +298,7 @@ export class RemotePlayerRenderer {
     }
 
     private createTextSprite(text: string): THREE.Sprite {
+        text = text.replace(/&[0123456789abcdef]/g, ''); // Remove color codes
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d')!;
         const fontSize = 64;
