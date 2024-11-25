@@ -39,7 +39,7 @@ export class DamageSystem {
         const MAX_DESYNC_DISTANCE = 1; // Threshold for considering positions in sync
 
         if (localDistance > MAX_DESYNC_DISTANCE || targetDistance > MAX_DESYNC_DISTANCE) {
-            console.warn(`⚠️ Client out of sync - localDistance: ${localDistance}, targetDistance: ${targetDistance}`);
+            //console.warn(`⚠️ Client out of sync - localDistance: ${localDistance}, targetDistance: ${targetDistance}`);
             // Optionally, send a message back to the client
             // this.chatManager.whisperChatMessage('⚠️ Shot not registered (client out of sync)', localPlayer.socket);
             return;

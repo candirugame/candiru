@@ -93,7 +93,7 @@ export class GameServer {
                 });
 
                 socket.on("disconnect", (reason) => {
-                    console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
+                    //console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
                 });
             }
         });
