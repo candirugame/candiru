@@ -9,7 +9,7 @@ const defaults = {
     PLAYER_DISCONNECT_TIME: '5',
     PLAYER_AFK_KICK_TIME: '600',
     PLAYER_MAX_HEALTH: '100',
-    PLAYER_BASE_INVENTORY: '[1,2]',
+    PLAYER_BASE_INVENTORY: '[]',
 
     // Health settings
     HEALTH_REGEN_DELAY: '5',
