@@ -265,7 +265,7 @@ export class ChatOverlay {
 
     private renderPrettyText(text: string, x: number, y: number, defaultColor: string) {
         let currentX = x;
-        let segments: { text: string, color: string }[] = [];
+        const segments: { text: string, color: string }[] = [];
         let currentColor = defaultColor;
         let currentSegment = '';
 

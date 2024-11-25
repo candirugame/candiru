@@ -31,6 +31,7 @@ export class PlayerManager {
         if (data.name.length < 1) data.name = 'possum' + data.id.toString().substring(0,3);
         if(data.chatMsg.startsWith('/admin ')) data.chatMsg = '/admin ' + data.chatMsg.substring(7).replace(/./g, '*');
         if(data.chatMsg.startsWith('>')) data.chatMsg = '&2'+data.chatMsg;
+        if(!data.chatMsg.startsWith('&f')) data.chatMsg = '&f'+data.chatMsg;
         if (existingPlayer) {
             // Handle forced acknowledgment
             if (existingPlayer.forced && !data.forcedAcknowledged) {

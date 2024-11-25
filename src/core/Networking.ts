@@ -187,10 +187,14 @@ export class Networking {
             name: this.localPlayer.name
         };
         if (msg.length < 1) return;
-        this.socket.emit('chatMsg', chatMessage);
-        if (msg.charAt(0) === '/') return;
         if(chatMessage.message.startsWith('>')) chatMessage.message = '&2'+chatMessage.message;
+        if (msg.charAt(0) === '/'){
+            this.socket.emit('chatMsg', chatMessage);
+            return;
+        }
+        chatMessage.message = '&f' + chatMessage.message;
         this.chatOverlay.addChatMessage(chatMessage);
+        this.socket.emit('chatMsg', chatMessage);
     }
 
     public applyDamage(id: number, damage: number) {
