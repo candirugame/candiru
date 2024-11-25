@@ -15,6 +15,10 @@ export class DataValidator {
         return this.SERVER_VERSION;
     }
 
+    public static getServerVersion() {
+        return this.SERVER_VERSION;
+    }
+
 
     private static vector3Schema = z.object({
         x: z.number(),

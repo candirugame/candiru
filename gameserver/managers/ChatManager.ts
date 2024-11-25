@@ -11,7 +11,7 @@ import {PlayerManager} from "./PlayerManager.ts";
 export class ChatManager {
     constructor(private io: Server, private playerManager:PlayerManager) {}
 
-    handleChatMessage(data: ChatMessage, socket) {
+    handleChatMessage(data: ChatMessage, socket:Socket) {
         const { error } = DataValidator.validateChatMessage(data);
         if (error) {
             console.warn(`Invalid chat message: ${error.message}`);
@@ -33,11 +33,14 @@ export class ChatManager {
 
         switch (command) {
             case 'help':
-                this.whisperChatMessage('Here are the available commands: /help, /kill, /ping, /version', socket);
+                this.whisperChatMessage(message + ` -> nah i'm good`, socket);
                 break;
             case 'kill':
-                // Implement kill logic by emitting an event or calling DamageSystem
-                break;
+                let player = this.playerManager.getPlayerById(playerId);
+                if(player)
+                    this.playerManager.respawnPlayer(player);
+                this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name} killed himself`);
+               break;
             case 'thumbsup':
                 this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👍`);
                 break;
@@ -48,22 +51,18 @@ export class ChatManager {
                 this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
                 break;
             case 'ping':
-                this.whisperChatMessage('Pong!', socket);
+                this.whisperChatMessage(message + ' -> pong!', socket);
                 break;
             case 'version':
-                this.whisperChatMessage(`Server Version: implement this pls :)`, socket);
-                break;
-            case 'bee':
-                this.whisperChatMessage(
-                    "🐝 According to all known laws of aviation, there is no way a bee should be able to fly...",
-                    socket
-                );
+                this.whisperChatMessage(message + ` -> candiru ${DataValidator.getServerVersion()}`, socket);
                 break;
             case 'clear':
-                // Implement chat clear logic
+                for(let i = 0; i < 25; i++)
+                    this.whisperChatMessage(' ', socket);
+                this.whisperChatMessage(message + ' -> cleared chat', socket);
                 break;
             default:
-                this.whisperChatMessage('Unknown command.', socket);
+                this.whisperChatMessage(message +' -> unknown command', socket);
         }
 
         return true;
