@@ -39,12 +39,18 @@ export class ItemManager {
         this.worldItems.push(newItem);
         this.itemUpdateFlag = true;
     }
+
+    pushItem(item: WorldItem) {
+        this.worldItems.push(item);
+        this.itemUpdateFlag = true;
+    }
+
     checkForPickups() {
         const players = this.playerManager.getAllPlayers();
 
         for (const player of players) {
             const itemIndex = this.worldItems.findIndex(item =>
-                item.vector.distanceTo(player.position) < 0.5
+               Vector3.distanceTo(player.position, item.vector) < 0.5
             );
 
             if (itemIndex === -1) continue;
@@ -86,7 +92,7 @@ export class ItemManager {
 
 
     isItemCloseToPoint(vector: Vector3, distance: number): boolean {
-        return this.worldItems.some(item => item.vector.distanceTo(vector) < distance);
+        return this.worldItems.some(item => Vector3.distanceTo(item.vector,vector) < distance);
     }
 
     getAllItems(): WorldItem[] {
@@ -104,5 +110,9 @@ export class ItemManager {
             return true;
         }
         return false;
+    }
+
+    triggerUpdateFlag(){
+        this.itemUpdateFlag = true;
     }
 }

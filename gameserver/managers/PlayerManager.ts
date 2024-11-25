@@ -4,13 +4,20 @@ import { Quaternion } from '../models/Quaternion.ts';
 import { DataValidator } from '../DataValidator.ts';
 import { MapData } from "../models/MapData.ts";
 import config from "../config.ts";
+import { WorldItem } from "../models/WorldItem.ts";
+import { ItemManager } from "./ItemManager.ts";
 
 export class PlayerManager {
     private players: Map<number, Player> = new Map();
     private mapData: MapData;
+    private itemManager!: ItemManager;
 
     constructor(mapData: MapData) {
         this.mapData = mapData;
+    }
+
+    setItemManager(itemManager: ItemManager) {
+        this.itemManager = itemManager
     }
 
     addOrUpdatePlayer(data: Player): { isNew: boolean; player?: Player } {
@@ -45,8 +52,10 @@ export class PlayerManager {
             data.position = spawnPoint.vec;
             data.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
             data.forced = true;
-
             this.players.set(data.id, data);
+
+            this.itemManager.triggerUpdateFlag();
+
             return { isNew: true, player: data };
         }
     }
@@ -65,6 +74,10 @@ export class PlayerManager {
 
     respawnPlayer(player: Player) {
         const spawnPoint = this.getRandomSpawnPoint();
+        for(let i = 0; i < player.inventory.length; i++){
+            this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
+        }
+        player.inventory = [...config.player.baseInventory];
         player.position = spawnPoint.vec;
         player.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
         player.health = config.player.maxHealth;

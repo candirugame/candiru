@@ -30,6 +30,8 @@ export class GameServer {
         this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
         this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
 
+        this.playerManager.setItemManager(this.itemManager);
+
         this.setupSocketIO();
         this.setupRoutes();
 
@@ -49,7 +51,6 @@ export class GameServer {
     private setupSocketIO() {
         this.io.on("connection", (socket: Socket) => {
             if (socket.connected) {
-                console.log(`Socket connected: ${socket.id}`);
 
                 socket.on("error", (error) => {
                     console.error(`Socket error for ${socket.id}:`, error);
