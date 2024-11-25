@@ -20,6 +20,7 @@ export class ChatManager {
 
         const isCommand = this.parseCommand(data.message, socket, data.id);
         if (!isCommand) {
+            if(data.message.startsWith('>')) data.message = '&2'+data.message;
             console.log(`💬 ${data.name}: ${data.message}`);
             this.io.emit('chatMsg', data);
         }

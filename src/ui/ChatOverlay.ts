@@ -197,7 +197,10 @@ export class ChatOverlay {
         }
 
         if (this.localPlayer.chatActive) {
-            linesToRender.push(usermsg + cursor);
+            if(this.localPlayer.chatMsg.startsWith('>'))
+                linesToRender.push('&2'+usermsg + cursor);
+            else
+                linesToRender.push(usermsg + cursor);
             pixOffsets.push(0);
         }
 

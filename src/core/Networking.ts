@@ -189,6 +189,7 @@ export class Networking {
         if (msg.length < 1) return;
         this.socket.emit('chatMsg', chatMessage);
         if (msg.charAt(0) === '/') return;
+        if(chatMessage.message.startsWith('>')) chatMessage.message = '&2'+chatMessage.message;
         this.chatOverlay.addChatMessage(chatMessage);
     }
 
