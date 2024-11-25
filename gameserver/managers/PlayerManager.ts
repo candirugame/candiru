@@ -23,10 +23,12 @@ export class PlayerManager {
     addOrUpdatePlayer(data: Player): { isNew: boolean; player?: Player } {
         const { error } = DataValidator.validatePlayerData(data);
         if (error) {
-            throw new Error(`Invalid player data: ${error.message}`);
+            //throw new Error(`Invalid player data: ${error.message}`);
+            console.log('⚠️ invalid player data recieved')
         }
 
         const existingPlayer = this.players.get(data.id);
+        if (data.name.length < 1) data.name = 'possum' + data.id.toString().substring(0,3);
         if (existingPlayer) {
             // Handle forced acknowledgment
             if (existingPlayer.forced && !data.forcedAcknowledged) {
@@ -53,7 +55,6 @@ export class PlayerManager {
             data.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
             data.forced = true;
             this.players.set(data.id, data);
-
             this.itemManager.triggerUpdateFlag();
 
             return { isNew: true, player: data };
