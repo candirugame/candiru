@@ -30,6 +30,9 @@ export class Renderer {
     private bobCycle: number;
     private lastCameraRoll: number
 
+    private targetZoom:number = 1;
+    public weaponScoped:boolean = false;
+
     public crosshairIsFlashing: boolean = false;
     public lastShotSomeoneTimestamp: number = 0;
     public playerHitMarkers: { hitPoint: THREE.Vector3, shotVector: THREE.Vector3, timestamp: number }[] = [];
@@ -116,6 +119,8 @@ export class Renderer {
 
     public onFrame(localPlayer: Player) {
         this.deltaTime = this.clock.getDelta();
+        this.updateZoom();
+
 
         // Ensure the renderer clears the buffers before the first render
         this.renderer.autoClear = true;
@@ -252,6 +257,22 @@ export class Renderer {
         this.camera.quaternion.setFromEuler(euler);
 
         this.updateFramerate();
+    }
+
+
+    private updateZoom() {
+        if(this.weaponScoped)
+            this.targetZoom = 14;
+        else
+            this.targetZoom = 1;
+        if(this.camera.zoom != this.targetZoom) {
+            this.camera.zoom = Renderer.approachNumber(this.camera.zoom, 1.2 * this.deltaTime * 60, this.targetZoom);
+            this.camera.updateProjectionMatrix();
+        }
+    }
+
+    public setSniperScoped(isScoped: boolean) {
+        this.heldItemCamera.zoom = isScoped ? 0.5 : 1;
     }
 
     private updateFramerate() {
