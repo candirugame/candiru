@@ -6,16 +6,16 @@ WORKDIR /app
 
 # Install curl
 USER root
-RUN apt-get update && apt-get install -y curl  # or wget, depending on what you want
+RUN apt-get update && apt-get install -y curl
 
-# Change ownership of /app to the deno user
+# Copy the project files
+COPY . .
+
+# Ensure the deno user has ownership of the necessary files and directories
 RUN chown -R deno:deno /app
 
 # Switch back to deno user
 USER deno
-
-# Copy the project files
-COPY . .
 
 # Expose the port
 EXPOSE 3000
