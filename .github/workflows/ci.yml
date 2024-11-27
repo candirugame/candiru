@@ -83,6 +83,33 @@ jobs:
               exit 1
             fi
           done
+  # Add this job after the build job
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t candiru .
+
+      - name: Run Docker container
+        run: docker run -d -p 3000:3000 candiru
+
+      - name: Health check
+        run: |
+          retries=10
+          count=0
+          until curl -f http://localhost:3000; do
+            count=$((count + 1))
+            if [ $count -lt $retries ]; then
+              echo "Health check failed, retrying in 5 seconds... ($count/$retries)"
+              sleep 5
+            else
+              echo "Health check failed after $retries attempts, exiting."
+              exit 1
+            fi
+          done
 
   # Audit Job
   audit:
