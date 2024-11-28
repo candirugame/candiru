@@ -308,7 +308,7 @@ export class ChatOverlay {
             const data = imageData.data;
 
             for (let i = 0; i < data.length; i += 4) {
-                data[i + 3] = data[i + 3] > 200 ? 255 : 0;
+                data[i + 3] = data[i + 3] > 170 ? 255 : 0;
             }
 
             this.offscreenCtx.putImageData(imageData, 0, 0);
