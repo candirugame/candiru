@@ -1,17 +1,17 @@
 // src/managers/ChatManager.ts
-import { Server } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
+import { Server, Socket } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
 import { DataValidator } from "../DataValidator.ts";
 import { ChatMessage } from '../models/ChatMessage.ts';
-import { Socket } from 'socket.io';
 import config from "../config.ts";
 import {PlayerManager} from "./PlayerManager.ts";
+import { DefaultEventsMap } from "https://deno.land/x/socket_io@0.2.0/packages/event-emitter/mod.ts";
 
 
 
 export class ChatManager {
     constructor(private io: Server, private playerManager:PlayerManager) {}
 
-    handleChatMessage(data: ChatMessage, socket:Socket) {
+    handleChatMessage(data: ChatMessage, socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> | Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, unknown>) {
         const { error } = DataValidator.validateChatMessage(data);
         if (error) {
             console.warn(`Invalid chat message: ${error.message}`);
