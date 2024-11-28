@@ -131,10 +131,10 @@ export class InputHandler {
             if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
             if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
             const aimAdjust = this.calculateAimAssist();
-            if (this.getKey('arrowright')) this.gamepadEuler.y -= SettingsManager.settings.sense * deltaTime * aimAdjust * 800;
-            if (this.getKey('arrowleft')) this.gamepadEuler.y += SettingsManager.settings.sense * deltaTime * aimAdjust * 800;
-            if (this.getKey('arrowup')) this.gamepadEuler.x += SettingsManager.settings.sense * deltaTime * aimAdjust * 800;
-            if (this.getKey('arrowdown')) this.gamepadEuler.x -= SettingsManager.settings.sense * deltaTime * aimAdjust * 800;
+            if (this.getKey('arrowright')) this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
+            if (this.getKey('arrowleft')) this.gamepadEuler.y += SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
+            if (this.getKey('arrowup')) this.gamepadEuler.x += SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
+            if (this.getKey('arrowdown')) this.gamepadEuler.x -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
             if (this.getKey(' ')) this.jump = true;
 
         }
