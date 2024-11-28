@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Player } from '../core/Player.ts';
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree, StaticGeometryGenerator, MeshBVH } from 'three-mesh-bvh';
 import { InputHandler } from "./InputHandler.ts";
+import { RemotePlayerRenderer} from "../core/RemotePlayerRenderer.ts";
 
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -29,7 +30,7 @@ export class CollisionManager {
         this.deltaVec = new THREE.Vector3();
         this.prevPosition = new THREE.Vector3();
         this.triNormal = new THREE.Vector3();
-        this.upVector = new THREE.Vector3(0,1,0)
+        this.upVector = new THREE.Vector3(0, 1, 0)
         this.coyoteTime = 0;
         this.jumped = false;
         this.collided = false;
@@ -39,11 +40,11 @@ export class CollisionManager {
         if (!CollisionManager.mapLoaded || !CollisionManager.colliderGeom || !CollisionManager.colliderGeom.boundsTree) return; // Add checks
         let deltaTime: number = this.clock.getDelta();
         let steps: number = 1;
-        while (deltaTime >= 1/120) {
+        while (deltaTime >= 1 / 120) {
             deltaTime = deltaTime / 2
             steps = steps * 2;
         }
-        for (let i = 0; i < steps; i ++) {
+        for (let i = 0; i < steps; i++) {
             this.physics(localPlayer, deltaTime);
         }
     }
@@ -129,6 +130,7 @@ export class CollisionManager {
             staticGenerator.attributes = ['position'];
             this.colliderGeom = staticGenerator.generate();
             this.colliderGeom.computeBoundsTree({maxDepth: 1000000, maxLeafTris: 4});
+            RemotePlayerRenderer.setMap(new THREE.Mesh(this.colliderGeom));
             this.mapLoaded = true;
             console.timeEnd("Building static geometry BVH");
         }
@@ -136,9 +138,5 @@ export class CollisionManager {
 
     public isPlayerInAir(): boolean {
         return !this.collided;
-    }
-
-    public static getColliderGeom() {
-        return this.colliderGeom!;
     }
 }
