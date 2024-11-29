@@ -110,8 +110,8 @@ export class InputHandler {
                 if (this.gamepadInputs.leftTrigger > .5) this.aim = true;
                 if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
                 const aimAdjust = this.calculateAimAssist();
-                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
-                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
+                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
                 this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
             }
@@ -131,10 +131,10 @@ export class InputHandler {
             if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
             if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
             const aimAdjust = this.calculateAimAssist();
-            if (this.getKey('arrowright')) this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
-            if (this.getKey('arrowleft')) this.gamepadEuler.y += SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
-            if (this.getKey('arrowup')) this.gamepadEuler.x += SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
-            if (this.getKey('arrowdown')) this.gamepadEuler.x -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust;
+            if (this.getKey('arrowright')) this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+            if (this.getKey('arrowleft')) this.gamepadEuler.y += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+            if (this.getKey('arrowup')) this.gamepadEuler.x += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+            if (this.getKey('arrowdown')) this.gamepadEuler.x -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
             if (this.getKey(' ')) this.jump = true;
 
         }
