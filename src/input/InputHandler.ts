@@ -207,10 +207,12 @@ export class InputHandler {
         const key = event.key.toLowerCase();
         this.keys[key] = true;
 
-        if (key === 'c') {
-            this.leftMouseDown = true;
-        } else if (key === 'z') {
-            this.rightMouseDown = true;
+        if (!this.localPlayer.chatActive && !this.nameSettingActive) {
+            if (key === 'c') {
+                this.leftMouseDown = true;
+            } else if (key === 'z') {
+                this.rightMouseDown = true;
+            }
         }
     }
 
@@ -218,10 +220,12 @@ export class InputHandler {
         const key = event.key.toLowerCase();
         this.keys[key] = false;
 
-        if (key === 'c') {
-            this.leftMouseDown = false;
-        } else if (key === 'z') {
-            this.rightMouseDown = false;
+        if (!this.localPlayer.chatActive && !this.nameSettingActive) {
+            if (key === 'c') {
+                this.leftMouseDown = false;
+            } else if (key === 'z') {
+                this.rightMouseDown = false;
+            }
         }
     }
 
