@@ -197,7 +197,10 @@ export class ChatOverlay {
         }
 
         if (this.localPlayer.chatActive) {
-            linesToRender.push(usermsg + cursor);
+            if(this.localPlayer.chatMsg.startsWith('>'))
+                linesToRender.push('&2'+usermsg + cursor);
+            else
+                linesToRender.push(usermsg + cursor);
             pixOffsets.push(0);
         }
 
@@ -240,61 +243,113 @@ export class ChatOverlay {
             ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
         }
     }
-    private renderPrettyText(text: string, x: number, y: number, color: string) {
+// Color code mapping
+     COLOR_CODES:{[key: string]: string} = {
+        '0': '#000000',    // Black
+        '1': '#0000AA',    // Dark Blue
+        '2': '#00AA00',    // Dark Green
+        '3': '#00AAAA',    // Dark Aqua
+        '4': '#AA0000',    // Dark Red
+        '5': '#AA00AA',    // Dark Purple
+        '6': '#FFAA00',    // Gold
+        '7': '#AAAAAA',    // Gray
+        '8': '#555555',    // Dark Gray
+        '9': '#5555FF',    // Blue
+        'a': '#55FF55',    // Green
+        'b': '#55FFFF',    // Aqua
+        'c': '#FF5555',    // Red
+        'd': '#FF55FF',    // Light Purple
+        'e': '#FFFF55',    // Yellow
+        'f': '#FFFFFF'     // White
+    };
 
-        // Set font to measure text
-        this.offscreenCtx.font = '8px Tiny5';
+    private renderPrettyText(text: string, x: number, y: number, defaultColor: string) {
+        let currentX = x;
+        const segments: { text: string, color: string }[] = [];
+        let currentColor = defaultColor;
+        let currentSegment = '';
 
-        // Measure the text to determine the canvas size
-        const textMetrics = this.offscreenCtx.measureText(text);
-        const textWidth = Math.max(Math.ceil(textMetrics.width), 1);
-        const textHeight = 8;
-
-        // Resize the offscreen canvas if necessary
-        if (this.offscreenCanvas.width !== textWidth || this.offscreenCanvas.height !== textHeight) {
-            this.offscreenCanvas.width = textWidth;
-            this.offscreenCanvas.height = textHeight;
+        // Parse color codes and split into segments
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] === '&' && i + 1 < text.length && this.COLOR_CODES[text[i + 1]]) {
+                if (currentSegment) {
+                    segments.push({ text: currentSegment, color: currentColor });
+                }
+                currentColor = this.COLOR_CODES[text[i + 1]];
+                currentSegment = '';
+                i++; // Skip the color code character
+            } else {
+                currentSegment += text[i];
+            }
         }
 
-        // Clear the canvas before drawing
-        this.offscreenCtx.clearRect(0, 0, textWidth, textHeight);
-
-        // Set the font and fill style for drawing
-        this.offscreenCtx.font = '8px Tiny5';
-        this.offscreenCtx.fillStyle = color;
-
-        // Draw the text onto the offscreen canvas
-        this.offscreenCtx.fillText(text, 0, textHeight - 1);
-
-        // Get the image data to apply pixelation
-        const imageData = this.offscreenCtx.getImageData(0, 0, textWidth, textHeight);
-        const data = imageData.data;
-
-        // Apply a simple pixelation effect by adjusting the alpha channel
-        for (let i = 0; i < data.length; i += 4) {
-            data[i + 3] = data[i + 3] > 200 ? 255 : 0;
+        if (currentSegment) {
+            segments.push({ text: currentSegment, color: currentColor });
         }
 
-        // Put the modified image data back onto the offscreen canvas
-        this.offscreenCtx.putImageData(imageData, 0, 0);
+        // Render each segment
+        for (const segment of segments) {
+            this.offscreenCtx.font = '8px Tiny5';
+            const textMetrics = this.offscreenCtx.measureText(segment.text);
+            const textWidth = Math.max(Math.ceil(textMetrics.width), 1);
+            const textHeight = 8;
 
-        // Draw the offscreen canvas onto the main chat canvas at the specified coordinates
-        this.chatCtx.drawImage(this.offscreenCanvas, x, y - textHeight + 1);
+            if (this.offscreenCanvas.width !== textWidth || this.offscreenCanvas.height !== textHeight) {
+                this.offscreenCanvas.width = textWidth;
+                this.offscreenCanvas.height = textHeight;
+            }
+
+            this.offscreenCtx.clearRect(0, 0, textWidth, textHeight);
+            this.offscreenCtx.font = '8px Tiny5';
+            this.offscreenCtx.fillStyle = segment.color;
+            this.offscreenCtx.fillText(segment.text, 0, textHeight - 1);
+
+            const imageData = this.offscreenCtx.getImageData(0, 0, textWidth, textHeight);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                data[i + 3] = data[i + 3] > 170 ? 255 : 0;
+            }
+
+            this.offscreenCtx.putImageData(imageData, 0, 0);
+            this.chatCtx.drawImage(this.offscreenCanvas, currentX, y - textHeight + 1);
+            currentX += textWidth;
+        }
     }
 
-    private renderUglyText(text: string, x: number, y: number, color: string) {
-        this.chatCtx.font = '8px Tiny5';
-        this.chatCtx.fillStyle = color;
-        this.chatCtx.fillText(text, x, y);
+    private renderUglyText(text: string, x: number, y: number, defaultColor: string) {
+        let currentX = x;
+        let currentColor = defaultColor;
+        let currentSegment = '';
+
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] === '&' && i + 1 < text.length && this.COLOR_CODES[text[i + 1]]) {
+                if (currentSegment) {
+                    this.chatCtx.font = '8px Tiny5';
+                    this.chatCtx.fillStyle = currentColor;
+                    this.chatCtx.fillText(currentSegment, currentX, y);
+                    currentX += this.chatCtx.measureText(currentSegment).width;
+                }
+                currentColor = this.COLOR_CODES[text[i + 1]];
+                currentSegment = '';
+                i++; // Skip the color code character
+            } else {
+                currentSegment += text[i];
+            }
+        }
+
+        if (currentSegment) {
+            this.chatCtx.font = '8px Tiny5';
+            this.chatCtx.fillStyle = currentColor;
+            this.chatCtx.fillText(currentSegment, currentX, y);
+        }
     }
 
     private renderPixelText(text: string, x: number, y: number, color: string) {
-
         if(SettingsManager.settings.doPrettyText)
             this.renderPrettyText(text, x, y, color);
         else
             this.renderUglyText(text, x, y, color);
-
     }
 
 

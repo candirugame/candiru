@@ -17,7 +17,7 @@ export class CommandManager {
     public init() {
         this.commands.push(new Command('sense', (args: string[]): string => {
             if (args[1] == null) {
-                return "sensitivity is currently " + (SettingsManager.settings.sense * 500);
+                return "sensitivity is currently " + (SettingsManager.settings.sense);
             }
             const sense: number = Number(args[1]);
             if (Number.isNaN(sense)) {
@@ -26,7 +26,7 @@ export class CommandManager {
             if (sense > 10 || sense <= 0) {
                 return "sensitivity is not in the valid range of 0 to 10";
             }
-            SettingsManager.settings.sense = sense / 500;
+            SettingsManager.settings.sense = sense;
             SettingsManager.write();
             return "sensitivity is now set to " + (sense);
         }));

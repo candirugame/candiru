@@ -4,7 +4,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from './Player.ts';
 import {acceleratedRaycast, computeBoundsTree} from "three-mesh-bvh";
-import {CollisionManager} from "../input/CollisionManager.ts";
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -27,6 +26,7 @@ interface PlayerToRender {
     id: number;
     object: THREE.Object3D;
     objectUUID: string;
+    sphere: THREE.Object3D;
     nameLabel: THREE.Sprite;
     name: string;
 }
@@ -38,9 +38,12 @@ export class RemotePlayerRenderer {
     private loader: GLTFLoader;
     private dracoLoader: DRACOLoader;
 
+    private sphere: THREE.Mesh;
+    private sphereScene: THREE.Scene;
+
     private raycaster: THREE.Raycaster;
     private camera: THREE.Camera;
-    private scene: THREE.Scene;
+    private scene: THREE.Scene
 
     private isAnimating: { [id: number]: boolean };
     private animationPhase: { [id: number]: number };
@@ -53,6 +56,7 @@ export class RemotePlayerRenderer {
     private localPlayer: Player;
     private deltaTime: number = 0; // Initialize deltaTime to avoid Deno error
     private static minVelocityToAnimate = 0.1;
+    private static map: THREE.Mesh = new THREE.Mesh();
 
     private crosshairVec = new THREE.Vector2();
 
@@ -70,6 +74,10 @@ export class RemotePlayerRenderer {
         this.scene = scene;
 
         this.entityScene = new THREE.Scene();
+
+        this.sphere = new THREE.Mesh(new THREE.SphereGeometry(.6), new THREE.MeshBasicMaterial({color: 0xffffff}));
+        this.sphere.geometry.computeBoundsTree();
+        this.sphereScene = new THREE.Scene();
 
         this.loader = new GLTFLoader();
         this.dracoLoader = new DRACOLoader();
@@ -126,7 +134,7 @@ export class RemotePlayerRenderer {
 
             const existingPlayer = this.playersToRender.find((player) => player.id === remotePlayer.id);
             if (existingPlayer) {
-                this.updatePlayerPosition(existingPlayer.object, playerDataWithQuaternion);
+                this.updatePlayerPosition(existingPlayer.object, existingPlayer.sphere, playerDataWithQuaternion);
             } else {
                 this.addNewPlayer(playerDataWithQuaternion);
             }
@@ -135,7 +143,7 @@ export class RemotePlayerRenderer {
         this.removeInactivePlayers(remotePlayerData);
     }
 
-    private updatePlayerPosition(playerObject: THREE.Object3D, remotePlayerData: RemotePlayerData): void {
+    private updatePlayerPosition(playerObject: THREE.Object3D, playerSphere: THREE.Object3D, remotePlayerData: RemotePlayerData): void {
         const velocity = Math.sqrt(
             Math.pow(remotePlayerData.velocity.x, 2) +
             Math.pow(remotePlayerData.velocity.y, 2) +
@@ -189,6 +197,7 @@ export class RemotePlayerRenderer {
 
         // Set playerObject.position to groundTruthPosition.clone()
         playerObject.position.copy(groundTruthPosition);
+        playerSphere.position.copy(groundTruthPosition.clone());
 
         // Apply animation offsets (e.g., yOffset)
         if (this.isAnimating[playerId]) {
@@ -199,6 +208,7 @@ export class RemotePlayerRenderer {
             const yOffset = amplitude * (1 + Math.cos(this.animationPhase[playerId]));
 
             playerObject.position.y += yOffset;
+            playerSphere.position.y += yOffset;
             this.lastRunningYOffset[playerId] = yOffset;
 
             if (velocity <= RemotePlayerRenderer.minVelocityToAnimate && Math.cos(this.animationPhase[playerId]) <= 0) {
@@ -256,6 +266,7 @@ export class RemotePlayerRenderer {
 
     private addNewPlayer(remotePlayerData: RemotePlayerData): void {
         const object = this.possumMesh!.clone();
+        const sphere = this.sphere.clone();
 
         // Create a text sprite for the player's name
         const nameLabel = this.createTextSprite(remotePlayerData.name.toString());
@@ -264,12 +275,14 @@ export class RemotePlayerRenderer {
             id: remotePlayerData.id,
             object: object,
             objectUUID: object.uuid,
+            sphere: sphere,
             nameLabel: nameLabel,
             name: remotePlayerData.name,
         };
 
         this.playersToRender.push(newPlayer);
         this.entityScene.add(newPlayer.object);
+        this.sphereScene.add(newPlayer.sphere);
         this.entityScene.add(newPlayer.nameLabel);
 
         // Initialize groundTruthPosition for the new player
@@ -286,6 +299,7 @@ export class RemotePlayerRenderer {
             if (!isActive) {
                 this.entityScene.remove(player.object);
                 this.entityScene.remove(player.nameLabel);
+                this.sphereScene.remove(player.sphere);
                 // Remove associated data for the player
                 delete this.groundTruthPositions[player.id];
                 delete this.isAnimating[player.id];
@@ -298,6 +312,7 @@ export class RemotePlayerRenderer {
     }
 
     private createTextSprite(text: string): THREE.Sprite {
+        text = text.replace(/&[0123456789abcdef]/g, ''); // Remove color codes
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d')!;
         const fontSize = 64;
@@ -367,14 +382,31 @@ export class RemotePlayerRenderer {
     private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
         this.raycaster.setFromCamera(this.crosshairVec, this.camera);
 
-        const geom = CollisionManager.getColliderGeom();
-        const map = new THREE.Mesh(geom);
-        const mapobj = new THREE.Object3D;
-        mapobj.add(map);
-
         const playerIntersects = this.raycaster.intersectObjects(this.entityScene.children);
         this.raycaster.firstHitOnly = true;
-        const wallIntersects = this.raycaster.intersectObjects([mapobj]);
+        const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
+        this.raycaster.firstHitOnly = false;
+
+        const filteredIntersects = playerIntersects.filter((playerIntersect) => {
+            for (const wallIntersect of wallIntersects) {
+                if (wallIntersect.distance < playerIntersect.distance) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        return filteredIntersects.map((intersect) => intersect.object);
+    }
+
+    public getPlayerSpheresInCrosshairWithWalls(): THREE.Object3D[] {
+        this.raycaster.setFromCamera(this.crosshairVec, this.camera);
+
+        this.sphereScene.updateMatrixWorld();
+
+        this.raycaster.firstHitOnly = true;
+        const playerIntersects = this.raycaster.intersectObjects(this.sphereScene.children);
+        const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
         this.raycaster.firstHitOnly = false;
 
         const filteredIntersects = playerIntersects.filter((playerIntersect) => {
@@ -396,15 +428,10 @@ export class RemotePlayerRenderer {
         // Set the raycaster with the offset direction
         this.raycaster.set(this.camera.position, offsetDirection);
 
-        const geom = CollisionManager.getColliderGeom();
-        const map = new THREE.Mesh(geom);
-        const mapobj = new THREE.Object3D;
-        mapobj.add(map);
-
         // Intersect with all potential targets (players and walls)
         const playerIntersects = this.raycaster.intersectObjects(this.playersToRender.map(p => p.object), true);
         this.raycaster.firstHitOnly = true;
-        const wallIntersects = this.raycaster.intersectObjects([mapobj]);
+        const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
         this.raycaster.firstHitOnly = false;
 
         // Filter player intersections based on wall intersections
@@ -456,5 +483,9 @@ export class RemotePlayerRenderer {
             return intersects[0]; // Return the first intersection point
         }
         return null;
+    }
+
+    public static setMap(map: THREE.Mesh) {
+        this.map = map;
     }
 }

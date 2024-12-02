@@ -308,6 +308,10 @@ export class Renderer {
         return this.remotePlayerRenderer.getShotVectorsToPlayersInCrosshair();
     }
 
+    public getPlayerSpheresInCrosshairWithWalls() {
+        return this.remotePlayerRenderer.getPlayerSpheresInCrosshairWithWalls();
+    }
+
     public getShotVectorsToPlayersWithOffset(yawOffset: number, pitchOffset: number): { playerID: number, vector: THREE.Vector3, hitPoint: THREE.Vector3 }[] {
         return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset);
     }

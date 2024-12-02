@@ -10,7 +10,6 @@ export class InputHandler {
     private gamepad: (Gamepad | null) = null;
     private readonly gamepadEuler ;
     private clock: THREE.Clock;
-    private forward: THREE.Vector3;
     private keys: { [key: string]: boolean } = {};
     private leftMouseDown: boolean = false;
     private rightMouseDown: boolean = false;
@@ -40,7 +39,6 @@ export class InputHandler {
 
         this.clock = new THREE.Clock();
         this.mouse = new PointerLockControls(this.localPlayer, document.body);
-        this.forward = new THREE.Vector3(0, 0, -1);
 
         this.gamepadInputs = new GamepadInputs();
 
@@ -111,8 +109,9 @@ export class InputHandler {
                 if (this.gamepadInputs.A) this.jump = true;
                 if (this.gamepadInputs.leftTrigger > .5) this.aim = true;
                 if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
-                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * SettingsManager.settings.controllerSense * deltaTime;
-                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * SettingsManager.settings.controllerSense * deltaTime;
+                const aimAdjust = this.calculateAimAssist();
+                this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+                this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
                 this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
                 this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
             }
@@ -122,28 +121,28 @@ export class InputHandler {
         this.inputX += deltaTimeAcceleration * this.touchJoyX;
         this.inputZ += deltaTimeAcceleration * this.touchJoyY;
 
-        //touch look controls
+
         const touchSensitivity = 0.03; // Adjust sensitivity as needed
         this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
-        this.gamepadEuler.y -= this.touchLookX * touchSensitivity;
-        this.gamepadEuler.x -= this.touchLookY * touchSensitivity;
-        this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
-        this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
-
-        //touch buttons
-
-
-
-
 
         if (!this.localPlayer.chatActive && !this.nameSettingActive) {
             if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
             if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
             if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
             if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
+            const aimAdjust = this.calculateAimAssist();
+            if (this.getKey('arrowright')) this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+            if (this.getKey('arrowleft')) this.gamepadEuler.y += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+            if (this.getKey('arrowup')) this.gamepadEuler.x += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+            if (this.getKey('arrowdown')) this.gamepadEuler.x -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
             if (this.getKey(' ')) this.jump = true;
 
         }
+
+        this.gamepadEuler.y -= this.touchLookX * touchSensitivity;
+        this.gamepadEuler.x -= this.touchLookY * touchSensitivity;
+        this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
+        this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
 
         switch (this.inputZ - oldInputZ) {
             case 0:
@@ -207,11 +206,27 @@ export class InputHandler {
         if(event.key === 'Tab' || event.key === "'"|| event.key === '/') event.preventDefault();
         const key = event.key.toLowerCase();
         this.keys[key] = true;
+
+        if (!this.localPlayer.chatActive && !this.nameSettingActive) {
+            if (key === 'c') {
+                this.leftMouseDown = true;
+            } else if (key === 'z') {
+                this.rightMouseDown = true;
+            }
+        }
     }
 
     private onKeyUp(event: KeyboardEvent) {
         const key = event.key.toLowerCase();
         this.keys[key] = false;
+
+        if (!this.localPlayer.chatActive && !this.nameSettingActive) {
+            if (key === 'c') {
+                this.leftMouseDown = false;
+            } else if (key === 'z') {
+                this.rightMouseDown = false;
+            }
+        }
     }
 
     private onMouseDown(event: MouseEvent) {
@@ -282,6 +297,20 @@ export class InputHandler {
         this.gamepadInputs.rightShoulder= gamepad.buttons[5].pressed
     }
 
+    private calculateAimAssist(): number {
+        if(this.gamepad) {
+            if ((Math.abs(this.gamepadInputs.rightJoyX) >= .1 || Math.abs(this.gamepadInputs.rightJoyY) >= .1)) {
+                if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0) {
+                    return .5;
+                }
+            }
+        } else if (this.getKey('arrowup') || this.getKey('arrowdown') || this.getKey('arrowleft') || this.getKey('arrowright')) {
+            if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0) {
+                return .5;
+            }
+        }
+        return 1;
+    }
 }
 
 class GamepadInputs {
