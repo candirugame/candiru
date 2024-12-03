@@ -1,10 +1,35 @@
-import { defineConfig } from 'vite'
-import deno from '@deno/vite-plugin'
+/// <reference types="vitest" />
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [deno()],
+import { defineConfig } from 'vite';
+import analog from "@analogjs/platform";
+
+export default defineConfig(({ mode }) => ({
   build: {
+    target: ['es2020'],
     chunkSizeWarningLimit: 1500,
+    outDir: 'dist',
+    ssrManifest: true
+  },
+  resolve: {
+    mainFields: ['module']
+  },
+  plugins: [
+    analog({
+      ssr: true,
+      prerender: {
+        routes: ['/'],
+        discover: true
+      }
+    })
+  ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
+    include: ['**/*.spec.ts'],
+    reporters: ['default']
+  },
+  define: {
+    'import.meta.vitest': mode !== 'production'
   }
-})
+}));
