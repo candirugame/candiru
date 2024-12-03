@@ -37,7 +37,9 @@
     "npm:@angular/platform-browser@18": "18.2.13_@angular+animations@18.2.13__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_@angular+common@18.2.13__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_@angular+core@18.2.13__rxjs@7.8.1__zone.js@0.14.10_rxjs@7.8.1_zone.js@0.14.10",
     "npm:@angular/platform-server@18": "18.2.13_@angular+animations@18.2.13__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_@angular+common@18.2.13__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_@angular+compiler@18.2.13__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_@angular+core@18.2.13__rxjs@7.8.1__zone.js@0.14.10_@angular+platform-browser@18.2.13__@angular+animations@18.2.13___@angular+core@18.2.13____rxjs@7.8.1____zone.js@0.14.10___rxjs@7.8.1___zone.js@0.14.10__@angular+common@18.2.13___@angular+core@18.2.13____rxjs@7.8.1____zone.js@0.14.10___rxjs@7.8.1___zone.js@0.14.10__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_rxjs@7.8.1_zone.js@0.14.10",
     "npm:@angular/router@18": "18.2.13_@angular+common@18.2.13__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_@angular+core@18.2.13__rxjs@7.8.1__zone.js@0.14.10_@angular+platform-browser@18.2.13__@angular+animations@18.2.13___@angular+core@18.2.13____rxjs@7.8.1____zone.js@0.14.10___rxjs@7.8.1___zone.js@0.14.10__@angular+common@18.2.13___@angular+core@18.2.13____rxjs@7.8.1____zone.js@0.14.10___rxjs@7.8.1___zone.js@0.14.10__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10_rxjs@7.8.1_zone.js@0.14.10_@angular+animations@18.2.13__@angular+core@18.2.13___rxjs@7.8.1___zone.js@0.14.10__rxjs@7.8.1__zone.js@0.14.10",
+    "npm:@deno/vite-plugin@*": "1.0.1_vite@5.4.9",
     "npm:@deno/vite-plugin@1": "1.0.0_vite@5.4.9",
+    "npm:@deno/vite-plugin@^1.0.1": "1.0.1_vite@5.4.9",
     "npm:@types/three@0.169": "0.169.0",
     "npm:autoprefixer@^10.4.14": "10.4.20_postcss@8.4.47",
     "npm:dot-prop@9": "9.0.0",
@@ -1634,6 +1636,12 @@
     },
     "@deno/vite-plugin@1.0.0_vite@5.4.9": {
       "integrity": "sha512-Q9UeWqs3s7B5lqzu1Z5QrzYAzqTj3+F9YW17tWobGRbT2G40ihwis6zK/+QgMgcG4fm3IqdIfXmpQYhkZpdMfw==",
+      "dependencies": [
+        "vite@5.4.9"
+      ]
+    },
+    "@deno/vite-plugin@1.0.1_vite@5.4.9": {
+      "integrity": "sha512-w5drKBzKrUuV3xXfW+kkVxFpAlLELTwpLmN8Fwzw21wCew8SaR/AXPYbpUvIxdl8P61J52ufUez/kSalOD5sKA==",
       "dependencies": [
         "vite@5.4.9"
       ]
@@ -12080,6 +12088,7 @@
         "npm:@angular/platform-browser@18",
         "npm:@angular/platform-server@18",
         "npm:@angular/router@18",
+        "npm:@deno/vite-plugin@^1.0.1",
         "npm:@types/three@0.169",
         "npm:autoprefixer@^10.4.14",
         "npm:dot-prop@9",

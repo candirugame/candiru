@@ -13,6 +13,7 @@
     "@angular/platform-browser-dynamic": "^18.0.0",
     "@angular/platform-server": "^18.0.0",
     "@angular/router": "^18.0.0",
+    "@deno/vite-plugin": "^1.0.1",
     "@types/three": "^0.169.0",
     "dot-prop": "^9.0.0",
     "express": "^4.21.1",

@@ -4,7 +4,7 @@
     "build": "COMPATIBILITY_DATE=2024-12-02 deno run -A --node-modules-dir npm:vite build",
     "preview": "deno run -A --node-modules-dir npm:vite preview",
     "serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/",
-    "start": "deno task build && deno run --allow-read --allow-env --allow-net --allow-write --allow-fs main.ts"
+    "start": "deno task build && deno run --allow-read --allow-env --allow-net --allow-write main.ts"
   },
   "compilerOptions": {
     "lib": ["ES2020", "DOM", "DOM.Iterable", "deno.ns", "deno.window"]

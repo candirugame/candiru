@@ -2,6 +2,7 @@
 
 import { defineConfig } from 'vite';
 import analog from "@analogjs/platform";
+import deno from "npm:@deno/vite-plugin";
 
 export default defineConfig(({ mode }) => ({
   build: {
@@ -13,15 +14,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     mainFields: ['module']
   },
-  plugins: [
-    analog({
-      ssr: true,
-      prerender: {
-        routes: ['/'],
-        discover: true
-      }
-    })
-  ],
+  plugins: [deno(), analog()],
   test: {
     globals: true,
     environment: 'jsdom',
