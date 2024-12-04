@@ -1,6 +1,7 @@
 {
   "name": "candiru",
   "dependencies": {
+    "@semantic-release/git": "^10.0.1",
     "@types/three": "^0.169.0",
     "express": "^4.21.1",
     "joi": "^17.13.3",
@@ -27,7 +28,9 @@
         {
           "replacements": [
             {
-              "files": ["public/gameVersion.json"],
+              "files": [
+                "public/gameVersion.json"
+              ],
               "from": "\"version\": \".*\"",
               "to": "\"version\": \"${nextRelease.version}\"",
               "results": [
@@ -46,14 +49,15 @@
       [
         "@semantic-release/git",
         {
-          "assets": ["public/gameVersion.json"],
+          "assets": [
+            "public/gameVersion.json"
+          ],
           "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
       ],
       "@semantic-release/github"
     ]
   },
-
   "devDependencies": {
     "semantic-release-replace-plugin": "^1.2.7"
   }
