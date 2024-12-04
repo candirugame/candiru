@@ -71,5 +71,3 @@ export class Game {
         this.animate();
     }
 }
-
-// Entry point
