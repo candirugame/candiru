@@ -12,7 +12,6 @@ module.exports = {
                 successComment: false,
             },
         ],
-        // Conditionally include these plugins only when on 'main' branch
         ...(process.env.GITHUB_REF_NAME === 'main' ? [
             [
                 'semantic-release-replace-plugin',
@@ -32,6 +31,8 @@ module.exports = {
                 {
                     assets: ['public/gameVersion.json'],
                     message: 'chore: release ${nextRelease.version} [skip ci]',
+                    gitUserName: 'github-actions[bot]',
+                    gitUserEmail: 'github-actions[bot]@users.noreply.github.com'
                 },
             ],
         ] : []),
