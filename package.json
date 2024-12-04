@@ -1,6 +1,7 @@
 {
   "name": "candiru",
   "dependencies": {
+    "@semantic-release/git": "^10.0.1",
     "@types/three": "^0.169.0",
     "express": "^4.21.1",
     "joi": "^17.13.3",
@@ -11,18 +12,9 @@
     "three": "^0.169.0",
     "three-mesh-bvh": "^0.8.2"
   },
-  "release": {
-    "branches": [
-      "main",
-      {
-        "name": "dev",
-        "prerelease": "beta"
-      }
-    ],
-    "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      "@semantic-release/github"
-    ]
+
+
+"devDependencies": {
+    "semantic-release-replace-plugin": "^1.2.7"
   }
 }
