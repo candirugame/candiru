@@ -130,9 +130,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     permissions:
-      contents: write # To publish a GitHub release
-    outputs:
-      version: ${{ steps.get_version.outputs.version }}
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -142,72 +140,18 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "lts/*"
+      - name: Create public directory
+        run: mkdir -p public
+      - name: Create initial version file if not exists
+        run: |
+          if [ ! -f public/gameVersion.json ]; then
+            echo '{"version": "0.0.0"}' > public/gameVersion.json
+          fi
       - name: Install dependencies
         run: npm clean-install
       - name: Verify the integrity of dependencies
         run: npm audit signatures
       - name: Release
-        id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
         run: npx semantic-release --branch ${GITHUB_REF#refs/heads/} --ci
-      - name: Extract new version
-        id: get_version
-        run: echo "version=$(npx -c 'echo $npm_package_version')" >> $GITHUB_OUTPUT
-
-  # Update Game Version (Only for main branch after release)
-  update-game-version:
-    needs: release
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all history for all tags
-          persist-credentials: false
-      - name: Set up credentials for pushing changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_DEPLOY_TOKEN }}@github.com/${{ github.repository }}
-      - name: Fetch all tags
-        run: git fetch --tags
-      - name: Get latest tag
-        id: get_latest_tag
-        run: echo "latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)" >> $GITHUB_OUTPUT
-      - name: Get last commit message
-        id: get_last_commit_message
-        run: |
-          echo "last_commit_message<<EOF" >> $GITHUB_OUTPUT
-          git log -1 --pretty=%B >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      - name: Check if commit is from GitHub Actions
-        id: check_author
-        run: |
-          COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
-          if [ "$COMMIT_AUTHOR" = "github-actions[bot]" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-      - name: Update gameVersion.json
-        if: steps.check_author.outputs.skip == 'false'
-        run: |
-          mkdir -p public
-          echo "{\"version\": \"${{ steps.get_latest_tag.outputs.latest_tag }}\"}" > public/gameVersion.json
-
-      - name: Commit and push changes
-        if: steps.check_author.outputs.skip == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: |
-          git add public/gameVersion.json
-          git commit -m "${{ steps.get_latest_tag.outputs.latest_tag }} - ${{ steps.get_last_commit_message.outputs.last_commit_message }}" || echo "No changes to commit"
-          git push origin ${{ github.ref_name }}
-
-      - name: Debugging List files in public after update
-        if: steps.check_author.outputs.skip == 'false'
-        run: ls -al public
