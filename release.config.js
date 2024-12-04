@@ -32,7 +32,9 @@ module.exports = {
                     assets: ['public/gameVersion.json'],
                     message: 'chore: release ${nextRelease.version} [skip ci]',
                     gitUserName: 'github-actions[bot]',
-                    gitUserEmail: 'github-actions[bot]@users.noreply.github.com'
+                    gitUserEmail: 'github-actions[bot]@users.noreply.github.com',
+                    author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>',
+                    committer: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
                 },
             ],
         ] : []),
