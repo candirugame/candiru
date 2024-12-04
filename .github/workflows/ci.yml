@@ -143,8 +143,11 @@ jobs:
           node-version: "lts/*"
       - name: Install dependencies
         run: npm clean-install
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_TOKEN }}
-        run: |
-          npx semantic-release --extends ./release.config.js
+        run: npx semantic-release --extends ./release.config.js
