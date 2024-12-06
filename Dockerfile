@@ -1,4 +1,4 @@
-FROM denoland/deno:2.0.5
+FROM denoland/deno:2.1.2
 LABEL authors="Candiru <team@candiru.xyz>"
 
 # Set working directory
