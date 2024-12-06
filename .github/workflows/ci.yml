@@ -40,6 +40,8 @@ jobs:
         uses: denoland/setup-deno@v1
         with:
           deno-version: 'latest'
+      - name: Build project
+        run: deno task build
       - name: Run lint
         run: deno lint
   # Check Job
