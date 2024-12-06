@@ -57,7 +57,7 @@ jobs:
       - name: install
         run: deno install
       - name: check src
-        run: deno check src
+        run: deno check ./src/client ./src/server
 
   # Healthcheck Job
   health:
