@@ -1,0 +1,23 @@
+// game.component.ts
+import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Game } from "../../client/core/Game.ts";
+
+@Component({
+  selector: 'app-game',
+  templateUrl: './game.component.html',
+  standalone: true,
+})
+export class GameComponent implements AfterViewInit {
+  @ViewChild('rendererContainer') rendererContainer!: ElementRef;
+  private game?: Game;
+
+  ngAfterViewInit() {
+    this.game = new Game(this.rendererContainer.nativeElement);
+    this.game.start();
+    console.log('init!')
+  }
+
+  ngOnDestroy() {
+    // Add cleanup if needed
+  }
+}
