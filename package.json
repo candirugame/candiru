@@ -1,5 +1,14 @@
+
 {
   "name": "candiru",
+  "scripts": {
+    "ng": "ng",
+    "dev": "ng serve",
+    "start": "npm run dev",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
   "dependencies": {
     "@semantic-release/git": "^10.0.1",
     "@types/three": "^0.169.0",
@@ -10,11 +19,49 @@
     "socket.io": "^4.8.0",
     "socket.io-client": "^4.8.0",
     "three": "^0.169.0",
-    "three-mesh-bvh": "^0.8.2"
+    "three-mesh-bvh": "^0.8.2",
+    "vite": "^5.4.11",
+    "@analogjs/content": "^1.10.1",
+    "@analogjs/router": "^1.10.1",
+    "@angular/animations": "^19.0.0",
+    "@angular/common": "^19.0.0",
+    "@angular/compiler": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/forms": "^19.0.0",
+    "@angular/platform-browser": "^19.0.0",
+    "@angular/platform-browser-dynamic": "^19.0.0",
+    "@angular/platform-server": "^19.0.0",
+    "@angular/router": "^19.0.0",
+    "front-matter": "^4.0.2",
+    "marked": "^5.0.2",
+    "marked-gfm-heading-id": "^3.1.0",
+    "marked-highlight": "^2.0.1",
+    "marked-mangle": "^1.1.7",
+    "prismjs": "^1.29.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
   },
-
-
-"devDependencies": {
-    "semantic-release-replace-plugin": "^1.2.7"
+  "devDependencies": {
+    "semantic-release-replace-plugin": "^1.2.7",
+    "@analogjs/platform": "^1.10.1",
+    "@analogjs/vite-plugin-angular": "^1.10.1",
+    "@analogjs/vitest-angular": "^1.10.1",
+    "@angular-devkit/build-angular": "^19.0.0",
+    "@angular/build": "^19.0.0",
+    "@angular/cli": "^19.0.0",
+    "@angular/compiler-cli": "^19.0.0",
+    "autoprefixer": "^10.4.14",
+    "jsdom": "^22.0.0",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.1",
+    "typescript": "~5.5.0",
+    "vite-tsconfig-paths": "^4.2.0",
+    "vitest": "^2.0.0"
+  },
+  "overrides": {
+    "@nx/angular": {
+      "@angular-devkit/build-angular": "$@angular-devkit/build-angular"
+    }
   }
 }
