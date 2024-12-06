@@ -1,5 +1,4 @@
 import { WorldItem } from '../models/WorldItem.ts';
-import { Player } from '../models/Player.ts';
 import { MapData } from '../models/MapData.ts';
 import { Vector3 } from '../models/Vector3.ts';
 import config from "../config.ts";

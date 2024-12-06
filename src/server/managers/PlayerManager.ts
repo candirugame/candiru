@@ -93,7 +93,7 @@ export class PlayerManager {
 
     regenerateHealth() {
         const currentTime = Date.now() / 1000;
-        for (let player of this.players.values()) {
+        for (const player of this.players.values()) {
             const lastDamage = player.lastDamageTime ?? 0;
             if (player.health < config.player.maxHealth && (lastDamage + config.health.regenDelay < currentTime)) {
                 player.health += config.health.regenRate / config.server.tickRate; // Adjusted per tick

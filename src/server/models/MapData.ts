@@ -10,9 +10,9 @@ export class MapData {
         public itemRespawnPoints: ItemRespawnPoint[]
     ) {}
 
-    static fromJSON(json: any): MapData {
+    static fromJSON(json: { respawnPoints: RespawnPoint[]; itemRespawnPoints: ItemRespawnPoint[]; name: string; }): MapData {
         const respawnPoints = json.respawnPoints.map(
-            (rp: any) =>
+            (rp) =>
                 new RespawnPoint(
                     new Vector3(rp.position.x, rp.position.y, rp.position.z),
                     new Quaternion(rp.quaternion.x, rp.quaternion.y, rp.quaternion.z, rp.quaternion.w)
@@ -20,7 +20,7 @@ export class MapData {
         );
 
         const itemRespawnPoints = json.itemRespawnPoints.map(
-            (irp: any) =>
+            (irp) =>
                 new ItemRespawnPoint(
                     new Vector3(irp.position.x, irp.position.y, irp.position.z),
                     irp.itemId,

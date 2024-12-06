@@ -42,7 +42,7 @@ export class Renderer {
     private inputHandler!: InputHandler;
     private collisionManager!: CollisionManager;
 
-    constructor(networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
+    constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
         this.localPlayer = localPlayer;
         this.chatOverlay = chatOverlay;
@@ -51,7 +51,8 @@ export class Renderer {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
         this.renderer = new THREE.WebGLRenderer();
-        document.body.appendChild(this.renderer.domElement);
+        //document.body.appendChild(this.renderer.domElement);
+        container.appendChild(this.renderer.domElement);
         this.renderer.domElement.style.imageRendering = 'pixelated';
         this.renderer.setAnimationLoop(null);
 
