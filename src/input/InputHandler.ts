@@ -118,8 +118,14 @@ export class InputHandler {
         }
 
         //touch joystick controls
-        this.inputX += deltaTimeAcceleration * this.touchJoyX;
-        this.inputZ += deltaTimeAcceleration * this.touchJoyY;
+        if(Math.hypot(this.touchJoyY, this.touchJoyX) > 0.1) {
+            const touchVectorLength = Math.hypot(this.touchJoyX, this.touchJoyY);
+            speedMultiplier = Math.min(Math.max(touchVectorLength, 0), 1);
+            this.inputX += deltaTimeAcceleration * this.touchJoyX;
+            this.inputZ += deltaTimeAcceleration * this.touchJoyY;
+        }
+
+
 
 
         const touchSensitivity = 0.03; // Adjust sensitivity as needed
