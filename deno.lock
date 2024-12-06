@@ -45,6 +45,7 @@
     "npm:autoprefixer@^10.4.14": "10.4.20_postcss@8.4.49",
     "npm:dot-prop@9": "9.0.0",
     "npm:express@^4.21.1": "4.21.2",
+    "npm:fdir@^6.4.2": "6.4.2",
     "npm:front-matter@^4.0.2": "4.0.2",
     "npm:joi@^17.13.3": "17.13.3",
     "npm:jsdom@22": "22.1.0",
@@ -2915,7 +2916,7 @@
         "@rollup/pluginutils",
         "commondir",
         "estree-walker@2.0.2",
-        "fdir",
+        "fdir@6.4.2_picomatch@4.0.2",
         "is-reference",
         "magic-string@0.30.12",
         "picomatch@4.0.2",
@@ -5755,6 +5756,9 @@
       "dependencies": [
         "websocket-driver"
       ]
+    },
+    "fdir@6.4.2": {
+      "integrity": "sha512-KnhMXsKSPZlAhp7+IjUkRZKPb4fUyccpDrdFXbi4QL1qkmFh9kVY09Yox+n4MaOb3lHZ1Tv829C3oaaXoMYPDQ=="
     },
     "fdir@6.4.2_picomatch@4.0.2": {
       "integrity": "sha512-KnhMXsKSPZlAhp7+IjUkRZKPb4fUyccpDrdFXbi4QL1qkmFh9kVY09Yox+n4MaOb3lHZ1Tv829C3oaaXoMYPDQ==",
@@ -10272,7 +10276,7 @@
     "tinyglobby@0.2.10_picomatch@4.0.2": {
       "integrity": "sha512-Zc+8eJlFMvgatPZTl6A9L/yht8QqdmUNtURHaKZLmKBE12hNPSrqNkUp2cs3M/UKmNVVAMFQYSjYIVHDjW5zew==",
       "dependencies": [
-        "fdir",
+        "fdir@6.4.2_picomatch@4.0.2",
         "picomatch@4.0.2"
       ]
     },
@@ -11326,6 +11330,7 @@
         "npm:autoprefixer@^10.4.14",
         "npm:dot-prop@9",
         "npm:express@^4.21.1",
+        "npm:fdir@^6.4.2",
         "npm:front-matter@^4.0.2",
         "npm:joi@^17.13.3",
         "npm:jsdom@22",
