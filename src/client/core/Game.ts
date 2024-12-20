@@ -29,7 +29,7 @@ export class Game {
     constructor(container: HTMLElement) {
         this.gameIndex = Game.nextGameIndex++;
         this.localPlayer = new Player();
-        this.chatOverlay = new ChatOverlay(this.localPlayer);
+        this.chatOverlay = new ChatOverlay(container,this.localPlayer);
         this.networking = new Networking(this.localPlayer, this.chatOverlay);
         this.renderer = new Renderer(container, this.networking, this.localPlayer, this.chatOverlay);
         this.chatOverlay.setRenderer(this.renderer);

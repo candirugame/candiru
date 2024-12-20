@@ -14,7 +14,6 @@ export class GameComponent implements AfterViewInit {
   ngAfterViewInit() {
     this.game = new Game(this.rendererContainer.nativeElement);
     this.game.start();
-    console.log('init!')
   }
 
   ngOnDestroy() {
