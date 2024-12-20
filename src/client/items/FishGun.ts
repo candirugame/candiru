@@ -188,8 +188,8 @@ export class FishGun extends ItemBase {
 
             while (processedShots < totalShots && timeRemaining > 0) {
                 const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
-                    (Math.random() - 0.5) * 0.5,
-                    (Math.random() - 0.5) * 0.5
+                    (Math.random() - 0.5) * 0.30,
+                    (Math.random() - 0.5) * 0.30
                 );
                 if (shotVectors.length > 0) {
                     for (const shot of shotVectors) {
