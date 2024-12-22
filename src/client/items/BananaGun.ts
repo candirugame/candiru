@@ -17,11 +17,11 @@ const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class BananaGun extends ItemBase {
-    private renderer: Renderer;
-    private networking: Networking;
-    private lastInput: HeldItemInput = new HeldItemInput();
-    private lastFired: number = 0;
-    private addedToHandScene: boolean = false;
+    private renderer!: Renderer;
+    private networking!: Networking;
+    private lastInput: HeldItemInput;
+    private lastFired: number;
+    private addedToHandScene: boolean;
 
     // deno-lint-ignore constructor-super
     constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
@@ -31,6 +31,11 @@ export class BananaGun extends ItemBase {
             super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
         this.renderer = renderer;
         this.networking = networking;
+        this.lastInput = new HeldItemInput();
+        this.addedToHandScene = false;
+        this.lastFired = 0;
+
+
     }
 
     public override init() {

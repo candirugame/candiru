@@ -56,11 +56,12 @@ export class GameServer {
                     console.error(`Socket error for ${socket.id}:`, error);
                 });
 
+                // deno-lint-ignore require-await
                 socket.on("playerData", async (data) => {
                     try {
                         const result = this.playerManager.addOrUpdatePlayer(data);
                         if (result.isNew && result.player) {
-                            await this.chatManager.broadcastChat(`${result.player.name} joined`);
+                            this.chatManager.broadcastChat(`${result.player.name} joined`);
                             console.log(`🟢 ${result.player.name}(${result.player.id}) joined`);
                         }
                     } catch (err) {
@@ -68,9 +69,10 @@ export class GameServer {
                     }
                 });
 
+                // deno-lint-ignore require-await
                 socket.on("chatMsg", async (data) => {
                     try {
-                        await this.chatManager.handleChatMessage(data, socket);
+                        this.chatManager.handleChatMessage(data, socket);
                     } catch (err) {
                         console.error(`Error handling chat message:`, err);
                     }
@@ -92,8 +94,8 @@ export class GameServer {
                     }
                 });
 
-                socket.on("disconnect", (reason) => {
-                    //console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
+                socket.on("disconnect", () => {
+                    //console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`); //reason is passed
                 });
             }
         });

@@ -43,7 +43,7 @@ export class ChatOverlay {
     private offscreenCanvas: HTMLCanvasElement;
     private offscreenCtx: CanvasRenderingContext2D;
 
-    constructor(localPlayer: Player) {
+    constructor(container: HTMLElement,localPlayer: Player) {
         this.localPlayer = localPlayer;
         this.chatCanvas = document.createElement('canvas');
         this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
@@ -81,7 +81,8 @@ export class ChatOverlay {
         this.offscreenCanvas = document.createElement('canvas');
         this.offscreenCtx = this.offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
 
-        document.body.appendChild(this.chatCanvas);
+        //document.body.appendChild(this.chatCanvas);
+        container.appendChild(this.chatCanvas);
 
         globalThis.addEventListener('resize', this.onWindowResize.bind(this));
         globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this));

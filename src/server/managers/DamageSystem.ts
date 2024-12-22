@@ -1,9 +1,7 @@
-// DamageSystem.ts
 import { PlayerManager } from "./PlayerManager.ts";
 import { ChatManager } from "./ChatManager.ts";
 import { DamageRequest } from "../models/DamageRequest.ts";
 import { DataValidator } from "../DataValidator.ts";
-import config from "../config.ts";
 import { Vector3 } from "../models/Vector3.ts";
 
 export class DamageSystem {
