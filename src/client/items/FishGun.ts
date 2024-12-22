@@ -5,6 +5,7 @@ import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
 import {Renderer} from '../core/Renderer.ts';
 import {Networking} from '../core/Networking.ts';
+import { AssetManager } from "../core/AssetManager.ts";
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -37,44 +38,33 @@ export class FishGun extends ItemBase {
     }
 
     public override init() {
-        const loader = new GLTFLoader();
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('/draco/');
-        loader.setDRACOLoader(dracoLoader);
-        loader.load(
-            'models/simplified_fish.glb',
-            (gltf) => {
-                this.object = gltf.scene;
-                // Adjust render order and depthTest based on itemType
-                if (this.itemType === ItemType.InventoryItem) {
-                    this.object.traverse((child) => {
-                        if ((child as THREE.Mesh).isMesh) {
-                            child.renderOrder = 999;
-                            const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
-                                if (Array.isArray(material))
-                                    material.forEach((mat) => applyDepthTest(mat));  // Recursively handle array elements
-                                else
-                                    material.depthTest = false;
-                            };
-                            const mesh = child as THREE.Mesh;
-                            applyDepthTest(mesh.material);
+        AssetManager.getInstance().loadAsset('models/simplified_fish.glb', (scene) => {
+            this.object = scene;
+            if (this.itemType === ItemType.InventoryItem) {
+                this.object.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                        child.renderOrder = 999;
+                        const mesh = child as THREE.Mesh;
+                        if (Array.isArray(mesh.material)) {
+                            mesh.material.forEach(mat => mat.depthTest = false);
+                        } else {
+                            mesh.material.depthTest = false;
                         }
-                    });
-                    if(this.itemType === ItemType.InventoryItem)
-                        this.object.scale.set(1.5, 1.5, 1.5);
-                }
-                this.inventoryMenuObject = this.object.clone();
-                this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
-
-                if(this.itemType === ItemType.WorldItem)
-                    this.object.scale.set(0.45, 0.45, 0.45);
-            },
-            undefined,
-            () => {
-                console.log('Banana model loading error');
+                    }
+                });
+                if(this.itemType === ItemType.InventoryItem)
+                    this.object.scale.set(1.5, 1.5, 1.5);
             }
-        );
+
+            this.inventoryMenuObject = this.object.clone();
+            this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+
+            if(this.itemType === ItemType.WorldItem)
+                this.object.scale.set(0.45, 0.45, 0.45);
+        });
     }
+
+
 
     public override onFrame(input: HeldItemInput, selectedIndex: number) {
         if (!this.object) return;
