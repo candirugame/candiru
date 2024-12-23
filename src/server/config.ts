@@ -6,7 +6,7 @@ const defaults = {
     SERVER_TICK_RATE: '15',
 
     // Player settings
-    PLAYER_DISCONNECT_TIME: '5',
+    PLAYER_DISCONNECT_TIME: '8',
     PLAYER_AFK_KICK_TIME: '600',
     PLAYER_MAX_HEALTH: '100',
     PLAYER_BASE_INVENTORY: '[]',

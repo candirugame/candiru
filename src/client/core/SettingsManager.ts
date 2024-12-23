@@ -17,7 +17,7 @@ export class SettingsManager {
             controllerSense: 1,
             name: null,
             crosshairColor: 'rgb(0,255,255)',
-            crosshairType: 0,
+            crosshairType: 1,
             viewBobbingStrength: 1,
             doPrettyText: false,
         };
