@@ -174,7 +174,7 @@ export class BananaGun extends ItemBase {
             if (shotVectors.length > 0) {
                 for (const shot of shotVectors) {
                     const { playerID, hitPoint } = shot;
-                    this.networking.applyDamage(playerID, 10);
+                    this.networking.applyDamage(playerID, 17);
                     this.renderer.playerHitMarkers.push({hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1});
                 }
                 this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
