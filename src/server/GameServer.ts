@@ -63,6 +63,7 @@ export class GameServer {
                         if (result.isNew && result.player) {
                             this.chatManager.broadcastChat(`${result.player.name} joined`);
                             console.log(`🟢 ${result.player.name}(${result.player.id}) joined`);
+                            this.gameEngine.emitServerInfo();
                         }
                     } catch (err) {
                         console.error(`Error handling playerData:`, err);
