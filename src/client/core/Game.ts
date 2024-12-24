@@ -47,7 +47,6 @@ export class Game {
     }
 
     init() {
-        this.mapLoader.load('maps/crackhouse_1/map.glb');
         this.inventoryManager.init();
         this.healthIndicator.init();
     }
@@ -61,6 +60,7 @@ export class Game {
         this.inventoryManager.onFrame();
         this.healthIndicator.onFrame();
         this.renderer.onFrame(this.localPlayer);
+        this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');
 
         this.remoteItemRenderer.onFrame();
         requestAnimationFrame(this.animate.bind(this));

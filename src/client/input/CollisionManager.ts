@@ -124,7 +124,7 @@ export class CollisionManager {
     }
 
     public static staticGeometry(group: THREE.Group) {
-        if (!this.mapLoaded) {
+        //if (!this.mapLoaded) {
             console.time("Building static geometry BVH");
             const staticGenerator = new StaticGeometryGenerator(group);
             staticGenerator.attributes = ['position'];
@@ -133,7 +133,7 @@ export class CollisionManager {
             RemotePlayerRenderer.setMap(new THREE.Mesh(this.colliderGeom));
             this.mapLoaded = true;
             console.timeEnd("Building static geometry BVH");
-        }
+       // }
     }
 
     public isPlayerInAir(): boolean {

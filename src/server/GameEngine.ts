@@ -5,12 +5,15 @@ import { PlayerManager } from "./managers/PlayerManager.ts";
 import { Server } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
 import config from "./config.ts";
 import { Vector3 } from "./models/Vector3.ts";
+import { ServerInfo } from "./models/ServerInfo.ts";
+import {DataValidator} from "./DataValidator.ts";
 
 export class GameEngine {
     private lastPlayerTickTimestamp: number = Date.now() / 1000;
     private lastItemUpdateTimestamp: number = Date.now() / 1000;
     private playerUpdateSinceLastEmit: boolean = false;
     private itemUpdateSinceLastEmit: boolean = false;
+    private serverInfo: ServerInfo = new ServerInfo();
 
     constructor(
         private playerManager: PlayerManager,
@@ -22,7 +25,8 @@ export class GameEngine {
 
     start() {
         setInterval(() => this.serverTick(), 1000 / config.server.tickRate);
-        setInterval(() => this.periodicCleanup(), 500);
+        setInterval(() => this.periodicCleanup(), config.server.cleanupInterval);
+        setInterval(() => this.emitServerInfo(), config.server.cleanupInterval);
     }
 
     private serverTick() {
@@ -90,5 +94,12 @@ export class GameEngine {
         } catch (error) {
             console.error('Error in periodicCleanup:', error);
         }
+    }
+
+    // Method to emit server info to all clients
+    public emitServerInfo() {
+        this.serverInfo.version = DataValidator.getServerVersion();
+        this.serverInfo.currentPlayers = this.playerManager.getAllPlayers().length;
+        this.io.emit('serverInfo', this.serverInfo);
     }
 }
