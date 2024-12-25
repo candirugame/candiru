@@ -68,7 +68,7 @@ export class Networking {
         this.fetchVersion();
 
         this.lastUploadTime = Date.now() / 1000;
-        this.uploadWait = 1 / 15;
+        this.uploadWait = 0.05; //gets replaced by server info
         this.lastLatencyTestEmit = 0;
         this.lastLatencyTestGotResponse = false;
         this.latencyTestWait = 5;
@@ -118,9 +118,13 @@ export class Networking {
 
         this.socket.on('serverInfo', (data: ServerInfo) => {
             this.serverInfo = data;
+            this.onServerInfo();
         });
     }
 
+    private onServerInfo() {
+        this.uploadWait = 1 / this.serverInfo.tickRate;
+    }
     public updatePlayerData() {
         const currentTime = Date.now() / 1000;
         this.localPlayer.gameVersion = this.gameVersion;
