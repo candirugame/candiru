@@ -3,6 +3,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
 import {Renderer} from "../core/Renderer.ts";
 import {Player} from "../core/Player.ts";
+import {Networking} from "../core/Networking.ts";
 
 
 const clock = new THREE.Clock();
@@ -11,19 +12,15 @@ export class HealthIndicator {
     private scene: THREE.Scene;
     private possumObject!: THREE.Object3D;
     private sceneAdded: boolean = false;
-    private renderer:Renderer;
     private targetQuaternion: THREE.Quaternion = new THREE.Quaternion(0,0,0,1);
     private targetPosition: THREE.Vector3 = new THREE.Vector3(0,0,0);
-    private localPlayer:Player;
     private rotatedAngle:number = 0;
     private ambientLight: THREE.AmbientLight;
-    private lastHealth:number = 100;
+    private lastHealth:number = 0;
     private lastHealthChangeWasDamage:boolean = false;
     private lightRGBI:number[] = [0,0,0,0];
 
-    constructor(renderer: Renderer, localPlayer:Player) {
-        this.renderer = renderer;
-        this.localPlayer = localPlayer;
+    constructor(private renderer: Renderer, private localPlayer:Player, private networking: Networking) {
         this.scene = renderer.getHealthIndicatorScene();
         this.ambientLight = new THREE.AmbientLight(rgbToHex(0,0,0), 0);
         this.scene.add(this.ambientLight);
@@ -65,8 +62,12 @@ export class HealthIndicator {
             this.scene.add(this.possumObject);
             this.sceneAdded = true;
         }
+
+        let maxHealth = this.networking.getServerInfo().playerMaxHealth;
+        if(maxHealth === 0) maxHealth = 0.001;
+
         const deltaTime = clock.getDelta();
-        const scaredLevel = 1-Math.pow(this.localPlayer.health / 100,1); //0-1
+        const scaredLevel = 1-Math.pow(this.localPlayer.health / maxHealth,1); //0-1
         this.renderer.scaredLevel = scaredLevel;
 
         this.targetPosition.copy(basePosition);
@@ -76,17 +77,17 @@ export class HealthIndicator {
         this.targetPosition.z += (Math.random() - 0.5 ) * 0.2 * scaredLevel;
 
         this.targetQuaternion.copy(baseQuaternion);
-        rotateAroundWorldAxis(this.targetQuaternion, new THREE.Vector3(0, 0, 1), Math.PI - this.localPlayer.health * Math.PI / 100);
+        rotateAroundWorldAxis(this.targetQuaternion, new THREE.Vector3(0, 0, 1), Math.PI - this.localPlayer.health * Math.PI / maxHealth);
 
-        this.rotatedAngle += 4 * deltaTime / ((1-scaredLevel)*3);
+        this.rotatedAngle += 4 * deltaTime / (Math.max(0.001, (1-scaredLevel)*3));
         rotateAroundWorldAxis(this.targetQuaternion, new THREE.Vector3(0, 1, 0),  this.rotatedAngle);
 
         moveTowardsPos(this.possumObject.position, this.targetPosition, 0.8 * deltaTime * 60);
         moveTowardsRot(this.possumObject.quaternion, this.targetQuaternion, 0.5 * deltaTime * 60);
 
-        let targetRGBI = [255,255,255,0.5];
+        let targetRGBI: number[];
 
-        if(!this.lastHealthChangeWasDamage && this.localPlayer.health < 100 && this.rotatedAngle % 2 > 1)
+        if(!this.lastHealthChangeWasDamage && this.localPlayer.health < maxHealth && this.rotatedAngle % 2 > 1)
             targetRGBI = [125,255,125,1.2];
         else
             targetRGBI = [255,255,255,0.5];
@@ -106,6 +107,7 @@ export class HealthIndicator {
 
 
 }
+
 
 
 

@@ -220,7 +220,7 @@ export class RemotePlayerRenderer {
         }
 
         // Apply scared effect
-        const scaredLevel = 1 - Math.pow(remotePlayerData.health / 100, 2); // 0-1
+        const scaredLevel = 1 - Math.pow(remotePlayerData.health / this.networking.getServerInfo().playerMaxHealth, 2); // 0-1
         playerObject.position.x += (Math.random() - 0.5) * 0.05 * scaredLevel;
         playerObject.position.y += (Math.random() - 0.5) * 0.05 * scaredLevel;
         playerObject.position.z += (Math.random() - 0.5) * 0.05 * scaredLevel;

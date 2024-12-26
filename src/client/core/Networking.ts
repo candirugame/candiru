@@ -33,6 +33,7 @@ interface ServerInfo {
     tickRate: number;
     version: string;
     gameMode: string;
+    playerMaxHealth: number;
 }
 
 interface LastUploadedLocalPlayer {
@@ -80,7 +81,8 @@ export class Networking {
             mapName: '',
             tickRate: 0,
             version: '',
-            gameMode: ''
+            gameMode: '',
+            playerMaxHealth: 0
         }
 
         this.setupSocketListeners();

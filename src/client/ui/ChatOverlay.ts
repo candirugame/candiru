@@ -377,7 +377,8 @@ export class ChatOverlay {
         linesToRender.push('mode: ' + this.networking.getServerInfo().gameMode);
         linesToRender.push('serverVersion: ' + this.networking.getServerInfo().version);
         linesToRender.push('tickRate: ' + this.networking.getServerInfo().tickRate);
-
+        linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
+        linesToRender.push('health: ' + this.localPlayer.health);
 
         //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 

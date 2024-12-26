@@ -8,6 +8,7 @@ export class ServerInfo {
     public tickRate: number;
     public version: string;
     public gameMode: string;
+    public playerMaxHealth: number;
     constructor() {
         this.name = config.server.name;
         this.maxPlayers = config.game.maxPlayers;
@@ -16,5 +17,6 @@ export class ServerInfo {
         this.tickRate = config.server.tickRate;
         this.version = '';
         this.gameMode = config.game.mode;
+        this.playerMaxHealth = config.player.maxHealth;
     }
 }

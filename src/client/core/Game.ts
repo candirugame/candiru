@@ -42,7 +42,7 @@ export class Game {
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
         this.mapLoader = new MapLoader(this.renderer);
-        this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
+        this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer, this.networking);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
     }
 
