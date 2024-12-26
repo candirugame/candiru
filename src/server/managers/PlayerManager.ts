@@ -55,6 +55,7 @@ export class PlayerManager {
             data.inventory = [...config.player.baseInventory];
             const spawnPoint = this.getRandomSpawnPoint();
             data.position = spawnPoint.vec;
+            data.health = config.player.maxHealth;
             data.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
             data.forced = true;
             this.players.set(data.id, data);

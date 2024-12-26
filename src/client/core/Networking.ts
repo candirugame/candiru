@@ -25,6 +25,17 @@ interface WorldItem {
     itemType: number;
 }
 
+interface ServerInfo {
+    name: string;
+    maxPlayers: number;
+    currentPlayers: number;
+    mapName: string;
+    tickRate: number;
+    version: string;
+    gameMode: string;
+    playerMaxHealth: number;
+}
+
 interface LastUploadedLocalPlayer {
     position: THREE.Vector3;
     quaternion: THREE.Quaternion;
@@ -48,6 +59,7 @@ export class Networking {
     private localPlayer: Player;
     private chatOverlay: ChatOverlay;
     private damagedTimestamp: number = 0;
+    private serverInfo: ServerInfo;
 
     constructor(localPlayer: Player, chatOverlay: ChatOverlay) {
         this.localPlayer = localPlayer;
@@ -57,10 +69,21 @@ export class Networking {
         this.fetchVersion();
 
         this.lastUploadTime = Date.now() / 1000;
-        this.uploadWait = 1 / 15;
+        this.uploadWait = 0.05; //gets replaced by server info
         this.lastLatencyTestEmit = 0;
         this.lastLatencyTestGotResponse = false;
         this.latencyTestWait = 5;
+
+        this.serverInfo = {
+            name: '',
+            maxPlayers: 0,
+            currentPlayers: 0,
+            mapName: '',
+            tickRate: 0,
+            version: '',
+            gameMode: '',
+            playerMaxHealth: 0
+        }
 
         this.setupSocketListeners();
     }
@@ -94,8 +117,16 @@ export class Networking {
         this.socket.on('chatMsg', (data: { id: number, name: string, message: string }) => {
             if (data.id !== this.localPlayer.id) this.chatOverlay.addChatMessage(data);
         });
+
+        this.socket.on('serverInfo', (data: ServerInfo) => {
+            this.serverInfo = data;
+            this.onServerInfo();
+        });
     }
 
+    private onServerInfo() {
+        this.uploadWait = 1 / this.serverInfo.tickRate;
+    }
     public updatePlayerData() {
         const currentTime = Date.now() / 1000;
         this.localPlayer.gameVersion = this.gameVersion;
@@ -129,6 +160,10 @@ export class Networking {
 
     public processWorldItemData() {
         // Implementation for processing world items
+    }
+
+    public getServerInfo() {
+        return this.serverInfo;
     }
 
     private processRemotePlayerData() {

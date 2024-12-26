@@ -42,12 +42,11 @@ export class Game {
         this.chatOverlay.setNetworking(this.networking);
         this.chatOverlay.setInputHandler(this.inputHandler);
         this.mapLoader = new MapLoader(this.renderer);
-        this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer);
+        this.healthIndicator = new HealthIndicator(this.renderer,this.localPlayer, this.networking);
         this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
     }
 
     init() {
-        this.mapLoader.load('maps/crackhouse_1/map.glb');
         this.inventoryManager.init();
         this.healthIndicator.init();
     }
@@ -61,7 +60,8 @@ export class Game {
         this.inventoryManager.onFrame();
         this.healthIndicator.onFrame();
         this.renderer.onFrame(this.localPlayer);
-
+        if(this.networking.getServerInfo().mapName)
+            this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');
         this.remoteItemRenderer.onFrame();
         requestAnimationFrame(this.animate.bind(this));
     }

@@ -1,15 +1,21 @@
 const defaults = {
     // Server settings
     SERVER_PORT: '3000',
+    SERVER_NAME: 'my-server',
     SERVER_URL: 'https://example.com',
     SERVER_DEFAULT_MAP: 'crackhouse_1',
     SERVER_TICK_RATE: '15',
+    SERVER_CLEANUP_INTERVAL: '2000',
 
     // Player settings
     PLAYER_DISCONNECT_TIME: '8',
     PLAYER_AFK_KICK_TIME: '600',
     PLAYER_MAX_HEALTH: '100',
     PLAYER_BASE_INVENTORY: '[]',
+
+    //Game settings
+    GAME_MODE: 'ffa',
+    GAME_MAX_PLAYERS: '20',
 
     // Health settings
     HEALTH_REGEN_DELAY: '5',
@@ -55,9 +61,15 @@ function parseConfig(env: Record<string, string>) {
     return {
         server: {
             port: parseInt(env.SERVER_PORT),
+            name: env.SERVER_NAME,
             url: env.SERVER_URL,
             defaultMap: env.SERVER_DEFAULT_MAP,
-            tickRate: parseInt(env.SERVER_TICK_RATE)
+            tickRate: parseInt(env.SERVER_TICK_RATE),
+            cleanupInterval: parseInt(env.SERVER_CLEANUP_INTERVAL)
+        },
+        game: {
+            mode: env.GAME_MODE,
+            maxPlayers: parseInt(env.GAME_MAX_PLAYERS)
         },
         player: {
             disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),
