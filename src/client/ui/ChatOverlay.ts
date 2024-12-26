@@ -372,13 +372,13 @@ export class ChatOverlay {
 
         linesToRender.push('candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, '+ Math.round(this.localPlayer.latency) + 'ms');
         linesToRender.push('connected to: '+this.networking.getServerInfo().name);
-        linesToRender.push('players: ' + this.networking.getServerInfo().currentPlayers + '/' + this.networking.getServerInfo().maxPlayers);
+        //linesToRender.push('players: ' + this.networking.getServerInfo().currentPlayers + '/' + this.networking.getServerInfo().maxPlayers);
         linesToRender.push('map: ' + this.networking.getServerInfo().mapName);
         linesToRender.push('mode: ' + this.networking.getServerInfo().gameMode);
-        linesToRender.push('serverVersion: ' + this.networking.getServerInfo().version);
-        linesToRender.push('tickRate: ' + this.networking.getServerInfo().tickRate);
-        linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
-        linesToRender.push('health: ' + this.localPlayer.health);
+        //linesToRender.push('serverVersion: ' + this.networking.getServerInfo().version);
+        //linesToRender.push('tickRate: ' + this.networking.getServerInfo().tickRate);
+        //linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
+        //linesToRender.push('health: ' + this.localPlayer.health);
 
         //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
