@@ -60,8 +60,8 @@ export class Game {
         this.inventoryManager.onFrame();
         this.healthIndicator.onFrame();
         this.renderer.onFrame(this.localPlayer);
-        this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');
-
+        if(this.networking.getServerInfo().mapName)
+            this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');
         this.remoteItemRenderer.onFrame();
         requestAnimationFrame(this.animate.bind(this));
     }

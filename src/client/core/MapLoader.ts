@@ -17,9 +17,9 @@ export class MapLoader {
 
     public load(mapUrl: string) {
         if(mapUrl === this.mapUrl) return;
+        this.mapUrl = mapUrl;
         AssetManager.getInstance().loadAsset(mapUrl, (scene) => {
             if(this.mapObject) this.scene.remove(this.mapObject);
-            this.mapUrl = mapUrl;
             this.mapObject = scene;
             CollisionManager.staticGeometry(scene);
             this.scene.add(this.mapObject);
