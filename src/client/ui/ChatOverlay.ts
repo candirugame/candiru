@@ -14,10 +14,16 @@ interface ChatMessage {
 }
 
 interface AnimatedGameMessage {
+    id: string; // Unique identifier
     message: string;
     state: 'animatingIn' | 'animatingOut' | 'idle';
     animationProgress: number; // Ranges from 0 to 1
     timestamp: number; // Time when the current animation state started
+}
+
+interface LineMessage {
+    currentMessage: AnimatedGameMessage | null;
+    pendingMessage: string | null;
 }
 
 const hitMarkerLifetime = 0.3;
@@ -36,7 +42,7 @@ export class ChatOverlay {
     private screenWidth: number;
     private inputHandler!: InputHandler;
     private debugTextHeight!: number;
-    private oldScreenWidth:number = 0;
+    private oldScreenWidth: number = 0;
     private readonly commandManager: CommandManager;
     private lastTouchTimestamp: number = 0;
     private touchJoystickEngaged: boolean = false;
@@ -53,12 +59,31 @@ export class ChatOverlay {
     public gameMessages: string[] = [];
     private previousGameMessages: string[] = [];
 
+    // Removed animatedGameMessages in favor of per-line management
+    private lines: LineMessage[] = [];
+    private animationDuration: number = 1; // Adjusted for smoother animation
 
-    private animatedGameMessages: AnimatedGameMessage[] = [];
-    private animationDuration: number = 0.25; //seconds
+    // Color code mapping
+    COLOR_CODES: { [key: string]: string } = {
+        '0': '#000000',    // Black
+        '1': '#0000AA',    // Dark Blue
+        '2': '#00AA00',    // Dark Green
+        '3': '#00AAAA',    // Dark Aqua
+        '4': '#AA0000',    // Dark Red
+        '5': '#AA00AA',    // Dark Purple
+        '6': '#FFAA00',    // Gold
+        '7': '#AAAAAA',    // Gray
+        '8': '#555555',    // Dark Gray
+        '9': '#5555FF',    // Blue
+        'a': '#55FF55',    // Green
+        'b': '#55FFFF',    // Aqua
+        'c': '#FF5555',    // Red
+        'd': '#FF55FF',    // Light Purple
+        'e': '#FFFF55',    // Yellow
+        'f': '#FFFFFF'     // White
+    };
 
-
-    constructor(container: HTMLElement,localPlayer: Player) {
+    constructor(container: HTMLElement, localPlayer: Player) {
         this.localPlayer = localPlayer;
         this.chatCanvas = document.createElement('canvas');
         this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
@@ -69,7 +94,7 @@ export class ChatOverlay {
         this.chatCanvas.height = 200;
 
         this.chatMessages = [];
-        this.chatMessageLifespan = 40; // 20 seconds
+        this.chatMessageLifespan = 40; // 40 seconds
         this.charsToRemovePerSecond = 30;
         this.maxMessagesOnScreen = 12;
 
@@ -86,7 +111,7 @@ export class ChatOverlay {
         this.chatCanvas.style.top = '0';
         this.chatCanvas.style.left = '0';
 
-         this.chatCanvas.style.height = '100vh';
+        this.chatCanvas.style.height = '100vh';
         document.body.style.margin = '0';
         this.chatCanvas.style.imageRendering = 'pixelated';
         this.chatCanvas.style.textRendering = 'pixelated';
@@ -96,14 +121,17 @@ export class ChatOverlay {
         this.offscreenCanvas = document.createElement('canvas');
         this.offscreenCtx = this.offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
 
+        // Initialize lines for per-line message management
+        this.lines = Array(this.maxMessagesOnScreen).fill(null).map(() => ({
+            currentMessage: null,
+            pendingMessage: null
+        }));
+
         //document.body.appendChild(this.chatCanvas);
         container.appendChild(this.chatCanvas);
 
         globalThis.addEventListener('resize', this.onWindowResize.bind(this));
         globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this));
-
-
-
     }
 
     public setRenderer(renderer: Renderer) {
@@ -122,12 +150,17 @@ export class ChatOverlay {
         document.addEventListener('keydown', this.onKeyDown.bind(this));
     }
 
-
-
     public onFrame() {
         const startTime = Date.now();
         const now = Date.now() / 1000;
-        this.gameMessages = [Math.floor(now) + ''];
+        //this.gameMessages = ['&a'+Math.floor(now/4 % 10) + ' kills'];
+
+        if ((now / 10) % 1 < 0.5) {
+            this.gameMessages = ['killed hob', 'you died! spectating possum165'];
+
+        } else {
+            this.gameMessages = [ 'alived hob','you died! spectating possum165'];
+        }
 
         this.detectGameMessagesChanges(now);
         this.updateAnimatedGameMessages(now);
@@ -144,16 +177,13 @@ export class ChatOverlay {
         this.renderCrosshair();
         this.renderTouchControls();
 
-
-
         this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
 
-        if(this.oldScreenWidth !== this.screenWidth){
+        if (this.oldScreenWidth !== this.screenWidth) {
             //if(this.chatCanvas.width < this.screenWidth)
-                this.chatCanvas.width = this.screenWidth;
+            this.chatCanvas.width = this.screenWidth;
             this.oldScreenWidth = this.screenWidth;
         }
-
 
         // this.chatCanvas.width = this.screenWidth;
         // this.chatCtx.fillRect(0,0,10,10);
@@ -161,14 +191,13 @@ export class ChatOverlay {
         this.onWindowResize();
 
         this.inputHandler.nameSettingActive = this.nameSettingActive;
-        if(Math.random()<0.03)
+        if (Math.random() < 0.03)
             this.lastRoutineMs = Date.now() - startTime;
     }
+
     private onWindowResize() {
-
         this.chatCanvas.style.width = globalThis.innerWidth + 'px';
-        this.chatCanvas.style.height = globalThis.innerHeight+ 'px';
-
+        this.chatCanvas.style.height = globalThis.innerHeight + 'px';
     }
 
     private renderChatMessages() {
@@ -220,8 +249,8 @@ export class ChatOverlay {
         }
 
         if (this.localPlayer.chatActive) {
-            if(this.localPlayer.chatMsg.startsWith('>'))
-                linesToRender.push('&2'+usermsg + cursor);
+            if (this.localPlayer.chatMsg.startsWith('>'))
+                linesToRender.push('&2' + usermsg + cursor);
             else
                 linesToRender.push(usermsg + cursor);
             pixOffsets.push(0);
@@ -266,25 +295,6 @@ export class ChatOverlay {
             ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
         }
     }
-// Color code mapping
-     COLOR_CODES:{[key: string]: string} = {
-        '0': '#000000',    // Black
-        '1': '#0000AA',    // Dark Blue
-        '2': '#00AA00',    // Dark Green
-        '3': '#00AAAA',    // Dark Aqua
-        '4': '#AA0000',    // Dark Red
-        '5': '#AA00AA',    // Dark Purple
-        '6': '#FFAA00',    // Gold
-        '7': '#AAAAAA',    // Gray
-        '8': '#555555',    // Dark Gray
-        '9': '#5555FF',    // Blue
-        'a': '#55FF55',    // Green
-        'b': '#55FFFF',    // Aqua
-        'c': '#FF5555',    // Red
-        'd': '#FF55FF',    // Light Purple
-        'e': '#FFFF55',    // Yellow
-        'f': '#FFFFFF'     // White
-    };
 
     private renderPrettyText(text: string, x: number, y: number, defaultColor: string) {
         let currentX = x;
@@ -369,17 +379,13 @@ export class ChatOverlay {
     }
 
     private renderPixelText(text: string, x: number, y: number, color: string) {
-        if(SettingsManager.settings.doPrettyText)
+        if (SettingsManager.settings.doPrettyText)
             this.renderPrettyText(text, x, y, color);
         else
             this.renderUglyText(text, x, y, color);
     }
 
-
-
-
     private renderDebugText() {
-
         const ctx = this.chatCtx;
         ctx.font = '8px Tiny5';
         ctx.fillStyle = 'teal';
@@ -392,8 +398,8 @@ export class ChatOverlay {
 
         //const playerX = Math.round(this.localPlayer.position.x);
 
-        linesToRender.push('candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, '+ Math.round(this.localPlayer.latency) + 'ms');
-        linesToRender.push('connected to: '+this.networking.getServerInfo().name);
+        linesToRender.push('candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' + Math.round(this.localPlayer.latency) + 'ms');
+        linesToRender.push('connected to: ' + this.networking.getServerInfo().name);
         //linesToRender.push('players: ' + this.networking.getServerInfo().currentPlayers + '/' + this.networking.getServerInfo().maxPlayers);
         linesToRender.push('map: ' + this.networking.getServerInfo().mapName);
         linesToRender.push('mode: ' + this.networking.getServerInfo().gameMode);
@@ -412,183 +418,185 @@ export class ChatOverlay {
     }
 
     private detectGameMessagesChanges(now: number) {
-        const previous = this.previousGameMessages;
         const current = this.gameMessages;
 
-        const maxLength = Math.max(previous.length, current.length);
+        for (let i = 0; i < this.maxMessagesOnScreen; i++) {
+            const line = this.lines[i];
+            const currentMessage = current[i] || null;
 
-        for (let i = 0; i < maxLength; i++) {
-            const prevMsg = previous[i];
-            const currMsg = current[i];
-
-            if (prevMsg && currMsg) {
-                if (prevMsg !== currMsg) {
-                    // Message has changed at this index
-                    this.animateMessageChange(i, prevMsg, currMsg, now);
+            if (!line.currentMessage) {
+                if (currentMessage) {
+                    line.currentMessage = {
+                        id: this.generateUniqueId(),
+                        message: currentMessage,
+                        state: 'animatingIn',
+                        animationProgress: 0,
+                        timestamp: now,
+                    };
                 }
-                // If messages are the same, do nothing
-            } else if (!prevMsg && currMsg) {
-                // New message added
-                this.animateMessageAddition(i, currMsg, now);
-            } else if (prevMsg && !currMsg) {
-                // Message removed
-                this.animateMessageRemoval(i, prevMsg, now);
-            }
-        }
-
-        // Update previousGameMessages for the next frame
-        this.previousGameMessages = [...current];
-    }
-
-    private animateMessageChange(index: number, oldMsg: string, newMsg: string, now: number) {
-        // Animate out the old message
-        const animatedMsg = this.animatedGameMessages[index];
-        if (animatedMsg && animatedMsg.state !== 'animatingOut') {
-            this.animatedGameMessages[index].state = 'animatingOut';
-            this.animatedGameMessages[index].timestamp = now;
-        }
-
-        // Animate in the new message after the old one has faded out
-        setTimeout(() => {
-            const updatedAnimatedMsg: AnimatedGameMessage = {
-                message: newMsg,
-                state: 'animatingIn',
-                animationProgress: 0,
-                timestamp: Date.now() / 1000,
-            };
-            this.animatedGameMessages[index] = updatedAnimatedMsg;
-        }, this.animationDuration * 1000);
-    }
-
-    private animateMessageAddition(index: number, newMsg: string, now: number) {
-        const animatedMsg: AnimatedGameMessage = {
-            message: newMsg,
-            state: 'animatingIn',
-            animationProgress: 0,
-            timestamp: now,
-        };
-        this.animatedGameMessages[index] = animatedMsg;
-    }
-
-    private animateMessageRemoval(index: number, oldMsg: string, now: number) {
-        const animatedMsg = this.animatedGameMessages[index];
-        if (animatedMsg && animatedMsg.state !== 'animatingOut') {
-            this.animatedGameMessages[index].state = 'animatingOut';
-            this.animatedGameMessages[index].timestamp = now;
-        }
-    }
-
-    private updateAnimatedGameMessages(now: number) {
-        for (let i = this.animatedGameMessages.length - 1; i >= 0; i--) {
-            const msg = this.animatedGameMessages[i];
-            const elapsed = now - msg.timestamp;
-            msg.animationProgress = Math.min(elapsed / this.animationDuration, 1);
-
-            if (msg.state === 'animatingOut' && msg.animationProgress >= 1) {
-                // Remove the message after fading out
-                this.animatedGameMessages.splice(i, 1);
                 continue;
             }
 
-            if (msg.state === 'animatingIn' && msg.animationProgress >= 1) {
-                // Transition to idle state after fading in
-                this.animatedGameMessages[i].state = 'idle';
-                this.animatedGameMessages[i].animationProgress = 1;
+            if (currentMessage !== line.currentMessage.message) {
+                if (line.currentMessage.state === 'idle') {
+                    line.currentMessage.state = 'animatingOut';
+                    line.currentMessage.timestamp = now;
+                    line.pendingMessage = currentMessage;
+                } else {
+                    line.pendingMessage = currentMessage;
+                }
+            }
+        }
+
+        this.previousGameMessages = [...current];
+    }
+
+
+    private updateAnimatedGameMessages(now: number) {
+        for (let i = 0; i < this.maxMessagesOnScreen; i++) {
+            const line = this.lines[i];
+            if (!line.currentMessage) continue; // Early return if null
+
+            const elapsed = now - line.currentMessage.timestamp;
+            let progress = Math.min(elapsed / this.animationDuration, 1);
+            progress = this.easeOut(progress);
+
+            line.currentMessage.animationProgress = progress;
+
+            if (line.currentMessage.state === 'animatingOut' && progress >= 1) {
+                // Remove the message after fade-out
+                if (line.pendingMessage) {
+                    line.currentMessage = {
+                        id: this.generateUniqueId(),
+                        message: line.pendingMessage,
+                        state: 'animatingIn',
+                        animationProgress: 0,
+                        timestamp: now,
+                    };
+                    line.pendingMessage = null;
+                } else {
+                    line.currentMessage = null;
+                }
+                continue;
+            }
+
+            if (line.currentMessage.state === 'animatingIn' && progress >= 1) {
+                line.currentMessage.state = 'idle';
+                line.currentMessage.animationProgress = 1;
             }
         }
     }
+
 
     private renderGameText() {
         const ctx = this.chatCtx;
         ctx.font = '8px Tiny5';
 
-        // Calculate vertical center position
-        const centerY = this.chatCanvas.height / 2 + 64;
+        // Calculate vertical center position (adjust as needed)
+        const centerY = this.chatCanvas.height / 2 + 48;
 
-        for (let i = 0; i < this.animatedGameMessages.length; i++) {
-            const msg = this.animatedGameMessages[i];
-            let alpha = 1;
-            let xOffset = 0;
+        for (let i = 0; i < this.maxMessagesOnScreen; i++) {
+            const line = this.lines[i];
+            if (line.currentMessage) {
+                let visibleText = line.currentMessage.message;
 
-            // Determine alpha based on animation state
-            if (msg.state === 'animatingIn') {
-                alpha = msg.animationProgress; // From 0 to 1
-            } else if (msg.state === 'animatingOut') {
-                alpha = 1 - msg.animationProgress; // From 1 to 0
-            } else if (msg.state === 'idle') {
-                alpha = 1; // Fully opaque
+                // Determine the visible portion based on animation state
+                if (line.currentMessage.state === 'animatingIn' || line.currentMessage.state === 'animatingOut') {
+                    visibleText = this.getVisibleText(line.currentMessage.message, line.currentMessage.state, line.currentMessage.animationProgress);
+                }
+
+                // Calculate text dimensions
+                const plainMessage = visibleText.replace(/&[0-9a-f]/g, ''); // Remove color codes for measurement
+                const textWidth = this.chatCtx.measureText(plainMessage).width;
+                const x = Math.floor((this.screenWidth - textWidth) / 2);
+                const y = Math.floor(centerY + (i * 10));
+
+                // Render the text
+                this.renderPixelText(visibleText, x, y, 'white');
             }
-
-            // Set global alpha for fade effect
-            ctx.globalAlpha = alpha;
-
-            // Calculate text dimensions
-            const plainMessage = msg.message.replace(/&[0-9a-f]/g, ''); // Remove color codes for measurement
-            const textWidth = this.chatCtx.measureText(plainMessage).width;
-            const x = Math.floor((this.screenWidth - textWidth) / 2);
-            const y = Math.floor(centerY + (i * 10));
-
-            // Render the text
-            this.renderPixelText(msg.message, x, y, 'white');
-
-            // Reset global alpha
-            ctx.globalAlpha = 1;
         }
     }
 
+    private getVisibleText(message: string, state: 'animatingIn' | 'animatingOut' | 'idle', progress: number): string {
+        if (state === 'idle') {
+            return message;
+        }
+
+        const length = message.length;
+        if (length === 0) return '';
+
+        let charsToShow = 0;
+
+        if (state === 'animatingIn') {
+            charsToShow = Math.floor(progress * length);
+            charsToShow = Math.min(charsToShow, length); // Ensure it doesn't exceed the message length
+            return message.substring(0, charsToShow);
+        } else if (state === 'animatingOut') {
+            charsToShow = Math.floor((1 - progress) * length);
+            charsToShow = Math.max(charsToShow, 0); // Ensure it doesn't go below zero
+            return message.substring(0, charsToShow);
+        }
+
+        return message;
+    }
+
+    private easeOut(progress: number): number {
+        return 1 - Math.pow(1 - progress, 1.5);
+    }
 
     public renderTouchControls() {
-        if(Date.now() / 1000 - this.lastTouchTimestamp > 10) return;
-        if(this.touchJoystickEngaged) {
-            //draw circle for movement
+        if (Date.now() / 1000 - this.lastTouchTimestamp > 10) return;
+        if (this.touchJoystickEngaged) {
+            // Draw circle for movement
             this.chatCtx.fillStyle = 'rgba(255,255,255,0.25)';
             this.chatCtx.beginPath();
             this.chatCtx.arc(this.joystickX, this.joystickY, TouchInputHandler.joystickRadius, 0, 2 * Math.PI);
             this.chatCtx.fill();
 
-            //smaller circle for joystick-- offset from center
+            // Smaller circle for joystick-- offset from center
             this.chatCtx.fillStyle = 'rgba(255,255,255,0.5)';
             this.chatCtx.beginPath();
-            this.chatCtx.arc(this.joystickX + this.joystickInputX * TouchInputHandler.joystickRadius, this.joystickY + this.joystickInputY * TouchInputHandler.joystickRadius, 10, 0, 2 * Math.PI);
+            this.chatCtx.arc(
+                this.joystickX + this.joystickInputX * TouchInputHandler.joystickRadius,
+                this.joystickY + this.joystickInputY * TouchInputHandler.joystickRadius,
+                10,
+                0,
+                2 * Math.PI
+            );
             this.chatCtx.fill();
-
-
-
         }
 
         // Draw rounded square center right for jumping
         const squareWidth = 24;
         const squareHeight = 24;
         const cornerRadius = 6;
-        const x = this.chatCanvas.width - squareWidth - 12; // 10px from the right edge
-        let y = (this.chatCanvas.height - squareHeight) / 2 ; // Center vertically
+        const x = this.chatCanvas.width - squareWidth - 12; // 12px from the right edge
+        let y = (this.chatCanvas.height - squareHeight) / 2; // Center vertically
 
-        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'●',1,0);
-        y-= squareHeight + 4;
-        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'↑',1,-1);
-        y+= squareHeight + 4;
-        y+= squareHeight + 4;
-        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius,'[]',1,1);
-
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius, '●', 1, 0);
+        y -= squareHeight + 4;
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius, '↑', 1, -1);
+        y += squareHeight + 4;
+        y += squareHeight + 4;
+        this.drawButton(x, y, squareWidth, squareHeight, cornerRadius, '[]', 1, 1);
     }
 
     public setButtonsHeld(buttons: number[]) {
         this.buttonsHeld = buttons;
     }
 
-    private drawButton(x:number, y:number, width:number, height:number, cornerRadius:number, text:string,textOffset:number, index:number) {
-        if(this.buttonsHeld.includes(index))
+    private drawButton(x: number, y: number, width: number, height: number, cornerRadius: number, text: string, textOffset: number, index: number) {
+        if (this.buttonsHeld.includes(index))
             this.chatCtx.fillStyle = 'rgba(100,100,100,0.3)';
         else
             this.chatCtx.fillStyle = 'rgba(255,255,255,0.15)';
 
         this.drawRoundedSquare(x, y, width, height, cornerRadius);
-        //draw character inside square
+        // Draw character inside square
         this.chatCtx.fillStyle = 'rgba(0,0,0,0.5)';
         this.chatCtx.font = '16px Tiny5';
         const textWidth = this.chatCtx.measureText(text).width;
-        this.chatCtx.fillText(text, Math.floor(x + width / 2 - textWidth / 2 + textOffset),Math.floor( y + height / 2 + 16 / 2 - 2));
-
+        this.chatCtx.fillText(text, Math.floor(x + width / 2 - textWidth / 2 + textOffset), Math.floor(y + height / 2 + 16 / 2 - 2));
     }
 
     private drawRoundedSquare(x: number, y: number, width: number, height: number, cornerRadius: number) {
@@ -609,13 +617,16 @@ export class ChatOverlay {
     public setLastTouchTimestamp(timestamp: number) {
         this.lastTouchTimestamp = timestamp;
     }
+
     public setTouchJoystickEngaged(value: boolean) {
         this.touchJoystickEngaged = value;
     }
+
     public setJoystickPosition(x: number, y: number) {
         this.joystickX = x;
         this.joystickY = y;
     }
+
     public setJoystickInput(x: number, y: number) {
         this.joystickInputX = x;
         this.joystickInputY = y;
@@ -660,7 +671,6 @@ export class ChatOverlay {
         }
     }
 
-
     public getDebugTextHeight(): number {
         return this.debugTextHeight;
     }
@@ -697,7 +707,6 @@ export class ChatOverlay {
         }
     }
 
-
     private renderEvil() {
         const ctx = this.chatCtx;
         if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.05) {
@@ -730,7 +739,7 @@ export class ChatOverlay {
 
         if (e.key === 'Enter') {
             if (this.localPlayer.chatActive) {
-                if(!this.commandManager.runCmd(this.localPlayer.chatMsg)) this.networking.sendMessage(this.localPlayer.chatMsg);
+                if (!this.commandManager.runCmd(this.localPlayer.chatMsg)) this.networking.sendMessage(this.localPlayer.chatMsg);
             }
             if (this.nameSettingActive) {
                 this.localPlayer.name = this.localPlayer.chatMsg.toString();
@@ -832,5 +841,7 @@ export class ChatOverlay {
         return resultLines;
     }
 
-
+    private generateUniqueId(): string {
+        return Math.random().toString(36).substr(2, 9);
+    }
 }
