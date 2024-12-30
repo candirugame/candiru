@@ -115,6 +115,7 @@ export class ChatOverlay {
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
         this.renderHitMarkers();
         this.renderChatMessages();
+        this.renderGameText();
         this.renderDebugText();
         if (this.inputHandler.getKey('tab'))
             this.renderPlayerList();
@@ -388,6 +389,31 @@ export class ChatOverlay {
 
         this.debugTextHeight = 7 * linesToRender.length;
     }
+
+    private renderGameText() {
+        const ctx = this.chatCtx;
+        ctx.font = '8px Tiny5';
+
+        // Example game messages to render (you can modify this array as needed)
+        const gameMessages = [
+            '&akilled hob',
+        ];
+
+        // Calculate vertical center position
+        const centerY = this.chatCanvas.height / 2 + 64;
+
+        // Render each message
+        for (let i = 0; i < gameMessages.length; i++) {
+            const message = gameMessages[i];
+            const textWidth = this.chatCtx.measureText(message.replace(/&[0-9a-f]/g, '')).width;
+            const x = Math.floor((this.screenWidth - textWidth) / 2);
+            const y = Math.floor(centerY + (i * 10)); // 10 pixels spacing between lines
+
+            // Use the existing renderPixelText method to handle color codes
+            this.renderPixelText(message, x, y, 'white');
+        }
+    }
+
 
 
     public renderTouchControls() {
