@@ -13,6 +13,13 @@ interface ChatMessage {
     timestamp: number;
 }
 
+interface AnimatedGameMessage {
+    message: string;
+    state: 'animatingIn' | 'animatingOut' | 'idle';
+    animationProgress: number; // Ranges from 0 to 1
+    timestamp: number; // Time when the current animation state started
+}
+
 const hitMarkerLifetime = 0.3;
 
 export class ChatOverlay {
@@ -42,6 +49,14 @@ export class ChatOverlay {
 
     private offscreenCanvas: HTMLCanvasElement;
     private offscreenCtx: CanvasRenderingContext2D;
+
+    public gameMessages: string[] = [];
+    private previousGameMessages: string[] = [];
+
+
+    private animatedGameMessages: AnimatedGameMessage[] = [];
+    private animationDuration: number = 0.25; //seconds
+
 
     constructor(container: HTMLElement,localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -111,6 +126,12 @@ export class ChatOverlay {
 
     public onFrame() {
         const startTime = Date.now();
+        const now = Date.now() / 1000;
+        this.gameMessages = [Math.floor(now) + ''];
+
+        this.detectGameMessagesChanges(now);
+        this.updateAnimatedGameMessages(now);
+
         this.clearOldMessages();
         this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
         this.renderHitMarkers();
@@ -390,30 +411,130 @@ export class ChatOverlay {
         this.debugTextHeight = 7 * linesToRender.length;
     }
 
+    private detectGameMessagesChanges(now: number) {
+        const previous = this.previousGameMessages;
+        const current = this.gameMessages;
+
+        const maxLength = Math.max(previous.length, current.length);
+
+        for (let i = 0; i < maxLength; i++) {
+            const prevMsg = previous[i];
+            const currMsg = current[i];
+
+            if (prevMsg && currMsg) {
+                if (prevMsg !== currMsg) {
+                    // Message has changed at this index
+                    this.animateMessageChange(i, prevMsg, currMsg, now);
+                }
+                // If messages are the same, do nothing
+            } else if (!prevMsg && currMsg) {
+                // New message added
+                this.animateMessageAddition(i, currMsg, now);
+            } else if (prevMsg && !currMsg) {
+                // Message removed
+                this.animateMessageRemoval(i, prevMsg, now);
+            }
+        }
+
+        // Update previousGameMessages for the next frame
+        this.previousGameMessages = [...current];
+    }
+
+    private animateMessageChange(index: number, oldMsg: string, newMsg: string, now: number) {
+        // Animate out the old message
+        const animatedMsg = this.animatedGameMessages[index];
+        if (animatedMsg && animatedMsg.state !== 'animatingOut') {
+            this.animatedGameMessages[index].state = 'animatingOut';
+            this.animatedGameMessages[index].timestamp = now;
+        }
+
+        // Animate in the new message after the old one has faded out
+        setTimeout(() => {
+            const updatedAnimatedMsg: AnimatedGameMessage = {
+                message: newMsg,
+                state: 'animatingIn',
+                animationProgress: 0,
+                timestamp: Date.now() / 1000,
+            };
+            this.animatedGameMessages[index] = updatedAnimatedMsg;
+        }, this.animationDuration * 1000);
+    }
+
+    private animateMessageAddition(index: number, newMsg: string, now: number) {
+        const animatedMsg: AnimatedGameMessage = {
+            message: newMsg,
+            state: 'animatingIn',
+            animationProgress: 0,
+            timestamp: now,
+        };
+        this.animatedGameMessages[index] = animatedMsg;
+    }
+
+    private animateMessageRemoval(index: number, oldMsg: string, now: number) {
+        const animatedMsg = this.animatedGameMessages[index];
+        if (animatedMsg && animatedMsg.state !== 'animatingOut') {
+            this.animatedGameMessages[index].state = 'animatingOut';
+            this.animatedGameMessages[index].timestamp = now;
+        }
+    }
+
+    private updateAnimatedGameMessages(now: number) {
+        for (let i = this.animatedGameMessages.length - 1; i >= 0; i--) {
+            const msg = this.animatedGameMessages[i];
+            const elapsed = now - msg.timestamp;
+            msg.animationProgress = Math.min(elapsed / this.animationDuration, 1);
+
+            if (msg.state === 'animatingOut' && msg.animationProgress >= 1) {
+                // Remove the message after fading out
+                this.animatedGameMessages.splice(i, 1);
+                continue;
+            }
+
+            if (msg.state === 'animatingIn' && msg.animationProgress >= 1) {
+                // Transition to idle state after fading in
+                this.animatedGameMessages[i].state = 'idle';
+                this.animatedGameMessages[i].animationProgress = 1;
+            }
+        }
+    }
+
     private renderGameText() {
         const ctx = this.chatCtx;
         ctx.font = '8px Tiny5';
 
-        // Example game messages to render (you can modify this array as needed)
-        const gameMessages = [
-            '&akilled hob',
-        ];
-
         // Calculate vertical center position
         const centerY = this.chatCanvas.height / 2 + 64;
 
-        // Render each message
-        for (let i = 0; i < gameMessages.length; i++) {
-            const message = gameMessages[i];
-            const textWidth = this.chatCtx.measureText(message.replace(/&[0-9a-f]/g, '')).width;
-            const x = Math.floor((this.screenWidth - textWidth) / 2);
-            const y = Math.floor(centerY + (i * 10)); // 10 pixels spacing between lines
+        for (let i = 0; i < this.animatedGameMessages.length; i++) {
+            const msg = this.animatedGameMessages[i];
+            let alpha = 1;
+            let xOffset = 0;
 
-            // Use the existing renderPixelText method to handle color codes
-            this.renderPixelText(message, x, y, 'white');
+            // Determine alpha based on animation state
+            if (msg.state === 'animatingIn') {
+                alpha = msg.animationProgress; // From 0 to 1
+            } else if (msg.state === 'animatingOut') {
+                alpha = 1 - msg.animationProgress; // From 1 to 0
+            } else if (msg.state === 'idle') {
+                alpha = 1; // Fully opaque
+            }
+
+            // Set global alpha for fade effect
+            ctx.globalAlpha = alpha;
+
+            // Calculate text dimensions
+            const plainMessage = msg.message.replace(/&[0-9a-f]/g, ''); // Remove color codes for measurement
+            const textWidth = this.chatCtx.measureText(plainMessage).width;
+            const x = Math.floor((this.screenWidth - textWidth) / 2);
+            const y = Math.floor(centerY + (i * 10));
+
+            // Render the text
+            this.renderPixelText(msg.message, x, y, 'white');
+
+            // Reset global alpha
+            ctx.globalAlpha = 1;
         }
     }
-
 
 
     public renderTouchControls() {
