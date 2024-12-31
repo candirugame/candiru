@@ -17,6 +17,7 @@ export interface RemotePlayer {
     inventory: number[];
     chatActive: boolean;
     chatMsg: string;
+    playerSpectating: number;
 }
 
 interface WorldItem {

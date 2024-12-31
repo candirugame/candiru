@@ -16,6 +16,7 @@ interface RemotePlayerData {
     quaternion: [number, number, number, number]; // Add quaternion as required
     forced: boolean;
     name: string;
+    playerSpectating: number;
 }
 
 interface RemotePlayer extends Omit<RemotePlayerData, 'quaternion'> {
@@ -126,6 +127,8 @@ export class RemotePlayerRenderer {
 
         remotePlayerData.forEach((remotePlayer) => {
             if (remotePlayer.id === localPlayerId) return;
+            if(remotePlayer.id === this.localPlayer.playerSpectating) return;
+            if(remotePlayer.playerSpectating !== -1) return;
 
             const playerDataWithQuaternion: RemotePlayerData = {
                 ...remotePlayer,
