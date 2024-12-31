@@ -24,7 +24,8 @@ export class PlayerManager {
         const { error } = DataValidator.validatePlayerData(data);
         if (error) {
             //throw new Error(`Invalid player data: ${error.message}`);
-            console.log('⚠️ invalid player data recieved')
+            throw new Error(`⚠️ invalid player data `);
+           // console.log('⚠️ invalid player data recieved')
         }
 
         const existingPlayer = this.players.get(data.id);

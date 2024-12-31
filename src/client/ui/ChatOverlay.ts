@@ -153,15 +153,8 @@ export class ChatOverlay {
     public onFrame() {
         const startTime = Date.now();
         const now = Date.now() / 1000;
-        //this.gameMessages = ['&a'+Math.floor(now/4 % 10) + ' kills'];
 
-        if ((now / 10) % 1 < 0.5) {
-            this.gameMessages = ['killed hob', 'you died! spectating possum165'];
-
-        } else {
-            this.gameMessages = [ 'alived hob','you died! spectating possum165'];
-        }
-
+        this.gameMessages = this.localPlayer.gameMsgs;
         this.detectGameMessagesChanges(now);
         this.updateAnimatedGameMessages(now);
 
