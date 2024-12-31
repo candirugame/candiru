@@ -52,6 +52,7 @@ export class DataValidator {
         idLastDamagedBy: z.number().optional(),
         playerSpectating: z.number(),
         gameMsgs: z.array(z.string()),
+        gameMsgs2: z.array(z.string()),
     }).strict();
 
     private static chatMsgSchema = z.object({

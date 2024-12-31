@@ -80,8 +80,23 @@ export class ChatOverlay {
         'c': '#FF5555',    // Red
         'd': '#FF55FF',    // Light Purple
         'e': '#FFFF55',    // Yellow
-        'f': '#FFFFFF'     // White
+        'f': '#FFFFFF',    // White
+        'g': this.getRainbowColor()
     };
+
+    private getColorCode(code: string): string | false {
+        if (code === 'g') {
+            return this.getRainbowColor();
+        }
+        return this.COLOR_CODES[code] || false;
+    }
+
+
+    private getRainbowColor(): string {
+        const hue = (Date.now() / 20) % 360;
+        return `hsl(${hue}, 100%, 50%)`;
+    }
+
 
     constructor(container: HTMLElement, localPlayer: Player) {
         this.localPlayer = localPlayer;
@@ -297,11 +312,11 @@ export class ChatOverlay {
 
         // Parse color codes and split into segments
         for (let i = 0; i < text.length; i++) {
-            if (text[i] === '&' && i + 1 < text.length && this.COLOR_CODES[text[i + 1]]) {
+            if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
                 if (currentSegment) {
                     segments.push({ text: currentSegment, color: currentColor });
                 }
-                currentColor = this.COLOR_CODES[text[i + 1]];
+                currentColor = <string>this.getColorCode(text[i + 1]);
                 currentSegment = '';
                 i++; // Skip the color code character
             } else {
@@ -349,14 +364,14 @@ export class ChatOverlay {
         let currentSegment = '';
 
         for (let i = 0; i < text.length; i++) {
-            if (text[i] === '&' && i + 1 < text.length && this.COLOR_CODES[text[i + 1]]) {
+            if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
                 if (currentSegment) {
                     this.chatCtx.font = '8px Tiny5';
                     this.chatCtx.fillStyle = currentColor;
                     this.chatCtx.fillText(currentSegment, currentX, y);
                     currentX += this.chatCtx.measureText(currentSegment).width;
                 }
-                currentColor = this.COLOR_CODES[text[i + 1]];
+                currentColor = <string>this.getColorCode(text[i + 1]);
                 currentSegment = '';
                 i++; // Skip the color code character
             } else {
@@ -392,14 +407,17 @@ export class ChatOverlay {
         //const playerX = Math.round(this.localPlayer.position.x);
 
         linesToRender.push('candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' + Math.round(this.localPlayer.latency) + 'ms');
-        linesToRender.push('connected to: ' + this.networking.getServerInfo().name);
+        //linesToRender.push('connected to: ' + this.networking.getServerInfo().name);
         //linesToRender.push('players: ' + this.networking.getServerInfo().currentPlayers + '/' + this.networking.getServerInfo().maxPlayers);
-        linesToRender.push('map: ' + this.networking.getServerInfo().mapName);
-        linesToRender.push('mode: ' + this.networking.getServerInfo().gameMode);
+        //linesToRender.push('map: ' + this.networking.getServerInfo().mapName);
+        //linesToRender.push('mode: ' + this.networking.getServerInfo().gameMode);
         //linesToRender.push('serverVersion: ' + this.networking.getServerInfo().version);
         //linesToRender.push('tickRate: ' + this.networking.getServerInfo().tickRate);
         //linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
         //linesToRender.push('health: ' + this.localPlayer.health);
+
+        for(const msg of this.localPlayer.gameMsgs2)
+            linesToRender.push(msg)
 
         //linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
