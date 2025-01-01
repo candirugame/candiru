@@ -37,10 +37,10 @@ export class FFAGamemode extends Gamemode {
 
     }
 
-    onPlayerConnect(player: Player): void {
+    onPlayerConnect(_player: Player): void {
     }
 
-    onPlayerDisconnect(player: Player): void {
+    onPlayerDisconnect(_player: Player): void {
     }
 
     onPlayerDeath(player: Player): void {
@@ -70,7 +70,7 @@ export class FFAGamemode extends Gamemode {
         }
     }
 
-    onItemPickup(player: Player): void {
+    onItemPickup(_player: Player): void {
     }
 
 
