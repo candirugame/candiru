@@ -502,31 +502,47 @@ export class ChatOverlay {
     private renderGameText() {
         const ctx = this.chatCtx;
         ctx.font = '8px Tiny5';
-
-        // Calculate vertical center position (adjust as needed)
         const centerY = this.chatCanvas.height / 2 + 48;
 
         for (let i = 0; i < this.maxMessagesOnScreen; i++) {
             const line = this.lines[i];
-            if (line.currentMessage) {
-                let visibleText = line.currentMessage.message;
+            if (!line.currentMessage) continue;
 
-                // Determine the visible portion based on animation state
-                if (line.currentMessage.state === 'animatingIn' || line.currentMessage.state === 'animatingOut') {
-                    visibleText = this.getVisibleText(line.currentMessage.message, line.currentMessage.state, line.currentMessage.animationProgress);
-                }
+            let visibleText = line.currentMessage.message;
 
-                // Calculate text dimensions
-                const plainMessage = visibleText.replace(/&[0-9a-f]/g, ''); // Remove color codes for measurement
-                const textWidth = this.chatCtx.measureText(plainMessage).width;
-                const x = Math.floor((this.screenWidth - textWidth) / 2);
-                const y = Math.floor(centerY + (i * 10));
+            // Check if we should skip animation
+            const shouldSkipAnimation =
+                line.currentMessage.state === 'animatingOut' &&
+                line.pendingMessage !== null &&
+                line.currentMessage.message.includes('seconds') &&
+                line.pendingMessage.includes('seconds');
 
-                // Render the text
-                this.renderPixelText(visibleText, x, y, 'white');
+            if (shouldSkipAnimation && line.pendingMessage) {
+                // Directly update to the pending message
+                line.currentMessage = {
+                    id: this.generateUniqueId(),
+                    message: line.pendingMessage,
+                    state: 'idle',
+                    animationProgress: 1,
+                    timestamp: Date.now() / 1000,
+                };
+                line.pendingMessage = null;
+                visibleText = line.currentMessage.message;
+            } else if (line.currentMessage.state === 'animatingIn' || line.currentMessage.state === 'animatingOut') {
+                visibleText = this.getVisibleText(line.currentMessage.message, line.currentMessage.state, line.currentMessage.animationProgress);
             }
+
+            // Calculate text dimensions and render
+            const plainMessage = visibleText.replace(/&[0-9a-f]/g, '');
+            const textWidth = this.chatCtx.measureText(plainMessage).width;
+            const x = Math.floor((this.screenWidth - textWidth) / 2);
+            const y = Math.floor(centerY + (i * 10));
+
+            this.renderPixelText(visibleText, x, y, 'white');
         }
     }
+
+
 
     private getVisibleText(message: string, state: 'animatingIn' | 'animatingOut' | 'idle', progress: number): string {
         if (state === 'idle') {

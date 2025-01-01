@@ -23,8 +23,13 @@ export class FFAGamemode extends Gamemode {
                 this.gameEngine.playerManager.respawnPlayer(player);
                 player.playerSpectating = -1;
                 this.spectateTimeouts.delete(player);
+                this.gameEngine.setGameMessage(player, '', 0);
+            }else{
+                this.gameEngine.setGameMessage(player, '&crespawn in ' + Math.floor(10 + timestamp - currentTime)+ ' seconds', 1, 0.5);
             }
             player.health = config.player.maxHealth;
+
+
         }
     }
 
