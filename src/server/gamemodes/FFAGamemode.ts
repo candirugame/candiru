@@ -44,31 +44,41 @@ export class FFAGamemode extends Gamemode {
     }
 
     onPlayerDeath(player: Player): void {
-
-        if(player.lastDamageTime && player.idLastDamagedBy &&
-            Date.now()/1000 - player.lastDamageTime < 5 ){
+        if (player.lastDamageTime && player.idLastDamagedBy &&
+            Date.now() / 1000 - player.lastDamageTime < 5) {
             const killer = this.gameEngine.playerManager.getPlayerById(player.idLastDamagedBy);
-            if(killer){
+            if (killer) {
+                // Redirect spectators of the dead player to the killer
+                for (const otherPlayer of this.gameEngine.playerManager.getAllPlayers()) {
+                    if (otherPlayer.playerSpectating === player.id) {
+                        otherPlayer.playerSpectating = killer.id;
+                        this.gameEngine.setGameMessage(otherPlayer, '&cspectating ' + killer.name, 0, 10);
+                    }
+                }
+
+                // Set the dead player to spectate the killer
                 player.playerSpectating = player.idLastDamagedBy;
                 player.health = config.player.maxHealth;
-                // player.gameMsgs[0] = '&cspectating ' + killer.name;
-                // player.gameMsgs[1] = '&crespawn in 10 seconds';
-                // killer.gameMsgs[0] = '&akilled ' + player.name;
-
-                this.gameEngine.setGameMessage(player, '&cspectating ' + killer.name, 0, 8);
-                this.gameEngine.setGameMessage(player, '&crespawn in 10 seconds', 1, 8);
+                player.inventory = [];
+                this.gameEngine.setGameMessage(player, '&cspectating ' + killer.name, 0, 10);
+                this.gameEngine.setGameMessage(player, '&crespawn in 10 seconds', 1, 2);
                 this.gameEngine.setGameMessage(killer, '&akilled ' + player.name, 0, 5);
-                this.spectateTimeouts.set(player, Date.now()/1000);
+
+                // Add the dead player to the spectate timeout list
+                this.spectateTimeouts.set(player, Date.now() / 1000);
                 this.gameEngine.playerUpdateSinceLastEmit = true;
-
-
-            }else{
+            } else {
+                // Respawn the player if no killer is found
                 this.gameEngine.playerManager.respawnPlayer(player);
             }
-        }else{
+        } else {
+            // Respawn the player if no valid killer is found
             this.gameEngine.playerManager.respawnPlayer(player);
         }
     }
+
+
+
 
     onItemPickup(_player: Player): void {
     }
