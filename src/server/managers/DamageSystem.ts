@@ -3,12 +3,17 @@ import { ChatManager } from "./ChatManager.ts";
 import { DamageRequest } from "../models/DamageRequest.ts";
 import { DataValidator } from "../DataValidator.ts";
 import { Vector3 } from "../models/Vector3.ts";
+import {GameEngine} from "../GameEngine.ts";
 
 export class DamageSystem {
     constructor(
         private playerManager: PlayerManager,
-        private chatManager: ChatManager
+        private chatManager: ChatManager,
     ) {}
+    private gameEngine!:GameEngine;
+    public setGameEngine(gameEngine:GameEngine){
+        this.gameEngine = gameEngine;
+    }
 
     handleDamageRequest(data: DamageRequest) {
         const validationResult = DataValidator.validateDamageRequest(data);
@@ -51,9 +56,10 @@ export class DamageSystem {
         if (targetPlayer.health <= 0) {
             const killerName = localPlayer.name;
             const killedName = targetPlayer.name;
-            this.chatManager.broadcastChat(`${killerName} &fkilled ${killedName}`);
+            //this.chatManager.broadcastChat(`${killerName} &fkilled ${killedName}`);
             console.log(`💔 ${killerName} killed ${killedName}`);
-            this.playerManager.respawnPlayer(targetPlayer);
+            //this.playerManager.respawnPlayer(targetPlayer);
+            this.gameEngine.periodicCleanup();
         }
 
         // Update player data

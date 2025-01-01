@@ -4,14 +4,18 @@ import { Vector3 } from '../models/Vector3.ts';
 import config from "../config.ts";
 import {PlayerManager} from "./PlayerManager.ts";
 import {ChatManager} from "./ChatManager.ts";
+import {Gamemode} from "../gamemodes/Gamemode.ts";
 
 
 export class ItemManager {
     private worldItems: WorldItem[] = [];
     private lastItemCreationTimestamp: number = Date.now() / 1000;
     private itemUpdateFlag: boolean = false;
+    private gamemode: Gamemode | false = false;
 
-    constructor(private mapData: MapData, private playerManager:PlayerManager, private chatManager:ChatManager) {}
+    constructor(private mapData: MapData, public playerManager:PlayerManager, private chatManager:ChatManager) {}
+
+    public setGamemode(gamemode: Gamemode | false) {this.gamemode = gamemode;}
 
     tick(currentTime: number) {
         this.checkForPickups();
@@ -83,6 +87,7 @@ export class ItemManager {
             }
 
             if (shouldPickup) {
+                if(this.gamemode) this.gamemode.onItemPickup(player);
                 this.worldItems.splice(itemIndex, 1);
                 this.itemUpdateFlag = true;
             }

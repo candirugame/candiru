@@ -6,9 +6,15 @@ import { MapData } from "../models/MapData.ts";
 import config from "../config.ts";
 import { WorldItem } from "../models/WorldItem.ts";
 import { ItemManager } from "./ItemManager.ts";
+import {PlayerExtras} from "../models/PlayerExtras.ts";
+
+interface PlayerData {
+    player: Player;
+    extras: PlayerExtras;
+}
 
 export class PlayerManager {
-    private players: Map<number, Player> = new Map();
+    private players: Map<number, PlayerData> = new Map();
     private mapData: MapData;
     private itemManager!: ItemManager;
 
@@ -23,43 +29,56 @@ export class PlayerManager {
     addOrUpdatePlayer(data: Player): { isNew: boolean; player?: Player } {
         const { error } = DataValidator.validatePlayerData(data);
         if (error) {
-            //throw new Error(`Invalid player data: ${error.message}`);
             throw new Error(`⚠️ invalid player data `);
-           // console.log('⚠️ invalid player data recieved')
         }
 
-        const existingPlayer = this.players.get(data.id);
+        const existingPlayerData = this.players.get(data.id);
         if (data.name.length < 1) data.name = 'possum' + data.id.toString().substring(0,3);
         if(data.chatMsg.startsWith('/admin ')) data.chatMsg = '/admin ' + data.chatMsg.substring(7).replace(/./g, '*');
         if(data.chatMsg.startsWith('>')) data.chatMsg = '&2'+data.chatMsg;
         if(!data.chatMsg.startsWith('&f')) data.chatMsg = '&f'+data.chatMsg;
-        if (existingPlayer) {
+
+        if (existingPlayerData) {
             // Handle forced acknowledgment
-            if (existingPlayer.forced && !data.forcedAcknowledged) {
+            if (existingPlayerData.player.forced && !data.forcedAcknowledged) {
                 return { isNew: false };
             }
-            if (existingPlayer.forced && data.forcedAcknowledged) {
-                existingPlayer.forced = false;
-                //console.log(`🟢 ${data.name}(${data.id}) acknowledged force`);
+            if (existingPlayerData.player.forced && data.forcedAcknowledged) {
+                existingPlayerData.player.forced = false;
             }
 
             // Update existing player, preserving certain fields
-            data.health = existingPlayer.health;
-            data.inventory = existingPlayer.inventory;
-            data.lastDamageTime = existingPlayer.lastDamageTime;
+            data.health = existingPlayerData.player.health;
+            data.inventory = existingPlayerData.player.inventory;
+            data.lastDamageTime = existingPlayerData.player.lastDamageTime;
+            data.gameMsgs = existingPlayerData.player.gameMsgs;
+            data.gameMsgs2 = existingPlayerData.player.gameMsgs2;
+            data.playerSpectating = existingPlayerData.player.playerSpectating;
             data.updateTimestamp = Date.now() / 1000;
 
-            this.players.set(data.id, data);
+            const updatedData: PlayerData = {
+                player: data,
+                extras: existingPlayerData.extras
+            };
+            this.players.set(data.id, updatedData);
             return { isNew: false };
         } else {
-            // New playera
+            // New player
             data.inventory = [...config.player.baseInventory];
             const spawnPoint = this.getRandomSpawnPoint();
             data.position = spawnPoint.vec;
             data.health = config.player.maxHealth;
+            data.gameMsgs = [];
+            data.gameMsgs2 = [];
+            data.playerSpectating = -1;
             data.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
             data.forced = true;
-            this.players.set(data.id, data);
+
+            const newPlayerData: PlayerData = {
+                player: data,
+                extras: { gameMsgsTimeouts: []}
+            };
+            this.players.set(data.id, newPlayerData);
             this.itemManager.triggerUpdateFlag();
 
             return { isNew: true, player: data };
@@ -71,14 +90,32 @@ export class PlayerManager {
     }
 
     getAllPlayers(): Player[] {
-        return Array.from(this.players.values());
+        return Array.from(this.players.values()).map(playerData => playerData.player);
     }
 
     getPlayerById(playerId: number): Player | undefined {
+        const playerData = this.players.get(playerId);
+        return playerData?.player;
+    }
+
+    getPlayerDataById(playerId: number): PlayerData | undefined {
         return this.players.get(playerId);
     }
 
+    getPlayerExtrasById(playerId: number): PlayerExtras | undefined {
+        const playerData = this.players.get(playerId);
+        return playerData?.extras;
+    }
+
+    getAllPlayerData(): PlayerData[] {
+        return Array.from(this.players.values());
+    }
+
+
     respawnPlayer(player: Player) {
+        const playerData = this.players.get(player.id);
+        if (!playerData) return;
+
         const spawnPoint = this.getRandomSpawnPoint();
         for(let i = 0; i < player.inventory.length; i++){
             this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
@@ -90,15 +127,21 @@ export class PlayerManager {
         player.gravity = 0;
         player.velocity = new Vector3(0, 0, 0);
         player.forced = true;
-        this.players.set(player.id, player);
+
+        const updatedPlayerData: PlayerData = {
+            player: player,
+            extras: playerData.extras
+        };
+        this.players.set(player.id, updatedPlayerData);
     }
 
     regenerateHealth() {
         const currentTime = Date.now() / 1000;
-        for (const player of this.players.values()) {
+        for (const playerData of this.players.values()) {
+            const player = playerData.player;
             const lastDamage = player.lastDamageTime ?? 0;
             if (player.health < config.player.maxHealth && (lastDamage + config.health.regenDelay < currentTime)) {
-                player.health += config.health.regenRate / config.server.tickRate; // Adjusted per tick
+                player.health += config.health.regenRate / config.server.tickRate;
                 if (player.health > config.player.maxHealth) player.health = config.player.maxHealth;
             }
         }
@@ -106,7 +149,6 @@ export class PlayerManager {
 
     private getRandomSpawnPoint(): { vec: Vector3; quaternion: Quaternion } {
         if (!this.mapData) {
-            // Default spawn point if map data is unavailable
             return { vec: new Vector3(2, 1, 0), quaternion: new Quaternion(0, 0, 0, 1) };
         }
 
