@@ -22,6 +22,8 @@ export interface Player {
     lastDamageTime?: number;
     inventory: number[];
     idLastDamagedBy?: number;
+    playerSpectating:number;
     gameMsgs:string[];
     gameMsgs2:string[];
+
 }

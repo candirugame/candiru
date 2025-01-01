@@ -272,7 +272,7 @@ export class Renderer {
 
         const vel = Math.sqrt(Math.pow(this.localPlayer.inputVelocity.x,2) + Math.pow(this.localPlayer.inputVelocity.z,2))
 
-        if(vel == 0 || this.collisionManager.isPlayerInAir()) {
+        if(vel == 0 || this.collisionManager.isPlayerInAir() || this.localPlayer.playerSpectating !== -1) {
             this.bobCycle = 0;
         } else {
             this.bobCycle += this.deltaTime * 4.8 * vel;
