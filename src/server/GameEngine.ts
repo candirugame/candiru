@@ -22,7 +22,7 @@ export class GameEngine {
     constructor(
         public playerManager: PlayerManager,
         private itemManager: ItemManager,
-        private chatManager: ChatManager,
+        public chatManager: ChatManager,
         private damageSystem: DamageSystem,
         private io: Server
     ) {}
@@ -84,6 +84,7 @@ export class GameEngine {
 
                 if (player.health <= 0) {
                     if(this.gamemode) this.gamemode.onPlayerDeath(player); //gamemode now handles
+                    else this.playerManager.respawnPlayer(player);
                 }
 
                 if ((player.updateTimestamp || 0) + config.player.disconnectTime < currentTime) {

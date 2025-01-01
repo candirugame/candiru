@@ -532,15 +532,42 @@ export class ChatOverlay {
                 visibleText = this.getVisibleText(line.currentMessage.message, line.currentMessage.state, line.currentMessage.animationProgress);
             }
 
-            // Calculate text dimensions and render
-            const plainMessage = visibleText.replace(/&[0-9a-f]/g, '');
-            const textWidth = this.chatCtx.measureText(plainMessage).width;
+            // Calculate the actual width of the rendered text, including color codes
+            const textWidth = this.getRenderedTextWidth(visibleText);
             const x = Math.floor((this.screenWidth - textWidth) / 2);
             const y = Math.floor(centerY + (i * 10));
 
             this.renderPixelText(visibleText, x, y, 'white');
         }
     }
+
+
+    private getRenderedTextWidth(text: string): number {
+        let totalWidth = 0;
+        let currentSegment = '';
+        const ctx = this.chatCtx;
+
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
+                // Measure the current segment before switching color
+                if (currentSegment) {
+                    totalWidth += ctx.measureText(currentSegment).width;
+                    currentSegment = '';
+                }
+                i++; // Skip the color code character
+            } else {
+                currentSegment += text[i];
+            }
+        }
+
+        // Measure the last segment
+        if (currentSegment) {
+            totalWidth += ctx.measureText(currentSegment).width;
+        }
+
+        return totalWidth;
+    }
+
 
 
 

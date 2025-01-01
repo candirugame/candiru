@@ -76,7 +76,7 @@ export class PlayerManager {
 
             const newPlayerData: PlayerData = {
                 player: data,
-                extras: { gameMsgsTimeouts: []}
+                extras: new PlayerExtras()
             };
             this.players.set(data.id, newPlayerData);
             this.itemManager.triggerUpdateFlag();

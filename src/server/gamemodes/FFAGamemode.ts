@@ -44,6 +44,9 @@ export class FFAGamemode extends Gamemode {
     }
 
     onPlayerDeath(player: Player): void {
+        const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+        if(extras) {extras.deaths++; extras.killStreak = 0;}
+
         if (player.lastDamageTime && player.idLastDamagedBy &&
             Date.now() / 1000 - player.lastDamageTime < 5) {
             const killer = this.gameEngine.playerManager.getPlayerById(player.idLastDamagedBy);
@@ -67,6 +70,10 @@ export class FFAGamemode extends Gamemode {
                 // Add the dead player to the spectate timeout list
                 this.spectateTimeouts.set(player, Date.now() / 1000);
                 this.gameEngine.playerUpdateSinceLastEmit = true;
+
+                this.onPlayerKill(killer);
+
+
             } else {
                 // Respawn the player if no killer is found
                 this.gameEngine.playerManager.respawnPlayer(player);
@@ -74,6 +81,32 @@ export class FFAGamemode extends Gamemode {
         } else {
             // Respawn the player if no valid killer is found
             this.gameEngine.playerManager.respawnPlayer(player);
+        }
+
+
+    }
+
+    onPlayerKill(player:Player){
+        const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+        console.log('kill')
+        if(extras) {
+            console.log('kill2')
+            extras.kills++;
+            extras.killStreak++;
+            console.log(extras.killStreak)
+
+
+            let colorCode = '&a';
+            if(extras.killStreak >= 5) colorCode = '&b';
+            if(extras.killStreak >= 10) colorCode = '&6';
+            if(extras.killStreak >= 15) colorCode = '&g';
+
+            if(extras.killStreak >= 3)
+                this.gameEngine.setGameMessage(player, colorCode+extras.killStreak+' kill streak', 1, 5);
+            if(extras.killStreak >= 5)
+                this.gameEngine.chatManager.broadcastChat(colorCode+player.name+' is on a '+extras.killStreak+' kill streak');
+
+
         }
     }
 
