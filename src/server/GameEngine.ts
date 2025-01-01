@@ -118,6 +118,9 @@ export class GameEngine {
                     this.itemUpdateSinceLastEmit = true;
                 }
             });
+
+            if(this.gamemode) this.gamemode.onPeriodicCleanup();
+            
         } catch (error) {
             console.error('⚠ error in periodicCleanup:', error);
         }

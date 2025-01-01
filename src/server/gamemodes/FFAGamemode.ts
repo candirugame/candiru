@@ -34,6 +34,12 @@ export class FFAGamemode extends Gamemode {
     }
 
     onPeriodicCleanup(): void {
+        // send kill death stats to all players
+        for (const player of this.gameEngine.playerManager.getAllPlayers()) {
+            const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+            if(extras) player.gameMsgs2 = ['&7'+extras.kills + ' kills, ' + extras.deaths + ' deaths'];
+        }
+
 
     }
 
