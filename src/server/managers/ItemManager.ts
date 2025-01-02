@@ -52,6 +52,8 @@ export class ItemManager {
         const players = this.playerManager.getAllPlayers();
 
         for (const player of players) {
+            if(player.playerSpectating !== -1) continue;
+            if(player.health <= 0) continue;
             const itemIndex = this.worldItems.findIndex(item =>
                Vector3.distanceTo(player.position, item.vector) < 0.5
             );

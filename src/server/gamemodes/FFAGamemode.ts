@@ -65,10 +65,12 @@ export class FFAGamemode extends Gamemode {
                     }
                 }
 
+
                 // Set the dead player to spectate the killer
                 player.playerSpectating = player.idLastDamagedBy;
                 player.health = config.player.maxHealth;
-                player.inventory = [];
+                this.gameEngine.playerManager.dropAllItems(player);
+
                 this.gameEngine.setGameMessage(player, '&cspectating ' + killer.name, 0, 10);
                 this.gameEngine.setGameMessage(player, '&crespawn in 10 seconds', 1, 2);
                 this.gameEngine.setGameMessage(killer, '&akilled ' + player.name, 0, 5);
@@ -94,13 +96,9 @@ export class FFAGamemode extends Gamemode {
 
     onPlayerKill(player:Player){
         const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
-        console.log('kill')
         if(extras) {
-            console.log('kill2')
             extras.kills++;
             extras.killStreak++;
-            console.log(extras.killStreak)
-
 
             let colorCode = '&a';
             if(extras.killStreak >= 5) colorCode = '&b';

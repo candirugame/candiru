@@ -111,16 +111,19 @@ export class PlayerManager {
         return Array.from(this.players.values());
     }
 
+    public dropAllItems(player:Player){
+        for(let i = 0; i < player.inventory.length; i++){
+            this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
+        }
+        player.inventory = [];
+
+    }
 
     respawnPlayer(player: Player) {
         const playerData = this.players.get(player.id);
         if (!playerData) return;
 
         const spawnPoint = this.getRandomSpawnPoint();
-        for(let i = 0; i < player.inventory.length; i++){
-            this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
-        }
-        player.inventory = [...config.player.baseInventory];
         player.position = spawnPoint.vec;
         player.lookQuaternion = [spawnPoint.quaternion.x, spawnPoint.quaternion.y, spawnPoint.quaternion.z, spawnPoint.quaternion.w];
         player.health = config.player.maxHealth;
