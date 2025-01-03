@@ -62,27 +62,7 @@ export class DataValidator {
 		playerSpectating: z.number(),
 		gameMsgs: z.array(z.string()),
 		gameMsgs2: z.array(z.string()),
-	}).strict().transform((data) => {
-		const withVectors = {
-			...data,
-			position: new THREE.Vector3(data.position.x, data.position.y, data.position.z),
-			velocity: new THREE.Vector3(data.velocity.x, data.velocity.y, data.velocity.z),
-			inputVelocity: new THREE.Vector3(data.inputVelocity.x, data.inputVelocity.y, data.inputVelocity.z),
-			lookQuaternion: new THREE.Quaternion(
-				data.lookQuaternion.x,
-				data.lookQuaternion.y,
-				data.lookQuaternion.z,
-				data.lookQuaternion.w,
-			),
-			quaternion: new THREE.Quaternion(
-				data.quaternion.x,
-				data.quaternion.y,
-				data.quaternion.z,
-				data.quaternion.w,
-			),
-		};
-		return Player.fromObject(withVectors as Player);
-	});
+	}).strict().transform((data) => Player.fromObject(data as Player));
 
 	static chatMsgSchema = z.object({
 		id: z.number(),
