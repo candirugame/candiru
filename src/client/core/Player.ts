@@ -21,6 +21,9 @@ export class Player {
     public forcedAcknowledged: boolean;
     public inventory: number[];
     public idLastDamagedBy: number;
+    public playerSpectating: number;
+    public gameMsgs: string[];
+    public gameMsgs2: string[];
 
     constructor() {
         this.position = new THREE.Vector3(0,100,0);
@@ -42,6 +45,9 @@ export class Player {
         this.forcedAcknowledged = false;
         this.inventory = [];
         this.idLastDamagedBy = -1;
+        this.playerSpectating = -1;
+        this.gameMsgs = [];
+        this.gameMsgs2 = [];
 
         const storedName = SettingsManager.settings.name;
         if (storedName) this.name = storedName;

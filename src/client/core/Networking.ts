@@ -17,6 +17,9 @@ export interface RemotePlayer {
     inventory: number[];
     chatActive: boolean;
     chatMsg: string;
+    playerSpectating: number;
+    gameMsgs: string[];
+    gameMsgs2: string[];
 }
 
 interface WorldItem {
@@ -184,6 +187,9 @@ export class Networking {
                 this.localPlayer.health = remotePlayer.health;
                 this.localPlayer.idLastDamagedBy = remotePlayer.idLastDamagedBy;
                 this.localPlayer.inventory = remotePlayer.inventory;
+                this.localPlayer.playerSpectating = remotePlayer.playerSpectating;
+                this.localPlayer.gameMsgs = remotePlayer.gameMsgs;
+                this.localPlayer.gameMsgs2 = remotePlayer.gameMsgs2;
                 continue;
             }
             if (remotePlayer.chatActive)

@@ -24,7 +24,7 @@ export class DataValidator {
         x: z.number(),
         y: z.number(),
         z: z.number(),
-    });
+    }).strict();
 
     private static playerDataSchema = z.object({
         id: z.number(),
@@ -50,19 +50,22 @@ export class DataValidator {
         lastDamageTime: z.number().optional(),
         inventory: z.array(z.number()),
         idLastDamagedBy: z.number().optional(),
-    });
+        playerSpectating: z.number(),
+        gameMsgs: z.array(z.string()),
+        gameMsgs2: z.array(z.string()),
+    }).strict();
 
     private static chatMsgSchema = z.object({
         id: z.number(),
         name: z.string().max(42),
         message: z.string().max(300),
-    });
+    }).strict();
 
     private static damageRequestSchema = z.object({
         localPlayer: DataValidator.playerDataSchema,
         targetPlayer: DataValidator.playerDataSchema,
         damage: z.number(),
-    });
+    }).strict();
 
     static validatePlayerData(data: Player) {
         return DataValidator.playerDataSchema.safeParse(data);

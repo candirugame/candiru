@@ -7,18 +7,22 @@ import config from "./config.ts";
 import { Vector3 } from "./models/Vector3.ts";
 import { ServerInfo } from "./models/ServerInfo.ts";
 import {DataValidator} from "./DataValidator.ts";
+import {Player} from "./models/Player.ts";
+import {Gamemode} from "./gamemodes/Gamemode.ts";
+import {FFAGamemode} from "./gamemodes/FFAGamemode.ts";
 
 export class GameEngine {
     private lastPlayerTickTimestamp: number = Date.now() / 1000;
     private lastItemUpdateTimestamp: number = Date.now() / 1000;
-    private playerUpdateSinceLastEmit: boolean = false;
+    public playerUpdateSinceLastEmit: boolean = false;
     private itemUpdateSinceLastEmit: boolean = false;
     private serverInfo: ServerInfo = new ServerInfo();
+    public gamemode: Gamemode | false = false;
 
     constructor(
-        private playerManager: PlayerManager,
+        public playerManager: PlayerManager,
         private itemManager: ItemManager,
-        private chatManager: ChatManager,
+        public chatManager: ChatManager,
         private damageSystem: DamageSystem,
         private io: Server
     ) {}
@@ -27,6 +31,7 @@ export class GameEngine {
         setInterval(() => this.serverTick(), 1000 / config.server.tickRate);
         setInterval(() => this.periodicCleanup(), config.server.cleanupInterval);
         setInterval(() => this.emitServerInfo(), config.server.cleanupInterval);
+        this.initGamemode();
     }
 
     private serverTick() {
@@ -34,6 +39,7 @@ export class GameEngine {
             const currentTime = Date.now() / 1000;
             this.playerManager.regenerateHealth();
             this.itemManager.tick(currentTime);
+            if(this.gamemode) this.gamemode.tick();
 
             // Emit player data if there are updates or enough time has passed
             if (this.playerUpdateSinceLastEmit || currentTime - this.lastPlayerTickTimestamp > 1 / config.server.tickRate) {
@@ -42,7 +48,7 @@ export class GameEngine {
                     this.playerUpdateSinceLastEmit = false;
                     this.lastPlayerTickTimestamp = currentTime;
                 } catch (err) {
-                    console.error('Error emitting player data:', err);
+                    console.error('⚠ error emitting player data:', err);
                 }
             }
 
@@ -52,15 +58,18 @@ export class GameEngine {
                     this.io.emit('worldItemData', this.itemManager.getAllItems());
                     this.itemUpdateSinceLastEmit = false;
                 } catch (err) {
-                    console.error('Error emitting item data:', err);
+                    console.error('⚠ error emitting item data:', err);
                 }
             }
         } catch (error) {
-            console.error('Error in serverTick:', error);
+            console.error('⚠ error in serverTick:', error);
         }
     }
 
-    private periodicCleanup() {
+    public periodicCleanup() {
+        // for(const player of this.playerManager.getAllPlayers())
+        //         console.log(player.gameMsgs)
+
         try {
             const currentTime = Date.now() / 1000;
             const players = this.playerManager.getAllPlayers();
@@ -74,15 +83,33 @@ export class GameEngine {
                 }
 
                 if (player.health <= 0) {
-                    this.playerManager.respawnPlayer(player);
+                    if(this.gamemode) this.gamemode.onPlayerDeath(player); //gamemode now handles
+                    else this.playerManager.respawnPlayer(player);
                 }
 
                 if ((player.updateTimestamp || 0) + config.player.disconnectTime < currentTime) {
+                    if(this.gamemode) this.gamemode.onPlayerDisconnect(player);
                     console.log(`🟠 ${player.name}(${player.id}) left`);
                     this.chatManager.broadcastChat(`${player.name} left`);
                     this.playerManager.removePlayer(player.id);
                 }
             });
+
+            const playerData = this.playerManager.getAllPlayerData();
+            playerData.forEach(playerData => {
+                for(let i = 0; i<playerData.extras.gameMsgsTimeouts.length; i++){
+                    if(playerData.extras.gameMsgsTimeouts[i] &&
+                        currentTime > playerData.extras.gameMsgsTimeouts[i] && playerData.extras.gameMsgsTimeouts[i] !== -1){
+
+                        playerData.player.gameMsgs[i] = '';
+                        playerData.extras.gameMsgsTimeouts[i] = -1;
+                        this.playerUpdateSinceLastEmit = true;
+
+                    }
+                }
+            });
+
+
 
             const items = this.itemManager.getAllItems();
             items.forEach(item => {
@@ -91,8 +118,11 @@ export class GameEngine {
                     this.itemUpdateSinceLastEmit = true;
                 }
             });
+
+            if(this.gamemode) this.gamemode.onPeriodicCleanup();
+            
         } catch (error) {
-            console.error('Error in periodicCleanup:', error);
+            console.error('⚠ error in periodicCleanup:', error);
         }
     }
 
@@ -101,5 +131,32 @@ export class GameEngine {
         this.serverInfo.version = DataValidator.getServerVersion();
         this.serverInfo.currentPlayers = this.playerManager.getAllPlayers().length;
         this.io.emit('serverInfo', this.serverInfo);
+    }
+
+
+
+    public setGameMessage(player:Player, message:string, index:number, timeout?:number){
+        player.gameMsgs[index] = message;
+        const extras = this.playerManager.getPlayerExtrasById(player.id);
+        if(timeout && timeout > 0 && extras){
+            extras.gameMsgsTimeouts[index] = Date.now()/1000 + timeout;
+        }
+    }
+
+
+
+    private initGamemode(){
+        try {
+            switch(config.game.mode){
+                case 'ffa':
+                    this.gamemode = new FFAGamemode(this);
+                    break;
+                default:
+                    console.log('⚠️ invalid gamemode supplied (check your config!)', config.game.mode);
+                    break;
+            }
+        } catch (error) {
+            console.error('⚠ error initializing gamemode:', error);
+        }
     }
 }

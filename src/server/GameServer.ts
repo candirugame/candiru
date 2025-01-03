@@ -42,6 +42,8 @@ export class GameServer {
             this.damageSystem,
             this.io
         );
+        this.itemManager.setGamemode(this.gameEngine.gamemode);
+        this.damageSystem.setGameEngine(this.gameEngine);
         this.gameEngine.start();
 
         DataValidator.updateServerVersion();
@@ -61,6 +63,7 @@ export class GameServer {
                     try {
                         const result = this.playerManager.addOrUpdatePlayer(data);
                         if (result.isNew && result.player) {
+                            if(this.gameEngine.gamemode) this.gameEngine.gamemode.onPlayerConnect(result.player);
                             this.chatManager.broadcastChat(`${result.player.name} joined`);
                             console.log(`🟢 ${result.player.name}(${result.player.id}) joined`);
                             this.gameEngine.emitServerInfo();

@@ -16,6 +16,7 @@ interface RemotePlayerData {
     quaternion: [number, number, number, number]; // Add quaternion as required
     forced: boolean;
     name: string;
+    playerSpectating: number;
 }
 
 interface RemotePlayer extends Omit<RemotePlayerData, 'quaternion'> {
@@ -124,12 +125,44 @@ export class RemotePlayerRenderer {
         const remotePlayerData: RemotePlayer[] = this.networking.getRemotePlayerData();
         const localPlayerId = this.localPlayer.id;
 
+        // First, remove all players that should be hidden
+        this.playersToRender = this.playersToRender.filter((player) => {
+            const remotePlayer = remotePlayerData.find(rp => rp.id === player.id);
+            const shouldHide =
+                !remotePlayer || // Player no longer exists
+                remotePlayer.id === localPlayerId || // Is local player
+                remotePlayer.id === this.localPlayer.playerSpectating || // Is being spectated
+                remotePlayer.playerSpectating !== -1; // Is spectating someone
+
+            if (shouldHide) {
+                // Remove the player's objects from scenes
+                this.entityScene.remove(player.object);
+                this.entityScene.remove(player.nameLabel);
+                this.sphereScene.remove(player.sphere);
+
+                // Clean up associated data
+                delete this.groundTruthPositions[player.id];
+                delete this.isAnimating[player.id];
+                delete this.animationPhase[player.id];
+                delete this.previousVelocity[player.id];
+                delete this.lastRunningYOffset[player.id];
+            }
+
+            return !shouldHide;
+        });
+
+        // Then, update or add remaining valid players
         remotePlayerData.forEach((remotePlayer) => {
-            if (remotePlayer.id === localPlayerId) return;
+            // Skip if player should be hidden
+            if (remotePlayer.id === localPlayerId ||
+                remotePlayer.id === this.localPlayer.playerSpectating ||
+                remotePlayer.playerSpectating !== -1) {
+                return;
+            }
 
             const playerDataWithQuaternion: RemotePlayerData = {
                 ...remotePlayer,
-                quaternion: remotePlayer.quaternion || [0, 0, 0, 1], // Provide default quaternion if missing
+                quaternion: remotePlayer.quaternion || [0, 0, 0, 1],
             };
 
             const existingPlayer = this.playersToRender.find((player) => player.id === remotePlayer.id);
@@ -139,9 +172,8 @@ export class RemotePlayerRenderer {
                 this.addNewPlayer(playerDataWithQuaternion);
             }
         });
-
-        this.removeInactivePlayers(remotePlayerData);
     }
+
 
     private updatePlayerPosition(playerObject: THREE.Object3D, playerSphere: THREE.Object3D, remotePlayerData: RemotePlayerData): void {
         const velocity = Math.sqrt(

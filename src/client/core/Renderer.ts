@@ -42,6 +42,9 @@ export class Renderer {
     private inputHandler!: InputHandler;
     private collisionManager!: CollisionManager;
 
+    private spectateGroundTruthPosition: THREE.Vector3 | null = null;
+
+
     constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
         this.networking = networking;
         this.localPlayer = localPlayer;
@@ -185,9 +188,63 @@ export class Renderer {
         // Restore autoClear to true if necessary
         this.renderer.autoClear = true;
 
-        // Update camera position and rotation for local player
-        this.camera.position.copy(localPlayer.position);
-        this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+        if(localPlayer.playerSpectating !== -1) {
+            const remotePlayer = this.networking.getRemotePlayerData().find((player) => player.id === localPlayer.playerSpectating);
+            if(remotePlayer !== undefined) {
+                // Initialize ground truth position if not set
+                if (!this.spectateGroundTruthPosition) {
+                    this.spectateGroundTruthPosition = new THREE.Vector3(
+                        remotePlayer.position.x,
+                        remotePlayer.position.y,
+                        remotePlayer.position.z
+                    );
+                }
+
+                // Update ground truth position based on velocity
+                this.spectateGroundTruthPosition.x += remotePlayer.velocity.x * this.deltaTime;
+                this.spectateGroundTruthPosition.y += remotePlayer.velocity.y * this.deltaTime;
+                this.spectateGroundTruthPosition.z += remotePlayer.velocity.z * this.deltaTime;
+
+                // If forced update, set directly to remote position
+                if (remotePlayer.forced) {
+                    this.spectateGroundTruthPosition.set(
+                        remotePlayer.position.x,
+                        remotePlayer.position.y,
+                        remotePlayer.position.z
+                    );
+                }
+
+                // Lerp ground truth position towards actual position
+                this.spectateGroundTruthPosition.lerp(
+                    new THREE.Vector3(
+                        remotePlayer.position.x,
+                        remotePlayer.position.y,
+                        remotePlayer.position.z
+                    ),
+                    0.1 * this.deltaTime * 60
+                );
+
+                // Update camera position and rotation
+                this.camera.position.copy(this.spectateGroundTruthPosition);
+
+                // Simple quaternion slerp
+                this.camera.quaternion.slerp(new THREE.Quaternion(
+                    remotePlayer.lookQuaternion[0],
+                    remotePlayer.lookQuaternion[1],
+                    remotePlayer.lookQuaternion[2],
+                    remotePlayer.lookQuaternion[3]
+                ), 0.3 * this.deltaTime * 60);
+            }
+        } else {
+            // Reset spectate position when not spectating
+            this.spectateGroundTruthPosition = null;
+            this.camera.position.copy(localPlayer.position);
+            this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+        }
+
+
+
+
 
         this.camera.position.add(this.knockbackVector);
         this.knockbackVector.lerp(new THREE.Vector3(), 0.05 * this.deltaTime * 60);
@@ -215,7 +272,7 @@ export class Renderer {
 
         const vel = Math.sqrt(Math.pow(this.localPlayer.inputVelocity.x,2) + Math.pow(this.localPlayer.inputVelocity.z,2))
 
-        if(vel == 0 || this.collisionManager.isPlayerInAir()) {
+        if(vel == 0 || this.collisionManager.isPlayerInAir() || this.localPlayer.playerSpectating !== -1) {
             this.bobCycle = 0;
         } else {
             this.bobCycle += this.deltaTime * 4.8 * vel;
