@@ -1,4 +1,4 @@
 export class GameMsgManager {
-    constructor() {
-    }
+	constructor() {
+	}
 }

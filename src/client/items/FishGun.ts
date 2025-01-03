@@ -1,10 +1,10 @@
-import {ItemBase, ItemType} from './ItemBase.ts';
-import {HeldItemInput} from '../input/HeldItemInput.ts';
+import { ItemBase, ItemType } from './ItemBase.ts';
+import { HeldItemInput } from '../input/HeldItemInput.ts';
 
 import * as THREE from 'three';
-import {Renderer} from '../core/Renderer.ts';
-import {Networking} from '../core/Networking.ts';
-import { AssetManager } from "../core/AssetManager.ts";
+import { Renderer } from '../core/Renderer.ts';
+import { Networking } from '../core/Networking.ts';
+import { AssetManager } from '../core/AssetManager.ts';
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -13,241 +13,235 @@ const showInHandDelay = 0.1;
 const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
 const unscopedPosition = new THREE.Vector3(0.75, -0.9, 3.2);
 const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
-const scopedQuaternion = new THREE.Quaternion(0,0.707,0,0.707);
+const scopedQuaternion = new THREE.Quaternion(0, 0.707, 0, 0.707);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class FishGun extends ItemBase {
-    private renderer!: Renderer;
-    private networking!: Networking;
-    private lastInput: HeldItemInput;
-    private lastFired: number;
-    private addedToHandScene: boolean;
+	private renderer!: Renderer;
+	private networking!: Networking;
+	private lastInput: HeldItemInput;
+	private lastFired: number;
+	private addedToHandScene: boolean;
 
-    // deno-lint-ignore constructor-super
-    constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
-        if(itemType === ItemType.WorldItem)
-            super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
-        else
-            super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
-        this.renderer = renderer;
-        this.networking = networking;
-        this.lastInput = new HeldItemInput();
-        this.addedToHandScene = false;
-        this.lastFired = 0;
-    }
+	// deno-lint-ignore constructor-super
+	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+		if (itemType === ItemType.WorldItem) {
+			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
+		} else {
+			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
+		}
+		this.renderer = renderer;
+		this.networking = networking;
+		this.lastInput = new HeldItemInput();
+		this.addedToHandScene = false;
+		this.lastFired = 0;
+	}
 
-    public override init() {
-        AssetManager.getInstance().loadAsset('models/simplified_fish.glb', (scene) => {
-            this.object = scene;
-            if (this.itemType === ItemType.InventoryItem) {
-                this.object.traverse((child) => {
-                    if ((child as THREE.Mesh).isMesh) {
-                        child.renderOrder = 999;
-                        const mesh = child as THREE.Mesh;
-                        if (Array.isArray(mesh.material)) {
-                            mesh.material.forEach(mat => mat.depthTest = false);
-                        } else {
-                            mesh.material.depthTest = false;
-                        }
-                    }
-                });
-                if(this.itemType === ItemType.InventoryItem)
-                    this.object.scale.set(1.5, 1.5, 1.5);
-            }
+	public override init() {
+		AssetManager.getInstance().loadAsset('models/simplified_fish.glb', (scene) => {
+			this.object = scene;
+			if (this.itemType === ItemType.InventoryItem) {
+				this.object.traverse((child) => {
+					if ((child as THREE.Mesh).isMesh) {
+						child.renderOrder = 999;
+						const mesh = child as THREE.Mesh;
+						if (Array.isArray(mesh.material)) {
+							mesh.material.forEach((mat) => mat.depthTest = false);
+						} else {
+							mesh.material.depthTest = false;
+						}
+					}
+				});
+				if (this.itemType === ItemType.InventoryItem) {
+					this.object.scale.set(1.5, 1.5, 1.5);
+				}
+			}
 
-            this.inventoryMenuObject = this.object.clone();
-            this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+			this.inventoryMenuObject = this.object.clone();
+			this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
 
-            if(this.itemType === ItemType.WorldItem)
-                this.object.scale.set(0.45, 0.45, 0.45);
-        });
-    }
+			if (this.itemType === ItemType.WorldItem) {
+				this.object.scale.set(0.45, 0.45, 0.45);
+			}
+		});
+	}
 
+	public override onFrame(input: HeldItemInput, selectedIndex: number) {
+		if (!this.object) return;
+		const deltaTime = this.clock.getDelta();
+		this.timeAccum += deltaTime;
+		this.angleAccum += deltaTime;
 
+		if (this.itemType === ItemType.WorldItem) {
+			this.worldOnFrame(deltaTime);
+		} else if (this.itemType === ItemType.InventoryItem) {
+			this.inventoryOnFrame(deltaTime, selectedIndex);
+			this.handOnFrame(deltaTime, input);
+		}
+	}
 
-    public override onFrame(input: HeldItemInput, selectedIndex: number) {
-        if (!this.object) return;
-        const deltaTime = this.clock.getDelta();
-        this.timeAccum += deltaTime;
-        this.angleAccum += deltaTime;
+	// No need to override worldOnFrame if default behavior is sufficient
+	// If specific behavior is needed, you can override it here
 
-        if (this.itemType === ItemType.WorldItem) {
-            this.worldOnFrame(deltaTime);
-        } else if (this.itemType === ItemType.InventoryItem) {
-            this.inventoryOnFrame(deltaTime, selectedIndex);
-            this.handOnFrame(deltaTime, input);
-        }
-    }
+	public override inventoryOnFrame(deltaTime: number, selectedIndex: number) {
+		if (!this.addedToInventoryItemScenes) {
+			this.inventoryMenuScene.add(this.inventoryMenuObject);
+			this.addedToInventoryItemScenes = true;
+		}
 
-    // No need to override worldOnFrame if default behavior is sufficient
-    // If specific behavior is needed, you can override it here
+		this.angleAccum += deltaTime;
+		this.inventoryMenuObject.position.set(0, this.index, 0);
 
-    public override inventoryOnFrame(deltaTime: number, selectedIndex: number) {
-        if (!this.addedToInventoryItemScenes) {
-            this.inventoryMenuScene.add(this.inventoryMenuObject);
-            this.addedToInventoryItemScenes = true;
-        }
+		const targetQuaternion = inventoryQuaternionBase.clone();
+		if (this.index === selectedIndex) {
+			rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0, 1, 0), this.angleAccum * 4);
+			this.showInHand();
+		} else {
+			this.hideInHand();
+		}
+		this.inventoryMenuObject.quaternion.slerp(targetQuaternion, 0.1 * 60 * deltaTime);
+	}
 
-        this.angleAccum += deltaTime;
-        this.inventoryMenuObject.position.set(0, this.index, 0);
+	public override handOnFrame(deltaTime: number, input: HeldItemInput) {
+		if (!this.object) return;
 
-        const targetQuaternion = inventoryQuaternionBase.clone();
-        if (this.index === selectedIndex) {
-            rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0, 1, 0), this.angleAccum * 4);
-            this.showInHand();
-        } else {
-            this.hideInHand();
-        }
-        this.inventoryMenuObject.quaternion.slerp(targetQuaternion, 0.1 * 60 * deltaTime);
-    }
+		if (this.shownInHand && !this.addedToHandScene) {
+			this.scene.add(this.object);
+			this.addedToHandScene = true;
+		}
 
-    public override handOnFrame(deltaTime: number, input: HeldItemInput) {
-        if (!this.object) return;
+		if (this.shownInHand && Date.now() / 1000 - this.shownInHandTimestamp > showInHandDelay) {
+			this.handleInput(input, deltaTime);
+		} else {
+			this.handPosition.lerp(hiddenPosition, 0.1 * 60 * deltaTime);
+			this.object.position.copy(this.handPosition);
+			// Remove the object after it has slid out of view
+			if (this.handPosition.distanceTo(hiddenPosition) < 0.1) {
+				if (this.addedToHandScene) {
+					this.scene.remove(this.object);
+					this.addedToHandScene = false;
+				}
+			}
+		}
 
-        if (this.shownInHand && !this.addedToHandScene) {
-            this.scene.add(this.object);
-            this.addedToHandScene = true;
-        }
+		// Update crosshair flashing based on last shot timestamp
+		this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.renderer.lastShotSomeoneTimestamp < 0.05;
+	}
 
-        if (this.shownInHand && Date.now() / 1000 - this.shownInHandTimestamp > showInHandDelay) {
-            this.handleInput(input, deltaTime);
-        } else {
-            this.handPosition.lerp(hiddenPosition, 0.1 * 60 * deltaTime);
-            this.object.position.copy(this.handPosition);
-            // Remove the object after it has slid out of view
-            if (this.handPosition.distanceTo(hiddenPosition) < 0.1) {
-                if (this.addedToHandScene) {
-                    this.scene.remove(this.object);
-                    this.addedToHandScene = false;
-                }
-            }
-        }
+	private handleInput(input: HeldItemInput, deltaTime: number) {
+		if (input.rightClick) {
+			moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
+		} else {
+			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
+		}
 
-        // Update crosshair flashing based on last shot timestamp
-        this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.renderer.lastShotSomeoneTimestamp < 0.05;
-    }
+		this.object.position.copy(this.handPosition);
 
-    private handleInput(input: HeldItemInput, deltaTime: number) {
-        if (input.rightClick)
-            moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
-        else
-            moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
+		moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
 
-        this.object.position.copy(this.handPosition);
+		if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
+			if (Date.now() / 1000 - this.lastFired > firingDelay) {
+				this.lastFired = Date.now() / 1000;
+				this.shootFish();
+				this.handPosition.add(new THREE.Vector3(0, 0, 2));
+				rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
+			}
+		}
 
-        moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
+		this.lastInput = input;
+	}
 
-        if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
-            if (Date.now() / 1000 - this.lastFired > firingDelay) {
-                this.lastFired = Date.now() / 1000;
-                this.shootFish();
-                this.handPosition.add(new THREE.Vector3(0, 0, 2));
-                rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
-            }
-        }
+	public override showInHand() {
+		if (this.shownInHand) return;
+		this.shownInHand = true;
+		this.shownInHandTimestamp = Date.now() / 1000;
+		if (!this.addedToHandScene && this.object) {
+			this.scene.add(this.object);
+			this.addedToHandScene = true;
+		}
+	}
 
-        this.lastInput = input;
-    }
+	public override hideInHand() {
+		if (!this.shownInHand) return;
+		this.shownInHand = false;
+	}
+	public itemDepleted(): boolean {
+		return false;
+	}
 
-    public override showInHand() {
-        if (this.shownInHand) return;
-        this.shownInHand = true;
-        this.shownInHandTimestamp = Date.now() / 1000;
-        if (!this.addedToHandScene && this.object) {
-            this.scene.add(this.object);
-            this.addedToHandScene = true;
-        }
-    }
+	private shootFish() {
+		const totalShots = 25;
+		let processedShots = 0;
+		const TIMEOUT = 150;
 
-    public override hideInHand() {
-        if (!this.shownInHand) return;
-        this.shownInHand = false;
-    }
-    public itemDepleted(): boolean {
-        return false;
-    }
+		const processShots = (deadline?: IdleDeadline) => {
+			const timeRemaining = deadline ? deadline.timeRemaining() : 16;
 
-    private shootFish() {
-        const totalShots = 25;
-        let processedShots = 0;
-        const TIMEOUT = 150;
+			while (processedShots < totalShots && timeRemaining > 0) {
+				const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
+					(Math.random() - 0.5) * 0.30,
+					(Math.random() - 0.5) * 0.30,
+				);
+				if (shotVectors.length > 0) {
+					for (const shot of shotVectors) {
+						const { playerID, hitPoint } = shot;
+						this.networking.applyDamage(playerID, 3);
+						this.renderer.playerHitMarkers.push({
+							hitPoint: hitPoint,
+							shotVector: shot.vector,
+							timestamp: -1,
+						});
+					}
+					this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+				}
+				processedShots++;
+			}
 
-        const processShots = (deadline?: IdleDeadline) => {
-            const timeRemaining = deadline ? deadline.timeRemaining() : 16;
+			// If we still have shots to process, schedule the next batch
+			if (processedShots < totalShots) {
+				if (typeof requestIdleCallback === 'function') {
+					const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
 
-            while (processedShots < totalShots && timeRemaining > 0) {
-                const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
-                    (Math.random() - 0.5) * 0.30,
-                    (Math.random() - 0.5) * 0.30
-                );
-                if (shotVectors.length > 0) {
-                    for (const shot of shotVectors) {
-                        const { playerID, hitPoint } = shot;
-                        this.networking.applyDamage(playerID, 3);
-                        this.renderer.playerHitMarkers.push({
-                            hitPoint: hitPoint,
-                            shotVector: shot.vector,
-                            timestamp: -1,
-                        });
-                    }
-                    this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
-                }
-                processedShots++;
-            }
+					// Ensure completion within timeout
+					setTimeout(() => {
+						cancelIdleCallback(idleCallbackId);
+						processShots();
+					}, TIMEOUT);
+				} else {
+					setTimeout(() => processShots(), 0);
+				}
+			}
+		};
 
-            // If we still have shots to process, schedule the next batch
-            if (processedShots < totalShots) {
-                if (typeof requestIdleCallback === 'function') {
-                    const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
+		// Initial call
+		if (typeof requestIdleCallback === 'function') {
+			const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
 
-                    // Ensure completion within timeout
-                    setTimeout(() => {
-                        cancelIdleCallback(idleCallbackId);
-                        processShots();
-                    }, TIMEOUT);
-                } else {
-                    setTimeout(() => processShots(), 0);
-                }
-            }
-        };
+			// Ensure first batch starts within timeout
+			setTimeout(() => {
+				cancelIdleCallback(idleCallbackId);
+				processShots();
+			}, TIMEOUT);
+		} else {
+			setTimeout(() => processShots(), 0);
+		}
+	}
 
-        // Initial call
-        if (typeof requestIdleCallback === 'function') {
-            const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
-
-            // Ensure first batch starts within timeout
-            setTimeout(() => {
-                cancelIdleCallback(idleCallbackId);
-                processShots();
-            }, TIMEOUT);
-        } else {
-            setTimeout(() => processShots(), 0);
-        }
-    }
-
-
-
-
-
-
-
-
-
-    // Method to set world position when used as WorldItem
-    public override setWorldPosition(vector: THREE.Vector3) {
-        super.setWorldPosition(vector);
-    }
+	// Method to set world position when used as WorldItem
+	public override setWorldPosition(vector: THREE.Vector3) {
+		super.setWorldPosition(vector);
+	}
 }
 
 function rotateAroundWorldAxis(source: THREE.Quaternion, axis: THREE.Vector3, angle: number) {
-    const rotationQuat = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-    source.multiplyQuaternions(rotationQuat, source);
+	const rotationQuat = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+	source.multiplyQuaternions(rotationQuat, source);
 }
 
 function moveTowardsPos(source: THREE.Vector3, target: THREE.Vector3, frac: number) {
-    source.lerp(target, frac);
+	source.lerp(target, frac);
 }
 
 function moveTowardsRot(source: THREE.Quaternion, target: THREE.Quaternion, frac: number) {
-    source.slerp(target, frac);
+	source.slerp(target, frac);
 }
