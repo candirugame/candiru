@@ -1,9 +1,9 @@
-import { Vector3 } from "./Vector3.ts";
+import { Vector3 } from './Vector3.ts';
 
 export class WorldItem {
-    public id: number;
+	public id: number;
 
-    constructor(public vector: Vector3, public itemType: number) {
-        this.id = Math.floor(Math.random() * 100000) + 1;
-    }
+	constructor(public vector: Vector3, public itemType: number) {
+		this.id = Math.floor(Math.random() * 100000) + 1;
+	}
 }
