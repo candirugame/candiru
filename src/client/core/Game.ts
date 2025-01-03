@@ -1,4 +1,3 @@
-import { Player } from './Player.ts';
 import { Renderer } from './Renderer.ts';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { InputHandler } from '../input/InputHandler.ts';
@@ -9,6 +8,8 @@ import { HealthIndicator } from '../ui/HealthIndicator.ts';
 import { MapLoader } from './MapLoader.ts';
 import { RemoteItemRenderer } from './RemoteItemRenderer.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
+import { SettingsManager } from './SettingsManager.ts';
+import { Player } from '../../shared/Player.ts';
 
 export class Game {
 	private localPlayer: Player;
@@ -28,6 +29,7 @@ export class Game {
 	constructor(container: HTMLElement) {
 		this.gameIndex = Game.nextGameIndex++;
 		this.localPlayer = new Player();
+		this.localPlayer.name = SettingsManager.settings.name ?? this.localPlayer.name;
 		this.chatOverlay = new ChatOverlay(container, this.localPlayer);
 		this.networking = new Networking(this.localPlayer, this.chatOverlay);
 		this.renderer = new Renderer(container, this.networking, this.localPlayer, this.chatOverlay);

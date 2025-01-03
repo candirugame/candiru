@@ -1,10 +1,10 @@
 import { WorldItem } from '../models/WorldItem.ts';
 import { MapData } from '../models/MapData.ts';
-import { Vector3 } from '../models/Vector3.ts';
 import config from '../config.ts';
 import { PlayerManager } from './PlayerManager.ts';
 import { ChatManager } from './ChatManager.ts';
 import { Gamemode } from '../gamemodes/Gamemode.ts';
+import * as THREE from 'three';
 
 export class ItemManager {
 	private worldItems: WorldItem[] = [];
@@ -33,7 +33,7 @@ export class ItemManager {
 		const randomIndex = Math.floor(Math.random() * this.mapData.itemRespawnPoints.length);
 		const respawnPoint = this.mapData.itemRespawnPoints[randomIndex];
 		const newItem = new WorldItem(
-			new Vector3(respawnPoint.position.x, respawnPoint.position.y, respawnPoint.position.z),
+			new THREE.Vector3(respawnPoint.position.x, respawnPoint.position.y, respawnPoint.position.z),
 			respawnPoint.itemId,
 		);
 
@@ -55,7 +55,7 @@ export class ItemManager {
 		for (const player of players) {
 			if (player.playerSpectating !== -1) continue;
 			if (player.health <= 0) continue;
-			const itemIndex = this.worldItems.findIndex((item) => Vector3.distanceTo(player.position, item.vector) < 0.5);
+			const itemIndex = this.worldItems.findIndex((item) => player.position.distanceTo(item.vector) < 0.5);
 
 			if (itemIndex === -1) continue;
 
@@ -95,8 +95,8 @@ export class ItemManager {
 		}
 	}
 
-	isItemCloseToPoint(vector: Vector3, distance: number): boolean {
-		return this.worldItems.some((item) => Vector3.distanceTo(item.vector, vector) < distance);
+	isItemCloseToPoint(vector: THREE.Vector3, distance: number): boolean {
+		return this.worldItems.some((item) => item.vector.distanceTo(vector) < distance);
 	}
 
 	getAllItems(): WorldItem[] {

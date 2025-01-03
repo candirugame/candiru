@@ -3,13 +3,13 @@ import { DamageSystem } from './managers/DamageSystem.ts';
 import { ItemManager } from './managers/ItemManager.ts';
 import { PlayerManager } from './managers/PlayerManager.ts';
 import config from './config.ts';
-import { Vector3 } from './models/Vector3.ts';
 import { ServerInfo } from './models/ServerInfo.ts';
 import { DataValidator } from './DataValidator.ts';
-import { Player } from './models/Player.ts';
 import { Gamemode } from './gamemodes/Gamemode.ts';
 import { FFAGamemode } from './gamemodes/FFAGamemode.ts';
 import { CustomServer } from '../shared/messages.ts';
+import { Player } from '../shared/Player.ts';
+import * as THREE from 'three';
 
 export class GameEngine {
 	private lastPlayerTickTimestamp: number = Date.now() / 1000;
@@ -77,7 +77,7 @@ export class GameEngine {
 			players.forEach((player) => {
 				if (player.position.y < -150) {
 					player.health = 0;
-					player.velocity = new Vector3(0, 0, 0);
+					player.velocity = new THREE.Vector3(0, 0, 0);
 					this.chatManager.broadcastChat(`${player.name} fell off :'(`);
 					console.log(`💔 ${player.name}(${player.id}) fell off the map`);
 				}

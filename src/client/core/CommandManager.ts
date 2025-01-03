@@ -1,6 +1,6 @@
-import { Player } from './Player.ts';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { SettingsManager } from './SettingsManager.ts';
+import { Player } from '../../shared/Player.ts';
 
 export class CommandManager {
 	private localPlayer: Player;

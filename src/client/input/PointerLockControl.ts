@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { Player } from '../core/Player.ts';
 import { SettingsManager } from '../core/SettingsManager.ts';
+import { Player } from '../../shared/Player.ts';
 
 // Define a custom event map interface
 interface PointerLockControlEventMap {

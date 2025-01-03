@@ -58,7 +58,7 @@ export class GameServer {
 				socket.on('playerData', async (data) => {
 					try {
 						const result = this.playerManager.addOrUpdatePlayer(data);
-						if (result.isNew && result.player) {
+						if (result.isNew) {
 							if (this.gameEngine.gamemode) this.gameEngine.gamemode.onPlayerConnect(result.player);
 							this.chatManager.broadcastChat(`${result.player.name} joined`);
 							console.log(`🟢 ${result.player.name}(${result.player.id}) joined`);

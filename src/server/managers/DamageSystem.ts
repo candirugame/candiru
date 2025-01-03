@@ -2,23 +2,24 @@ import { PlayerManager } from './PlayerManager.ts';
 import { ChatManager } from './ChatManager.ts';
 import { DamageRequest } from '../models/DamageRequest.ts';
 import { DataValidator } from '../DataValidator.ts';
-import { Vector3 } from '../models/Vector3.ts';
 import { GameEngine } from '../GameEngine.ts';
 
 export class DamageSystem {
+	private gameEngine!: GameEngine;
+
 	constructor(
 		private playerManager: PlayerManager,
 		private chatManager: ChatManager,
 	) {}
-	private gameEngine!: GameEngine;
+
 	public setGameEngine(gameEngine: GameEngine) {
 		this.gameEngine = gameEngine;
 	}
 
-	handleDamageRequest(data: DamageRequest) {
-		const validationResult = DataValidator.validateDamageRequest(data);
-		if (!validationResult.success) {
-			console.warn(`Invalid damage request: ${validationResult.error?.message}`);
+	handleDamageRequest(unparsedData: DamageRequest) {
+		const { data, error } = DataValidator.validateDamageRequest(unparsedData);
+		if (error) {
+			console.warn(`Invalid damage request: ${error.message}`);
 			return;
 		}
 
@@ -33,11 +34,11 @@ export class DamageSystem {
 		// Validate positions
 		const localPlayerSentPosition = data.localPlayer.position;
 		const localPlayerServerPosition = localPlayer.position;
-		const localDistance = Vector3.distanceTo(localPlayerSentPosition, localPlayerServerPosition);
+		const localDistance = localPlayerSentPosition.distanceTo(localPlayerServerPosition);
 
 		const targetPlayerSentPosition = data.targetPlayer.position;
 		const targetPlayerServerPosition = targetPlayer.position;
-		const targetDistance = Vector3.distanceTo(targetPlayerSentPosition, targetPlayerServerPosition);
+		const targetDistance = targetPlayerSentPosition.distanceTo(targetPlayerServerPosition);
 
 		const MAX_DESYNC_DISTANCE = 1; // Threshold for considering positions in sync
 

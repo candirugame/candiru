@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { Player } from '../core/Player.ts';
 import {
 	acceleratedRaycast,
 	computeBoundsTree,
@@ -9,6 +8,7 @@ import {
 } from 'three-mesh-bvh';
 import { InputHandler } from './InputHandler.ts';
 import { RemotePlayerRenderer } from '../core/RemotePlayerRenderer.ts';
+import { Player } from '../../shared/Player.ts';
 
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;

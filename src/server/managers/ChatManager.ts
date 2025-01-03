@@ -6,8 +6,8 @@ import { CustomServer, CustomSocket } from '../../shared/messages.ts';
 export class ChatManager {
 	constructor(private io: CustomServer, private playerManager: PlayerManager) {}
 
-	handleChatMessage(data: ChatMessage, socket: CustomSocket) {
-		const { error } = DataValidator.validateChatMessage(data);
+	handleChatMessage(unparsedData: ChatMessage, socket: CustomSocket) {
+		const { data, error } = DataValidator.validateChatMessage(unparsedData);
 		if (error) {
 			console.warn(`Invalid chat message: ${error.message}`);
 			return;

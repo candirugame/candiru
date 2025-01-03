@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { Networking, type RemotePlayer } from './Networking.ts';
-import { Player } from './Player.ts';
+import { Networking } from './Networking.ts';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { RemotePlayerRenderer } from './RemotePlayerRenderer.ts';
 import { InputHandler } from '../input/InputHandler.ts';
 import { SettingsManager } from './SettingsManager.ts';
 import { CollisionManager } from '../input/CollisionManager.ts';
+import { Player, PlayerData } from '../../shared/Player.ts';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -230,10 +230,10 @@ export class Renderer {
 				// Simple quaternion slerp
 				this.camera.quaternion.slerp(
 					new THREE.Quaternion(
-						remotePlayer.lookQuaternion[0],
-						remotePlayer.lookQuaternion[1],
-						remotePlayer.lookQuaternion[2],
-						remotePlayer.lookQuaternion[3],
+						remotePlayer.lookQuaternion.x,
+						remotePlayer.lookQuaternion.y,
+						remotePlayer.lookQuaternion.z,
+						remotePlayer.lookQuaternion.w,
 					),
 					0.3 * this.deltaTime * 60,
 				);
@@ -249,7 +249,7 @@ export class Renderer {
 		this.knockbackVector.lerp(new THREE.Vector3(), 0.05 * this.deltaTime * 60);
 
 		if (this.localPlayer.health < this.lastPlayerHealth) {
-			const remotePlayer: RemotePlayer | undefined = this.networking.getRemotePlayerData().find((player) =>
+			const remotePlayer: PlayerData | undefined = this.networking.getRemotePlayerData().find((player) =>
 				player.id === this.localPlayer.idLastDamagedBy
 			);
 			if (remotePlayer !== undefined) {

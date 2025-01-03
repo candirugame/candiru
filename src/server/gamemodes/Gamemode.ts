@@ -1,5 +1,5 @@
 import { GameEngine } from '../GameEngine.ts';
-import { Player } from '../models/Player.ts';
+import { Player } from '../../shared/Player.ts';
 
 export abstract class Gamemode {
 	constructor(protected gameEngine: GameEngine) {}

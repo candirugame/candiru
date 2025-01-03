@@ -1,6 +1,5 @@
-import { Vector3 } from './Vector3.ts';
-import { Quaternion } from './Quaternion.ts';
+import * as THREE from 'three';
 
 export class RespawnPoint {
-	constructor(public position: Vector3, public quaternion: Quaternion) {}
+	constructor(public position: THREE.Vector3, public quaternion: THREE.Quaternion) {}
 }
