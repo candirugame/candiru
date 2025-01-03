@@ -1,7 +1,7 @@
-import { Player } from "./Player.ts";
+import { Player } from './Player.ts';
 
 export interface DamageRequest {
-    localPlayer: Player;
-    targetPlayer: Player;
-    damage: number;
+	localPlayer: Player;
+	targetPlayer: Player;
+	damage: number;
 }
