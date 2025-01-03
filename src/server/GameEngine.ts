@@ -44,7 +44,7 @@ export class GameEngine {
 			// Emit player data if there are updates or enough time has passed
 			if (this.playerUpdateSinceLastEmit || currentTime - this.lastPlayerTickTimestamp > 1 / config.server.tickRate) {
 				try {
-					this.io.emit('remotePlayerData', this.playerManager.getAllPlayers());
+					this.io.volatile.emit('remotePlayerData', this.playerManager.getAllPlayers());
 					this.playerUpdateSinceLastEmit = false;
 					this.lastPlayerTickTimestamp = currentTime;
 				} catch (err) {

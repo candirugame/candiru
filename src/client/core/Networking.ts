@@ -126,7 +126,7 @@ export class Networking {
 			return;
 		}
 
-		this.socket.emit('playerData', this.localPlayer);
+		this.socket.volatile.emit('playerData', this.localPlayer);
 		this.lastUploadedLocalPlayer = {
 			position: this.localPlayer.position.clone(),
 			quaternion: this.localPlayer.quaternion.clone(),
