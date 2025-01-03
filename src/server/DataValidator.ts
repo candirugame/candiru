@@ -43,12 +43,12 @@ export class DataValidator {
 		gameVersion: z.string().refine((val) => val === this.SERVER_VERSION, {
 			message: `Game version must be ${this.SERVER_VERSION}`,
 		}),
-		position: DataValidator.vector3Schema,
-		velocity: DataValidator.vector3Schema,
-		inputVelocity: DataValidator.vector3Schema,
+		position: this.vector3Schema,
+		velocity: this.vector3Schema,
+		inputVelocity: this.vector3Schema,
 		gravity: z.number(),
-		lookQuaternion: DataValidator.quaternionSchema,
-		quaternion: DataValidator.quaternionSchema,
+		lookQuaternion: this.quaternionSchema,
+		quaternion: this.quaternionSchema,
 		chatActive: z.boolean(),
 		chatMsg: z.string().max(300),
 		latency: z.number(),
@@ -62,7 +62,27 @@ export class DataValidator {
 		playerSpectating: z.number(),
 		gameMsgs: z.array(z.string()),
 		gameMsgs2: z.array(z.string()),
-	}).strict().transform((data) => Player.fromObject(data));
+	}).strict().transform((data) => {
+		const withVectors = {
+			...data,
+			position: new THREE.Vector3(data.position.x, data.position.y, data.position.z),
+			velocity: new THREE.Vector3(data.velocity.x, data.velocity.y, data.velocity.z),
+			inputVelocity: new THREE.Vector3(data.inputVelocity.x, data.inputVelocity.y, data.inputVelocity.z),
+			lookQuaternion: new THREE.Quaternion(
+				data.lookQuaternion.x,
+				data.lookQuaternion.y,
+				data.lookQuaternion.z,
+				data.lookQuaternion.w,
+			),
+			quaternion: new THREE.Quaternion(
+				data.quaternion.x,
+				data.quaternion.y,
+				data.quaternion.z,
+				data.quaternion.w,
+			),
+		};
+		return Player.fromObject(withVectors as Player);
+	});
 
 	static chatMsgSchema = z.object({
 		id: z.number(),
