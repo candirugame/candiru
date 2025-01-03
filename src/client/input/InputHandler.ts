@@ -181,6 +181,14 @@ export class InputHandler {
         if (this.leftMouseDown || this.touchButtons.includes(0)) this.shoot = true;
         if (this.rightMouseDown) this.aim = true;
 
+        if(this.localPlayer.playerSpectating !== -1) {
+            this.inputX = 0;
+            this.inputZ = 0;
+            this.jump = false;
+            this.shoot = false;
+            this.aim = false;
+        }
+
     }
 
     public getKey(key: string):boolean {
