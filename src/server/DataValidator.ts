@@ -43,12 +43,12 @@ export class DataValidator {
 		gameVersion: z.string().refine((val) => val === this.SERVER_VERSION, {
 			message: `Game version must be ${this.SERVER_VERSION}`,
 		}),
-		position: DataValidator.vector3Schema,
-		velocity: DataValidator.vector3Schema,
-		inputVelocity: DataValidator.vector3Schema,
+		position: this.vector3Schema,
+		velocity: this.vector3Schema,
+		inputVelocity: this.vector3Schema,
 		gravity: z.number(),
-		lookQuaternion: DataValidator.quaternionSchema,
-		quaternion: DataValidator.quaternionSchema,
+		lookQuaternion: this.quaternionSchema,
+		quaternion: this.quaternionSchema,
 		chatActive: z.boolean(),
 		chatMsg: z.string().max(300),
 		latency: z.number(),
@@ -62,7 +62,7 @@ export class DataValidator {
 		playerSpectating: z.number(),
 		gameMsgs: z.array(z.string()),
 		gameMsgs2: z.array(z.string()),
-	}).strict().transform((data) => Player.fromObject(data));
+	}).strict().transform((data) => Player.fromObject(data as Player));
 
 	static chatMsgSchema = z.object({
 		id: z.number(),
