@@ -1,12 +1,12 @@
-import { Server, Socket } from 'https://deno.land/x/socket_io@0.2.0/mod.ts';
 import { DataValidator } from '../DataValidator.ts';
 import { ChatMessage } from '../models/ChatMessage.ts';
 import { PlayerManager } from './PlayerManager.ts';
+import { CustomServer, CustomSocket } from '../../shared/messages.ts';
 
 export class ChatManager {
-	constructor(private io: Server, private playerManager: PlayerManager) {}
+	constructor(private io: CustomServer, private playerManager: PlayerManager) {}
 
-	handleChatMessage(data: ChatMessage, socket: Socket) {
+	handleChatMessage(data: ChatMessage, socket: CustomSocket) {
 		const { error } = DataValidator.validateChatMessage(data);
 		if (error) {
 			console.warn(`Invalid chat message: ${error.message}`);
@@ -21,7 +21,7 @@ export class ChatManager {
 		}
 	}
 
-	private parseCommand(message: string, socket: Socket, playerId: number): boolean {
+	private parseCommand(message: string, socket: CustomSocket, playerId: number): boolean {
 		if (message.charAt(0) !== '/') return false;
 
 		const args = message.slice(1).split(' ');
@@ -76,7 +76,7 @@ export class ChatManager {
 		this.io.emit('chatMsg', chatMessage);
 	}
 
-	whisperChatMessage(message: string, socket: Socket) {
+	whisperChatMessage(message: string, socket: CustomSocket) {
 		const chatMessage: ChatMessage = {
 			id: -1,
 			name: '',

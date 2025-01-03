@@ -1,5 +1,5 @@
 import { Application, Router, send } from '@oak/oak';
-import { Server, Socket } from 'https://deno.land/x/socket_io@0.2.0/mod.ts';
+import { Server } from 'https://deno.land/x/socket_io@0.2.0/mod.ts';
 import config from './config.ts';
 import { serve } from 'https://deno.land/std@0.150.0/http/server.ts';
 
@@ -10,11 +10,12 @@ import { ChatManager } from './managers/ChatManager.ts';
 import { DamageSystem } from './managers/DamageSystem.ts';
 import { MapData } from './models/MapData.ts';
 import { DataValidator } from './DataValidator.ts';
+import { CustomServer } from '../shared/messages.ts';
 
 export class GameServer {
 	router: Router = new Router();
 	app: Application = new Application();
-	io: Server = new Server();
+	io: CustomServer = new Server();
 
 	gameEngine: GameEngine;
 	playerManager: PlayerManager;
@@ -51,12 +52,8 @@ export class GameServer {
 	}
 
 	private setupSocketIO() {
-		this.io.on('connection', (socket: Socket) => {
+		this.io.on('connection', (socket) => {
 			if (socket.connected) {
-				socket.on('error', (error) => {
-					console.error(`Socket error for ${socket.id}:`, error);
-				});
-
 				// deno-lint-ignore require-await
 				socket.on('playerData', async (data) => {
 					try {
@@ -91,7 +88,7 @@ export class GameServer {
 
 				socket.on('latencyTest', () => {
 					try {
-						socket.emit('latencyTest', 'response :)');
+						socket.emit('latencyTest');
 					} catch (err) {
 						console.error(`Error handling latency test:`, err);
 					}
