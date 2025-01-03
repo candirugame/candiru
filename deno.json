@@ -18,6 +18,10 @@
   "lint": {
     "include": ["src/"],
     "exclude": ["dist/", "node_modules/", "public/"]
-
+  },
+  "fmt": {
+    "options": {
+      "lineWidth": 120
     }
+  }
 }
