@@ -1,10 +1,10 @@
-import { Player } from '../core/Player.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { InputHandler } from '../input/InputHandler.ts';
 import { CommandManager } from '../core/CommandManager.ts';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
+import { Player } from '../../shared/Player.ts';
 
 interface ChatMessage {
 	id: number;

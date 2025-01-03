@@ -1,7 +1,7 @@
 import { GameEngine } from '../GameEngine.ts';
-import { Player } from '../models/Player.ts';
 import { Gamemode } from './Gamemode.ts';
 import config from '../config.ts';
+import { Player } from '../../shared/Player.ts';
 
 export class FFAGamemode extends Gamemode {
 	private spectateTimeouts: Map<Player, number> = new Map();

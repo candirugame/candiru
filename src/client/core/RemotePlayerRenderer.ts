@@ -2,26 +2,11 @@ import * as THREE from 'three';
 import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { Player } from './Player.ts';
 import { acceleratedRaycast, computeBoundsTree } from 'three-mesh-bvh';
+import { Player, PlayerData } from '../../shared/Player.ts';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
-
-interface RemotePlayerData {
-	health: number;
-	id: number;
-	velocity: { x: number; y: number; z: number };
-	position: { x: number; y: number; z: number };
-	quaternion: [number, number, number, number]; // Add quaternion as required
-	forced: boolean;
-	name: string;
-	playerSpectating: number;
-}
-
-interface RemotePlayer extends Omit<RemotePlayerData, 'quaternion'> {
-	quaternion?: [number, number, number, number]; // Optional in case it's missing
-}
 
 interface PlayerToRender {
 	id: number;
@@ -122,7 +107,7 @@ export class RemotePlayerRenderer {
 	private updateRemotePlayers(): void {
 		if (!this.possumMesh) return;
 
-		const remotePlayerData: RemotePlayer[] = this.networking.getRemotePlayerData();
+		const remotePlayerData: PlayerData[] = this.networking.getRemotePlayerData();
 		const localPlayerId = this.localPlayer.id;
 
 		// First, remove all players that should be hidden
@@ -161,7 +146,7 @@ export class RemotePlayerRenderer {
 				return;
 			}
 
-			const playerDataWithQuaternion: RemotePlayerData = {
+			const playerDataWithQuaternion: PlayerData = {
 				...remotePlayer,
 				quaternion: remotePlayer.quaternion || [0, 0, 0, 1],
 			};
@@ -178,7 +163,7 @@ export class RemotePlayerRenderer {
 	private updatePlayerPosition(
 		playerObject: THREE.Object3D,
 		playerSphere: THREE.Object3D,
-		remotePlayerData: RemotePlayerData,
+		remotePlayerData: PlayerData,
 	): void {
 		const velocity = Math.sqrt(
 			Math.pow(remotePlayerData.velocity.x, 2) +
@@ -265,10 +250,10 @@ export class RemotePlayerRenderer {
 
 		// Apply quaternion slerp as before
 		const targetQuaternion = new THREE.Quaternion(
-			remotePlayerData.quaternion[0],
-			remotePlayerData.quaternion[1],
-			remotePlayerData.quaternion[2],
-			remotePlayerData.quaternion[3],
+			remotePlayerData.quaternion.x,
+			remotePlayerData.quaternion.y,
+			remotePlayerData.quaternion.z,
+			remotePlayerData.quaternion.w,
 		);
 		const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
 		targetQuaternion.multiply(rotationQuaternion);
@@ -302,7 +287,7 @@ export class RemotePlayerRenderer {
 		}
 	}
 
-	private addNewPlayer(remotePlayerData: RemotePlayerData): void {
+	private addNewPlayer(remotePlayerData: PlayerData): void {
 		const object = this.possumMesh!.clone();
 		const sphere = this.sphere.clone();
 
@@ -331,7 +316,7 @@ export class RemotePlayerRenderer {
 		);
 	}
 
-	private removeInactivePlayers(remotePlayerData: RemotePlayer[]): void {
+	private removeInactivePlayers(remotePlayerData: PlayerData[]): void {
 		this.playersToRender = this.playersToRender.filter((player) => {
 			const isActive = remotePlayerData.some((remotePlayer) => remotePlayer.id === player.id);
 			if (!isActive) {

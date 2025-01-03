@@ -1,7 +1,8 @@
+import * as THREE from 'three';
 import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
-import { Player } from './models/Player.ts';
 import { ChatMessage } from './models/ChatMessage.ts';
 import { DamageRequest } from './models/DamageRequest.ts';
+import { Player, PlayerData } from '../shared/Player.ts';
 
 export class DataValidator {
 	private static SERVER_VERSION = '';
@@ -17,13 +18,24 @@ export class DataValidator {
 		return this.SERVER_VERSION;
 	}
 
-	private static vector3Schema = z.object({
-		x: z.number(),
-		y: z.number(),
-		z: z.number(),
-	}).strict();
+	static vector3Schema = z
+		.object({
+			x: z.number(),
+			y: z.number(),
+			z: z.number(),
+		})
+		.transform(({ x, y, z }) => new THREE.Vector3(x, y, z));
 
-	private static playerDataSchema = z.object({
+	static quaternionSchema = z
+		.object({
+			x: z.number(),
+			y: z.number(),
+			z: z.number(),
+			w: z.number(),
+		})
+		.transform(({ x, y, z, w }) => new THREE.Quaternion(x, y, z, w));
+
+	static playerDataSchema = z.object({
 		id: z.number(),
 		speed: z.number(),
 		acceleration: z.number(),
@@ -31,12 +43,12 @@ export class DataValidator {
 		gameVersion: z.string().refine((val) => val === this.SERVER_VERSION, {
 			message: `Game version must be ${this.SERVER_VERSION}`,
 		}),
-		position: DataValidator.vector3Schema,
-		velocity: DataValidator.vector3Schema,
-		inputVelocity: DataValidator.vector3Schema,
+		position: this.vector3Schema,
+		velocity: this.vector3Schema,
+		inputVelocity: this.vector3Schema,
 		gravity: z.number(),
-		lookQuaternion: z.array(z.number()).length(4),
-		quaternion: z.array(z.number()).length(4),
+		lookQuaternion: this.quaternionSchema,
+		quaternion: this.quaternionSchema,
 		chatActive: z.boolean(),
 		chatMsg: z.string().max(300),
 		latency: z.number(),
@@ -50,21 +62,21 @@ export class DataValidator {
 		playerSpectating: z.number(),
 		gameMsgs: z.array(z.string()),
 		gameMsgs2: z.array(z.string()),
-	}).strict();
+	}).strict().transform((data) => Player.fromObject(data as Player));
 
-	private static chatMsgSchema = z.object({
+	static chatMsgSchema = z.object({
 		id: z.number(),
 		name: z.string().max(42),
 		message: z.string().max(300),
 	}).strict();
 
-	private static damageRequestSchema = z.object({
+	static damageRequestSchema = z.object({
 		localPlayer: DataValidator.playerDataSchema,
 		targetPlayer: DataValidator.playerDataSchema,
 		damage: z.number(),
 	}).strict();
 
-	static validatePlayerData(data: Player) {
+	static validatePlayerData(data: PlayerData) {
 		return DataValidator.playerDataSchema.safeParse(data);
 	}
 

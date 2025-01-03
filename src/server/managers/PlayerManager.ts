@@ -1,20 +1,19 @@
-import { Player } from '../models/Player.ts';
-import { Vector3 } from '../models/Vector3.ts';
-import { Quaternion } from '../models/Quaternion.ts';
+import { Player, PlayerData } from '../../shared/Player.ts';
 import { DataValidator } from '../DataValidator.ts';
 import { MapData } from '../models/MapData.ts';
 import config from '../config.ts';
 import { WorldItem } from '../models/WorldItem.ts';
 import { ItemManager } from './ItemManager.ts';
 import { PlayerExtras } from '../models/PlayerExtras.ts';
+import * as THREE from 'three';
 
-interface PlayerData {
+interface PlayerWithExtras {
 	player: Player;
 	extras: PlayerExtras;
 }
 
 export class PlayerManager {
-	private players: Map<number, PlayerData> = new Map();
+	private players: Map<number, PlayerWithExtras> = new Map();
 	private mapData: MapData;
 	private itemManager!: ItemManager;
 
@@ -26,67 +25,69 @@ export class PlayerManager {
 		this.itemManager = itemManager;
 	}
 
-	addOrUpdatePlayer(data: Player): { isNew: boolean; player?: Player } {
-		const { error } = DataValidator.validatePlayerData(data);
+	addOrUpdatePlayer(unparsedData: PlayerData): { isNew: false } | { isNew: true; player: Player } {
+		const { data: player, error } = DataValidator.validatePlayerData(unparsedData);
 		if (error) {
 			throw new Error(`⚠️ invalid player data `);
 		}
 
-		const existingPlayerData = this.players.get(data.id);
-		if (data.name.length < 1) data.name = 'possum' + data.id.toString().substring(0, 3);
-		if (data.chatMsg.startsWith('/admin ')) data.chatMsg = '/admin ' + data.chatMsg.substring(7).replace(/./g, '*');
-		if (data.chatMsg.startsWith('>')) data.chatMsg = '&2' + data.chatMsg;
-		if (!data.chatMsg.startsWith('&f')) data.chatMsg = '&f' + data.chatMsg;
+		const existingPlayerData = this.players.get(player.id);
+		if (player.name.length < 1) player.name = 'possum' + player.id.toString().substring(0, 3);
+		if (player.chatMsg.startsWith('/admin ')) {
+			player.chatMsg = '/admin ' + player.chatMsg.substring(7).replace(/./g, '*');
+		}
+		if (player.chatMsg.startsWith('>')) player.chatMsg = '&2' + player.chatMsg;
+		if (!player.chatMsg.startsWith('&f')) player.chatMsg = '&f' + player.chatMsg;
 
 		if (existingPlayerData) {
 			// Handle forced acknowledgment
-			if (existingPlayerData.player.forced && !data.forcedAcknowledged) {
+			if (existingPlayerData.player.forced && !player.forcedAcknowledged) {
 				return { isNew: false };
 			}
-			if (existingPlayerData.player.forced && data.forcedAcknowledged) {
+			if (existingPlayerData.player.forced && player.forcedAcknowledged) {
 				existingPlayerData.player.forced = false;
 			}
 
 			// Update existing player, preserving certain fields
-			data.health = existingPlayerData.player.health;
-			data.inventory = existingPlayerData.player.inventory;
-			data.lastDamageTime = existingPlayerData.player.lastDamageTime;
-			data.gameMsgs = existingPlayerData.player.gameMsgs;
-			data.gameMsgs2 = existingPlayerData.player.gameMsgs2;
-			data.playerSpectating = existingPlayerData.player.playerSpectating;
-			data.updateTimestamp = Date.now() / 1000;
+			player.health = existingPlayerData.player.health;
+			player.inventory = existingPlayerData.player.inventory;
+			player.lastDamageTime = existingPlayerData.player.lastDamageTime;
+			player.gameMsgs = existingPlayerData.player.gameMsgs;
+			player.gameMsgs2 = existingPlayerData.player.gameMsgs2;
+			player.playerSpectating = existingPlayerData.player.playerSpectating;
+			player.updateTimestamp = Date.now() / 1000;
 
-			const updatedData: PlayerData = {
-				player: data,
+			const updatedData: PlayerWithExtras = {
+				player: player,
 				extras: existingPlayerData.extras,
 			};
-			this.players.set(data.id, updatedData);
+			this.players.set(player.id, updatedData);
 			return { isNew: false };
 		} else {
 			// New player
-			data.inventory = [...config.player.baseInventory];
+			player.inventory = [...config.player.baseInventory];
 			const spawnPoint = this.getRandomSpawnPoint();
-			data.position = spawnPoint.vec;
-			data.health = config.player.maxHealth;
-			data.gameMsgs = [];
-			data.gameMsgs2 = [];
-			data.playerSpectating = -1;
-			data.lookQuaternion = [
+			player.position = spawnPoint.vec;
+			player.health = config.player.maxHealth;
+			player.gameMsgs = [];
+			player.gameMsgs2 = [];
+			player.playerSpectating = -1;
+			player.lookQuaternion = new THREE.Quaternion(
 				spawnPoint.quaternion.x,
 				spawnPoint.quaternion.y,
 				spawnPoint.quaternion.z,
 				spawnPoint.quaternion.w,
-			];
-			data.forced = true;
+			);
+			player.forced = true;
 
-			const newPlayerData: PlayerData = {
-				player: data,
+			const newPlayerData: PlayerWithExtras = {
+				player: player,
 				extras: new PlayerExtras(),
 			};
-			this.players.set(data.id, newPlayerData);
+			this.players.set(player.id, newPlayerData);
 			this.itemManager.triggerUpdateFlag();
 
-			return { isNew: true, player: data };
+			return { isNew: true, player: player };
 		}
 	}
 
@@ -95,7 +96,7 @@ export class PlayerManager {
 	}
 
 	getAllPlayers(): Player[] {
-		return Array.from(this.players.values()).map((playerData) => playerData.player);
+		return Array.from(this.players.values().map(({ player }) => player));
 	}
 
 	getPlayerById(playerId: number): Player | undefined {
@@ -103,7 +104,7 @@ export class PlayerManager {
 		return playerData?.player;
 	}
 
-	getPlayerDataById(playerId: number): PlayerData | undefined {
+	getPlayerDataById(playerId: number): PlayerWithExtras | undefined {
 		return this.players.get(playerId);
 	}
 
@@ -112,7 +113,7 @@ export class PlayerManager {
 		return playerData?.extras;
 	}
 
-	getAllPlayerData(): PlayerData[] {
+	getAllPlayerData(): PlayerWithExtras[] {
 		return Array.from(this.players.values());
 	}
 
@@ -129,18 +130,18 @@ export class PlayerManager {
 
 		const spawnPoint = this.getRandomSpawnPoint();
 		player.position = spawnPoint.vec;
-		player.lookQuaternion = [
+		player.lookQuaternion = new THREE.Quaternion(
 			spawnPoint.quaternion.x,
 			spawnPoint.quaternion.y,
 			spawnPoint.quaternion.z,
 			spawnPoint.quaternion.w,
-		];
+		);
 		player.health = config.player.maxHealth;
 		player.gravity = 0;
-		player.velocity = new Vector3(0, 0, 0);
+		player.velocity = new THREE.Vector3(0, 0, 0);
 		player.forced = true;
 
-		const updatedPlayerData: PlayerData = {
+		const updatedPlayerData: PlayerWithExtras = {
 			player: player,
 			extras: playerData.extras,
 		};
@@ -159,9 +160,9 @@ export class PlayerManager {
 		}
 	}
 
-	private getRandomSpawnPoint(): { vec: Vector3; quaternion: Quaternion } {
+	private getRandomSpawnPoint(): { vec: THREE.Vector3; quaternion: THREE.Quaternion } {
 		if (!this.mapData) {
-			return { vec: new Vector3(2, 1, 0), quaternion: new Quaternion(0, 0, 0, 1) };
+			return { vec: new THREE.Vector3(2, 1, 0), quaternion: new THREE.Quaternion(0, 0, 0, 1) };
 		}
 
 		const randomIndex = Math.floor(Math.random() * this.mapData.respawnPoints.length);

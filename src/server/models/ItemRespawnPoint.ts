@@ -1,8 +1,8 @@
-import { Vector3 } from './Vector3.ts';
+import * as THREE from 'three';
 
 export class ItemRespawnPoint {
 	constructor(
-		public position: Vector3,
+		public position: THREE.Vector3,
 		public itemId: number,
 		public spawnChancePerTick: number,
 	) {}

@@ -1,26 +1,8 @@
-import { io, Socket } from 'socket.io-client';
-import { Player } from './Player.ts';
-import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import * as THREE from 'three';
-
-export interface RemotePlayer {
-	idLastDamagedBy: number;
-	latency: number;
-	id: number;
-	position: { x: number; y: number; z: number };
-	velocity: { x: number; y: number; z: number };
-	lookQuaternion: [number, number, number, number];
-	name: string;
-	gravity: number;
-	forced: boolean;
-	health: number;
-	inventory: number[];
-	chatActive: boolean;
-	chatMsg: string;
-	playerSpectating: number;
-	gameMsgs: string[];
-	gameMsgs2: string[];
-}
+import { io } from 'socket.io-client';
+import { ChatOverlay } from '../ui/ChatOverlay.ts';
+import { CustomClientSocket } from '../../shared/messages.ts';
+import { Player, PlayerData } from '../../shared/Player.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
@@ -48,9 +30,9 @@ interface LastUploadedLocalPlayer {
 }
 
 export class Networking {
-	private socket: Socket;
+	private socket: CustomClientSocket;
 	private gameVersion: string = '';
-	private remotePlayers: RemotePlayer[] = [];
+	private remotePlayers: PlayerData[] = [];
 	private worldItems: WorldItem[] = [];
 	private lastUploadedLocalPlayer: LastUploadedLocalPlayer | null = null;
 	private lastUploadTime: number;
@@ -107,21 +89,21 @@ export class Networking {
 			this.lastLatencyTestGotResponse = true;
 		});
 
-		this.socket.on('remotePlayerData', (data: RemotePlayer[]) => {
+		this.socket.on('remotePlayerData', (data) => {
 			this.remotePlayers = data;
 			this.processRemotePlayerData();
 		});
 
-		this.socket.on('worldItemData', (data: WorldItem[]) => {
+		this.socket.on('worldItemData', (data) => {
 			this.worldItems = data;
 			this.processWorldItemData();
 		});
 
-		this.socket.on('chatMsg', (data: { id: number; name: string; message: string }) => {
+		this.socket.on('chatMsg', (data) => {
 			if (data.id !== this.localPlayer.id) this.chatOverlay.addChatMessage(data);
 		});
 
-		this.socket.on('serverInfo', (data: ServerInfo) => {
+		this.socket.on('serverInfo', (data) => {
 			this.serverInfo = data;
 			this.onServerInfo();
 		});
@@ -180,7 +162,12 @@ export class Networking {
 				if (remotePlayer.forced) {
 					this.localPlayer.position.set(remotePlayer.position.x, remotePlayer.position.y, remotePlayer.position.z);
 					this.localPlayer.velocity.set(remotePlayer.velocity.x, remotePlayer.velocity.y, remotePlayer.velocity.z);
-					this.localPlayer.lookQuaternion.set(...remotePlayer.lookQuaternion);
+					this.localPlayer.lookQuaternion.set(
+						remotePlayer.lookQuaternion.x,
+						remotePlayer.lookQuaternion.y,
+						remotePlayer.lookQuaternion.z,
+						remotePlayer.lookQuaternion.w,
+					);
 					//this.localPlayer.name = remotePlayer.name;
 					this.localPlayer.gravity = remotePlayer.gravity;
 					this.localPlayer.forcedAcknowledged = true;
@@ -222,7 +209,7 @@ export class Networking {
 		return this.messagesBeingTyped;
 	}
 
-	public getRemotePlayerData(): RemotePlayer[] {
+	public getRemotePlayerData(): PlayerData[] {
 		return this.remotePlayers;
 	}
 
@@ -244,7 +231,7 @@ export class Networking {
 	}
 
 	public applyDamage(id: number, damage: number) {
-		const player2 = this.remotePlayers.find((player) => player.id === id);
+		const player2 = this.remotePlayers.find((player) => player.id === id)!;
 		const damageRequest = {
 			localPlayer: this.localPlayer,
 			targetPlayer: player2,
