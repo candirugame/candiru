@@ -137,7 +137,7 @@ export class Networking {
         if (this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) && currentTime - this.lastUploadTime < 4)
             return;
 
-        this.socket.emit('playerData', this.localPlayer);
+        this.socket.volatile.emit('playerData', this.localPlayer);
         this.lastUploadedLocalPlayer = {
             position: this.localPlayer.position.clone(),
             quaternion: this.localPlayer.quaternion.clone(),
