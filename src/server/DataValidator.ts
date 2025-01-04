@@ -53,6 +53,7 @@ export class DataValidator {
 		chatMsg: z.string().max(300),
 		latency: z.number(),
 		health: z.number(),
+		protection: z.number(),
 		forced: z.boolean(),
 		forcedAcknowledged: z.boolean(),
 		updateTimestamp: z.number().optional(),

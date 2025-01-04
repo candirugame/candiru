@@ -5,30 +5,33 @@ import * as THREE from 'three';
 export type PlayerData = z.input<typeof DataValidator.playerDataSchema>;
 
 export class Player {
-	public position = new THREE.Vector3(0, 100, 0);
+	//server-controlled simply means the server ignores updates from the client, client can sometimes still init these values before joining.
+
+	public position = new THREE.Vector3(0, 100, 0); //initial client spawn position, immediately updatd by server
 	public velocity = new THREE.Vector3(0, 0, 0);
 	public inputVelocity = new THREE.Vector3();
 	public gravity = 0;
-	public lookQuaternion = new THREE.Quaternion();
-	public quaternion = new THREE.Quaternion();
-	public id = Math.floor(Math.random() * 1000000000);
-	public gameVersion = '';
+	public lookQuaternion = new THREE.Quaternion(); //actual look direction
+	public quaternion = new THREE.Quaternion(); // model rotation, used for movement and remotePlayer model rotation
+	public id = Math.floor(Math.random() * 1000000000); //unique player id, generated on client
+	public gameVersion = ''; //client game version, pulled from dist/gameVersion.json
 	public name = '';
-	public speed = 5;
-	public acceleration = 100;
+	public speed = 5; //server-controlled, default 5
+	public acceleration = 100; //server-controlled, default 100
 	public chatActive = false;
 	public chatMsg = '';
 	public latency = 1000;
-	public health = 100;
-	public forced = false;
+	public health = 100; //server-controlled
+	public protection = 2; //server-controlled
+	public forced = false; //server-controlled
 	public forcedAcknowledged = false;
-	public inventory: number[] = [];
-	public idLastDamagedBy?: number = -1;
-	public playerSpectating = -1;
-	public gameMsgs: string[] = [];
-	public gameMsgs2: string[] = [];
-	public updateTimestamp?: number;
-	public lastDamageTime?: number;
+	public inventory: number[] = []; //server-controlled
+	public idLastDamagedBy?: number = -1; //server-controlled
+	public playerSpectating = -1; //server-controlled
+	public gameMsgs: string[] = []; //server-controlled
+	public gameMsgs2: string[] = []; //server-controlled
+	public updateTimestamp?: number; //server-controlled
+	public lastDamageTime?: number; //server-controlled
 
 	static fromObject(data: Player): Player {
 		const instance = new Player();

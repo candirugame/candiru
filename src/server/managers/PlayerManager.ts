@@ -49,9 +49,14 @@ export class PlayerManager {
 			}
 
 			// Update existing player, preserving certain fields
+			player.speed = existingPlayerData.player.speed;
+			player.acceleration = existingPlayerData.player.acceleration;
 			player.health = existingPlayerData.player.health;
+			player.protection = existingPlayerData.player.protection;
 			player.inventory = existingPlayerData.player.inventory;
 			player.lastDamageTime = existingPlayerData.player.lastDamageTime;
+			player.idLastDamagedBy = existingPlayerData.player.idLastDamagedBy;
+			player.forced = existingPlayerData.player.forced;
 			player.gameMsgs = existingPlayerData.player.gameMsgs;
 			player.gameMsgs2 = existingPlayerData.player.gameMsgs2;
 			player.playerSpectating = existingPlayerData.player.playerSpectating;
