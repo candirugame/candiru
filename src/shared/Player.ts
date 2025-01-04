@@ -22,7 +22,7 @@ export class Player {
 	public chatMsg = '';
 	public latency = 1000;
 	public health = 100; //server-controlled
-	public protection = 2; //server-controlled
+	public protection = 1; //server-controlled
 	public forced = false; //server-controlled
 	public forcedAcknowledged = false;
 	public inventory: number[] = []; //server-controlled
