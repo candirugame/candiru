@@ -16,6 +16,7 @@ const defaults = {
 	//Game settings
 	GAME_MODE: 'ffa',
 	GAME_MAX_PLAYERS: '20',
+	RESPAWN_DELAY: '10',
 
 	// Health settings
 	HEALTH_REGEN_DELAY: '5',
@@ -69,6 +70,7 @@ function parseConfig(env: Record<string, string>) {
 		game: {
 			mode: env.GAME_MODE,
 			maxPlayers: parseInt(env.GAME_MAX_PLAYERS),
+			respawnDelay: parseInt(env.RESPAWN_DELAY),
 		},
 		player: {
 			disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),
