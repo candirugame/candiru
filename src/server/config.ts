@@ -19,8 +19,8 @@ const defaults = {
 	RESPAWN_DELAY: '10',
 
 	// Health settings
-	HEALTH_REGEN_DELAY: '5',
-	HEALTH_REGEN_RATE: '3',
+	HEALTH_REGEN_DELAY: '6',
+	HEALTH_REGEN_RATE: '5',
 
 	//Item settings
 	MAX_ITEMS_IN_WORLD: '7',
