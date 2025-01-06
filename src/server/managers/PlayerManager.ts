@@ -1,0 +1,172 @@
+import { Player, PlayerData } from '../../shared/Player.ts';
+import { DataValidator } from '../DataValidator.ts';
+import { MapData } from '../models/MapData.ts';
+import config from '../config.ts';
+import { WorldItem } from '../models/WorldItem.ts';
+import { ItemManager } from './ItemManager.ts';
+import { PlayerExtras } from '../models/PlayerExtras.ts';
+import * as THREE from 'three';
+
+interface PlayerWithExtras {
+	player: Player;
+	extras: PlayerExtras;
+}
+
+export class PlayerManager {
+	private players: Map<number, PlayerWithExtras> = new Map();
+	private mapData: MapData;
+	private itemManager!: ItemManager;
+
+	constructor(mapData: MapData) {
+		this.mapData = mapData;
+	}
+
+	setItemManager(itemManager: ItemManager) {
+		this.itemManager = itemManager;
+	}
+
+	addOrUpdatePlayer(unparsedData: PlayerData): { isNew: false } | { isNew: true; player: Player } {
+		const { data: player, error } = DataValidator.validatePlayerData(unparsedData);
+		if (error) {
+			throw new Error(`⚠️ invalid player data `);
+		}
+
+		const existingPlayerData = this.players.get(player.id);
+		if (player.name.length < 1) player.name = 'possum' + player.id.toString().substring(0, 3);
+		if (player.chatMsg.startsWith('/admin ')) {
+			player.chatMsg = '/admin ' + player.chatMsg.substring(7).replace(/./g, '*');
+		}
+		if (player.chatMsg.startsWith('>')) player.chatMsg = '&2' + player.chatMsg;
+		if (!player.chatMsg.startsWith('&f')) player.chatMsg = '&f' + player.chatMsg;
+
+		if (existingPlayerData) {
+			// Handle forced acknowledgment
+			if (existingPlayerData.player.forced && !player.forcedAcknowledged) {
+				return { isNew: false };
+			}
+			if (existingPlayerData.player.forced && player.forcedAcknowledged) {
+				existingPlayerData.player.forced = false;
+			}
+
+			// Update existing player, preserving certain fields
+			player.health = existingPlayerData.player.health;
+			player.inventory = existingPlayerData.player.inventory;
+			player.lastDamageTime = existingPlayerData.player.lastDamageTime;
+			player.gameMsgs = existingPlayerData.player.gameMsgs;
+			player.gameMsgs2 = existingPlayerData.player.gameMsgs2;
+			player.playerSpectating = existingPlayerData.player.playerSpectating;
+			player.updateTimestamp = Date.now() / 1000;
+
+			const updatedData: PlayerWithExtras = {
+				player: player,
+				extras: existingPlayerData.extras,
+			};
+			this.players.set(player.id, updatedData);
+			return { isNew: false };
+		} else {
+			// New player
+			player.inventory = [...config.player.baseInventory];
+			const spawnPoint = this.getRandomSpawnPoint();
+			player.position = spawnPoint.vec;
+			player.health = config.player.maxHealth;
+			player.gameMsgs = [];
+			player.gameMsgs2 = [];
+			player.playerSpectating = -1;
+			player.lookQuaternion = new THREE.Quaternion(
+				spawnPoint.quaternion.x,
+				spawnPoint.quaternion.y,
+				spawnPoint.quaternion.z,
+				spawnPoint.quaternion.w,
+			);
+			player.forced = true;
+
+			const newPlayerData: PlayerWithExtras = {
+				player: player,
+				extras: new PlayerExtras(),
+			};
+			this.players.set(player.id, newPlayerData);
+			this.itemManager.triggerUpdateFlag();
+
+			return { isNew: true, player: player };
+		}
+	}
+
+	removePlayer(playerId: number) {
+		this.players.delete(playerId);
+	}
+
+	getAllPlayers(): Player[] {
+		return Array.from(this.players.values().map(({ player }) => player));
+	}
+
+	getPlayerById(playerId: number): Player | undefined {
+		const playerData = this.players.get(playerId);
+		return playerData?.player;
+	}
+
+	getPlayerDataById(playerId: number): PlayerWithExtras | undefined {
+		return this.players.get(playerId);
+	}
+
+	getPlayerExtrasById(playerId: number): PlayerExtras | undefined {
+		const playerData = this.players.get(playerId);
+		return playerData?.extras;
+	}
+
+	getAllPlayerData(): PlayerWithExtras[] {
+		return Array.from(this.players.values());
+	}
+
+	public dropAllItems(player: Player) {
+		for (let i = 0; i < player.inventory.length; i++) {
+			this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
+		}
+		player.inventory = [];
+	}
+
+	respawnPlayer(player: Player) {
+		const playerData = this.players.get(player.id);
+		if (!playerData) return;
+
+		const spawnPoint = this.getRandomSpawnPoint();
+		player.position = spawnPoint.vec;
+		player.lookQuaternion = new THREE.Quaternion(
+			spawnPoint.quaternion.x,
+			spawnPoint.quaternion.y,
+			spawnPoint.quaternion.z,
+			spawnPoint.quaternion.w,
+		);
+		player.health = config.player.maxHealth;
+		player.gravity = 0;
+		player.velocity = new THREE.Vector3(0, 0, 0);
+		player.forced = true;
+
+		const updatedPlayerData: PlayerWithExtras = {
+			player: player,
+			extras: playerData.extras,
+		};
+		this.players.set(player.id, updatedPlayerData);
+	}
+
+	regenerateHealth() {
+		const currentTime = Date.now() / 1000;
+		for (const playerData of this.players.values()) {
+			const player = playerData.player;
+			const lastDamage = player.lastDamageTime ?? 0;
+			if (player.health < config.player.maxHealth && (lastDamage + config.health.regenDelay < currentTime)) {
+				player.health += config.health.regenRate / config.server.tickRate;
+				if (player.health > config.player.maxHealth) player.health = config.player.maxHealth;
+			}
+		}
+	}
+
+	private getRandomSpawnPoint(): { vec: THREE.Vector3; quaternion: THREE.Quaternion } {
+		if (!this.mapData) {
+			return { vec: new THREE.Vector3(2, 1, 0), quaternion: new THREE.Quaternion(0, 0, 0, 1) };
+		}
+
+		const randomIndex = Math.floor(Math.random() * this.mapData.respawnPoints.length);
+		const respawnPoint = this.mapData.respawnPoints[randomIndex];
+		return { vec: respawnPoint.position, quaternion: respawnPoint.quaternion };
+	}
+}

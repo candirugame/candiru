@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
     branches:
       - main
@@ -24,7 +24,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: 'latest'
+          deno-version: "latest"
       - name: Build project
         run: deno task build
       - name: List build directory contents
@@ -39,7 +39,9 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: 'latest'
+          deno-version: "latest"
+      - name: Build project
+        run: deno task build
       - name: Run lint
         run: deno lint
   # Check Job
@@ -51,11 +53,25 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: 'latest'
+          deno-version: "latest"
       - name: install
         run: deno install
       - name: check src
-        run: deno check src
+        run: deno check ./src/client ./src/server
+  # Format Job
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: "latest"
+      - name: install
+        run: deno install
+      - name: fmt check src
+        run: deno fmt --check src
 
   # Healthcheck Job
   health:
@@ -66,7 +82,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: 'latest'
+          deno-version: "latest"
       - name: Start server
         run: deno task start &
       - name: Health check
@@ -120,7 +136,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: 'latest'
+          deno-version: "latest"
       - name: Run security audit
         run: npm audit --audit-level=high
 
@@ -135,7 +151,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          persist-credentials: 'false'
+          persist-credentials: "false"
           fetch-depth: 0
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -151,4 +167,3 @@ jobs:
           GIT_COMMITTER_NAME: "github-actions[bot]"
           GIT_COMMITTER_EMAIL: "github-actions[bot]@users.noreply.github.com"
         run: npx semantic-release --extends ./release.config.js
-      
