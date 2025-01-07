@@ -15,8 +15,8 @@ export class DirectionIndicator extends IndicatorBase {
 	) {
 		super(parentRenderer, localPlayer, networking);
 		// Set up orthographic camera
-		this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 1000);
-		this.camera.position.set(0, 5, -3);
+		this.camera = new THREE.PerspectiveCamera(10, 1, 0.1, 20);
+		this.camera.position.set(0, 8, -3);
 		this.camera.lookAt(0, 0, 0);
 	}
 
@@ -36,7 +36,7 @@ export class DirectionIndicator extends IndicatorBase {
 			.catch((error) => {
 				console.log('DirectionIndicator model loading error:', error);
 			});
-		this.scene.fog = new THREE.Fog(0x000000, 5, 13);
+		this.scene.fog = new THREE.Fog(0xee0000, 5, 13);
 	}
 	public onFrame(deltaTime: number) {
 		if (!this.directionObject || !this.sceneAdded) {
