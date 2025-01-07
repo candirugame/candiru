@@ -36,7 +36,7 @@ export class DirectionIndicator extends IndicatorBase {
 			.catch((error) => {
 				console.log('DirectionIndicator model loading error:', error);
 			});
-		this.ambientLight.intensity = 0.5;
+		this.scene.fog = new THREE.Fog(0x000000, 5, 13);
 	}
 	public onFrame(deltaTime: number) {
 		if (!this.directionObject || !this.sceneAdded) {
