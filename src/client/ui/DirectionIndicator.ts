@@ -39,17 +39,19 @@ export class DirectionIndicator extends IndicatorBase {
 		this.ambientLight.intensity = 0.5;
 	}
 	public onFrame(deltaTime: number) {
-		if (!this.directionObject) return;
-		if (!this.sceneAdded) {
-			this.scene.add(this.directionObject);
-			this.sceneAdded = true;
+		if (!this.directionObject || !this.sceneAdded) {
+			if (!this.sceneAdded && this.directionObject) {
+				this.scene.add(this.directionObject);
+				this.sceneAdded = true;
+			}
+			return;
 		}
 
 		const worldVector = this.networking.getServerInfo().directionIndicatorVector;
 		const playerPosition = this.localPlayer.position;
 		const playerRotation = this.localPlayer.lookQuaternion.clone().normalize();
 
-		// Calculate direction from player to target (reversed from your original)
+		// Calculate direction from player to target
 		const direction = new THREE.Vector3()
 			.copy(worldVector)
 			.sub(playerPosition)
@@ -59,10 +61,31 @@ export class DirectionIndicator extends IndicatorBase {
 		const inverseRotation = playerRotation.clone().invert();
 		const localDirection = direction.clone().applyQuaternion(inverseRotation);
 
-		// Calculate angle and apply rotations
-		this.directionObject.rotation.set(0, 0, 0);
-		const angle = Math.atan2(localDirection.x, localDirection.z);
-		this.directionObject.rotateZ(-angle);
+		// Calculate horizontal angle
+		const horizontalAngle = Math.atan2(localDirection.x, localDirection.z);
+
+		// Calculate vertical angle
+		const verticalAngle = Math.atan2(
+			localDirection.y,
+			Math.sqrt(
+				localDirection.x * localDirection.x +
+					localDirection.z * localDirection.z,
+			),
+		);
+
+		// Create target quaternion
+		const targetRotation = new THREE.Quaternion()
+			.setFromEuler(new THREE.Euler(verticalAngle, 0, -horizontalAngle));
+
+		// Get current rotation as quaternion
+		const currentRotation = new THREE.Quaternion()
+			.setFromEuler(this.directionObject.rotation);
+
+		// Smoothly interpolate between current and target rotation
+		this.moveTowardsRot(currentRotation, targetRotation, deltaTime * 60 * 0.2); // Adjust the multiplier to control rotation speed
+
+		// Apply the interpolated rotation
+		this.directionObject.quaternion.copy(currentRotation);
 	}
 
 	protected setupScissorAndViewport(): void {
