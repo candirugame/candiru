@@ -424,11 +424,7 @@ export class ChatOverlay {
 		//linesToRender.push('tickRate: ' + this.networking.getServerInfo().tickRate);
 		//linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
 		//linesToRender.push('health: ' + this.localPlayer.health);
-		linesToRender.push(
-			'pos:' +
-				this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +
-				this.localPlayer.position.z.toFixed(2),
-		);
+		//linesToRender.push('pos:' +this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +this.localPlayer.position.z.toFixed(2),);
 
 		for (const msg of this.localPlayer.gameMsgs2) {
 			linesToRender.push(msg);

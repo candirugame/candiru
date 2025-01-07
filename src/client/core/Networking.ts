@@ -20,6 +20,7 @@ interface ServerInfo {
 	gameMode: string;
 	playerMaxHealth: number;
 	highlightedVectors: THREE.Vector3[];
+	directionIndicatorVector: THREE.Vector3;
 }
 
 interface LastUploadedLocalPlayer {
@@ -70,6 +71,7 @@ export class Networking {
 			gameMode: '',
 			playerMaxHealth: 0,
 			highlightedVectors: [],
+			directionIndicatorVector: new THREE.Vector3(),
 		};
 
 		this.setupSocketListeners();
@@ -108,6 +110,11 @@ export class Networking {
 		this.socket.on('serverInfo', (data) => {
 			this.serverInfo = {
 				...data,
+				directionIndicatorVector: new THREE.Vector3(
+					data.directionIndicatorVector.x,
+					data.directionIndicatorVector.y,
+					data.directionIndicatorVector.z,
+				),
 				highlightedVectors: data.highlightedVectors.map((v: { x: number; y: number; z: number }) =>
 					new THREE.Vector3(v.x, v.y, v.z)
 				),
