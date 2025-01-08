@@ -171,8 +171,10 @@ export class Networking {
 
 	private processRemotePlayerData() {
 		this.messagesBeingTyped = [];
+		let foundLocalPlayer = false;
 		for (const remotePlayer of this.remotePlayers) {
 			if (remotePlayer.id === this.localPlayer.id) {
+				foundLocalPlayer = true;
 				if (this.localPlayer.name.length === 0) this.localPlayer.name = remotePlayer.name;
 				if (remotePlayer.forced) {
 					this.localPlayer.position.set(remotePlayer.position.x, remotePlayer.position.y, remotePlayer.position.z);
@@ -201,6 +203,11 @@ export class Networking {
 			if (remotePlayer.chatActive) {
 				this.messagesBeingTyped.push(`${remotePlayer.name}: ${remotePlayer.chatMsg}`);
 			}
+		}
+		if (
+			!foundLocalPlayer && this.getServerInfo().version && this.localPlayer.gameVersion !== this.getServerInfo().version
+		) {
+			this.localPlayer.gameMsgs = ['&c Your client may be outdated. Try refreshing the page.'];
 		}
 	}
 
