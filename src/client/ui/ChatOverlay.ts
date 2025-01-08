@@ -962,17 +962,18 @@ export class ChatOverlay {
 		}
 
 		if (e.key.toLowerCase() === 't' && !this.nameSettingActive) {
-			if (this.localPlayer.name.length > 0) this.localPlayer.chatActive = true;
-			else this.nameSettingActive = true;
+			//if (this.localPlayer.name.length > 0)
+			this.localPlayer.chatActive = true;
+			//else this.nameSettingActive = true;
 		}
 
 		if (e.key === '/' && !this.nameSettingActive && !this.localPlayer.chatActive) {
-			if (this.localPlayer.name.length > 0) {
-				this.localPlayer.chatActive = true;
-				this.localPlayer.chatMsg = '/';
-			} else {
-				this.nameSettingActive = true;
-			}
+			//if (this.localPlayer.name.length > 0) {
+			this.localPlayer.chatActive = true;
+			this.localPlayer.chatMsg = '/';
+			//} else {
+			//	this.nameSettingActive = true;
+			//}
 		}
 
 		if (e.key.toLowerCase() === 'n' && !this.localPlayer.chatActive) {
