@@ -10,8 +10,8 @@ export class ServerInfo {
 	public version: string = '';
 	public gameMode: string;
 	public playerMaxHealth: number;
-	public highlightedVectors: THREE.Vector3[] = [new THREE.Vector3(5.92, 1.21, -4.10)];
-	public directionIndicatorVector: THREE.Vector3 = new THREE.Vector3(5.92, 1.21, -4.10);
+	public highlightedVectors: THREE.Vector3[] = []; //new THREE.Vector3(5.92, 1.21, -4.10)
+	public directionIndicatorVector?: THREE.Vector3 = undefined;
 	constructor() {
 		this.name = config.server.name;
 		this.maxPlayers = config.game.maxPlayers;
@@ -26,7 +26,7 @@ export class ServerInfo {
 		return {
 			...this,
 			highlightedVectors: this.highlightedVectors.map(serializableVec3),
-			directionIndicatorVector: serializableVec3(this.directionIndicatorVector),
+			directionIndicatorVector: this.directionIndicatorVector ? serializableVec3(this.directionIndicatorVector) : null,
 		};
 	}
 }

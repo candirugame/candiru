@@ -39,7 +39,16 @@ export class DirectionIndicator extends IndicatorBase {
 		this.scene.fog = new THREE.Fog(0xee0000, 5, 13);
 	}
 	public onFrame(deltaTime: number) {
-		if (!this.directionObject || !this.sceneAdded) {
+		const worldVector = this.networking.getServerInfo().directionIndicatorVector;
+		if (!worldVector) {
+			if (this.sceneAdded && this.directionObject) {
+				this.scene.remove(this.directionObject);
+				this.sceneAdded = false;
+			}
+			return;
+		}
+
+		if (!this.directionObject || !this.sceneAdded || !worldVector) {
 			if (!this.sceneAdded && this.directionObject) {
 				this.scene.add(this.directionObject);
 				this.sceneAdded = true;
@@ -47,7 +56,6 @@ export class DirectionIndicator extends IndicatorBase {
 			return;
 		}
 
-		const worldVector = this.networking.getServerInfo().directionIndicatorVector;
 		const playerPosition = this.localPlayer.position;
 		const playerRotation = this.localPlayer.lookQuaternion.clone().normalize();
 
