@@ -91,7 +91,7 @@ export class RemoteItemRenderer {
 			case 2:
 				return new FishGun(this.renderer, this.networking, 0, ItemType.WorldItem);
 			case 4:
-				return new FlagItem(this.renderer, this.networking, 0, ItemType.WorldItem);
+				return new FlagItem(this.renderer, 0, ItemType.WorldItem);
 			default:
 				// Return a generic item
 				return new ItemBase(

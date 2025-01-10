@@ -2,7 +2,6 @@ import { ItemBase, ItemType } from './ItemBase.ts';
 import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
 import { AssetManager } from '../core/AssetManager.ts';
 
 const showInHandDelay = 0.1;
@@ -18,7 +17,7 @@ export class FlagItem extends ItemBase {
 	private addedToHandScene: boolean;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+	constructor(renderer: Renderer, index: number, itemType: ItemType) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
 		} else {
@@ -145,13 +144,6 @@ export class FlagItem extends ItemBase {
 	public override hideInHand() {
 		if (!this.shownInHand) return;
 		this.shownInHand = false;
-	}
-	public itemDepleted(): boolean {
-		return false;
-	}
-
-	private shootBanana() {
-		//do nothing :)
 	}
 
 	// Method to set world position when used as WorldItem

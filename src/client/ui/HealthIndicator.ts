@@ -4,8 +4,6 @@ import { IndicatorBase } from './IndicatorBase.ts';
 import { Networking } from '../core/Networking.ts';
 import { Renderer } from '../core/Renderer.ts';
 
-const clock = new THREE.Clock();
-
 export class HealthIndicator extends IndicatorBase {
 	private possumObject!: THREE.Object3D;
 	private sceneAdded: boolean = false;
@@ -96,7 +94,6 @@ export class HealthIndicator extends IndicatorBase {
 	}
 
 	protected setupScissorAndViewport(): void {
-		const screenWidth = globalThis.innerWidth;
 		const screenHeight = globalThis.innerHeight;
 
 		const healthIndicatorWidth = 60; // native
@@ -126,9 +123,6 @@ export class HealthIndicator extends IndicatorBase {
 	 * Applies depth testing adjustments to the mesh.
 	 * @param mesh The mesh to modify.
 	 */
-	private applyDepthTestToMesh(mesh: THREE.Mesh) {
-		super.applyDepthTest(mesh);
-	}
 }
 
 const basePosition = new THREE.Vector3(0, 0, 1.2);

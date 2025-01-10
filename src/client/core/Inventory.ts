@@ -65,7 +65,7 @@ export class Inventory {
 						break;
 					}
 					case 4: {
-						const flag = new FlagItem(this.renderer, this.networking, i, ItemType.InventoryItem);
+						const flag = new FlagItem(this.renderer, i, ItemType.InventoryItem);
 						this.inventoryItems.push(flag);
 						break;
 					}
