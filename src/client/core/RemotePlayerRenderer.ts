@@ -369,9 +369,11 @@ export class RemotePlayerRenderer {
 		return playerIDs;
 	}
 
-	public getShotVectorsToPlayersInCrosshair(): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
+	public getShotVectorsToPlayersInCrosshair(
+		maxDistance: number | undefined = undefined,
+	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
 		const shotVectors: { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] = [];
-		const objectsInCrosshair = this.getPlayersInCrosshairWithWalls();
+		const objectsInCrosshair = this.getPlayersInCrosshairWithWalls(maxDistance);
 
 		for (const object of objectsInCrosshair) {
 			for (const player of this.playersToRender) {
@@ -401,7 +403,7 @@ export class RemotePlayerRenderer {
 		return null;
 	}
 
-	private getPlayersInCrosshairWithWalls(): THREE.Object3D[] {
+	private getPlayersInCrosshairWithWalls(maxDistance: number | undefined = undefined): THREE.Object3D[] {
 		this.raycaster.setFromCamera(this.crosshairVec, this.camera);
 
 		const playerIntersects = this.raycaster.intersectObjects(this.entityScene.children);
@@ -413,6 +415,9 @@ export class RemotePlayerRenderer {
 			for (const wallIntersect of wallIntersects) {
 				if (wallIntersect.distance < playerIntersect.distance) {
 					return false;
+				}
+				if (maxDistance) {
+					if (playerIntersect.distance > maxDistance) return false;
 				}
 			}
 			return true;
