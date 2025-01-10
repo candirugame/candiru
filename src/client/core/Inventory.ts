@@ -7,6 +7,7 @@ import { Networking } from './Networking.ts';
 import { ItemBase, ItemType } from '../items/ItemBase.ts';
 import { FishGun } from '../items/FishGun.ts';
 import { Player } from '../../shared/Player.ts';
+import { Bat } from '../items/Bat.ts';
 
 export class Inventory {
 	private inventoryItems: ItemBase[] = [];
@@ -61,6 +62,11 @@ export class Inventory {
 					case 2: {
 						const fish = new FishGun(this.renderer, this.networking, i, ItemType.InventoryItem);
 						this.inventoryItems.push(fish);
+						break;
+					}
+					case 3: {
+						const bat = new Bat(this.renderer, this.networking, i, ItemType.InventoryItem);
+						this.inventoryItems.push(bat);
 						break;
 					}
 					default: {
