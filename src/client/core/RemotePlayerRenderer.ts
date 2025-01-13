@@ -2,17 +2,18 @@ import * as THREE from 'three';
 import { Networking } from './Networking.ts';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { acceleratedRaycast, computeBoundsTree } from 'three-mesh-bvh';
+import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
 import { Player, PlayerData } from '../../shared/Player.ts';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 interface PlayerToRender {
 	id: number;
 	object: THREE.Object3D;
 	objectUUID: string;
-	sphere: THREE.Object3D;
+	sphere: THREE.Mesh;
 	nameLabel: THREE.Sprite;
 	name: string;
 }
