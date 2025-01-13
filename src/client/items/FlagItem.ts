@@ -9,8 +9,8 @@ const showInHandDelay = 0.1;
 const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
 const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
 const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
-const scopedQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, Math.PI));
-const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
+const scopedQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 1.5, 0, 'XYZ'));
+const inventoryQuaternionBase = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 1.5, 0, 'XYZ'));
 
 export class FlagItem extends ItemBase {
 	private renderer!: Renderer;
@@ -28,7 +28,7 @@ export class FlagItem extends ItemBase {
 	}
 
 	public override init() {
-		AssetManager.getInstance().loadAsset('models/simplified_possum.glb', (scene) => {
+		AssetManager.getInstance().loadAsset('models/simplified_pizza.glb', (scene) => {
 			this.object = scene;
 			if (this.itemType === ItemType.InventoryItem) {
 				this.object.traverse((child) => {
@@ -50,9 +50,11 @@ export class FlagItem extends ItemBase {
 
 			this.inventoryMenuObject = this.object.clone();
 			this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+			this.inventoryMenuObject.rotation.x += Math.PI / 2;
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.45, 0.45, 0.45);
+				this.object.rotation.z -= Math.PI / 2;
 			}
 		});
 	}
@@ -86,6 +88,7 @@ export class FlagItem extends ItemBase {
 		const targetQuaternion = inventoryQuaternionBase.clone();
 		if (this.index === selectedIndex) {
 			rotateAroundWorldAxis(targetQuaternion, new THREE.Vector3(0, 1, 0), this.angleAccum * 4);
+
 			this.showInHand();
 		} else {
 			this.hideInHand();
@@ -128,7 +131,7 @@ export class FlagItem extends ItemBase {
 
 		this.object.position.copy(this.handPosition);
 
-		moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.01 * deltaTime * 60);
+		moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
 	}
 
 	public override showInHand() {
