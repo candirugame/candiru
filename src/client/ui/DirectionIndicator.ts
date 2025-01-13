@@ -39,7 +39,7 @@ export class DirectionIndicator extends IndicatorBase {
 		this.scene.fog = new THREE.Fog(0xee0000, 5, 13);
 	}
 	public onFrame(deltaTime: number) {
-		const worldVector = this.networking.getServerInfo().directionIndicatorVector;
+		const worldVector = this.localPlayer.directionIndicatorVector;
 		if (!worldVector) {
 			if (this.sceneAdded && this.directionObject) {
 				this.scene.remove(this.directionObject);

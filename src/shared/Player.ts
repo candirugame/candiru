@@ -32,6 +32,8 @@ export class Player {
 	public gameMsgs2: string[] = []; //server-controlled
 	public updateTimestamp?: number; //server-controlled
 	public lastDamageTime?: number; //server-controlled
+	public directionIndicatorVector?: THREE.Vector3 = undefined; //server-controlled
+	public highlightedVectors: THREE.Vector3[] = []; //new THREE.Vector3(5.92, 1.21, -4.10)
 
 	static fromObject(data: Player): Player {
 		const instance = new Player();
@@ -51,6 +53,7 @@ export class Player {
 			inputVelocity: serializableVec3(this.inputVelocity),
 			lookQuaternion: serializableQuaternion(this.lookQuaternion),
 			quaternion: serializableQuaternion(this.quaternion),
+			directionIndicatorVector: this.directionIndicatorVector ? serializableVec3(this.directionIndicatorVector) : null,
 		};
 	}
 }

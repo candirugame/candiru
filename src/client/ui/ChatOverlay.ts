@@ -745,7 +745,7 @@ export class ChatOverlay {
 	private readonly SPARKLE_RADIUS = 0.5; // World units instead of screen pixels
 
 	public renderSparkles() {
-		const positions = this.networking.getServerInfo().highlightedVectors.slice(0);
+		const positions = this.localPlayer.highlightedVectors.slice(0);
 		//const positions = [new THREE.Vector3(0, 3 + Math.sin(Date.now() / 1000), 0)];
 
 		// Initialize or update sparkle particles

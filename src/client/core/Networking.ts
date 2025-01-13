@@ -19,8 +19,6 @@ interface ServerInfo {
 	version: string;
 	gameMode: string;
 	playerMaxHealth: number;
-	highlightedVectors: THREE.Vector3[];
-	directionIndicatorVector?: THREE.Vector3;
 }
 
 interface LastUploadedLocalPlayer {
@@ -70,8 +68,6 @@ export class Networking {
 			version: '',
 			gameMode: '',
 			playerMaxHealth: 0,
-			highlightedVectors: [],
-			directionIndicatorVector: undefined,
 		};
 
 		this.setupSocketListeners();
@@ -110,16 +106,6 @@ export class Networking {
 		this.socket.on('serverInfo', (data) => {
 			this.serverInfo = {
 				...data,
-				directionIndicatorVector: data.directionIndicatorVector
-					? new THREE.Vector3(
-						data.directionIndicatorVector.x,
-						data.directionIndicatorVector.y,
-						data.directionIndicatorVector.z,
-					)
-					: undefined, // or null, depending on your use case
-				highlightedVectors: data.highlightedVectors.map((v: { x: number; y: number; z: number }) =>
-					new THREE.Vector3(v.x, v.y, v.z)
-				),
 			};
 			this.onServerInfo();
 		});
@@ -195,6 +181,17 @@ export class Networking {
 				}
 				if (remotePlayer.health < this.localPlayer.health) this.damagedTimestamp = Date.now() / 1000;
 				this.localPlayer.health = remotePlayer.health;
+				this.localPlayer.highlightedVectors = remotePlayer.highlightedVectors.map(
+					(vec) => new THREE.Vector3(vec.x, vec.y, vec.z),
+				);
+				this.localPlayer.directionIndicatorVector = remotePlayer.directionIndicatorVector
+					? new THREE.Vector3(
+						remotePlayer.directionIndicatorVector.x,
+						remotePlayer.directionIndicatorVector.y,
+						remotePlayer.directionIndicatorVector.z,
+					)
+					: undefined;
+
 				this.localPlayer.idLastDamagedBy = remotePlayer.idLastDamagedBy;
 				this.localPlayer.inventory = remotePlayer.inventory;
 				this.localPlayer.playerSpectating = remotePlayer.playerSpectating;
