@@ -6,12 +6,14 @@ import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { AssetManager } from '../core/AssetManager.ts';
 
-const firingDelay = 0.12;
-const firingDelayHeld = 0.225; //longer firing delay when mouse is held down
+const firingDelay = .4;
+const firingDelayHeld = 0.65; //longer firing delay when mouse is held down
 const showInHandDelay = 0.1;
-const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
+const unscopedPosition = new THREE.Vector3(0.85, -1, 3.2);
+const hitPosition = new THREE.Vector3(-.8, -1, 3);
+const hitQuaternion = new THREE.Quaternion(0.9142, -0.0720, 0.3975, -0.0313);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0.3827, -0.9239);
-const scopedQuaternion = new THREE.Quaternion(0, 0, 0.7071, -0.7071);
+const scopedQuaternion = new THREE.Quaternion(0, 0, 0.8870, -0.4617);
 const hiddenPosition = new THREE.Vector3(0.85, -3.5, 3.2);
 
 export class Bat extends ItemBase {
@@ -35,7 +37,7 @@ export class Bat extends ItemBase {
 	}
 
 	public override init() {
-		AssetManager.getInstance().loadAsset('models/bat.glb', (scene) => {
+		AssetManager.getInstance().loadAsset('models/simplified_bat.glb', (scene) => {
 			this.object = scene;
 			if (this.itemType === ItemType.InventoryItem) {
 				this.object.traverse((child) => {
@@ -51,10 +53,6 @@ export class Bat extends ItemBase {
 				});
 			}
 
-			if (this.itemType === ItemType.WorldItem) {
-				this.object.scale.set(0.66, 0.66, 0.66);
-			}
-
 			this.inventoryMenuObject = this.object.clone();
 			this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
 
@@ -63,7 +61,7 @@ export class Bat extends ItemBase {
 			}
 
 			if (this.itemType === ItemType.InventoryItem) {
-				this.object.scale.set(2, 2, 2);
+				this.object.scale.set(2.5, 2.5, 2.5);
 			}
 		});
 	}
@@ -138,10 +136,29 @@ export class Bat extends ItemBase {
 			if (Date.now() / 1000 - this.lastFired > firingDelay) {
 				this.lastFired = Date.now() / 1000;
 				this.hitWithBat();
-				this.handPosition.add(new THREE.Vector3(0, 0, -0.6));
-				rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), -Math.PI / 3);
+				// this.handPosition.add(new THREE.Vector3(0, 0, -0.8));
+				// rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), -Math.PI / 3);
 			}
 		}
+
+		if (Date.now() / 1000 - this.lastFired > .25) {
+			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
+			moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
+		} else {
+			moveTowardsPos(
+				this.handPosition,
+				hitPosition,
+				0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60,
+			);
+			moveTowardsRot(
+				this.object.quaternion,
+				hitQuaternion,
+				0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60,
+			);
+			console.log(0.04 * (Date.now() / 1000 - this.lastFired) * 60);
+		}
+
+		this.object.position.copy(this.handPosition);
 
 		this.lastInput = input;
 	}
