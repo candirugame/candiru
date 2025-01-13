@@ -126,12 +126,6 @@ export class Bat extends ItemBase {
 	}
 
 	private handleInput(input: HeldItemInput, deltaTime: number) {
-		moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
-
-		this.object.position.copy(this.handPosition);
-
-		moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
-
 		if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
 			if (Date.now() / 1000 - this.lastFired > firingDelay) {
 				this.lastFired = Date.now() / 1000;
