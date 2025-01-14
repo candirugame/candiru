@@ -13,8 +13,6 @@ export class SoloCTFGamemode extends FFAGamemode {
 	override init(): void {
 		super.init();
 		console.log('🚩 Solo CTF Gamemode initialized');
-		// Spawn the flag at the start of the game
-		this.spawnFlag();
 	}
 
 	override tick(): void {
@@ -30,8 +28,9 @@ export class SoloCTFGamemode extends FFAGamemode {
 
 		const currentTime = Date.now() / 1000;
 
-		// Ensure the flag exists in the world or any player's inventory
-		if (!this.flagExists()) {
+		// Only spawn flag if it doesn't exist AND we're not in reset state
+		if (this.gameActive && !this.flagExists()) {
+			console.log('No flag found, spawning new flag');
 			this.spawnFlag();
 		}
 

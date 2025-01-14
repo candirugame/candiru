@@ -5,6 +5,7 @@ import { ChatManager } from './ChatManager.ts';
 import * as THREE from 'three';
 import { Gamemode } from '../gamemodes/Gamemode.ts';
 import { MapData } from '../models/MapData.ts';
+import { SoloCTFGamemode } from '../gamemodes/SoloCTFGamemode.ts';
 
 export class ItemManager {
 	private worldItems: WorldItem[] = [];
@@ -21,11 +22,13 @@ export class ItemManager {
 	tick(currentTime: number) {
 		try {
 			this.checkForPickups();
-			if (currentTime - this.lastItemCreationTimestamp > config.items.respawnTime) {
-				this.createItem();
-				this.lastItemCreationTimestamp = currentTime;
+			// Only create random items if we're not in CTF mode
+			if (!this.gamemode || !(this.gamemode instanceof SoloCTFGamemode)) {
+				if (currentTime - this.lastItemCreationTimestamp > config.items.respawnTime) {
+					this.createItem();
+					this.lastItemCreationTimestamp = currentTime;
+				}
 			}
-			// Additional item-related logic can be added here
 		} catch (error) {
 			console.error('⚠ Error in ItemManager tick:', error);
 		}

@@ -94,6 +94,7 @@ export class RemoteItemRenderer {
 				return new FlagItem(this.renderer, 0, ItemType.WorldItem);
 			default:
 				// Return a generic item
+				console.log('Unknown item type:', itemType);
 				return new ItemBase(
 					ItemType.WorldItem,
 					this.renderer.getEntityScene(),
