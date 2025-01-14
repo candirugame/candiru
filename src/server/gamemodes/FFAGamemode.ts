@@ -39,7 +39,12 @@ export class FFAGamemode extends Gamemode {
 		// send kill death stats to all players
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
-			if (extras) player.gameMsgs2 = ['&7' + extras.kills + ' kills, ' + extras.deaths + ' deaths'];
+			if (extras) {
+				let colorPrefix = '&6';
+				if (extras.kills > extras.deaths) colorPrefix = '&a';
+				if (extras.kills < extras.deaths) colorPrefix = '&c';
+				player.gameMsgs2 = [colorPrefix + extras.kills + ' kills, ' + extras.deaths + ' deaths'];
+			}
 		}
 	}
 

@@ -142,19 +142,22 @@ export class SoloCTFGamemode extends FFAGamemode {
 			}
 
 			// Always update gameMsgs2
-			player.gameMsgs2[0] = `${personalSeconds} seconds to win`;
+			let colorPrefix = '&a';
 			if (leader) {
 				const leaderExtras = this.gameEngine.playerManager.getPlayerExtrasById(leader.id);
 				if (leaderExtras) {
 					if (leader.id === player.id) {
-						player.gameMsgs2[1] = '&ayou are leading';
+						player.gameMsgs2[2] = colorPrefix + 'you are leading';
 					} else {
-						player.gameMsgs2[1] = `${leader.name} has ${config.game.pointsToWin - leaderExtras.points} seconds left`;
+						colorPrefix = '&c';
+						player.gameMsgs2[2] = colorPrefix +
+							`&c${config.game.pointsToWin - leaderExtras.points} seconds for ${leader.name}`;
 					}
 				}
 			} else {
-				player.gameMsgs2[1] = '';
+				player.gameMsgs2[2] = '';
 			}
+			player.gameMsgs2[1] = colorPrefix + `${personalSeconds} seconds to win`;
 		}
 	}
 
@@ -268,9 +271,16 @@ export class SoloCTFGamemode extends FFAGamemode {
 
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
 			if (player.id === winner.id) {
-				this.gameEngine.setGameMessage(player, `&aYou have won the game!`, 0, config.game.respawnDelay);
+				this.gameEngine.setGameMessage(player, `&ayou have won!`, 0, config.game.respawnDelay);
+				this.gameEngine.setGameMessage(player, ``, 1, config.game.respawnDelay);
 			} else {
-				this.gameEngine.setGameMessage(player, `&a${winner.name} has won the game!`, 0, config.game.respawnDelay);
+				this.gameEngine.setGameMessage(
+					player,
+					`&c${winner.name} has transcended.`,
+					0,
+					config.game.respawnDelay,
+				);
+				this.gameEngine.setGameMessage(player, ``, 1, config.game.respawnDelay);
 			}
 		}
 		console.log(`🏆 ${winner.name} has won the Solo CTF game!`);
