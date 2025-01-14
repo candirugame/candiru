@@ -58,59 +58,54 @@ export class ItemManager {
 
 	checkForPickups() {
 		const players = this.playerManager.getAllPlayers();
-
 		for (const player of players) {
 			if (player.playerSpectating !== -1) continue;
 			if (player.health <= 0) continue;
 
-			const itemIndex = this.worldItems.findIndex((item) => player.position.distanceTo(item.vector) < 0.5);
+			// Find all items within pickup range, not just the first one
+			const nearbyItems = this.worldItems.filter(
+				(item) => player.position.distanceTo(item.vector) < 0.5,
+			);
 
-			if (itemIndex === -1) continue;
-
-			const item = this.worldItems[itemIndex];
-			let shouldPickup = false;
-
-			switch (item.itemType) {
-				case 0: // Cube
-					player.inventory.push(0);
-					shouldPickup = true;
-					this.chatManager.broadcastChat(`${player.name} picked up [Object]!`);
-					console.log(`🍌 ${player.name} picked up cube!`);
-					break;
-
-				case 1: // Banana
-					if (!player.inventory.includes(1)) {
-						player.inventory.push(1);
+			// Process each nearby item
+			for (const item of nearbyItems) {
+				let shouldPickup = false;
+				switch (item.itemType) {
+					case 0: // Cube
+						player.inventory.push(0);
 						shouldPickup = true;
-						console.log(`🍌 ${player.name} picked up banana!`);
-					}
-					break;
+						this.chatManager.broadcastChat(`${player.name} picked up [Object]!`);
+						console.log(`🍌 ${player.name} picked up cube!`);
+						break;
+					case 1: // Banana
+						if (!player.inventory.includes(1)) {
+							player.inventory.push(1);
+							shouldPickup = true;
+							console.log(`🍌 ${player.name} picked up banana!`);
+						}
+						break;
+					case 2: // Fish
+						if (!player.inventory.includes(2)) {
+							player.inventory.push(2);
+							shouldPickup = true;
+							console.log(`🍌 ${player.name} picked up fish!`);
+						}
+						break;
+					case 4: // Flag
+						if (!player.inventory.includes(4)) {
+							player.inventory.push(4);
+							shouldPickup = true;
+							console.log(`🚩 ${player.name} picked up the flag!`);
+						}
+						break;
+				}
 
-				case 2: // Fish
-					if (!player.inventory.includes(2)) {
-						player.inventory.push(2);
-						shouldPickup = true;
-						console.log(`🍌 ${player.name} picked up fish!`);
-					}
-					break;
-
-				case 4: // Flag
-					if (!player.inventory.includes(4)) {
-						player.inventory.push(4);
-						shouldPickup = true;
-						console.log(`🚩 ${player.name} picked up the flag!`);
-						// Optionally, broadcast a message
-						// this.chatManager.broadcastChat(`${player.name} picked up the flag!`);
-					}
-					break;
-
-					// Add more cases if needed for other item types
-			}
-
-			if (shouldPickup) {
-				if (this.gamemode) this.gamemode.onItemPickup(player);
-				this.worldItems.splice(itemIndex, 1);
-				this.itemUpdateFlag = true;
+				if (shouldPickup) {
+					if (this.gamemode) this.gamemode.onItemPickup(player);
+					const itemIndex = this.worldItems.indexOf(item);
+					this.worldItems.splice(itemIndex, 1);
+					this.itemUpdateFlag = true;
+				}
 			}
 		}
 	}
