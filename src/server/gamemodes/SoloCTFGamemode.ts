@@ -136,7 +136,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 					];
 				} else {
 					player.gameMsgs = [
-						'&athe flag has been dropped',
+						'&6the flag has been dropped',
 					];
 				}
 			}

@@ -106,7 +106,7 @@ export class DirectionIndicator extends IndicatorBase {
 
 		// Center bottom placement
 		const xOffset = (screenWidth - directionIndicatorWidth * this.parentRenderer.getScreenPixelsInGamePixel()) / 2;
-		const yOffset = screenHeight - (directionIndicatorHeight + 130) * this.parentRenderer.getScreenPixelsInGamePixel();
+		const yOffset = screenHeight - (directionIndicatorHeight + 150) * this.parentRenderer.getScreenPixelsInGamePixel();
 
 		this.scissor.set(
 			xOffset,
