@@ -5,7 +5,7 @@ const defaults = {
 	SERVER_URL: 'https://example.com',
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
 	SERVER_TICK_RATE: '15',
-	SERVER_CLEANUP_INTERVAL: '2000',
+	SERVER_CLEANUP_INTERVAL: '1000',
 
 	// Player settings
 	PLAYER_DISCONNECT_TIME: '8',
