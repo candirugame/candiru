@@ -8,7 +8,7 @@ import { MapData } from '../models/MapData.ts';
 import { SoloCTFGamemode } from '../gamemodes/SoloCTFGamemode.ts';
 
 export class ItemManager {
-	private worldItems: WorldItem[] = [];
+	worldItems: WorldItem[] = [];
 	private lastItemCreationTimestamp: number = Date.now() / 1000;
 	private itemUpdateFlag: boolean = false;
 	private gamemode: Gamemode | false = false;

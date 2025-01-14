@@ -315,7 +315,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 		const allItems = this.gameEngine.itemManager.getAllItems();
 		const updatedItems = allItems.filter((item) => item.itemType !== this.FLAG_ITEM_TYPE);
 		// Directly modifying private property 'worldItems' (not recommended)
-		(this.gameEngine.itemManager as any).worldItems = updatedItems;
+		this.gameEngine.itemManager.worldItems = updatedItems;
 		this.gameEngine.itemManager.triggerUpdateFlag();
 
 		// Spawn a new flag
