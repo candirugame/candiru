@@ -1,10 +1,10 @@
 import { WorldItem } from '../models/WorldItem.ts';
-import { MapData } from '../models/MapData.ts';
 import config from '../config.ts';
 import { PlayerManager } from './PlayerManager.ts';
 import { ChatManager } from './ChatManager.ts';
-import { Gamemode } from '../gamemodes/Gamemode.ts';
 import * as THREE from 'three';
+import { Gamemode } from '../gamemodes/Gamemode.ts';
+import { MapData } from '../models/MapData.ts';
 
 export class ItemManager {
 	private worldItems: WorldItem[] = [];
@@ -19,12 +19,16 @@ export class ItemManager {
 	}
 
 	tick(currentTime: number) {
-		this.checkForPickups();
-		if (currentTime - this.lastItemCreationTimestamp > config.items.respawnTime) {
-			this.createItem();
-			this.lastItemCreationTimestamp = currentTime;
+		try {
+			this.checkForPickups();
+			if (currentTime - this.lastItemCreationTimestamp > config.items.respawnTime) {
+				this.createItem();
+				this.lastItemCreationTimestamp = currentTime;
+			}
+			// Additional item-related logic can be added here
+		} catch (error) {
+			console.error('⚠ Error in ItemManager tick:', error);
 		}
-		// Additional item-related logic can be added here
 	}
 
 	createItem() {
@@ -55,6 +59,7 @@ export class ItemManager {
 		for (const player of players) {
 			if (player.playerSpectating !== -1) continue;
 			if (player.health <= 0) continue;
+
 			const itemIndex = this.worldItems.findIndex((item) => player.position.distanceTo(item.vector) < 0.5);
 
 			if (itemIndex === -1) continue;
@@ -85,6 +90,18 @@ export class ItemManager {
 						console.log(`🍌 ${player.name} picked up fish!`);
 					}
 					break;
+
+				case 4: // Flag
+					if (!player.inventory.includes(4)) {
+						player.inventory.push(4);
+						shouldPickup = true;
+						console.log(`🚩 ${player.name} picked up the flag!`);
+						// Optionally, broadcast a message
+						// this.chatManager.broadcastChat(`${player.name} picked up the flag!`);
+					}
+					break;
+
+					// Add more cases if needed for other item types
 			}
 
 			if (shouldPickup) {

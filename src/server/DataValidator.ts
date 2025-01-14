@@ -63,7 +63,7 @@ export class DataValidator {
 		playerSpectating: z.number(),
 		gameMsgs: z.array(z.string()),
 		gameMsgs2: z.array(z.string()),
-		directionIndicatorVector: this.vector3Schema.optional(),
+		directionIndicatorVector: this.vector3Schema.nullable().optional(),
 		highlightedVectors: z.array(this.vector3Schema),
 	}).strict().transform((data) => Player.fromObject(data as Player));
 

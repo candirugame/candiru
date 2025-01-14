@@ -3,6 +3,28 @@ import * as THREE from 'three';
 
 const showInHandDelay = 0.1;
 
+/**
+ * Enum representing item types.
+ */
+export enum ItemType {
+	WorldItem = 1,
+	InventoryItem = 2,
+}
+
+/**
+ * Rotates a quaternion around a given axis by a specified angle.
+ * @param source - The source quaternion.
+ * @param axis - The axis to rotate around.
+ * @param angle - The angle in radians.
+ */
+function rotateAroundWorldAxis(source: THREE.Quaternion, axis: THREE.Vector3, angle: number) {
+	const rotationQuat = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+	source.multiplyQuaternions(rotationQuat, source);
+}
+
+/**
+ * Base class for all items.
+ */
 export class ItemBase {
 	protected timeAccum: number = 0;
 	protected clock: THREE.Clock = new THREE.Clock();
@@ -12,13 +34,18 @@ export class ItemBase {
 
 	protected scene: THREE.Scene; // The scene to put the item in
 
-	protected inventoryMenuScene: THREE.Scene; //Inventory menu scene
-	protected inventoryMenuObject!: THREE.Object3D; //The object shown in the inventory menu (he do spin)
-	protected index: number; //The index of the item in the inventory
+	protected inventoryMenuScene: THREE.Scene; // Inventory menu scene
+	protected inventoryMenuObject!: THREE.Object3D; // The object shown in the inventory menu (he do spin)
+	protected index: number; // The index of the item in the inventory
 	protected shownInHand: boolean = false;
 	protected angleAccum: number = 0;
 	protected handPosition: THREE.Vector3 = new THREE.Vector3(0.85, -0.8, 3.2);
 	protected shownInHandTimestamp: number = 0;
+
+	// Interpolation properties for WorldItems
+	protected currentPosition: THREE.Vector3 = new THREE.Vector3();
+	protected targetPosition: THREE.Vector3 = new THREE.Vector3();
+	protected lerpSpeed: number = 5; // Adjust for faster/slower interpolation
 
 	constructor(itemType: ItemType, scene: THREE.Scene, inventoryMenuScene: THREE.Scene, index: number) {
 		this.itemType = itemType;
@@ -29,6 +56,9 @@ export class ItemBase {
 		this.init();
 	}
 
+	/**
+	 * Initializes the item by creating its visual representation.
+	 */
 	protected init() {
 		// Init should be responsible for creating object and inventoryMenuObject
 		// For this class, we'll just create a simple cube
@@ -55,8 +85,13 @@ export class ItemBase {
 		}
 	}
 
+	/**
+	 * Called every frame to update the item's state.
+	 * @param input - Input data if the item is held.
+	 * @param selectedIndex - The index of the selected item if applicable.
+	 */
 	onFrame(input: HeldItemInput | undefined, selectedIndex: number | undefined) {
-		if (!this.object) return; //return if object hasn't loaded
+		if (!this.object) return; // Return if object hasn't loaded
 		const deltaTime = this.clock.getDelta();
 		this.timeAccum += deltaTime;
 
@@ -71,20 +106,35 @@ export class ItemBase {
 
 	/** -- World Items -- */
 	protected addedToWorldScene: boolean = false;
-	protected worldPosition: THREE.Vector3 = new THREE.Vector3();
 
+	/**
+	 * Updates the item's position smoothly by interpolating towards the target position.
+	 * @param deltaTime - Time elapsed since the last frame.
+	 */
 	protected worldOnFrame(deltaTime: number) { // This function is called every frame for world items
 		if (!this.addedToWorldScene) {
 			this.scene.add(this.object);
 			this.addedToWorldScene = true;
+			this.currentPosition.copy(this.targetPosition); // Initialize current position
 		}
-		this.object.position.copy(this.worldPosition);
+
+		// Lerp current position towards target position
+		this.currentPosition.lerp(this.targetPosition, this.lerpSpeed * deltaTime);
+		this.object.position.copy(this.currentPosition);
+
+		// Optional: Add some oscillation for visual effect
 		this.object.position.add(new THREE.Vector3(0, Math.sin(this.timeAccum * 2) * 0.1, 0));
+
+		// Rotate the object for visual effect
 		this.object.rotation.y += deltaTime * 2;
 	}
 
+	/**
+	 * Sets the target world position for the item.
+	 * @param vector - The new target position.
+	 */
 	setWorldPosition(vector: THREE.Vector3) {
-		this.worldPosition = vector;
+		this.targetPosition.copy(vector);
 	}
 
 	/** -- Inventory Items -- */
@@ -134,22 +184,14 @@ export class ItemBase {
 		this.shownInHand = false;
 	}
 
+	/**
+	 * Destroys the item by removing it from all scenes.
+	 */
 	public destroy() {
 		this.scene.remove(this.object);
 		this.inventoryMenuScene.remove(this.inventoryMenuObject);
 	}
 }
+
 const heldPosition = new THREE.Vector3(0.85, -0.8, 3.2);
 const hiddenPosition = new THREE.Vector3(0.85, -2.5, 3.2);
-export enum ItemType {
-	//TODO diagnose lint being weird here?
-	// eslint-disable-next-line no-unused-vars
-	WorldItem = 1,
-	// eslint-disable-next-line no-unused-vars
-	InventoryItem = 2,
-}
-
-function rotateAroundWorldAxis(source: THREE.Quaternion, axis: THREE.Vector3, angle: number) {
-	const rotationQuat = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-	source.multiplyQuaternions(rotationQuat, source);
-}
