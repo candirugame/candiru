@@ -53,6 +53,7 @@ export class DataValidator {
 		chatMsg: z.string().max(300),
 		latency: z.number(),
 		health: z.number(),
+		protection: z.number(),
 		forced: z.boolean(),
 		forcedAcknowledged: z.boolean(),
 		updateTimestamp: z.number().optional(),
@@ -62,6 +63,9 @@ export class DataValidator {
 		playerSpectating: z.number(),
 		gameMsgs: z.array(z.string()),
 		gameMsgs2: z.array(z.string()),
+		directionIndicatorVector: this.vector3Schema.nullable().optional(),
+		highlightedVectors: z.array(this.vector3Schema),
+		doPhysics: z.boolean(),
 	}).strict().transform((data) => Player.fromObject(data as Player));
 
 	static chatMsgSchema = z.object({

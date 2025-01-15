@@ -6,6 +6,9 @@ import { InputHandler } from '../input/InputHandler.ts';
 import { SettingsManager } from './SettingsManager.ts';
 import { CollisionManager } from '../input/CollisionManager.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
+import { IndicatorBase } from '../ui/IndicatorBase.ts';
+import { HealthIndicator } from '../ui/HealthIndicator.ts';
+import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -33,8 +36,7 @@ export class Renderer {
 	public crosshairIsFlashing: boolean = false;
 	public lastShotSomeoneTimestamp: number = 0;
 	public playerHitMarkers: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
-	private healthIndicatorScene: THREE.Scene;
-	private healthIndicatorCamera: THREE.PerspectiveCamera;
+
 	private screenPixelsInGamePixel: number = 1;
 	private inventoryMenuScene: THREE.Scene;
 	private inventoryMenuCamera: THREE.OrthographicCamera;
@@ -43,6 +45,11 @@ export class Renderer {
 	private collisionManager!: CollisionManager;
 
 	private spectateGroundTruthPosition: THREE.Vector3 | null = null;
+
+	// List of indicators
+	private indicators: IndicatorBase[] = [];
+	private healthIndicator: HealthIndicator;
+	private directionIndicator: DirectionIndicator;
 
 	constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.networking = networking;
@@ -53,7 +60,6 @@ export class Renderer {
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
 		this.renderer = new THREE.WebGLRenderer();
-		//document.body.appendChild(this.renderer.domElement);
 		container.appendChild(this.renderer.domElement);
 		this.renderer.domElement.style.imageRendering = 'pixelated';
 		this.renderer.setAnimationLoop(null);
@@ -63,12 +69,6 @@ export class Renderer {
 		this.heldItemCamera = new THREE.PerspectiveCamera(90, globalThis.innerWidth / globalThis.innerHeight, 0.01, 1000);
 		this.heldItemCamera.position.set(0, 0, 5);
 		this.heldItemCamera.lookAt(0, 0, 0);
-
-		// Create a new scene and camera for the health indicator
-		this.healthIndicatorScene = new THREE.Scene();
-		this.healthIndicatorCamera = new THREE.PerspectiveCamera(70, 1, 0.01, 1000);
-		this.healthIndicatorCamera.position.set(0, 0, 0);
-		this.healthIndicatorCamera.lookAt(0, 0, 1);
 
 		this.inventoryMenuScene = new THREE.Scene();
 		this.inventoryMenuCamera = new THREE.OrthographicCamera(-0.5, 0.5, 2.5, -2.5, 0.01, 10);
@@ -80,7 +80,7 @@ export class Renderer {
 		// Ambient lights
 		this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 		const ambientLight2 = new THREE.AmbientLight(0xffffff, 0.5);
-		const ambientLight3 = new THREE.AmbientLight(0xffffff, 0.5); // Ambient light for remote players scene
+		const ambientLight3 = new THREE.AmbientLight(0xffffff, 0.5);
 
 		this.scene.add(this.ambientLight);
 		this.heldItemScene.add(ambientLight2);
@@ -88,7 +88,6 @@ export class Renderer {
 		// Fog settings
 		this.scene.fog = new THREE.FogExp2('#111111', 0.05);
 		this.heldItemScene.fog = new THREE.FogExp2('#111111', 0.05);
-		this.healthIndicatorScene.fog = new THREE.FogExp2('#111111', 0.05); // Add fog to health indicator scene
 
 		this.framerate = 0;
 		this.framesInFramerateSample = 30;
@@ -108,13 +107,24 @@ export class Renderer {
 			this.camera,
 			this.scene,
 		);
-		this.remotePlayerRenderer.getEntityScene().fog = new THREE.FogExp2('#111111', 0.1); // Add fog to remote players scene
-		this.remotePlayerRenderer.getEntityScene().add(ambientLight3); // Add ambient light to remote players scene
+		this.remotePlayerRenderer.getEntityScene().fog = new THREE.FogExp2('#111111', 0.1);
+		this.remotePlayerRenderer.getEntityScene().add(ambientLight3);
 		this.renderer.domElement.style.touchAction = 'none';
 		this.renderer.domElement.style.position = 'absolute';
 		this.onWindowResize();
 		globalThis.addEventListener('resize', this.onWindowResize.bind(this), false);
 		globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this), false);
+
+		// Initialize indicators
+		this.healthIndicator = new HealthIndicator(this, this.localPlayer, this.networking);
+		this.indicators.push(this.healthIndicator);
+
+		this.directionIndicator = new DirectionIndicator(this, this.localPlayer, this.networking);
+		this.indicators.push(this.directionIndicator);
+
+		// Initialize indicators
+		this.healthIndicator.init();
+		this.directionIndicator.init();
 	}
 
 	public onFrame(localPlayer: Player) {
@@ -136,32 +146,16 @@ export class Renderer {
 		// Render the held item scene normally (full screen)
 		this.renderer.render(this.heldItemScene, this.heldItemCamera);
 
-		// Set up the scissor and viewport for the health indicator scene rendering
+		// Update and render indicators
+		for (const indicator of this.indicators) {
+			indicator.onFrame(this.deltaTime);
+			indicator.render();
+		}
+
+		// Render inventory view
 		const screenWidth = globalThis.innerWidth;
 		const screenHeight = globalThis.innerHeight;
 
-		const healthIndicatorWidth = 60; // native
-		const healthIndicatorHeight = healthIndicatorWidth; // 1:1 aspect ratio
-
-		// Set up scissor and viewport for a region from (0, 0) to (50, 50)
-		this.renderer.setScissorTest(true);
-		this.renderer.setScissor(
-			2 * this.screenPixelsInGamePixel,
-			screenHeight - (healthIndicatorHeight + 1 + this.chatOverlay.getDebugTextHeight()) * this.screenPixelsInGamePixel,
-			healthIndicatorWidth * this.screenPixelsInGamePixel,
-			healthIndicatorHeight * this.screenPixelsInGamePixel,
-		);
-		this.renderer.setViewport(
-			2 * this.screenPixelsInGamePixel,
-			screenHeight - (healthIndicatorHeight + 1 + this.chatOverlay.getDebugTextHeight()) * this.screenPixelsInGamePixel,
-			healthIndicatorWidth * this.screenPixelsInGamePixel,
-			healthIndicatorHeight * this.screenPixelsInGamePixel,
-		);
-
-		// Render the health indicator scene
-		this.renderer.render(this.healthIndicatorScene, this.healthIndicatorCamera);
-
-		// Render inventory view
 		const inventoryWidth = 20;
 		const inventoryHeight = inventoryWidth * 5;
 		this.renderer.setScissorTest(true);
@@ -179,11 +173,11 @@ export class Renderer {
 		);
 		this.renderer.render(this.inventoryMenuScene, this.inventoryMenuCamera);
 
-		// Reset scissor test and viewport after rendering the health indicator
+		// Reset scissor test and viewport
 		this.renderer.setScissorTest(false);
 		this.renderer.setViewport(0, 0, screenWidth, screenHeight);
 
-		// Restore autoClear to true if necessary
+		// Restore autoClear to true
 		this.renderer.autoClear = true;
 
 		if (localPlayer.playerSpectating !== -1) {
@@ -191,7 +185,6 @@ export class Renderer {
 				player.id === localPlayer.playerSpectating
 			);
 			if (remotePlayer !== undefined) {
-				// Initialize ground truth position if not set
 				if (!this.spectateGroundTruthPosition) {
 					this.spectateGroundTruthPosition = new THREE.Vector3(
 						remotePlayer.position.x,
@@ -200,12 +193,10 @@ export class Renderer {
 					);
 				}
 
-				// Update ground truth position based on velocity
 				this.spectateGroundTruthPosition.x += remotePlayer.velocity.x * this.deltaTime;
 				this.spectateGroundTruthPosition.y += remotePlayer.velocity.y * this.deltaTime;
 				this.spectateGroundTruthPosition.z += remotePlayer.velocity.z * this.deltaTime;
 
-				// If forced update, set directly to remote position
 				if (remotePlayer.forced) {
 					this.spectateGroundTruthPosition.set(
 						remotePlayer.position.x,
@@ -214,7 +205,6 @@ export class Renderer {
 					);
 				}
 
-				// Lerp ground truth position towards actual position
 				this.spectateGroundTruthPosition.lerp(
 					new THREE.Vector3(
 						remotePlayer.position.x,
@@ -224,10 +214,8 @@ export class Renderer {
 					0.1 * this.deltaTime * 60,
 				);
 
-				// Update camera position and rotation
 				this.camera.position.copy(this.spectateGroundTruthPosition);
 
-				// Simple quaternion slerp
 				this.camera.quaternion.slerp(
 					new THREE.Quaternion(
 						remotePlayer.lookQuaternion.x,
@@ -239,7 +227,6 @@ export class Renderer {
 				);
 			}
 		} else {
-			// Reset spectate position when not spectating
 			this.spectateGroundTruthPosition = null;
 			this.camera.position.copy(localPlayer.position);
 			this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
@@ -253,7 +240,6 @@ export class Renderer {
 				player.id === this.localPlayer.idLastDamagedBy
 			);
 			if (remotePlayer !== undefined) {
-				//console.log("Player was damaged by " + remotePlayer.name);
 				const diff = new THREE.Vector3().subVectors(this.localPlayer.position, remotePlayer.position);
 				this.knockbackVector.copy(diff.normalize().multiplyScalar(0.2));
 			}
@@ -289,15 +275,13 @@ export class Renderer {
 			this.bobCycle += this.deltaTime * 4.8 * vel;
 			this.camera.position.y = this.camera.position.y +
 				(Math.sin(this.bobCycle) * .03 * SettingsManager.settings.viewBobbingStrength);
-			//console.log(this.camera.position.y);
 		}
 
 		let newHandX = Math.sin(this.bobCycle / 1.9) * .02 * SettingsManager.settings.viewBobbingStrength;
 		let newHandY = -(Math.sin(this.bobCycle) * .07 * SettingsManager.settings.viewBobbingStrength);
 		let newHandZ = Math.sin(this.bobCycle / 1.8) * .015 * SettingsManager.settings.viewBobbingStrength;
-		newHandY += localPlayer.velocity.y * 0.04 * SettingsManager.settings.viewBobbingStrength; //move hand up when falling, down when jumping
+		newHandY += localPlayer.velocity.y * 0.04 * SettingsManager.settings.viewBobbingStrength;
 
-		//banana lags behind player slightly
 		const playerVelocity = new THREE.Vector3().copy(localPlayer.velocity);
 		playerVelocity.applyQuaternion(localPlayer.lookQuaternion.clone().invert());
 		newHandX += playerVelocity.x * 0.02 * SettingsManager.settings.viewBobbingStrength;
@@ -320,6 +304,8 @@ export class Renderer {
 		this.lastCameraRoll = roll;
 
 		this.camera.quaternion.setFromEuler(euler);
+
+		this.scene.background = new THREE.Color(this.networking.getServerInfo().skyColor);
 
 		this.updateFramerate();
 	}
@@ -349,10 +335,6 @@ export class Renderer {
 		return this.heldItemScene;
 	}
 
-	public getHealthIndicatorScene(): THREE.Scene {
-		return this.healthIndicatorScene;
-	}
-
 	public getInventoryMenuScene(): THREE.Scene {
 		return this.inventoryMenuScene;
 	}
@@ -361,16 +343,16 @@ export class Renderer {
 		return this.inventoryMenuCamera;
 	}
 
-	private onWindowResize() {
-		this.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-		this.camera.updateProjectionMatrix();
-		this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
-		this.renderer.setPixelRatio(200 / globalThis.innerHeight);
+	public getWebGLRenderer(): THREE.WebGLRenderer {
+		return this.renderer;
+	}
 
-		this.screenPixelsInGamePixel = globalThis.innerHeight / 200;
-		// Update held item camera aspect ratio
-		this.heldItemCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-		this.heldItemCamera.updateProjectionMatrix();
+	public getScreenPixelsInGamePixel(): number {
+		return this.screenPixelsInGamePixel;
+	}
+
+	public getChatOverlay(): ChatOverlay {
+		return this.chatOverlay;
 	}
 
 	public getShotVectorsToPlayersInCrosshair(): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
@@ -398,6 +380,17 @@ export class Renderer {
 
 	public setCollisionManager(collisionManager: CollisionManager) {
 		this.collisionManager = collisionManager;
+	}
+
+	private onWindowResize() {
+		this.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
+		this.camera.updateProjectionMatrix();
+		this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
+		this.renderer.setPixelRatio(200 / globalThis.innerHeight);
+
+		this.screenPixelsInGamePixel = globalThis.innerHeight / 200;
+		this.heldItemCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
+		this.heldItemCamera.updateProjectionMatrix();
 	}
 
 	private static approachNumber(input: number, step: number, approach: number): number {

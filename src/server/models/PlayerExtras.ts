@@ -4,4 +4,5 @@ export class PlayerExtras {
 	deaths: number = 0;
 	killStreak: number = 0;
 	points: number = 0;
+	lastPointIncrementTime: number = 0;
 }

@@ -50,7 +50,7 @@ export class DamageSystem {
 		}
 
 		// Apply damage
-		targetPlayer.health -= data.damage;
+		targetPlayer.health -= data.damage / targetPlayer.protection;
 		targetPlayer.lastDamageTime = Date.now() / 1000;
 		targetPlayer.idLastDamagedBy = localPlayer.id;
 
