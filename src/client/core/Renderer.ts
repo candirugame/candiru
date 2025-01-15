@@ -7,7 +7,6 @@ import { SettingsManager } from './SettingsManager.ts';
 import { CollisionManager } from '../input/CollisionManager.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
 import is from 'npm:@sindresorhus/is@4.6.0';
-import infinite = is.infinite;
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -388,7 +387,7 @@ export class Renderer {
 	public getShotVectorsToPlayersWithOffset(
 		yawOffset: number,
 		pitchOffset: number,
-		maxDistance: number = infinite,
+		maxDistance: number = Infinity,
 	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
 		return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset, maxDistance);
 	}
