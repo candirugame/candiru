@@ -217,7 +217,7 @@ export class Networking {
 		const chatMessage = {
 			message: msg,
 			id: this.localPlayer.id,
-			name: this.localPlayer.name,
+			name: this.getRemotePlayerData().find((player) => player.id === this.localPlayer.id)!.name,
 		};
 		if (msg.length < 1) return;
 		if (chatMessage.message.startsWith('>')) chatMessage.message = '&2' + chatMessage.message;
