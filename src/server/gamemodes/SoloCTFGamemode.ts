@@ -372,10 +372,12 @@ export class SoloCTFGamemode extends FFAGamemode {
 		}
 
 		// Remove flag from the world if it exists
-		const allItems = this.gameEngine.itemManager.getAllItems();
-		const updatedItems = allItems.filter((item) => item.itemType !== this.FLAG_ITEM_TYPE);
+		//const allItems = this.gameEngine.itemManager.getAllItems();
+		//allItems.filter((item) => item.itemType !== this.FLAG_ITEM_TYPE);
 		// Directly modifying private property 'worldItems' (not recommended)
-		this.gameEngine.itemManager.worldItems = updatedItems;
+
+		// Clear all world items
+		this.gameEngine.itemManager.worldItems = [];
 		this.gameEngine.itemManager.triggerUpdateFlag();
 
 		// Spawn a new flag
