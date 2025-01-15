@@ -11331,6 +11331,7 @@
         "npm:@types/three@0.169",
         "npm:autoprefixer@^10.4.14",
         "npm:dot-prop@9",
+        "npm:express@^4.21.1",
         "npm:fdir@^6.4.2",
         "npm:front-matter@^4.0.2",
         "npm:joi@^17.13.3",
