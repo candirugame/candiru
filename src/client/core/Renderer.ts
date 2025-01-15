@@ -6,7 +6,6 @@ import { InputHandler } from '../input/InputHandler.ts';
 import { SettingsManager } from './SettingsManager.ts';
 import { CollisionManager } from '../input/CollisionManager.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
-import is from 'npm:@sindresorhus/is@4.6.0';
 
 export class Renderer {
 	private clock: THREE.Clock;
