@@ -305,6 +305,8 @@ export class Renderer {
 
 		this.camera.quaternion.setFromEuler(euler);
 
+		this.scene.background = new THREE.Color(this.networking.getServerInfo().skyColor);
+
 		this.updateFramerate();
 	}
 

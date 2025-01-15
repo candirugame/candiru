@@ -272,6 +272,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 	private announceWin(winner: Player): void {
 		this.isAnnouncingWin = true; // Set the flag to indicate win announcement
 		this.winner = winner;
+		this.gameEngine.serverInfo.skyColor = '#FFFFFF';
 		// Schedule to unset the win announcement flag after the respawn delay and reset the game
 		setTimeout(() => {
 			this.resetAfterWin();
@@ -382,6 +383,9 @@ export class SoloCTFGamemode extends FFAGamemode {
 
 		// Spawn a new flag
 		this.spawnFlag();
+
+		//set sky color to black
+		this.gameEngine.serverInfo.skyColor = '#000000';
 
 		// Reset game state
 		this.gameActive = true;

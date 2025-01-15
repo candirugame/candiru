@@ -9,6 +9,7 @@ export class ServerInfo {
 	public version: string = '';
 	public gameMode: string;
 	public playerMaxHealth: number;
+	public skyColor: string;
 	constructor() {
 		this.name = config.server.name;
 		this.maxPlayers = config.game.maxPlayers;
@@ -16,6 +17,7 @@ export class ServerInfo {
 		this.tickRate = config.server.tickRate;
 		this.gameMode = config.game.mode;
 		this.playerMaxHealth = config.player.maxHealth;
+		this.skyColor = '#000000';
 	}
 	toJSON() {
 		return {

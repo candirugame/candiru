@@ -19,6 +19,7 @@ interface ServerInfo {
 	version: string;
 	gameMode: string;
 	playerMaxHealth: number;
+	skyColor: string;
 }
 
 interface LastUploadedLocalPlayer {
@@ -68,6 +69,7 @@ export class Networking {
 			version: '',
 			gameMode: '',
 			playerMaxHealth: 0,
+			skyColor: '#000000',
 		};
 
 		this.setupSocketListeners();

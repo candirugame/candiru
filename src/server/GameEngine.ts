@@ -17,7 +17,7 @@ export class GameEngine {
 	private lastItemUpdateTimestamp: number = Date.now() / 1000;
 	public playerUpdateSinceLastEmit: boolean = false;
 	private itemUpdateSinceLastEmit: boolean = false;
-	private serverInfo: ServerInfo = new ServerInfo();
+	public serverInfo: ServerInfo = new ServerInfo();
 	public gamemode: Gamemode | false = false;
 
 	constructor(
