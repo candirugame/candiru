@@ -373,8 +373,10 @@ export class Renderer {
 		this.heldItemCamera.updateProjectionMatrix();
 	}
 
-	public getShotVectorsToPlayersInCrosshair(): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
-		return this.remotePlayerRenderer.getShotVectorsToPlayersInCrosshair();
+	public getShotVectorsToPlayersInCrosshair(
+		maxDistance: number | undefined = undefined,
+	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
+		return this.remotePlayerRenderer.getShotVectorsToPlayersInCrosshair(maxDistance);
 	}
 
 	public getPlayerSpheresInCrosshairWithWalls() {
@@ -384,8 +386,9 @@ export class Renderer {
 	public getShotVectorsToPlayersWithOffset(
 		yawOffset: number,
 		pitchOffset: number,
+		maxDistance: number = Infinity,
 	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
-		return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset);
+		return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset, maxDistance);
 	}
 
 	public getEntityScene(): THREE.Scene {

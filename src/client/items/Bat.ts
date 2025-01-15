@@ -1,21 +1,23 @@
 import { ItemBase, ItemType } from './ItemBase.ts';
 import { HeldItemInput } from '../input/HeldItemInput.ts';
+
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { AssetManager } from '../core/AssetManager.ts';
 
-const firingDelay = 0.12;
-const firingDelayHeld = 0.225; //longer firing delay when mouse is held down
+const firingDelay = .4;
+const firingDelayHeld = 0.65; //longer firing delay when mouse is held down
 const showInHandDelay = 0.1;
+const unscopedPosition = new THREE.Vector3(0.85, -1, 3.2);
+const hitPosition = new THREE.Vector3(-.8, -1, 3);
+const hitQuaternion = new THREE.Quaternion(0.9142, -0.0720, 0.3975, -0.0313);
+const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0.3827, -0.9239);
+const scopedQuaternion = new THREE.Quaternion(0, 0, 0.8870, -0.4617);
+const windBackQuaternion = new THREE.Quaternion(0.1367, 0.0754, -0.8813, 0.4460);
+const hiddenPosition = new THREE.Vector3(0.85, -3.5, 3.2);
 
-const scopedPosition = new THREE.Vector3(0, -0.6, 3.5);
-const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
-const hiddenPosition = new THREE.Vector3(0.85, -2.7, 3.2);
-const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
-const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
-
-export class BananaGun extends ItemBase {
+export class Bat extends ItemBase {
 	private renderer!: Renderer;
 	private networking!: Networking;
 	private lastInput: HeldItemInput;
@@ -37,7 +39,7 @@ export class BananaGun extends ItemBase {
 	}
 
 	public override init() {
-		AssetManager.getInstance().loadAsset('models/simplified_banana_1.glb', (scene) => {
+		AssetManager.getInstance().loadAsset('models/simplified_bat.glb', (scene) => {
 			this.object = scene;
 			if (this.itemType === ItemType.InventoryItem) {
 				this.object.traverse((child) => {
@@ -59,6 +61,10 @@ export class BananaGun extends ItemBase {
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.45, 0.45, 0.45);
 			}
+
+			if (this.itemType === ItemType.InventoryItem) {
+				this.object.scale.set(2.5, 2.5, 2.5);
+			}
 		});
 	}
 
@@ -75,9 +81,6 @@ export class BananaGun extends ItemBase {
 			this.handOnFrame(deltaTime, input);
 		}
 	}
-
-	// No need to override worldOnFrame if default behavior is sufficient
-	// If specific behavior is needed, you can override it here
 
 	public override inventoryOnFrame(deltaTime: number, selectedIndex: number) {
 		if (!this.addedToInventoryItemScenes) {
@@ -125,63 +128,99 @@ export class BananaGun extends ItemBase {
 	}
 
 	private handleInput(input: HeldItemInput, deltaTime: number) {
-		if (input.rightClick) {
-			moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
-		} else {
+		if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
+			if (Date.now() / 1000 - this.lastFired > firingDelay) {
+				this.lastFired = Date.now() / 1000;
+				this.hitWithBat();
+				// this.handPosition.add(new THREE.Vector3(0, 0, -0.8));
+				// rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), -Math.PI / 3);
+			}
+		}
+
+		if (Date.now() / 1000 - this.lastFired > .50) {
 			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
+			moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
+		} else if (Date.now() / 1000 - this.lastFired < .10) {
+			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
+			moveTowardsRot(this.object.quaternion, windBackQuaternion, 0.1 * deltaTime * 60);
+		} else {
+			moveTowardsPos(
+				this.handPosition,
+				hitPosition,
+				Math.min(0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60, 1),
+			);
+			moveTowardsRot(
+				this.object.quaternion,
+				hitQuaternion,
+				Math.min(0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60, 1),
+			);
 		}
 
 		this.object.position.copy(this.handPosition);
 
-		moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
-
-		if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
-			if (Date.now() / 1000 - this.lastFired > firingDelay) {
-				this.lastFired = Date.now() / 1000;
-				this.shootBanana();
-				this.handPosition.add(new THREE.Vector3(0, 0, 0.6));
-				rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), Math.PI / 16);
-			}
-		}
-
 		this.lastInput = input;
 	}
 
-	public override showInHand() {
-		if (this.shownInHand) return;
-		this.shownInHand = true;
-		this.shownInHandTimestamp = Date.now() / 1000;
-		if (!this.addedToHandScene && this.object) {
-			this.scene.add(this.object);
-			this.addedToHandScene = true;
-		}
-	}
+	private hitWithBat() {
+		const totalShots = 25;
+		let processedShots = 0;
+		const hitPlayers: number[] = [];
+		const TIMEOUT = 150;
 
-	public override hideInHand() {
-		if (!this.shownInHand) return;
-		this.shownInHand = false;
-	}
-	public itemDepleted(): boolean {
-		return false;
-	}
+		const processShots = (deadline?: IdleDeadline) => {
+			const timeRemaining = deadline ? deadline.timeRemaining() : 16;
 
-	private shootBanana() {
-		const processShots = () => {
-			const shotVectors = this.renderer.getShotVectorsToPlayersInCrosshair();
-			if (shotVectors.length > 0) {
-				for (const shot of shotVectors) {
-					const { playerID, hitPoint } = shot;
-					this.networking.applyDamage(playerID, 17);
-					this.renderer.playerHitMarkers.push({ hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1 });
+			while (processedShots < totalShots && timeRemaining > 0) {
+				const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
+					(Math.random() - 0.5) * 1.30,
+					(Math.random() - 0.5) * 0.80,
+					.7,
+				);
+				if (shotVectors.length > 0) {
+					for (const shot of shotVectors) {
+						const { playerID, hitPoint } = shot;
+						if (!hitPlayers.includes(playerID)) {
+							hitPlayers.push(playerID);
+							this.networking.applyDamage(playerID, 50);
+							this.renderer.playerHitMarkers.push({
+								hitPoint: hitPoint,
+								shotVector: shot.vector,
+								timestamp: -1,
+							});
+						}
+					}
+					this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
 				}
-				this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+				processedShots++;
+			}
+
+			// If we still have shots to process, schedule the next batch
+			if (processedShots < totalShots) {
+				if (typeof requestIdleCallback === 'function') {
+					const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
+
+					// Ensure completion within timeout
+					setTimeout(() => {
+						cancelIdleCallback(idleCallbackId);
+						processShots();
+					}, TIMEOUT);
+				} else {
+					setTimeout(() => processShots(), 0);
+				}
 			}
 		};
 
+		// Initial call
 		if (typeof requestIdleCallback === 'function') {
-			requestIdleCallback(processShots, { timeout: 150 });
+			const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
+
+			// Ensure first batch starts within timeout
+			setTimeout(() => {
+				cancelIdleCallback(idleCallbackId);
+				processShots();
+			}, TIMEOUT);
 		} else {
-			setTimeout(processShots, 0);
+			setTimeout(() => processShots(), 0);
 		}
 	}
 
