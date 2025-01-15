@@ -162,8 +162,6 @@ export class Networking {
 		let foundLocalPlayer = false;
 		for (const remotePlayer of this.remotePlayers) {
 			if (remotePlayer.id === this.localPlayer.id) {
-				foundLocalPlayer = true;
-				if (this.localPlayer.name.length === 0) this.localPlayer.name = remotePlayer.name;
 				if (remotePlayer.forced) {
 					this.localPlayer.position.set(remotePlayer.position.x, remotePlayer.position.y, remotePlayer.position.z);
 					this.localPlayer.velocity.set(remotePlayer.velocity.x, remotePlayer.velocity.y, remotePlayer.velocity.z);
@@ -173,7 +171,7 @@ export class Networking {
 						remotePlayer.lookQuaternion.z,
 						remotePlayer.lookQuaternion.w,
 					);
-					this.localPlayer.name = remotePlayer.name;
+					//this.localPlayer.name = remotePlayer.name;
 					this.localPlayer.gravity = remotePlayer.gravity;
 					this.localPlayer.forcedAcknowledged = true;
 				} else {
@@ -238,7 +236,7 @@ export class Networking {
 		const chatMessage = {
 			message: msg,
 			id: this.localPlayer.id,
-			name: this.localPlayer.name,
+			name: this.getRemotePlayerData().find((player) => player.id === this.localPlayer.id)!.name,
 		};
 		if (msg.length < 1) return;
 		if (chatMessage.message.startsWith('>')) chatMessage.message = '&2' + chatMessage.message;

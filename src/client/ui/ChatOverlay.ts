@@ -971,9 +971,7 @@ export class ChatOverlay {
 			//if (this.localPlayer.name.length > 0) {
 			this.localPlayer.chatActive = true;
 			this.localPlayer.chatMsg = '/';
-			//} else {
-			//	this.nameSettingActive = true;
-			//}
+			//} else this.nameSettingActive = true;
 		}
 
 		if (e.key.toLowerCase() === 'n' && !this.localPlayer.chatActive) {
