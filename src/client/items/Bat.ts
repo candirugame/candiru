@@ -181,7 +181,7 @@ export class Bat extends ItemBase {
 						const { playerID, hitPoint } = shot;
 						if (!hitPlayers.includes(playerID)) {
 							hitPlayers.push(playerID);
-							this.networking.applyDamage(playerID, 34);
+							this.networking.applyDamage(playerID, 50);
 							this.renderer.playerHitMarkers.push({
 								hitPoint: hitPoint,
 								shotVector: shot.vector,
