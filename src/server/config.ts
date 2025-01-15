@@ -8,7 +8,7 @@ const defaults = {
 	SERVER_CLEANUP_INTERVAL: '1000',
 
 	// Player settings
-	PLAYER_DISCONNECT_TIME: '8',
+	PLAYER_DISCONNECT_TIME: '10',
 	PLAYER_AFK_KICK_TIME: '600',
 	PLAYER_MAX_HEALTH: '100',
 	PLAYER_BASE_INVENTORY: '[]',
@@ -24,8 +24,8 @@ const defaults = {
 	HEALTH_REGEN_RATE: '5',
 
 	//Item settings
-	MAX_ITEMS_IN_WORLD: '7',
-	ITEM_RESPAWN_TIME: '10',
+	MAX_ITEMS_IN_WORLD: '10',
+	ITEM_RESPAWN_TIME: '7',
 };
 
 async function updateEnvFile(defaults: Record<string, string>) {

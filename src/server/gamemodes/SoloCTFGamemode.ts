@@ -277,7 +277,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 		this.gameEngine.serverInfo.skyColor = '#FFFFFF';
 		// Schedule to unset the win announcement flag after the respawn delay and reset the game
 		winner.doPhysics = false;
-		winner.gravity = 1.5;
+		winner.gravity = 2.5;
 		winner.forced = true;
 		setTimeout(() => {
 			this.resetAfterWin();
