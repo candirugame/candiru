@@ -14,6 +14,7 @@ const hitPosition = new THREE.Vector3(-.8, -1, 3);
 const hitQuaternion = new THREE.Quaternion(0.9142, -0.0720, 0.3975, -0.0313);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0.3827, -0.9239);
 const scopedQuaternion = new THREE.Quaternion(0, 0, 0.8870, -0.4617);
+const windBackQuaternion = new THREE.Quaternion(0.1367, 0.0754, -0.8813, 0.4460);
 const hiddenPosition = new THREE.Vector3(0.85, -3.5, 3.2);
 
 export class Bat extends ItemBase {
@@ -135,21 +136,23 @@ export class Bat extends ItemBase {
 			}
 		}
 
-		if (Date.now() / 1000 - this.lastFired > .25) {
+		if (Date.now() / 1000 - this.lastFired > .50) {
 			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
 			moveTowardsRot(this.object.quaternion, scopedQuaternion, 0.1 * deltaTime * 60);
+		} else if (Date.now() / 1000 - this.lastFired < .10) {
+			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
+			moveTowardsRot(this.object.quaternion, windBackQuaternion, 0.1 * deltaTime * 60);
 		} else {
 			moveTowardsPos(
 				this.handPosition,
 				hitPosition,
-				0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60,
+				Math.min(0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60, 1),
 			);
 			moveTowardsRot(
 				this.object.quaternion,
 				hitQuaternion,
-				0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60,
+				Math.min(0.4 * Math.pow(Date.now() / 1000 - this.lastFired, 2) * 60, 1),
 			);
-			console.log(0.04 * (Date.now() / 1000 - this.lastFired) * 60);
 		}
 
 		this.object.position.copy(this.handPosition);
@@ -158,22 +161,65 @@ export class Bat extends ItemBase {
 	}
 
 	private hitWithBat() {
-		const processShots = () => {
-			const shotVectors = this.renderer.getShotVectorsToPlayersInCrosshair(.5);
-			if (shotVectors.length > 0) {
-				for (const shot of shotVectors) {
-					const { playerID, hitPoint } = shot;
-					this.networking.applyDamage(playerID, 50);
-					this.renderer.playerHitMarkers.push({ hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1 });
+		const totalShots = 25;
+		let processedShots = 0;
+		const hitPlayers: number[] = [];
+		const TIMEOUT = 150;
+
+		const processShots = (deadline?: IdleDeadline) => {
+			const timeRemaining = deadline ? deadline.timeRemaining() : 16;
+
+			while (processedShots < totalShots && timeRemaining > 0) {
+				const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
+					(Math.random() - 0.5) * 1.30,
+					(Math.random() - 0.5) * 0.80,
+					.7,
+				);
+				if (shotVectors.length > 0) {
+					for (const shot of shotVectors) {
+						const { playerID, hitPoint } = shot;
+						if (!hitPlayers.includes(playerID)) {
+							hitPlayers.push(playerID);
+							this.networking.applyDamage(playerID, 34);
+							this.renderer.playerHitMarkers.push({
+								hitPoint: hitPoint,
+								shotVector: shot.vector,
+								timestamp: -1,
+							});
+						}
+					}
+					this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
 				}
-				this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+				processedShots++;
+			}
+
+			// If we still have shots to process, schedule the next batch
+			if (processedShots < totalShots) {
+				if (typeof requestIdleCallback === 'function') {
+					const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
+
+					// Ensure completion within timeout
+					setTimeout(() => {
+						cancelIdleCallback(idleCallbackId);
+						processShots();
+					}, TIMEOUT);
+				} else {
+					setTimeout(() => processShots(), 0);
+				}
 			}
 		};
 
+		// Initial call
 		if (typeof requestIdleCallback === 'function') {
-			requestIdleCallback(processShots, { timeout: 150 });
+			const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
+
+			// Ensure first batch starts within timeout
+			setTimeout(() => {
+				cancelIdleCallback(idleCallbackId);
+				processShots();
+			}, TIMEOUT);
 		} else {
-			setTimeout(processShots, 0);
+			setTimeout(() => processShots(), 0);
 		}
 	}
 

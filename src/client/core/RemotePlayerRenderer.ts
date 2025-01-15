@@ -452,6 +452,7 @@ export class RemotePlayerRenderer {
 	public getShotVectorsToPlayersWithOffset(
 		yawOffset: number,
 		pitchOffset: number,
+		maxDistance: number,
 	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
 		const shotVectors: { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] = [];
 		const offsetDirection = this.calculateOffsetDirection(yawOffset, pitchOffset);
@@ -470,6 +471,9 @@ export class RemotePlayerRenderer {
 			for (const wallIntersect of wallIntersects) {
 				if (wallIntersect.distance < playerIntersect.distance) {
 					return false; // A wall is blocking the player
+				}
+				if (playerIntersect.distance > maxDistance) {
+					return false;
 				}
 			}
 			return true; // No wall is blocking the player
