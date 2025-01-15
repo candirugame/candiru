@@ -9,6 +9,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 	private gameActive: boolean = true;
 	private resetTimestamp: number | null = null;
 	private isAnnouncingWin: boolean = false; // Flag to indicate win announcement
+	private winner: Player | null = null;
 
 	override init(): void {
 		super.init();
@@ -17,6 +18,8 @@ export class SoloCTFGamemode extends FFAGamemode {
 
 	override tick(): void {
 		super.tick();
+
+		if (this.isAnnouncingWin) this.doWinAnnouncement();
 
 		if (!this.gameActive) {
 			// Game is resetting, check if it's time to reset
@@ -264,12 +267,33 @@ export class SoloCTFGamemode extends FFAGamemode {
 	}
 
 	/**
-	 * Announces the winner to all players and updates their game messages.
+	 * Announces the winner to all players, sets spectators, and updates their game messages.
 	 */
 	private announceWin(winner: Player): void {
 		this.isAnnouncingWin = true; // Set the flag to indicate win announcement
+		this.winner = winner;
+		// Schedule to unset the win announcement flag after the respawn delay and reset the game
+		setTimeout(() => {
+			this.resetAfterWin();
+			this.isAnnouncingWin = false;
+			this.winner = null;
+		}, config.game.respawnDelay * 1000);
+	}
 
+	private doWinAnnouncement() {
+		const winner = this.winner;
+		if (!winner) return;
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
+			if (player.id !== winner.id) {
+				// Set player to spectate the winner
+				player.playerSpectating = winner.id;
+
+				// Clear the player's inventory
+				player.inventory = [];
+
+				// Optionally, you can also reset other player states if needed
+			}
+
 			if (player.id === winner.id) {
 				this.gameEngine.setGameMessage(player, `&ayou have won!`, 0, config.game.respawnDelay);
 				this.gameEngine.setGameMessage(player, ``, 1, config.game.respawnDelay);
@@ -284,11 +308,32 @@ export class SoloCTFGamemode extends FFAGamemode {
 			}
 		}
 		console.log(`🏆 ${winner.name} has won the Solo CTF game!`);
+	}
 
-		// Schedule to unset the win announcement flag after the respawn delay
-		setTimeout(() => {
-			this.isAnnouncingWin = false;
-		}, config.game.respawnDelay * 1000);
+	/**
+	 * Resets all players after a win: respawns them and clears their inventories.
+	 */
+	private resetAfterWin(): void {
+		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
+			// Respawn the player
+			this.gameEngine.playerManager.respawnPlayer(player);
+
+			// Clear the player's inventory
+			player.inventory = [];
+
+			// Remove spectate status
+			player.playerSpectating = -1;
+
+			// Clear direction indicators
+			player.directionIndicatorVector = undefined;
+
+			// Clear game messages
+			this.gameEngine.setGameMessage(player, '', 0);
+			this.gameEngine.setGameMessage(player, '', 1);
+		}
+
+		// Reset the game state
+		this.resetGame();
 	}
 
 	/**
@@ -301,14 +346,29 @@ export class SoloCTFGamemode extends FFAGamemode {
 			if (extras) {
 				extras.points = 0;
 				extras.lastPointIncrementTime = 0;
+				extras.kills = 0;
+				extras.deaths = 0;
+				extras.killStreak = 0;
 			}
+
 			// Remove flag from player's inventory if they have it
 			const flagIndex = player.inventory.indexOf(this.FLAG_ITEM_TYPE);
 			if (flagIndex !== -1) {
 				player.inventory.splice(flagIndex, 1);
 			}
+
 			// Clear direction indicators
 			player.directionIndicatorVector = undefined;
+
+			// Reset spectate status
+			player.playerSpectating = -1;
+
+			// Clear game messages
+			this.gameEngine.setGameMessage(player, '', 0);
+			this.gameEngine.setGameMessage(player, '', 1);
+
+			// Optionally, respawn the player to ensure they are back in the game
+			this.gameEngine.playerManager.respawnPlayer(player);
 		}
 
 		// Remove flag from the world if it exists
