@@ -24,6 +24,7 @@ export class Bat extends ItemBase {
 	private lastFired: number;
 	private addedToHandScene: boolean;
 
+	// deno-lint-ignore constructor-super
 	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
