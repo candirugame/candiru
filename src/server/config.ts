@@ -5,7 +5,7 @@ const defaults = {
 	SERVER_URL: 'https://example.com',
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
 	SERVER_TICK_RATE: '15',
-	SERVER_CLEANUP_INTERVAL: '2000',
+	SERVER_CLEANUP_INTERVAL: '1000',
 
 	// Player settings
 	PLAYER_DISCONNECT_TIME: '8',
@@ -16,10 +16,12 @@ const defaults = {
 	//Game settings
 	GAME_MODE: 'ffa',
 	GAME_MAX_PLAYERS: '20',
+	RESPAWN_DELAY: '10',
+	POINTS_TO_WIN: '100',
 
 	// Health settings
-	HEALTH_REGEN_DELAY: '5',
-	HEALTH_REGEN_RATE: '3',
+	HEALTH_REGEN_DELAY: '6',
+	HEALTH_REGEN_RATE: '5',
 
 	//Item settings
 	MAX_ITEMS_IN_WORLD: '7',
@@ -69,6 +71,8 @@ function parseConfig(env: Record<string, string>) {
 		game: {
 			mode: env.GAME_MODE,
 			maxPlayers: parseInt(env.GAME_MAX_PLAYERS),
+			respawnDelay: parseInt(env.RESPAWN_DELAY),
+			pointsToWin: parseInt(env.POINTS_TO_WIN),
 		},
 		player: {
 			disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),

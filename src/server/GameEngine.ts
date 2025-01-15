@@ -10,6 +10,7 @@ import { FFAGamemode } from './gamemodes/FFAGamemode.ts';
 import { CustomServer } from '../shared/messages.ts';
 import { Player } from '../shared/Player.ts';
 import * as THREE from 'three';
+import { SoloCTFGamemode } from './gamemodes/SoloCTFGamemode.ts';
 
 export class GameEngine {
 	private lastPlayerTickTimestamp: number = Date.now() / 1000;
@@ -21,7 +22,7 @@ export class GameEngine {
 
 	constructor(
 		public playerManager: PlayerManager,
-		private itemManager: ItemManager,
+		public itemManager: ItemManager,
 		public chatManager: ChatManager,
 		private damageSystem: DamageSystem,
 		private io: CustomServer,
@@ -144,12 +145,15 @@ export class GameEngine {
 				case 'ffa':
 					this.gamemode = new FFAGamemode(this);
 					break;
+				case 'ctf':
+					this.gamemode = new SoloCTFGamemode(this);
+					break;
 				default:
 					console.log('⚠️ invalid gamemode supplied (check your config!)', config.game.mode);
 					break;
 			}
 		} catch (error) {
-			console.error('⚠ error initializing gamemode:', error);
+			console.error('⚠️ error initializing gamemode:', error);
 		}
 	}
 }

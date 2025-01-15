@@ -59,7 +59,6 @@ export class Game {
 		this.networking.updatePlayerData();
 		this.chatOverlay.onFrame();
 		this.inventoryManager.onFrame();
-		this.healthIndicator.onFrame();
 		this.renderer.onFrame(this.localPlayer);
 		if (this.networking.getServerInfo().mapName) {
 			this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');

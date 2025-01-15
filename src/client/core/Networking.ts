@@ -104,7 +104,9 @@ export class Networking {
 		});
 
 		this.socket.on('serverInfo', (data) => {
-			this.serverInfo = data;
+			this.serverInfo = {
+				...data,
+			};
 			this.onServerInfo();
 		});
 	}
@@ -176,6 +178,17 @@ export class Networking {
 				}
 				if (remotePlayer.health < this.localPlayer.health) this.damagedTimestamp = Date.now() / 1000;
 				this.localPlayer.health = remotePlayer.health;
+				this.localPlayer.highlightedVectors = remotePlayer.highlightedVectors.map(
+					(vec) => new THREE.Vector3(vec.x, vec.y, vec.z),
+				);
+				this.localPlayer.directionIndicatorVector = remotePlayer.directionIndicatorVector
+					? new THREE.Vector3(
+						remotePlayer.directionIndicatorVector.x,
+						remotePlayer.directionIndicatorVector.y,
+						remotePlayer.directionIndicatorVector.z,
+					)
+					: undefined;
+
 				this.localPlayer.idLastDamagedBy = remotePlayer.idLastDamagedBy;
 				this.localPlayer.inventory = remotePlayer.inventory;
 				this.localPlayer.playerSpectating = remotePlayer.playerSpectating;
@@ -186,6 +199,11 @@ export class Networking {
 			if (remotePlayer.chatActive) {
 				this.messagesBeingTyped.push(`${remotePlayer.name}: ${remotePlayer.chatMsg}`);
 			}
+		}
+		if (
+			this.getServerInfo().version && this.localPlayer.gameVersion !== this.getServerInfo().version
+		) {
+			this.localPlayer.gameMsgs = ['&c Your client may be outdated. Try refreshing the page.'];
 		}
 	}
 
