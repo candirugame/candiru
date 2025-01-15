@@ -159,7 +159,6 @@ export class Networking {
 
 	private processRemotePlayerData() {
 		this.messagesBeingTyped = [];
-		let foundLocalPlayer = false;
 		for (const remotePlayer of this.remotePlayers) {
 			if (remotePlayer.id === this.localPlayer.id) {
 				if (remotePlayer.forced) {
@@ -202,7 +201,7 @@ export class Networking {
 			}
 		}
 		if (
-			!foundLocalPlayer && this.getServerInfo().version && this.localPlayer.gameVersion !== this.getServerInfo().version
+			this.getServerInfo().version && this.localPlayer.gameVersion !== this.getServerInfo().version
 		) {
 			this.localPlayer.gameMsgs = ['&c Your client may be outdated. Try refreshing the page.'];
 		}
