@@ -117,6 +117,8 @@ export class SoloCTFGamemode extends FFAGamemode {
 			}
 		}
 
+		for (const player of players) player.doPhysics = true;
+
 		for (const player of players) {
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
 			if (!extras) continue;
@@ -274,11 +276,15 @@ export class SoloCTFGamemode extends FFAGamemode {
 		this.winner = winner;
 		this.gameEngine.serverInfo.skyColor = '#FFFFFF';
 		// Schedule to unset the win announcement flag after the respawn delay and reset the game
+		winner.doPhysics = false;
+		winner.gravity = 1.5;
+		winner.forced = true;
 		setTimeout(() => {
 			this.resetAfterWin();
 			this.isAnnouncingWin = false;
 			this.winner = null;
 		}, config.game.respawnDelay * 1000);
+		console.log(`🏆 ${winner.name} has won the Solo CTF game!`);
 	}
 
 	private doWinAnnouncement() {
@@ -308,7 +314,6 @@ export class SoloCTFGamemode extends FFAGamemode {
 				this.gameEngine.setGameMessage(player, ``, 1, config.game.respawnDelay);
 			}
 		}
-		console.log(`🏆 ${winner.name} has won the Solo CTF game!`);
 	}
 
 	/**
@@ -324,6 +329,9 @@ export class SoloCTFGamemode extends FFAGamemode {
 
 			// Remove spectate status
 			player.playerSpectating = -1;
+
+			//make player do physics again
+			player.doPhysics = true;
 
 			// Clear direction indicators
 			player.directionIndicatorVector = undefined;

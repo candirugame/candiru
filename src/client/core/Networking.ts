@@ -196,6 +196,7 @@ export class Networking {
 				this.localPlayer.playerSpectating = remotePlayer.playerSpectating;
 				this.localPlayer.gameMsgs = remotePlayer.gameMsgs;
 				this.localPlayer.gameMsgs2 = remotePlayer.gameMsgs2;
+				this.localPlayer.doPhysics = remotePlayer.doPhysics;
 				continue;
 			}
 			if (remotePlayer.chatActive) {

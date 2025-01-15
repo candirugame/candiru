@@ -65,6 +65,7 @@ export class DataValidator {
 		gameMsgs2: z.array(z.string()),
 		directionIndicatorVector: this.vector3Schema.nullable().optional(),
 		highlightedVectors: z.array(this.vector3Schema),
+		doPhysics: z.boolean(),
 	}).strict().transform((data) => Player.fromObject(data as Player));
 
 	static chatMsgSchema = z.object({
