@@ -17,15 +17,16 @@ export class FFAGamemode extends Gamemode {
 	tick(): void {
 		const currentTime = Date.now() / 1000;
 		for (const [player, timestamp] of this.spectateTimeouts) {
-			if (currentTime - timestamp > 10) {
+			if (currentTime - timestamp > config.game.respawnDelay) {
 				this.gameEngine.playerManager.respawnPlayer(player);
 				player.playerSpectating = -1;
 				this.spectateTimeouts.delete(player);
 				this.gameEngine.setGameMessage(player, '', 0);
+				this.gameEngine.setGameMessage(player, '', 1);
 			} else {
 				this.gameEngine.setGameMessage(
 					player,
-					'&crespawn in ' + Math.floor(10 + timestamp - currentTime) + ' seconds',
+					'&crespawn in ' + Math.floor(config.game.respawnDelay + timestamp - currentTime) + ' seconds',
 					1,
 					0.5,
 				);
@@ -38,7 +39,12 @@ export class FFAGamemode extends Gamemode {
 		// send kill death stats to all players
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
-			if (extras) player.gameMsgs2 = ['&7' + extras.kills + ' kills, ' + extras.deaths + ' deaths'];
+			if (extras) {
+				let colorPrefix = '&6';
+				if (extras.kills > extras.deaths) colorPrefix = '&a';
+				if (extras.kills < extras.deaths) colorPrefix = '&c';
+				player.gameMsgs2 = [colorPrefix + extras.kills + ' kills, ' + extras.deaths + ' deaths'];
+			}
 		}
 	}
 
@@ -65,7 +71,7 @@ export class FFAGamemode extends Gamemode {
 				for (const otherPlayer of this.gameEngine.playerManager.getAllPlayers()) {
 					if (otherPlayer.playerSpectating === player.id) {
 						otherPlayer.playerSpectating = killer.id;
-						this.gameEngine.setGameMessage(otherPlayer, '&cspectating ' + killer.name, 0, 10);
+						this.gameEngine.setGameMessage(otherPlayer, '&cspectating ' + killer.name, 0, config.game.respawnDelay);
 					}
 				}
 
@@ -74,8 +80,8 @@ export class FFAGamemode extends Gamemode {
 				player.health = config.player.maxHealth;
 				this.gameEngine.playerManager.dropAllItems(player);
 
-				this.gameEngine.setGameMessage(player, '&cspectating ' + killer.name, 0, 10);
-				this.gameEngine.setGameMessage(player, '&crespawn in 10 seconds', 1, 2);
+				this.gameEngine.setGameMessage(player, '&cspectating ' + killer.name, 0, config.game.respawnDelay);
+				this.gameEngine.setGameMessage(player, `&crespawn in ${config.game.respawnDelay} seconds`, 1, 2);
 				this.gameEngine.setGameMessage(killer, '&akilled ' + player.name, 0, 5);
 
 				// Add the dead player to the spectate timeout list
