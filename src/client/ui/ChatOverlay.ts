@@ -5,6 +5,7 @@ import { CommandManager } from '../core/CommandManager.ts';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
 import { Player } from '../../shared/Player.ts';
+import * as THREE from 'three';
 
 interface ChatMessage {
 	id: number;
@@ -172,7 +173,10 @@ export class ChatOverlay {
 
 		this.clearOldMessages();
 		this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+
 		this.renderHitMarkers();
+		this.renderSparkles();
+
 		this.renderChatMessages();
 		this.renderGameText();
 		this.renderDebugText();
@@ -420,6 +424,7 @@ export class ChatOverlay {
 		//linesToRender.push('tickRate: ' + this.networking.getServerInfo().tickRate);
 		//linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
 		//linesToRender.push('health: ' + this.localPlayer.health);
+		//linesToRender.push('pos:' +this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +this.localPlayer.position.z.toFixed(2),);
 
 		for (const msg of this.localPlayer.gameMsgs2) {
 			linesToRender.push(msg);
@@ -703,12 +708,114 @@ export class ChatOverlay {
 		this.joystickInputY = y;
 	}
 
-	public renderHitMarkers() {
-		const numDots = 10; // Number of dots to render around each hit point
+	private getProjected3D(vec3: THREE.Vector3): { x: number; y: number } {
+		const projected = vec3.clone().project(this.renderer.getCamera());
+		return {
+			x: Math.round((projected.x + 1) * this.screenWidth / 2),
+			y: Math.round((-projected.y + 1) * 200 / 2),
+		};
+	}
 
+	private getSize(distance: number): number {
+		// Convert world distance to a screen-space scaling factor
+		// This helps match the scaling of the underlying 3D scene
+		const fov = this.renderer.getCamera().fov; // in degrees
+		const fovRadians = (fov * Math.PI) / 180;
+
+		// Calculate apparent size based on FOV and distance
+		// This gives us a size that matches the perspective of the 3D scene
+		const size = Math.tan(fovRadians / 2) / distance;
+
+		// Scale factor to make the size reasonable for screen space
+		// Adjust this based on your desired base size
+		const scaleFactor = 9;
+
+		return size * scaleFactor;
+	}
+
+	private sparkleParticles: {
+		basePos: THREE.Vector3;
+		offset: THREE.Vector3;
+		speed: number;
+		phase: number;
+		radius: number;
+	}[] = [];
+
+	private readonly SPARKLE_COUNT = 6;
+	private readonly SPARKLE_RADIUS = 0.5; // World units instead of screen pixels
+
+	public renderSparkles() {
+		const positions = this.localPlayer.highlightedVectors.slice(0);
+		//const positions = [new THREE.Vector3(0, 3 + Math.sin(Date.now() / 1000), 0)];
+
+		// Initialize or update sparkle particles
+		while (this.sparkleParticles.length < positions.length * this.SPARKLE_COUNT) {
+			this.sparkleParticles.push({
+				basePos: new THREE.Vector3(),
+				offset: new THREE.Vector3(
+					Math.random() * 2 - 1,
+					Math.random() * 2 - 1,
+					Math.random() * 2 - 1,
+				).normalize(),
+				speed: 0.5 + Math.random() * 1.5,
+				phase: Math.random() * Math.PI * 2,
+				radius: this.SPARKLE_RADIUS * (0.5 + Math.random() * 0.5),
+			});
+		}
+
+		// Remove excess particles
+		while (this.sparkleParticles.length > positions.length * this.SPARKLE_COUNT) {
+			this.sparkleParticles.pop();
+		}
+
+		const ctx = this.chatCtx;
+		ctx.fillStyle = 'rgba(46,163,46,0.8)';
+		const time = Date.now() / 1000;
+
+		// Update and render each sparkle
+		for (let i = 0; i < positions.length; i++) {
+			const basePos = positions[i];
+
+			// Update and draw sparkles for this position
+			for (let j = 0; j < this.SPARKLE_COUNT; j++) {
+				const particle = this.sparkleParticles[i * this.SPARKLE_COUNT + j];
+				particle.basePos.copy(basePos);
+
+				// Calculate 3D orbital motion
+				const angle = particle.phase + time * particle.speed;
+				const wobble = Math.sin(time * 3 + particle.phase) * 0.3;
+
+				// Create orbital motion around the base position
+				const orbitPos = new THREE.Vector3().copy(particle.offset)
+					.multiplyScalar(particle.radius * (1 + wobble))
+					.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle)
+					.add(particle.basePos);
+
+				// Project to screen space
+				const projected = this.getProjected3D(orbitPos);
+
+				// Skip if behind camera
+				if (orbitPos.clone().project(this.renderer.getCamera()).z >= 1) continue;
+
+				// Calculate size based on distance to camera
+				const distance = orbitPos.distanceTo(this.renderer.getCamera().position);
+				const size = Math.max(1, Math.min(3, this.getSize(distance) * 0.5));
+
+				// Draw particle
+				ctx.fillRect(
+					Math.round(projected.x - size / 2),
+					Math.round(projected.y - size / 2),
+					Math.ceil(size),
+					Math.ceil(size),
+				);
+			}
+		}
+	}
+
+	public renderHitMarkers() {
 		for (let i = this.renderer.playerHitMarkers.length - 1; i >= 0; i--) {
 			if (this.renderer.playerHitMarkers[i].timestamp === -1) {
-				this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000; // Set timestamp if not set
+				this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000;
 			}
 
 			const timeSinceHit = Date.now() / 1000 - this.renderer.playerHitMarkers[i].timestamp;
@@ -720,24 +827,26 @@ export class ChatOverlay {
 			}
 
 			const hitVec = this.renderer.playerHitMarkers[i].hitPoint;
-			const projected = hitVec.clone().project(this.renderer.getCamera());
-			const projectedX = Math.round((projected.x + 1) * this.screenWidth / 2);
-			const projectedY = Math.round((-projected.y + 1) * 200 / 2);
+			const projected = this.getProjected3D(hitVec);
 
-			if (projected.z < 1) {
+			if (hitVec.clone().project(this.renderer.getCamera()).z < 1) {
 				this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
 
-				// Calculate sizeMultiplier
-				const sizeMultiplier = 1 + 2 / this.renderer.playerHitMarkers[i].shotVector.length();
+				const sizeMultiplier = this.getSize(this.renderer.playerHitMarkers[i].shotVector.length());
+				const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier;
+				const numDots = Math.min(Math.max(sizeMultiplier * 5, 3), 15);
 
-				// Calculate and render dots
-				const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier; // Radius of the circle in which dots are placed
 				for (let j = 0; j < numDots; j++) {
 					const angle = (Math.PI * 2 / numDots) * j;
-					const dotX = Math.round(projectedX + radius * Math.cos(angle));
-					const dotY = Math.round(projectedY + radius * Math.sin(angle));
-
-					this.chatCtx.fillRect(dotX, dotY, 1, 1); // Render a 1px by 1px dot
+					const dotX = Math.round(projected.x + radius * Math.cos(angle));
+					const dotY = Math.round(projected.y + radius * Math.sin(angle));
+					const dotSize = Math.min(Math.max(Math.round(sizeMultiplier / 3), 1), 6);
+					this.chatCtx.fillRect(
+						Math.floor(dotX - dotSize / 2),
+						Math.floor(dotY - dotSize / 2),
+						Math.ceil(dotSize),
+						Math.ceil(dotSize),
+					);
 				}
 			}
 		}

@@ -5,6 +5,7 @@ import { ItemBase, ItemType } from '../items/ItemBase.ts';
 import { BananaGun } from '../items/BananaGun.ts';
 import { FishGun } from '../items/FishGun.ts';
 import { Bat } from '../items/Bat.ts';
+import { FlagItem } from '../items/FlagItem.ts';
 
 // Custom types
 type Vector3Data = {
@@ -92,8 +93,11 @@ export class RemoteItemRenderer {
 				return new FishGun(this.renderer, this.networking, 0, ItemType.WorldItem);
 			case 3:
 				return new Bat(this.renderer, this.networking, 0, ItemType.WorldItem);
+			case 4:
+				return new FlagItem(this.renderer, 0, ItemType.WorldItem);
 			default:
 				// Return a generic item
+				console.log('Unknown item type:', itemType);
 				return new ItemBase(
 					ItemType.WorldItem,
 					this.renderer.getEntityScene(),

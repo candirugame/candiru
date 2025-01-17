@@ -61,7 +61,7 @@ export class CollisionManager {
 		this.prevPosition.copy(localPlayer.position);
 		const jump: boolean = this.inputHandler.jump;
 
-		localPlayer.gravity += deltaTime * -30;
+		if (localPlayer.doPhysics) localPlayer.gravity += deltaTime * -30;
 		localPlayer.inputVelocity.y += localPlayer.gravity;
 		localPlayer.inputVelocity.y = (localPlayer.inputVelocity.y + this.inputHandler.prevInputVelocity.y) * .25;
 		localPlayer.position.add(localPlayer.inputVelocity.clone().multiplyScalar(deltaTime));
@@ -73,45 +73,47 @@ export class CollisionManager {
 
 		this.collided = false;
 
-		bvh.shapecast({
-			intersectsBounds: (box: THREE.Box3) => {
-				return box.intersectsSphere(this.colliderSphere);
-			},
+		if (localPlayer.doPhysics) {
+			bvh.shapecast({
+				intersectsBounds: (box: THREE.Box3) => {
+					return box.intersectsSphere(this.colliderSphere);
+				},
 
-			intersectsTriangle: (tri: THREE.Triangle) => {
-				// Get delta between the closest point and center
-				tri.closestPointToPoint(this.colliderSphere.center, this.deltaVec);
-				this.deltaVec.sub(this.colliderSphere.center);
-				const distance: number = this.deltaVec.length();
+				intersectsTriangle: (tri: THREE.Triangle) => {
+					// Get delta between the closest point and center
+					tri.closestPointToPoint(this.colliderSphere.center, this.deltaVec);
+					this.deltaVec.sub(this.colliderSphere.center);
+					const distance: number = this.deltaVec.length();
 
-				if (distance < this.colliderSphere.radius) {
-					// Move the sphere position to be outside the triangle
-					const radius: number = this.colliderSphere.radius;
-					const depth: number = distance - radius;
-					this.deltaVec.multiplyScalar(1 / distance);
+					if (distance < this.colliderSphere.radius) {
+						// Move the sphere position to be outside the triangle
+						const radius: number = this.colliderSphere.radius;
+						const depth: number = distance - radius;
+						this.deltaVec.multiplyScalar(1 / distance);
 
-					tri.getNormal(this.triNormal);
-					const angle: number = this.triNormal.dot(this.upVector);
+						tri.getNormal(this.triNormal);
+						const angle: number = this.triNormal.dot(this.upVector);
 
-					if (angle >= CollisionManager.maxAngle) {
-						localPlayer.position.addScaledVector(this.deltaVec, depth);
-						localPlayer.inputVelocity.y = 0;
-						localPlayer.gravity = 0;
-						this.coyoteTime = 0;
-						this.collided = true;
-					} else {
-						localPlayer.position.addScaledVector(this.deltaVec, depth);
+						if (angle >= CollisionManager.maxAngle) {
+							localPlayer.position.addScaledVector(this.deltaVec, depth);
+							localPlayer.inputVelocity.y = 0;
+							localPlayer.gravity = 0;
+							this.coyoteTime = 0;
+							this.collided = true;
+						} else {
+							localPlayer.position.addScaledVector(this.deltaVec, depth);
+						}
 					}
-				}
 
-				this.colliderSphere.center = localPlayer.position.clone();
-				return false;
-			},
+					this.colliderSphere.center = localPlayer.position.clone();
+					return false;
+				},
 
-			boundsTraverseOrder: (box: THREE.Box3) => {
-				return box.distanceToPoint(this.colliderSphere.center) - this.colliderSphere.radius;
-			},
-		});
+				boundsTraverseOrder: (box: THREE.Box3) => {
+					return box.distanceToPoint(this.colliderSphere.center) - this.colliderSphere.radius;
+				},
+			});
+		}
 
 		if (!this.collided) {
 			this.coyoteTime += deltaTime;
