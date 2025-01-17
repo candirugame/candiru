@@ -20,6 +20,7 @@ export class SettingsManager {
 			crosshairType: 1,
 			viewBobbingStrength: 1,
 			doPrettyText: false,
+			developerMode: false,
 		};
 	}
 
@@ -36,4 +37,5 @@ interface Settings {
 	crosshairType: number;
 	viewBobbingStrength: number;
 	doPrettyText: boolean;
+	developerMode: boolean;
 }

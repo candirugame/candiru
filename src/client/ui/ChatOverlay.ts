@@ -407,36 +407,47 @@ export class ChatOverlay {
 		const framerate = this.renderer.getFramerate();
 
 		if (this.localPlayer.latency >= 999) {
-			linesToRender.push('disconnected :(');
+			linesToRender.push('&cdisconnected :(');
 		}
-
-		//const playerX = Math.round(this.localPlayer.position.x);
-
 		linesToRender.push(
 			'candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' +
 				Math.round(this.localPlayer.latency) + 'ms',
 		);
-		//linesToRender.push('connected to: ' + this.networking.getServerInfo().name);
-		//linesToRender.push('players: ' + this.networking.getServerInfo().currentPlayers + '/' + this.networking.getServerInfo().maxPlayers);
-		//linesToRender.push('map: ' + this.networking.getServerInfo().mapName);
-		//linesToRender.push('mode: ' + this.networking.getServerInfo().gameMode);
-		//linesToRender.push('serverVersion: ' + this.networking.getServerInfo().version);
-		//linesToRender.push('tickRate: ' + this.networking.getServerInfo().tickRate);
-		//linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
-		//linesToRender.push('health: ' + this.localPlayer.health);
-		//linesToRender.push('pos:' +this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +this.localPlayer.position.z.toFixed(2),);
-		const tickTimeMs = this.networking.getServerInfo().tickComputeTime * 1000;
-		const cleanupTimeMs = this.networking.getServerInfo().cleanupComputeTime * 1000;
-		const tickSpeedMs = 1 / this.networking.getServerInfo().tickRate * 1000;
-		const tickTimePercent = (tickTimeMs / tickSpeedMs) * 100;
 
-		linesToRender.push('tickTime: ' + tickTimeMs.toFixed(2) + 'ms (' + tickTimePercent.toFixed(2) + '%)');
-		linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
+		//const playerX = Math.round(this.localPlayer.position.x);
+		if (SettingsManager.settings.developerMode) {
+			linesToRender.push(
+				this.networking.getServerInfo().name + ' (' + this.networking.getServerInfo().currentPlayers + '/' +
+					this.networking.getServerInfo().maxPlayers + ')',
+			);
+			linesToRender.push(
+				'map: ' + this.networking.getServerInfo().mapName + ', mode: ' + this.networking.getServerInfo().gameMode +
+					', v' +
+					this.networking.getServerInfo().version,
+			);
+
+			linesToRender.push('tps: ' + this.networking.getServerInfo().tickRate);
+			linesToRender.push('maxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
+			linesToRender.push('health: ' + this.localPlayer.health);
+			linesToRender.push(
+				'pos:' + this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +
+					this.localPlayer.position.z.toFixed(2),
+			);
+			const tickTimeMs = this.networking.getServerInfo().tickComputeTime * 1000;
+			const cleanupTimeMs = this.networking.getServerInfo().cleanupComputeTime * 1000;
+			const tickSpeedMs = 1 / this.networking.getServerInfo().tickRate * 1000;
+			const tickTimePercent = (tickTimeMs / tickSpeedMs) * 100;
+
+			linesToRender.push(
+				'tickTime: ' + tickTimeMs.toFixed(2) + '/' + tickSpeedMs.toFixed(2) + 'ms (' + tickTimePercent.toFixed(2) +
+					'%)',
+			);
+			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
+		}
+
 		for (const msg of this.localPlayer.gameMsgs2) {
 			linesToRender.push(msg);
 		}
-
-		//linesToRender.push('routineTime: ' + this.lastRoutineMs + 'ms');
 
 		for (let i = 0; i < linesToRender.length; i++) {
 			this.renderPixelText(linesToRender[i], 2, 7 + 7 * i, 'teal');
