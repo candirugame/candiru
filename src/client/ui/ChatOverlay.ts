@@ -425,10 +425,13 @@ export class ChatOverlay {
 		//linesToRender.push('playerMaxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
 		//linesToRender.push('health: ' + this.localPlayer.health);
 		//linesToRender.push('pos:' +this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +this.localPlayer.position.z.toFixed(2),);
+		const tickTimeMs = this.networking.getServerInfo().tickComputeTime * 1000;
+		const cleanupTimeMs = this.networking.getServerInfo().cleanupComputeTime * 1000;
+		const tickSpeedMs = 1 / this.networking.getServerInfo().tickRate * 1000;
+		const tickTimePercent = (tickTimeMs / tickSpeedMs) * 100;
 
-		linesToRender.push('tickTime: ' + (this.networking.getServerInfo().tickComputeTime * 1000).toFixed(2) + 'ms');
-		linesToRender.push('cleanupTime: ' + (this.networking.getServerInfo().cleanupComputeTime * 1000).toFixed(2) + 'ms');
-
+		linesToRender.push('tickTime: ' + tickTimeMs.toFixed(2) + 'ms (' + tickTimePercent.toFixed(2) + '%)');
+		linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
 		for (const msg of this.localPlayer.gameMsgs2) {
 			linesToRender.push(msg);
 		}
