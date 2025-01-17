@@ -426,6 +426,9 @@ export class ChatOverlay {
 		//linesToRender.push('health: ' + this.localPlayer.health);
 		//linesToRender.push('pos:' +this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +this.localPlayer.position.z.toFixed(2),);
 
+		linesToRender.push('tickTime: ' + (this.networking.getServerInfo().tickComputeTime * 1000).toFixed(2) + 'ms');
+		linesToRender.push('cleanupTime: ' + (this.networking.getServerInfo().cleanupComputeTime * 1000).toFixed(2) + 'ms');
+
 		for (const msg of this.localPlayer.gameMsgs2) {
 			linesToRender.push(msg);
 		}
