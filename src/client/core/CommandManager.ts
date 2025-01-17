@@ -113,6 +113,7 @@ export class CommandManager {
 			new Command('prettyText', (args: string[]): string => {
 				if (args[1] == null) {
 					SettingsManager.settings.doPrettyText = !SettingsManager.settings.doPrettyText;
+					SettingsManager.write();
 					return 'toggled prettyText to ' + SettingsManager.settings.doPrettyText;
 				}
 				if (args[1] == 'true') SettingsManager.settings.doPrettyText = true;
@@ -127,6 +128,7 @@ export class CommandManager {
 			new Command('debug', (args: string[]): string => {
 				if (args[1] == null) {
 					SettingsManager.settings.developerMode = !SettingsManager.settings.developerMode;
+					SettingsManager.write();
 					return 'toggled developer mode to ' + SettingsManager.settings.developerMode;
 				}
 				if (args[1] == 'true') SettingsManager.settings.developerMode = true;
