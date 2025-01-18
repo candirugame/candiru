@@ -22,6 +22,11 @@ export class HealthIndicator extends IndicatorBase {
 		super(parentRenderer, localPlayer, networking);
 	}
 
+	private getCurrentHealth(): number {
+		const spectatedPlayer = this.networking.getSpectatedPlayer();
+		return spectatedPlayer ? spectatedPlayer.health : this.localPlayer.health;
+	}
+
 	public init() {
 		this.loadModel('models/simplified_possum.glb')
 			.then((model) => {
@@ -45,10 +50,11 @@ export class HealthIndicator extends IndicatorBase {
 			this.sceneAdded = true;
 		}
 
+		const currentHealth = this.getCurrentHealth();
 		let maxHealth = this.networking.getServerInfo().playerMaxHealth;
 		if (maxHealth === 0) maxHealth = 0.001;
 
-		const scaredLevel = 1 - Math.pow(this.localPlayer.health / maxHealth, 1); // 0-1
+		const scaredLevel = 1 - Math.pow(currentHealth / maxHealth, 1); // 0-1
 
 		this.parentRenderer.scaredLevel = scaredLevel;
 
@@ -62,7 +68,7 @@ export class HealthIndicator extends IndicatorBase {
 		this.rotateAroundWorldAxis(
 			this.targetQuaternion,
 			new THREE.Vector3(0, 0, 1),
-			Math.PI - (this.localPlayer.health * Math.PI) / maxHealth,
+			Math.PI - (currentHealth * Math.PI) / maxHealth,
 		);
 
 		this.rotatedAngle += (4 * deltaTime) / Math.max(0.001, (1 - scaredLevel) * 3);
@@ -73,7 +79,7 @@ export class HealthIndicator extends IndicatorBase {
 
 		let targetRGBI: number[];
 
-		if (!this.lastHealthChangeWasDamage && this.localPlayer.health < maxHealth && this.rotatedAngle % 2 > 1) {
+		if (!this.lastHealthChangeWasDamage && currentHealth < maxHealth && this.rotatedAngle % 2 > 1) {
 			targetRGBI = [125, 255, 125, 1.2];
 		} else {
 			targetRGBI = [255, 255, 255, 0.5];
@@ -85,12 +91,12 @@ export class HealthIndicator extends IndicatorBase {
 		this.ambientLight.intensity = this.lightRGBI[3];
 		this.ambientLight.color = new THREE.Color(this.rgbToHex(this.lightRGBI[0], this.lightRGBI[1], this.lightRGBI[2]));
 
-		if (this.lastHealth < this.localPlayer.health) {
+		if (this.lastHealth < currentHealth) {
 			this.lastHealthChangeWasDamage = false;
-		} else if (this.lastHealth > this.localPlayer.health) {
+		} else if (this.lastHealth > currentHealth) {
 			this.lastHealthChangeWasDamage = true;
 		}
-		this.lastHealth = this.localPlayer.health;
+		this.lastHealth = currentHealth;
 	}
 
 	protected setupScissorAndViewport(): void {
@@ -117,12 +123,6 @@ export class HealthIndicator extends IndicatorBase {
 			healthIndicatorHeight * this.parentRenderer.getScreenPixelsInGamePixel(),
 		);
 	}
-
-	/**
-	 * Override the applyDepthTest method to avoid naming conflicts.
-	 * Applies depth testing adjustments to the mesh.
-	 * @param mesh The mesh to modify.
-	 */
 }
 
 const basePosition = new THREE.Vector3(0, 0, 1.2);
