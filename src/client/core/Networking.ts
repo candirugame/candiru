@@ -163,6 +163,11 @@ export class Networking {
 		return this.serverInfo;
 	}
 
+	public getSpectatedPlayer(): PlayerData | undefined {
+		if (this.localPlayer.playerSpectating === -1) return undefined;
+		return this.remotePlayers.find((player) => player.id === this.localPlayer.playerSpectating);
+	}
+
 	private processRemotePlayerData() {
 		this.messagesBeingTyped = [];
 		for (const remotePlayer of this.remotePlayers) {
@@ -256,6 +261,7 @@ export class Networking {
 	}
 
 	public applyDamage(id: number, damage: number) {
+		if (this.localPlayer.playerSpectating !== -1) return;
 		const player2 = this.remotePlayers.find((player) => player.id === id)!;
 		const damageRequest = {
 			localPlayer: this.localPlayer,

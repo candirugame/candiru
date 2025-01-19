@@ -49,6 +49,11 @@ export class DamageSystem {
 			return;
 		}
 
+		if (localPlayer.playerSpectating !== -1) {
+			console.log('⚠️Player is spectating, cannot apply damage');
+			return;
+		}
+
 		// Apply damage
 		targetPlayer.health -= data.damage / targetPlayer.protection;
 		targetPlayer.lastDamageTime = Date.now() / 1000;
