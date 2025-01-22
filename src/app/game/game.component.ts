@@ -1,5 +1,4 @@
-// game.component.ts
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 import { Game } from '../../client/core/Game.ts';
 
 @Component({
@@ -10,14 +9,17 @@ import { Game } from '../../client/core/Game.ts';
 export class GameComponent implements AfterViewInit {
 	@ViewChild('rendererContainer')
 	rendererContainer!: ElementRef;
+	@Output()
+	pointerLockChange = new EventEmitter<boolean>();
 	private game?: Game;
 
 	ngAfterViewInit() {
 		this.game = new Game(this.rendererContainer.nativeElement);
 		this.game.start();
-	}
 
-	ngOnDestroy() {
-		// Add cleanup if needed
+		// Listen to pointer lock changes
+		document.addEventListener('pointerlockchange', () => {
+			this.pointerLockChange.emit(document.pointerLockElement === document.body);
+		});
 	}
 }

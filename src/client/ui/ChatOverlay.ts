@@ -120,7 +120,7 @@ export class ChatOverlay {
 
 		this.chatCanvas.style.position = 'absolute';
 		this.chatCanvas.style.display = 'block';
-		this.chatCanvas.style.zIndex = '100';
+		this.chatCanvas.style.zIndex = '40';
 		this.chatCanvas.style.top = '0';
 		this.chatCanvas.style.left = '0';
 
