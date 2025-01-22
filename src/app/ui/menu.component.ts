@@ -10,13 +10,17 @@ import { BrowseComponent } from './browse.component.ts';
 	template: `
 		<div *ngIf="visible" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50"
 			 (click)="onBackdropClick($event)">
-			<div class="absolute top-4 left-4 bg-gray-800/90 p-4 w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
+			<div class="absolute top-4 left-4 bg-gray-800/90 p-4 max-h-[calc(100vh-2rem)] overflow-y-auto"
+				 [class.w-64]="activePage !== 'settings'"
+				 [class.w-80]="activePage === 'settings'"
 				 style="z-index: 60;"
 				 (click)="$event.stopPropagation()">
 				<div *ngIf="activePage === 'main'">
-					<button class="btn-menu" (click)="navigate('play')">play</button>
-					<button class="btn-menu" (click)="navigate('settings')">settings</button>
-					<button class="btn-menu" (click)="navigate('browse')">possum net</button>
+					<h2 class="text-xl text-gray-100 mb-4">candiru</h2>
+
+					<button class="btn-menu" (click)="navigate('play')">play</button><br>
+					<button class="btn-menu" (click)="navigate('settings')">settings</button><br>
+					<button class="btn-menu" (click)="navigate('browse')">servers</button><br>
 				</div>
 
 				<app-settings *ngIf="activePage === 'settings'"
@@ -36,8 +40,8 @@ import { BrowseComponent } from './browse.component.ts';
 			@apply overflow-hidden;
 		}
 		.btn-menu {
-			@apply w-full text-left px-4 py-2 text-gray-100 hover:bg-gray-700/50 transition-colors mb-2;
-			border-radius: 0;
+			@apply text-left px-2 py-1 text-gray-100 hover:bg-gray-700/50 transition-colors mb-2 rounded-none;
+
 		}
 	`],
 })
