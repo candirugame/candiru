@@ -8,27 +8,38 @@ import { BrowseComponent } from './browse.component.ts';
 	standalone: true,
 	imports: [CommonModule, SettingsComponent, BrowseComponent],
 	template: `
-        <div *ngIf="visible" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50"
-             (click)="onBackdropClick($event)">
-            <div class="absolute top-4 left-4 bg-gray-800/90 p-4 rounded-lg shadow-xl w-64"
-                 style="z-index: 60;"
-                 (click)="$event.stopPropagation()">
-        <div *ngIf="activePage === 'main'">
-          <button class="btn-menu" (click)="navigate('play')">Play</button>
-          <button class="btn-menu" (click)="navigate('settings')">Settings</button>
-          <button class="btn-menu" (click)="navigate('browse')">Browse</button>
-        </div>
+		<div *ngIf="visible" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50"
+			 (click)="onBackdropClick($event)">
+			<div class="absolute top-4 left-4 bg-gray-800/90 p-4 w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
+				 style="z-index: 60;"
+				 (click)="$event.stopPropagation()">
+				<div *ngIf="activePage === 'main'">
+					<button class="btn-menu" (click)="navigate('play')">play</button>
+					<button class="btn-menu" (click)="navigate('settings')">settings</button>
+					<button class="btn-menu" (click)="navigate('browse')">possum net</button>
+				</div>
 
-        <app-settings *ngIf="activePage === 'settings'" (back)="activePage = 'main'"></app-settings>
-        <app-browse *ngIf="activePage === 'browse'" (back)="activePage = 'main'"></app-browse>
-      </div>
-    </div>
-  `,
+				<app-settings *ngIf="activePage === 'settings'"
+							  class="h-full overflow-y-auto"
+							  (back)="activePage = 'main'"></app-settings>
+				<app-browse *ngIf="activePage === 'browse'"
+							class="h-full overflow-y-auto"
+							(back)="activePage = 'main'"></app-browse>
+			</div>
+		</div>
+	`,
 	styles: [`
-    .btn-menu {
-      @apply w-full text-left px-4 py-2 text-gray-100 hover:bg-gray-700/50 rounded-md transition-colors mb-2;
-    }
-  `],
+		:host {
+			@apply contents;
+		}
+		.fixed {
+			@apply overflow-hidden;
+		}
+		.btn-menu {
+			@apply w-full text-left px-4 py-2 text-gray-100 hover:bg-gray-700/50 transition-colors mb-2;
+			border-radius: 0;
+		}
+	`],
 })
 export class MenuComponent {
 	@Input()
@@ -47,6 +58,7 @@ export class MenuComponent {
 	navigate(page: 'settings' | 'browse' | 'play') {
 		if (page === 'play') {
 			this.close.emit();
+			document.body.requestPointerLock();
 			return;
 		}
 		this.activePage = page;

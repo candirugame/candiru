@@ -17,9 +17,11 @@ export class GameComponent implements AfterViewInit {
 		this.game = new Game(this.rendererContainer.nativeElement);
 		this.game.start();
 
-		// Listen to pointer lock changes
 		document.addEventListener('pointerlockchange', () => {
-			this.pointerLockChange.emit(document.pointerLockElement === document.body);
+			const isLocked = document.pointerLockElement === document.body;
+			this.pointerLockChange.emit(isLocked);
+
+			//document.body.requestPointerLock();
 		});
 	}
 }
