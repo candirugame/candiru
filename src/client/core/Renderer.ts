@@ -15,7 +15,7 @@ export class Renderer {
 	private deltaTime: number = 0;
 	private chatOverlay: ChatOverlay;
 	private scene: THREE.Scene;
-	private camera: THREE.PerspectiveCamera;
+	public camera: THREE.PerspectiveCamera;
 	private renderer: THREE.WebGLRenderer;
 	private heldItemScene: THREE.Scene;
 	private heldItemCamera: THREE.PerspectiveCamera;

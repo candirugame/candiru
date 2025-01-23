@@ -16,24 +16,24 @@ const unscopedQuaternion = new THREE.Quaternion(0, 0, 0, 0);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class BottleGun extends ItemBase {
-	private renderer!: Renderer;
-	private networking!: Networking;
+	private renderer: Renderer;
+	private networking: Networking;
 	private lastInput: HeldItemInput;
-	private lastFired: number;
-	private addedToHandScene: boolean;
+	private lastFired: number = 0;
+	private addedToHandScene: boolean = false;
+	private isZoomed: boolean = false;
+	private zoomFactor: number = 1;
+	private originalZoom: number;
 
-	// deno-lint-ignore constructor-super
 	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
-		if (itemType === ItemType.WorldItem) {
-			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
-		} else {
-			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
-		}
+		const scene = itemType === ItemType.WorldItem ? renderer.getEntityScene() : renderer.getHeldItemScene();
+
+		super(itemType, scene, renderer.getInventoryMenuScene(), index);
+
 		this.renderer = renderer;
 		this.networking = networking;
 		this.lastInput = new HeldItemInput();
-		this.addedToHandScene = false;
-		this.lastFired = 0;
+		this.originalZoom = renderer.getCamera().zoom;
 	}
 
 	public override init() {
@@ -129,18 +129,29 @@ export class BottleGun extends ItemBase {
 	}
 
 	private handleInput(input: HeldItemInput, deltaTime: number) {
+		const zoomSpeed = 0.2 * deltaTime * 60;
 		if (input.rightClick) {
-			// input handling to move to scoped position
+			if (!this.isZoomed) {
+				this.isZoomed = true;
+				// input handling to move to scoped position
+			}
 			moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
+			this.zoomFactor = THREE.MathUtils.lerp(this.zoomFactor, 10, zoomSpeed);
+			this.renderer.getCamera().zoom = this.originalZoom * this.zoomFactor;
+			this.renderer.getCamera().updateProjectionMatrix();
 		} else {
+			if (this.isZoomed) {
+				this.isZoomed = false;
+			}
 			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
-		}
-		if (input.leftClick) {
-			//poo
+
+			this.zoomFactor = THREE.MathUtils.lerp(this.zoomFactor, 1, zoomSpeed);
+			this.renderer.getCamera().zoom = this.originalZoom * this.zoomFactor;
+			this.renderer.getCamera().updateProjectionMatrix();
 		}
 
 		this.object.position.copy(this.handPosition);
-		//TODO: make if/else
+		//returns wep to original position
 		moveTowardsRot(this.object.quaternion, unscopedQuaternion, 0.1 * deltaTime * 60);
 
 		if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
