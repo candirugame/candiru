@@ -20,6 +20,8 @@ interface ServerInfo {
 	gameMode: string;
 	playerMaxHealth: number;
 	skyColor: string;
+	tickComputeTime: number;
+	cleanupComputeTime: number;
 }
 
 interface LastUploadedLocalPlayer {
@@ -70,6 +72,8 @@ export class Networking {
 			gameMode: '',
 			playerMaxHealth: 0,
 			skyColor: '#000000',
+			tickComputeTime: 0,
+			cleanupComputeTime: 0,
 		};
 
 		this.setupSocketListeners();
@@ -157,6 +161,11 @@ export class Networking {
 
 	public getServerInfo() {
 		return this.serverInfo;
+	}
+
+	public getSpectatedPlayer(): PlayerData | undefined {
+		if (this.localPlayer.playerSpectating === -1) return undefined;
+		return this.remotePlayers.find((player) => player.id === this.localPlayer.playerSpectating);
 	}
 
 	private processRemotePlayerData() {
@@ -252,6 +261,7 @@ export class Networking {
 	}
 
 	public applyDamage(id: number, damage: number) {
+		if (this.localPlayer.playerSpectating !== -1) return;
 		const player2 = this.remotePlayers.find((player) => player.id === id)!;
 		const damageRequest = {
 			localPlayer: this.localPlayer,
