@@ -11,7 +11,7 @@
 
 /* Menu button styles */
 .btn-menu {
-	@apply text-left px-2 py-1 text-gray-100 hover:bg-gray-700/50 transition-colors mb-2 rounded-none;
+	@apply text-left px-2 py-1 text-gray-100 bg-gray-700 hover:bg-gray-700/50 transition-colors mb-2 rounded-none;
 	font-family: Tiny5, serif;
 }
 
