@@ -10,10 +10,16 @@ import { CommonModule } from '@angular/common';
 			<h2 class="text-xl text-gray-100 mb-4">internet (for possum)</h2>
 			<div class="space-y-4 h-full">
 				<div class="server-item whitespace-nowrap overflow-hidden text-ellipsis">
-					possum world
+					FFA-0 (release)
+					<button class="join-btn" (click)="navigateToUrl('https://candiru.xyz')">join</button>
 				</div>
 				<div class="server-item whitespace-nowrap overflow-hidden text-ellipsis">
-					possum world 2
+					FFA-1 (beta)
+					<button class="join-btn" (click)="navigateToUrl('https://dev.candiru.xyz')">join</button>
+				</div>
+				<div class="server-item whitespace-nowrap overflow-hidden text-ellipsis">
+					CTF-0 (beta)
+					<button class="join-btn" (click)="navigateToUrl('https://ctf.candiru.xyz')">join</button>
 				</div>
 				<button class="btn-menu" (click)="back.emit()">back</button>
 			</div>
@@ -24,4 +30,7 @@ import { CommonModule } from '@angular/common';
 export class BrowseComponent {
 	@Output()
 	back = new EventEmitter<void>();
+	navigateToUrl(url: string): void {
+		window.location.href = url;
+	}
 }
