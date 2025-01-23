@@ -31,6 +31,6 @@ export class BrowseComponent {
 	@Output()
 	back = new EventEmitter<void>();
 	navigateToUrl(url: string): void {
-		window.location.href = url;
+		globalThis.location.href = url;
 	}
 }
