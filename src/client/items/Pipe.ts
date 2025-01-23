@@ -9,7 +9,6 @@ import { AssetManager } from '../core/AssetManager.ts';
 const firingDelay = .4;
 const firingDelayHeld = 0.65; //longer firing delay when mouse is held down
 const showInHandDelay = 0.1;
-//const unscopedPosition = new THREE.Vector3(0.85, -1, 3.2);
 const unscopedPosition = new THREE.Vector3(1.3, -1, 3.2);
 const hitPosition = new THREE.Vector3(0.1, -1, 2.9);
 const hitQuaternion = new THREE.Quaternion(0.1388, -0.7948, 0.1982, -0.5565);
@@ -132,9 +131,7 @@ export class Pipe extends ItemBase {
 		if (input.leftClick && (!this.lastInput.leftClick || Date.now() / 1000 - this.lastFired > firingDelayHeld)) {
 			if (Date.now() / 1000 - this.lastFired > firingDelay) {
 				this.lastFired = Date.now() / 1000;
-				this.hitWithBat();
-				// this.handPosition.add(new THREE.Vector3(0, 0, -0.8));
-				// rotateAroundWorldAxis(this.object.quaternion, new THREE.Vector3(1, 0, 0), -Math.PI / 3);
+				this.hitWithPipe();
 			}
 		}
 
@@ -162,7 +159,7 @@ export class Pipe extends ItemBase {
 		this.lastInput = input;
 	}
 
-	private hitWithBat() {
+	private hitWithPipe() {
 		const totalShots = 25;
 		let processedShots = 0;
 		const hitPlayers: number[] = [];
