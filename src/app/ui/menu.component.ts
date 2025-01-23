@@ -39,7 +39,15 @@ export class MenuComponent {
 	visible = false;
 	@Output()
 	close = new EventEmitter<void>();
+	@Output()
+	menuVisibilityChange = new EventEmitter<boolean>(); // New event to emit menu visibility
+
 	activePage: 'main' | 'settings' | 'browse' = 'main';
+
+	ngOnChanges() {
+		// Emit the visibility status whenever it changes
+		this.menuVisibilityChange.emit(this.visible);
+	}
 
 	onBackdropClick(event: MouseEvent) {
 		if ((event.target as HTMLElement).classList.contains('fixed')) {

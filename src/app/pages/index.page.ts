@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, ViewChild } from '@angular/core';
 import { GameComponent } from '../game/game.component.ts';
 import { MenuComponent } from '../ui/menu.component.ts';
 
@@ -6,14 +6,17 @@ import { MenuComponent } from '../ui/menu.component.ts';
 	selector: 'app-home',
 	standalone: true,
 	template: `
-		<app-game (pointerLockChange)="onPointerLockChange($event)"></app-game>
-		<app-menu [visible]="showMenu" (close)="showMenu = false"></app-menu>
+		<app-game (pointerLockChange)="onPointerLockChange($event)" #gameComponent></app-game>
+		<app-menu [visible]="showMenu" (close)="showMenu = false" (menuVisibilityChange)="onMenuVisibilityChange($event)"></app-menu>
 	`,
 	styles: ``,
 	imports: [GameComponent, MenuComponent],
 })
 export default class HomeComponent {
 	showMenu = false;
+
+	@ViewChild('gameComponent')
+	gameComponent!: GameComponent;
 
 	// Add to class
 	@HostListener('document:keydown', ['$event'])
@@ -37,5 +40,10 @@ export default class HomeComponent {
 		if (!isLocked) {
 			document.exitPointerLock();
 		}
+	}
+
+	// Handle menu visibility change
+	onMenuVisibilityChange(isMenuOpen: boolean) {
+		this.gameComponent.onMenuVisibilityChange(isMenuOpen);
 	}
 }

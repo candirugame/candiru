@@ -11,10 +11,6 @@ import { SettingsManager } from '../../client/core/SettingsManager.ts';
 		<div>
 			<h2 class="text-xl text-gray-100 mb-4">settings</h2>
 			<div class="space-y-4">
-				<div class="setting-item">
-					<label class="mr-2">name</label>
-					<input type="text" [(ngModel)]="settings.name" (change)="saveSettings()">
-				</div>
 
 				<div class="setting-item">
 					<label class="mr-2">sens (mouse)</label>

@@ -20,8 +20,13 @@ export class GameComponent implements AfterViewInit {
 		document.addEventListener('pointerlockchange', () => {
 			const isLocked = document.pointerLockElement === document.body;
 			this.pointerLockChange.emit(isLocked);
-
-			//document.body.requestPointerLock();
 		});
+	}
+
+	// Method to update the game about menu visibility
+	onMenuVisibilityChange(isMenuOpen: boolean) {
+		if (this.game) {
+			this.game.setMenuOpen(isMenuOpen);
+		}
 	}
 }

@@ -3,6 +3,7 @@ import { PointerLockControls } from './PointerLockControl.ts';
 import { Renderer } from '../core/Renderer.ts';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
+import { Game } from '../core/Game.ts';
 
 export class InputHandler {
 	private readonly gameIndex: number;
@@ -194,8 +195,8 @@ export class InputHandler {
 		this.localPlayer.quaternion.setFromEuler(euler);
 		this.localPlayer.inputVelocity.applyQuaternion(this.localPlayer.quaternion);
 
-		if (this.leftMouseDown || this.touchButtons.includes(0)) this.shoot = true;
-		if (this.rightMouseDown) this.aim = true;
+		if (this.leftMouseDown || this.touchButtons.includes(0) && !Game.menuOpen) this.shoot = true;
+		if (this.rightMouseDown && !Game.menuOpen) this.aim = true;
 
 		if (this.localPlayer.playerSpectating !== -1) {
 			this.inputX = 0;
@@ -258,9 +259,9 @@ export class InputHandler {
 	}
 
 	private onMouseDown(event: MouseEvent) {
-		if (event.button === 0) {
+		if (event.button === 0 && !Game.menuOpen) {
 			this.leftMouseDown = true;
-		} else if (event.button === 2) {
+		} else if (event.button === 2 && !Game.menuOpen) {
 			this.rightMouseDown = true;
 		}
 	}

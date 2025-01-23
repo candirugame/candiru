@@ -6,6 +6,7 @@ import { SettingsManager } from '../core/SettingsManager.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
 import { Player } from '../../shared/Player.ts';
 import * as THREE from 'three';
+import { Game } from '../core/Game.ts';
 
 interface ChatMessage {
 	id: number;
@@ -978,20 +979,20 @@ export class ChatOverlay {
 			this.localPlayer.chatMsg += e.key;
 		}
 
-		if (e.key.toLowerCase() === 't' && !this.nameSettingActive) {
+		if (e.key.toLowerCase() === 't' && !this.nameSettingActive && !Game.menuOpen) {
 			//if (this.localPlayer.name.length > 0)
 			this.localPlayer.chatActive = true;
 			//else this.nameSettingActive = true;
 		}
 
-		if (e.key === '/' && !this.nameSettingActive && !this.localPlayer.chatActive) {
+		if (e.key === '/' && !this.nameSettingActive && !this.localPlayer.chatActive && !Game.menuOpen) {
 			//if (this.localPlayer.name.length > 0) {
 			this.localPlayer.chatActive = true;
 			this.localPlayer.chatMsg = '/';
 			//} else this.nameSettingActive = true;
 		}
 
-		if (e.key.toLowerCase() === 'n' && !this.localPlayer.chatActive) {
+		if (e.key.toLowerCase() === 'n' && !this.localPlayer.chatActive && !Game.menuOpen) {
 			this.nameSettingActive = true;
 		}
 	}
