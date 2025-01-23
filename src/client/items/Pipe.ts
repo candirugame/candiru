@@ -64,7 +64,7 @@ export class Pipe extends ItemBase {
 			}
 
 			if (this.itemType === ItemType.InventoryItem) {
-				this.object.scale.set(1.4, 1.4, 1.4);
+				this.object.scale.set(1.2, 1.2, 1.2);
 			}
 		});
 	}
