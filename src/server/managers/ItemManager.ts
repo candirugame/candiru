@@ -91,13 +91,13 @@ export class ItemManager {
 							console.log(`🐟 ${player.name} picked up fish!`);
 						}
 						break;
-                    case 3: // Bat
-                        if (!player.inventory.includes(3)) {
-                            player.inventory.push(3);
-                            shouldPickup = true;
-                            console.log(`🦇 ${player.name} picked up bat!`);
-                        }
-                        break;
+					case 3: // Bat
+						if (!player.inventory.includes(3)) {
+							player.inventory.push(3);
+							shouldPickup = true;
+							console.log(`🦇 ${player.name} picked up bat!`);
+						}
+						break;
 					case 4: // Flag
 						if (!player.inventory.includes(4)) {
 							player.inventory.push(4);
