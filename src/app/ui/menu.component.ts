@@ -20,7 +20,7 @@ import { BrowseComponent } from './browse.component.ts';
 
 					<button class="btn-menu" (click)="navigate('play')">play</button><br>
 					<button class="btn-menu" (click)="navigate('settings')">settings</button><br>
-					<button class="btn-menu" (click)="navigate('browse')">servers</button><br>
+					<button class="btn-menu" (click)="navigate('browse')">servers</button>
 				</div>
 
 				<app-settings *ngIf="activePage === 'settings'"
@@ -32,18 +32,7 @@ import { BrowseComponent } from './browse.component.ts';
 			</div>
 		</div>
 	`,
-	styles: [`
-		:host {
-			@apply contents;
-		}
-		.fixed {
-			@apply overflow-hidden;
-		}
-		.btn-menu {
-			@apply text-left px-2 py-1 text-gray-100 hover:bg-gray-700/50 transition-colors mb-2 rounded-none;
-
-		}
-	`],
+	styleUrls: ['./menu-styles.css'],
 })
 export class MenuComponent {
 	@Input()
