@@ -60,11 +60,11 @@ export class Pipe extends ItemBase {
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.rotation.z = Math.PI / 2;
-				this.object.scale.set(0.45, 0.45, 0.45);
+				this.object.scale.set(0.3, 0.3, 0.3);
 			}
 
 			if (this.itemType === ItemType.InventoryItem) {
-				this.object.scale.set(1.2, 1.2, 1.2);
+				this.object.scale.set(1, 1, 1);
 			}
 		});
 	}
