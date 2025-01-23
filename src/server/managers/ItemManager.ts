@@ -98,6 +98,12 @@ export class ItemManager {
 							console.log(`🚩 ${player.name} picked up the flag!`);
 						}
 						break;
+					case 5: // Bottle
+						if (!player.inventory.includes(5)) {
+							player.inventory.push(5);
+							shouldPickup = true;
+							console.log(`🍾 ${player.name} picked up bottle!`);
+						}
 				}
 
 				if (shouldPickup) {
