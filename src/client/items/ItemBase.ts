@@ -76,6 +76,7 @@ export class ItemBase {
 	protected worldOnFrame(deltaTime: number) { // This function is called every frame for world items
 		if (!this.addedToWorldScene) {
 			this.scene.add(this.object);
+			this.object.rotation.z = Math.PI / 2;
 			this.addedToWorldScene = true;
 		}
 		this.object.position.copy(this.worldPosition);
