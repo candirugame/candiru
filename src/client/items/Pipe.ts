@@ -59,6 +59,7 @@ export class Pipe extends ItemBase {
 			this.inventoryMenuObject.scale.set(0.5, 0.5, 0.5);
 
 			if (this.itemType === ItemType.WorldItem) {
+				this.object.rotation.z = Math.PI / 2;
 				this.object.scale.set(0.45, 0.45, 0.45);
 			}
 
