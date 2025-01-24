@@ -44,6 +44,6 @@ export default class HomeComponent {
 
 	// Handle menu visibility change
 	onMenuVisibilityChange(isMenuOpen: boolean) {
-		this.gameComponent.onMenuVisibilityChange(isMenuOpen);
+		if (this.gameComponent) this.gameComponent.onMenuVisibilityChange(isMenuOpen);
 	}
 }
