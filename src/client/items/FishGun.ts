@@ -186,7 +186,7 @@ export class FishGun extends ItemBase {
 					for (const shot of shotVectors) {
 						const { playerID, hitPoint } = shot;
 						this.networking.applyDamage(playerID, 3);
-						this.renderer.playerHitMarkers.push({
+						this.renderer.hitMarkerQueue.push({
 							hitPoint: hitPoint,
 							shotVector: shot.vector,
 							timestamp: -1,

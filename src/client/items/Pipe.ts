@@ -181,7 +181,7 @@ export class Pipe extends ItemBase {
 						if (!hitPlayers.includes(playerID)) {
 							hitPlayers.push(playerID);
 							this.networking.applyDamage(playerID, 50);
-							this.renderer.playerHitMarkers.push({
+							this.renderer.hitMarkerQueue.push({
 								hitPoint: hitPoint,
 								shotVector: shot.vector,
 								timestamp: -1,
