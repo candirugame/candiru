@@ -102,6 +102,15 @@ export class GameServer {
 	}
 
 	private setupRoutes() {
+		this.router.get('/api/getInfo', (context) => {
+			try {
+				context.response.type = 'application/json';
+				context.response.body = this.gameEngine.serverInfo;
+			} catch (err) {
+				console.error('Error getting server info via API:', err);
+			}
+		});
+
 		this.router.get('/(.*)', async (context) => {
 			try {
 				await send(context, context.params[0], {
