@@ -24,6 +24,7 @@ export class BottleGun extends ItemBase {
 	private isZoomed: boolean = false;
 	private zoomFactor: number = 1;
 	private originalZoom: number;
+	private scopeOverlay: HTMLDivElement | null = null;
 
 	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
 		const scene = itemType === ItemType.WorldItem ? renderer.getEntityScene() : renderer.getHeldItemScene();
@@ -36,10 +37,68 @@ export class BottleGun extends ItemBase {
 		this.originalZoom = renderer.getCamera().zoom;
 	}
 
+	private createScopeOverlay(): void {
+		const style = document.createElement('style');
+		style.textContent = `
+        .scope-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+            z-index: 1000;
+        }
+
+        .scope-viewport {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vmin;
+            height: 80vmin;
+            border-radius: 50%;
+            background: radial-gradient(
+                circle,
+                transparent 0%,
+                transparent 60%,
+                rgba(0, 32, 0, 0.5) 100%
+            );
+            box-shadow: 0 0 0 100vmax rgba(0, 32, 0, 0.5);
+        }
+
+        .scope-viewport svg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    `;
+		document.head.appendChild(style);
+
+		this.scopeOverlay = document.createElement('div');
+		this.scopeOverlay.className = 'scope-overlay';
+		this.scopeOverlay.innerHTML = `
+        <div class="scope-viewport">
+            <svg width="100%" height="100%" viewBox="-50 -50 100 100">
+                <circle cx="0" cy="0" r="40" stroke="rgba(0, 32, 0, 0.8)" stroke-width="0.3" fill="none"/>
+                <line x1="0" y1="-40" x2="0" y2="40" stroke="rgba(0, 32, 0, 0.8)" stroke-width="0.3"/>
+                <line x1="-40" y1="0" x2="40" y2="0" stroke="rgba(0, 32, 0, 0.8)" stroke-width="0.3"/>
+                <circle cx="0" cy="0" r="0.8" fill="rgba(255, 0, 0, 0.8)"/>
+            </svg>
+        </div>
+    `;
+
+		document.body.appendChild(this.scopeOverlay);
+	}
+
 	public override init() {
 		AssetManager.getInstance().loadAsset('models/simplified_bottle.glb', (scene) => {
 			this.object = scene;
 			if (this.itemType === ItemType.InventoryItem) {
+				this.object.scale.set(0.55, 0.55, 0.55);
+				this.createScopeOverlay();
 				this.object.traverse((child) => {
 					if ((child as THREE.Mesh).isMesh) {
 						child.renderOrder = 999;
@@ -133,15 +192,29 @@ export class BottleGun extends ItemBase {
 		if (input.rightClick) {
 			if (!this.isZoomed) {
 				this.isZoomed = true;
+				if (this.scopeOverlay) {
+					this.scopeOverlay.style.display = 'block';
+				}
+				//hide gun
+				if (this.object) {
+					this.object.visible = false;
+				}
 				// input handling to move to scoped position
 			}
 			moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
 			this.zoomFactor = THREE.MathUtils.lerp(this.zoomFactor, 10, zoomSpeed);
+
 			this.renderer.getCamera().zoom = this.originalZoom * this.zoomFactor;
 			this.renderer.getCamera().updateProjectionMatrix();
 		} else {
 			if (this.isZoomed) {
 				this.isZoomed = false;
+				if (this.scopeOverlay) {
+					this.scopeOverlay.style.display = 'none';
+				}
+				if (this.object) {
+					this.object.visible = true;
+				}
 			}
 			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
 
@@ -170,6 +243,9 @@ export class BottleGun extends ItemBase {
 		if (this.shownInHand) return;
 		this.shownInHand = true;
 		this.shownInHandTimestamp = Date.now() / 1000;
+		if (!this.scopeOverlay && this.itemType === ItemType.InventoryItem) {
+			this.createScopeOverlay();
+		}
 		if (!this.addedToHandScene && this.object) {
 			this.scene.add(this.object);
 			this.addedToHandScene = true;
@@ -179,7 +255,11 @@ export class BottleGun extends ItemBase {
 	public override hideInHand() {
 		if (!this.shownInHand) return;
 		this.shownInHand = false;
+		if (this.scopeOverlay) {
+			this.scopeOverlay.style.display = 'none';
+		}
 	}
+
 	public itemDepleted(): boolean {
 		return false;
 	}
