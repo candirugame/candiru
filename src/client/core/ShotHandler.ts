@@ -96,7 +96,7 @@ export class ShotGroup {
 						if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
 							hitPlayers.push(playerID);
 							networking.applyDamage(playerID, this.damage);
-							renderer.playerHitMarkers.push({
+							renderer.hitMarkerQueue.push({
 								hitPoint: hitPoint,
 								shotVector: shot.vector,
 								timestamp: -1,
