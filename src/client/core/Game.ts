@@ -10,6 +10,7 @@ import { RemoteItemRenderer } from './RemoteItemRenderer.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
 import { SettingsManager } from './SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
+import { ShotHander } from './ShotHander.ts';
 
 export class Game {
 	private localPlayer: Player;
@@ -19,6 +20,7 @@ export class Game {
 	private touchInputHandler: TouchInputHandler;
 	private networking: Networking;
 	private collisionManager: CollisionManager;
+	private shotHandler: ShotHander;
 	private inventoryManager: Inventory;
 	private mapLoader: MapLoader;
 	private healthIndicator: HealthIndicator;
@@ -39,7 +41,14 @@ export class Game {
 		this.renderer.setInputHandler(this.inputHandler);
 		this.collisionManager = new CollisionManager(this.inputHandler);
 		this.renderer.setCollisionManager(this.collisionManager);
-		this.inventoryManager = new Inventory(this.renderer, this.inputHandler, this.networking, this.localPlayer);
+		this.shotHandler = new ShotHander(this.renderer, this.networking);
+		this.inventoryManager = new Inventory(
+			this.shotHandler,
+			this.renderer,
+			this.inputHandler,
+			this.networking,
+			this.localPlayer,
+		);
 		this.chatOverlay.setNetworking(this.networking);
 		this.chatOverlay.setInputHandler(this.inputHandler);
 		this.mapLoader = new MapLoader(this.renderer);
@@ -59,6 +68,7 @@ export class Game {
 		this.networking.updatePlayerData();
 		this.chatOverlay.onFrame();
 		this.inventoryManager.onFrame();
+		this.shotHandler.onFrame();
 		this.renderer.onFrame(this.localPlayer);
 		if (this.networking.getServerInfo().mapName) {
 			this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');
