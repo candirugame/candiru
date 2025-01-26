@@ -128,7 +128,7 @@ export class Inventory {
 
 		// Use spectated player's states if available, otherwise use local states
 		const rightClickHeld = spectatedPlayer ? spectatedPlayer.rightClickHeld : this.inputHandler.getAim();
-		const shooting = spectatedPlayer ? spectatedPlayer.shooting : isShootActive;
+		const shooting = spectatedPlayer ? spectatedPlayer.shooting : this.inputHandler.getShoot();
 		const heldItemInput = new HeldItemInput(shooting, rightClickHeld, false);
 
 		let downPressed = (this.inputHandler.getKey('[') || this.inputHandler.getInventoryIterationTouched()) &&
