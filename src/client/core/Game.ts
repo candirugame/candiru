@@ -27,6 +27,7 @@ export class Game {
 	private remoteItemRenderer: RemoteItemRenderer;
 	private gameIndex: number;
 	private static nextGameIndex: number = 0;
+	public static menuOpen: boolean = false;
 
 	constructor(container: HTMLElement) {
 		this.gameIndex = Game.nextGameIndex++;
@@ -80,5 +81,9 @@ export class Game {
 	start() {
 		this.init();
 		this.animate();
+	}
+
+	setMenuOpen(isMenuOpen: boolean) {
+		Game.menuOpen = isMenuOpen;
 	}
 }
