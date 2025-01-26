@@ -2,8 +2,8 @@ import { ItemBase, ItemType } from './ItemBase.ts';
 import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
 import { AssetManager } from '../core/AssetManager.ts';
+import { ShotHandler } from '../core/ShotHandler.ts';
 
 const firingDelay = 0.12;
 const firingDelayHeld = 0.225; //longer firing delay when mouse is held down
@@ -16,21 +16,19 @@ const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class BananaGun extends ItemBase {
-	private renderer!: Renderer;
-	private networking!: Networking;
+	private shotHanlder: ShotHandler;
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
 		} else {
 			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
 		}
-		this.renderer = renderer;
-		this.networking = networking;
+		this.shotHanlder = shotHandler;
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
@@ -119,9 +117,6 @@ export class BananaGun extends ItemBase {
 				}
 			}
 		}
-
-		// Update crosshair flashing based on last shot timestamp
-		this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.renderer.lastShotSomeoneTimestamp < 0.05;
 	}
 
 	private handleInput(input: HeldItemInput, deltaTime: number) {
@@ -166,23 +161,7 @@ export class BananaGun extends ItemBase {
 	}
 
 	private shootBanana() {
-		const processShots = () => {
-			const shotVectors = this.renderer.getShotVectorsToPlayersInCrosshair();
-			if (shotVectors.length > 0) {
-				for (const shot of shotVectors) {
-					const { playerID, hitPoint } = shot;
-					this.networking.applyDamage(playerID, 17);
-					this.renderer.playerHitMarkers.push({ hitPoint: hitPoint, shotVector: shot.vector, timestamp: -1 });
-				}
-				this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
-			}
-		};
-
-		if (typeof requestIdleCallback === 'function') {
-			requestIdleCallback(processShots, { timeout: 150 });
-		} else {
-			setTimeout(processShots, 0);
-		}
+		this.shotHanlder.addShotGroup(17);
 	}
 
 	// Method to set world position when used as WorldItem

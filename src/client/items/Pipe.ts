@@ -3,8 +3,8 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
 import { AssetManager } from '../core/AssetManager.ts';
+import { ShotHandler } from '../core/ShotHandler.ts';
 
 const firingDelay = .4;
 const firingDelayHeld = 0.65; //longer firing delay when mouse is held down
@@ -18,21 +18,19 @@ const windBackQuaternion = new THREE.Quaternion(0.2081, 0.8216, 0.2802, 0.4506);
 const hiddenPosition = new THREE.Vector3(0.85, -3.5, 3.2);
 
 export class Pipe extends ItemBase {
-	private renderer!: Renderer;
-	private networking!: Networking;
+	private shotHandler: ShotHandler;
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+	constructor(renderer: Renderer, shotHanlder: ShotHandler, index: number, itemType: ItemType) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
 		} else {
 			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
 		}
-		this.renderer = renderer;
-		this.networking = networking;
+		this.shotHandler = shotHanlder;
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
@@ -123,9 +121,6 @@ export class Pipe extends ItemBase {
 				}
 			}
 		}
-
-		// Update crosshair flashing based on last shot timestamp
-		this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.renderer.lastShotSomeoneTimestamp < 0.05;
 	}
 
 	private handleInput(input: HeldItemInput, deltaTime: number) {
@@ -161,66 +156,7 @@ export class Pipe extends ItemBase {
 	}
 
 	private hitWithPipe() {
-		const totalShots = 25;
-		let processedShots = 0;
-		const hitPlayers: number[] = [];
-		const TIMEOUT = 150;
-
-		const processShots = (deadline?: IdleDeadline) => {
-			const timeRemaining = deadline ? deadline.timeRemaining() : 16;
-
-			while (processedShots < totalShots && timeRemaining > 0) {
-				const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
-					(Math.random() - 0.5) * 1.30,
-					(Math.random() - 0.5) * 0.80,
-					.7,
-				);
-				if (shotVectors.length > 0) {
-					for (const shot of shotVectors) {
-						const { playerID, hitPoint } = shot;
-						if (!hitPlayers.includes(playerID)) {
-							hitPlayers.push(playerID);
-							this.networking.applyDamage(playerID, 50);
-							this.renderer.playerHitMarkers.push({
-								hitPoint: hitPoint,
-								shotVector: shot.vector,
-								timestamp: -1,
-							});
-						}
-					}
-					this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
-				}
-				processedShots++;
-			}
-
-			// If we still have shots to process, schedule the next batch
-			if (processedShots < totalShots) {
-				if (typeof requestIdleCallback === 'function') {
-					const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
-
-					// Ensure completion within timeout
-					setTimeout(() => {
-						cancelIdleCallback(idleCallbackId);
-						processShots();
-					}, TIMEOUT);
-				} else {
-					setTimeout(() => processShots(), 0);
-				}
-			}
-		};
-
-		// Initial call
-		if (typeof requestIdleCallback === 'function') {
-			const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
-
-			// Ensure first batch starts within timeout
-			setTimeout(() => {
-				cancelIdleCallback(idleCallbackId);
-				processShots();
-			}, TIMEOUT);
-		} else {
-			setTimeout(() => processShots(), 0);
-		}
+		this.shotHandler.addShotGroup(50, 25, 150, 1.3, .8, .7, true);
 	}
 
 	// Method to set world position when used as WorldItem
