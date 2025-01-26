@@ -26,12 +26,12 @@ type ItemsToRenderEntry = {
 };
 
 export class RemoteItemRenderer {
-	private shotHandler: ShotcastHandler;
+	private shotHandler: ShotHandler;
 	private networking: Networking;
 	private renderer: Renderer;
 	private itemsToRender: ItemsToRenderEntry[] = [];
 
-	constructor(networking: Networking, renderer: Renderer, shotHandler: ShotcastHandler) {
+	constructor(networking: Networking, renderer: Renderer, shotHandler: ShotHandler) {
 		this.networking = networking;
 		this.renderer = renderer;
 		this.shotHandler = shotHandler;

@@ -90,7 +90,7 @@ export class ShotGroup {
 
 			while (this.shots.length > 0 && timeRemaining > 0) {
 				const shotVectors = this.shots.pop()?.shoot(renderer);
-				if (shotVectors?.length > 0) {
+				if (shotVectors && shotVectors?.length > 0) {
 					for (const shot of shotVectors) {
 						const { playerID, hitPoint } = shot;
 						if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {

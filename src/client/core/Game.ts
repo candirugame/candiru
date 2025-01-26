@@ -54,7 +54,7 @@ export class Game {
 		this.chatOverlay.setInputHandler(this.inputHandler);
 		this.mapLoader = new MapLoader(this.renderer);
 		this.healthIndicator = new HealthIndicator(this.renderer, this.localPlayer, this.networking);
-		this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer);
+		this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer, this.shotHandler);
 	}
 
 	init() {
