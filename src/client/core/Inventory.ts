@@ -7,6 +7,7 @@ import { Networking } from './Networking.ts';
 import { ItemBase, ItemType } from '../items/ItemBase.ts';
 import { FishGun } from '../items/FishGun.ts';
 import { Player } from '../../shared/Player.ts';
+import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
 import { BottleGun } from '../items/BottleGun.ts';
 export class Inventory {
@@ -65,6 +66,11 @@ export class Inventory {
 					case 2: {
 						const fish = new FishGun(this.renderer, this.networking, i, ItemType.InventoryItem);
 						this.inventoryItems.push(fish);
+						break;
+					}
+					case 3: {
+						const bat = new Pipe(this.renderer, this.networking, i, ItemType.InventoryItem);
+						this.inventoryItems.push(bat);
 						break;
 					}
 					case 4: {
@@ -138,9 +144,12 @@ export class Inventory {
 			for (let i = 0; i < nums.length; i++) {
 				const numPressed = this.inputHandler.getKey(nums[i]);
 				if (numPressed && !this.oldNumsPressed[i]) {
-					this.lastSelectedInventoryItem = this.selectedInventoryItem;
-					this.selectedInventoryItem = i;
-					this.lastInventoryTouchTime = currentTime;
+					// Only update if selecting different item
+					if (i !== this.selectedInventoryItem) {
+						this.lastSelectedInventoryItem = this.selectedInventoryItem;
+						this.selectedInventoryItem = i;
+						this.lastInventoryTouchTime = currentTime;
+					}
 					break;
 				}
 			}
@@ -165,9 +174,16 @@ export class Inventory {
 		}
 
 		if (qPressed && !this.oldQPressed) {
-			const temp = this.selectedInventoryItem;
-			this.selectedInventoryItem = this.lastSelectedInventoryItem;
-			this.lastSelectedInventoryItem = temp;
+			if (this.inventoryItems.length === 2) {
+				// Auto-switch between two items
+				this.lastSelectedInventoryItem = this.selectedInventoryItem;
+				this.selectedInventoryItem = 1 - this.selectedInventoryItem;
+			} else {
+				// Regular swap behavior
+				const temp = this.selectedInventoryItem;
+				this.selectedInventoryItem = this.lastSelectedInventoryItem;
+				this.lastSelectedInventoryItem = temp;
+			}
 		}
 
 		if (this.selectedInventoryItem < 0) {

@@ -75,7 +75,7 @@ export class ItemManager {
 						player.inventory.push(0);
 						shouldPickup = true;
 						this.chatManager.broadcastChat(`${player.name} picked up [Object]!`);
-						console.log(`🍌 ${player.name} picked up cube!`);
+						console.log(`📦 ${player.name} picked up cube!`);
 						break;
 					case 1: // Banana
 						if (!player.inventory.includes(1)) {
@@ -88,7 +88,14 @@ export class ItemManager {
 						if (!player.inventory.includes(2)) {
 							player.inventory.push(2);
 							shouldPickup = true;
-							console.log(`🍌 ${player.name} picked up fish!`);
+							console.log(`🐟 ${player.name} picked up fish!`);
+						}
+						break;
+					case 3: // Pipe
+						if (!player.inventory.includes(3)) {
+							player.inventory.push(3);
+							shouldPickup = true;
+							console.log(`⚔️ ${player.name} picked up pipe!`);
 						}
 						break;
 					case 4: // Flag
