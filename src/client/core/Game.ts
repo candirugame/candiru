@@ -10,7 +10,7 @@ import { RemoteItemRenderer } from './RemoteItemRenderer.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
 import { SettingsManager } from './SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
-import { ShotHander } from './ShotHander.ts';
+import { ShotHandler } from './ShotHandler.ts';
 
 export class Game {
 	private localPlayer: Player;
@@ -20,7 +20,7 @@ export class Game {
 	private touchInputHandler: TouchInputHandler;
 	private networking: Networking;
 	private collisionManager: CollisionManager;
-	private shotHandler: ShotHander;
+	private shotHandler: ShotHandler;
 	private inventoryManager: Inventory;
 	private mapLoader: MapLoader;
 	private healthIndicator: HealthIndicator;
@@ -42,7 +42,7 @@ export class Game {
 		this.renderer.setInputHandler(this.inputHandler);
 		this.collisionManager = new CollisionManager(this.inputHandler);
 		this.renderer.setCollisionManager(this.collisionManager);
-		this.shotHandler = new ShotHander(this.renderer, this.networking);
+		this.shotHandler = new ShotHandler(this.renderer, this.networking);
 		this.inventoryManager = new Inventory(
 			this.shotHandler,
 			this.renderer,

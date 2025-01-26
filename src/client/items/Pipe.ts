@@ -4,7 +4,7 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
-import { ShotHander } from '../core/ShotHander.ts';
+import { ShotHandler } from '../core/ShotHandler.ts';
 
 const firingDelay = .4;
 const firingDelayHeld = 0.65; //longer firing delay when mouse is held down
@@ -18,13 +18,13 @@ const windBackQuaternion = new THREE.Quaternion(0.2081, 0.8216, 0.2802, 0.4506);
 const hiddenPosition = new THREE.Vector3(0.85, -3.5, 3.2);
 
 export class Pipe extends ItemBase {
-	private shotHandler: ShotHander;
+	private shotHandler: ShotHandler;
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, shotHanlder: ShotHander, index: number, itemType: ItemType) {
+	constructor(renderer: Renderer, shotHanlder: ShotHandler, index: number, itemType: ItemType) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
 		} else {

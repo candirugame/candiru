@@ -9,13 +9,13 @@ import { FishGun } from '../items/FishGun.ts';
 import { Player } from '../../shared/Player.ts';
 import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
-import { ShotHander } from './ShotHander.ts';
+import { ShotHandler } from './ShotHandler.ts';
 export class Inventory {
 	private inventoryItems: ItemBase[] = [];
 	private renderer: Renderer;
 	private inputHandler: InputHandler;
 	private networking: Networking;
-	private shotHandler: ShotHander;
+	private shotHandler: ShotHandler;
 	private inventoryScene: THREE.Scene;
 	private selectedInventoryItem: number = 0;
 	private lastSelectedInventoryItem: number = 0;
@@ -34,7 +34,7 @@ export class Inventory {
 	private oldNumsPressed: boolean[] = new Array(10).fill(false);
 
 	constructor(
-		shotHandler: ShotHander,
+		shotHandler: ShotHandler,
 		renderer: Renderer,
 		inputHandler: InputHandler,
 		networking: Networking,

@@ -6,7 +6,7 @@ import { BananaGun } from '../items/BananaGun.ts';
 import { FishGun } from '../items/FishGun.ts';
 import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
-import { ShotHandler } from './ShotHander.ts';
+import { ShotHandler } from './ShotHandler.ts';
 
 // Custom types
 type Vector3Data = {

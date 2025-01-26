@@ -4,7 +4,7 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
-import { ShotHander } from '../core/ShotHander.ts';
+import { ShotHandler } from '../core/ShotHandler.ts';
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -17,13 +17,13 @@ const scopedQuaternion = new THREE.Quaternion(0, 0.707, 0, 0.707);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class FishGun extends ItemBase {
-	private shotHandler: ShotHander;
+	private shotHandler: ShotHandler;
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, shotHandler: ShotHander, index: number, itemType: ItemType) {
+	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
 		} else {

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Networking } from './Networking.ts';
 import { Renderer } from './Renderer.ts';
 
-export class ShotHander {
+export class ShotHandler {
 	private readonly renderer: Renderer;
 	private readonly networking: Networking;
 
