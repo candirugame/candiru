@@ -830,27 +830,54 @@ export class ChatOverlay {
 		}
 	}
 
+	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
+	private minTimeBetweenHitMarkers = 0.016;
+	private lastHitMarkerTime = 0;
+
 	public renderHitMarkers() {
-		for (let i = this.renderer.playerHitMarkers.length - 1; i >= 0; i--) {
-			if (this.renderer.playerHitMarkers[i].timestamp === -1) {
-				this.renderer.playerHitMarkers[i].timestamp = Date.now() / 1000;
+		const currentTime = Date.now() / 1000;
+		const elapsed = currentTime - this.lastHitMarkerTime;
+
+		if (this.renderer.hitMarkerQueue.length > 0 && elapsed >= this.minTimeBetweenHitMarkers) {
+			// Always process 1/10 of the queue, but at least one
+			const processCount = Math.max(Math.floor(this.renderer.hitMarkerQueue.length / 2), 1);
+
+			this.lastHitMarkerTime = currentTime;
+
+			// Process the calculated number of markers
+			for (let i = 0; i < processCount; i++) {
+				const hitMarkerToAdd = this.renderer.hitMarkerQueue.shift();
+				if (hitMarkerToAdd) {
+					hitMarkerToAdd.timestamp = currentTime;
+					this.hitMarkersNow.push(hitMarkerToAdd);
+				}
+			}
+		}
+
+		//
+		// console.log('hitMarkersNow', this.hitMarkersNow);
+		// console.log('hitMarkerQueue', this.renderer.hitMarkerQueue);
+
+		for (let i = this.hitMarkersNow.length - 1; i >= 0; i--) {
+			if (this.hitMarkersNow[i].timestamp === -1) {
+				this.hitMarkersNow[i].timestamp = Date.now() / 1000;
 			}
 
-			const timeSinceHit = Date.now() / 1000 - this.renderer.playerHitMarkers[i].timestamp;
+			const timeSinceHit = Date.now() / 1000 - this.hitMarkersNow[i].timestamp;
 			const lifePercent = timeSinceHit / hitMarkerLifetime;
 
 			if (timeSinceHit > hitMarkerLifetime) {
-				this.renderer.playerHitMarkers.splice(i, 1);
+				this.hitMarkersNow.splice(i, 1);
 				continue;
 			}
 
-			const hitVec = this.renderer.playerHitMarkers[i].hitPoint;
+			const hitVec = this.hitMarkersNow[i].hitPoint;
 			const projected = this.getProjected3D(hitVec);
 
 			if (hitVec.clone().project(this.renderer.getCamera()).z < 1) {
 				this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
 
-				const sizeMultiplier = this.getSize(this.renderer.playerHitMarkers[i].shotVector.length());
+				const sizeMultiplier = this.getSize(this.hitMarkersNow[i].shotVector.length());
 				const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier;
 				const numDots = Math.min(Math.max(sizeMultiplier * 5, 3), 15);
 

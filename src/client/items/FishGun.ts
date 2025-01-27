@@ -3,8 +3,8 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
 import { AssetManager } from '../core/AssetManager.ts';
+import { ShotHandler } from '../core/ShotHandler.ts';
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -17,21 +17,19 @@ const scopedQuaternion = new THREE.Quaternion(0, 0.707, 0, 0.707);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class FishGun extends ItemBase {
-	private renderer!: Renderer;
-	private networking!: Networking;
+	private shotHandler: ShotHandler;
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
 		} else {
 			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
 		}
-		this.renderer = renderer;
-		this.networking = networking;
+		this.shotHandler = shotHandler;
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
@@ -123,9 +121,6 @@ export class FishGun extends ItemBase {
 				}
 			}
 		}
-
-		// Update crosshair flashing based on last shot timestamp
-		this.renderer.crosshairIsFlashing = Date.now() / 1000 - this.renderer.lastShotSomeoneTimestamp < 0.05;
 	}
 
 	private handleInput(input: HeldItemInput, deltaTime: number) {
@@ -170,61 +165,7 @@ export class FishGun extends ItemBase {
 	}
 
 	private shootFish() {
-		const totalShots = 25;
-		let processedShots = 0;
-		const TIMEOUT = 150;
-
-		const processShots = (deadline?: IdleDeadline) => {
-			const timeRemaining = deadline ? deadline.timeRemaining() : 16;
-
-			while (processedShots < totalShots && timeRemaining > 0) {
-				const shotVectors = this.renderer.getShotVectorsToPlayersWithOffset(
-					(Math.random() - 0.5) * 0.30,
-					(Math.random() - 0.5) * 0.30,
-				);
-				if (shotVectors.length > 0) {
-					for (const shot of shotVectors) {
-						const { playerID, hitPoint } = shot;
-						this.networking.applyDamage(playerID, 3);
-						this.renderer.playerHitMarkers.push({
-							hitPoint: hitPoint,
-							shotVector: shot.vector,
-							timestamp: -1,
-						});
-					}
-					this.renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
-				}
-				processedShots++;
-			}
-
-			// If we still have shots to process, schedule the next batch
-			if (processedShots < totalShots) {
-				if (typeof requestIdleCallback === 'function') {
-					const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
-
-					// Ensure completion within timeout
-					setTimeout(() => {
-						cancelIdleCallback(idleCallbackId);
-						processShots();
-					}, TIMEOUT);
-				} else {
-					setTimeout(() => processShots(), 0);
-				}
-			}
-		};
-
-		// Initial call
-		if (typeof requestIdleCallback === 'function') {
-			const idleCallbackId = requestIdleCallback(processShots, { timeout: TIMEOUT });
-
-			// Ensure first batch starts within timeout
-			setTimeout(() => {
-				cancelIdleCallback(idleCallbackId);
-				processShots();
-			}, TIMEOUT);
-		} else {
-			setTimeout(() => processShots(), 0);
-		}
+		this.shotHandler.addShotGroup(3, 25, 150, .3, .3);
 	}
 
 	// Method to set world position when used as WorldItem

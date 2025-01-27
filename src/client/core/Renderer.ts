@@ -35,7 +35,7 @@ export class Renderer {
 
 	public crosshairIsFlashing: boolean = false;
 	public lastShotSomeoneTimestamp: number = 0;
-	public playerHitMarkers: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
+	public hitMarkerQueue: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
 
 	private screenPixelsInGamePixel: number = 1;
 	private inventoryMenuScene: THREE.Scene;

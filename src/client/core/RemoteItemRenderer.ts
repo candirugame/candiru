@@ -6,6 +6,7 @@ import { BananaGun } from '../items/BananaGun.ts';
 import { FishGun } from '../items/FishGun.ts';
 import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
+import { ShotHandler } from './ShotHandler.ts';
 
 // Custom types
 type Vector3Data = {
@@ -26,14 +27,15 @@ type ItemsToRenderEntry = {
 };
 
 export class RemoteItemRenderer {
+	private shotHandler: ShotHandler;
 	private networking: Networking;
 	private renderer: Renderer;
 	private itemsToRender: ItemsToRenderEntry[] = [];
-	private worldItemsData: WorldItemData[] = [];
 
-	constructor(networking: Networking, renderer: Renderer) {
+	constructor(networking: Networking, renderer: Renderer, shotHandler: ShotHandler) {
 		this.networking = networking;
 		this.renderer = renderer;
+		this.shotHandler = shotHandler;
 	}
 
 	public update() {
@@ -88,11 +90,11 @@ export class RemoteItemRenderer {
 		// Create item based on itemType
 		switch (itemType) {
 			case 1:
-				return new BananaGun(this.renderer, this.networking, 0, ItemType.WorldItem);
+				return new BananaGun(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
 			case 2:
-				return new FishGun(this.renderer, this.networking, 0, ItemType.WorldItem);
+				return new FishGun(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
 			case 3:
-				return new Pipe(this.renderer, this.networking, 0, ItemType.WorldItem);
+				return new Pipe(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
 			case 4:
 				return new FlagItem(this.renderer, 0, ItemType.WorldItem);
 			default:
