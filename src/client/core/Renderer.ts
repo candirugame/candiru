@@ -30,6 +30,9 @@ export class Renderer {
 	public scaredLevel: number = 0;
 	private lastPlayerHealth: number = 100;
 	private knockbackVector: THREE.Vector3 = new THREE.Vector3();
+	private heldItemZoom: number = 1;
+	private targetHeldItemZoom: number = 1;
+	private originalCameraZoom: number;
 	private bobCycle: number;
 	private lastCameraRoll: number;
 
@@ -63,6 +66,9 @@ export class Renderer {
 		container.appendChild(this.renderer.domElement);
 		this.renderer.domElement.style.imageRendering = 'pixelated';
 		this.renderer.setAnimationLoop(null);
+
+		//init zoom
+		this.originalCameraZoom = this.camera.zoom;
 
 		// Create a new scene and camera for the held item
 		this.heldItemScene = new THREE.Scene();
@@ -129,6 +135,11 @@ export class Renderer {
 
 	public onFrame(localPlayer: Player) {
 		this.deltaTime = this.clock.getDelta();
+		//zoom render
+		const zoomSpeed = 0.2 * this.deltaTime * 60;
+		this.heldItemZoom = THREE.MathUtils.lerp(this.heldItemZoom, this.targetHeldItemZoom, zoomSpeed);
+		this.camera.zoom = this.originalCameraZoom * this.heldItemZoom;
+		this.camera.updateProjectionMatrix();
 
 		// Ensure the renderer clears the buffers before the first render
 		this.renderer.autoClear = true;
@@ -354,7 +365,13 @@ export class Renderer {
 	public getChatOverlay(): ChatOverlay {
 		return this.chatOverlay;
 	}
+	public setTargetHeldItemZoom(zoom: number): void {
+		this.targetHeldItemZoom = zoom;
+	}
 
+	public getHeldItemZoom(): number {
+		return this.heldItemZoom;
+	}
 	public getShotVectorsToPlayersInCrosshair(
 		maxDistance: number | undefined = undefined,
 	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {

@@ -20,10 +20,8 @@ export class BottleGun extends ItemBase {
 	private networking: Networking;
 	private lastInput: HeldItemInput;
 	private lastFired: number = 0;
-	private addedToHandScene: boolean = false;
 	private isZoomed: boolean = false;
-	private zoomFactor: number = 1;
-	private originalZoom: number;
+	private addedToHandScene: boolean = false;
 	private scopeOverlay: HTMLDivElement | null = null;
 
 	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
@@ -34,7 +32,6 @@ export class BottleGun extends ItemBase {
 		this.renderer = renderer;
 		this.networking = networking;
 		this.lastInput = new HeldItemInput();
-		this.originalZoom = renderer.getCamera().zoom;
 	}
 
 	private createScopeOverlay(): void {
@@ -49,6 +46,7 @@ export class BottleGun extends ItemBase {
             pointer-events: none;
             display: none;
             z-index: 1000;
+            image-rendering: pixelated;
         }
 
         .scope-viewport {
@@ -62,7 +60,8 @@ export class BottleGun extends ItemBase {
             background: radial-gradient(
                 circle,
                 transparent 0%,
-                transparent 60%,
+                transparent 58%,
+                rgba(0, 32, 0, 0.5) 60%,
                 rgba(0, 32, 0, 0.5) 100%
             );
             box-shadow: 0 0 0 100vmax rgba(0, 32, 0, 0.5);
@@ -73,19 +72,58 @@ export class BottleGun extends ItemBase {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            shape-rendering: crispEdges;
         }
     `;
 		document.head.appendChild(style);
+
+		// Generate random dust particles
+		let dustParticles = '';
+		for (let i = 0; i < 50; i++) {
+			const x = Math.random() * 80 - 40;
+			const y = Math.random() * 80 - 40;
+			const size = Math.random() * 2 + 1;
+			const opacity = Math.random() * 0.1;
+			const grayValue = Math.floor(Math.random() * 255);
+			dustParticles += `<rect x="${x}" y="${y}" width="${size}" height="${size}" 
+                               fill="rgb(${grayValue},${grayValue},${grayValue})" 
+                               opacity="${opacity}"/>`;
+		}
 
 		this.scopeOverlay = document.createElement('div');
 		this.scopeOverlay.className = 'scope-overlay';
 		this.scopeOverlay.innerHTML = `
         <div class="scope-viewport">
             <svg width="100%" height="100%" viewBox="-50 -50 100 100">
-                <circle cx="0" cy="0" r="40" stroke="rgba(0, 32, 0, 0.8)" stroke-width="0.3" fill="none"/>
-                <line x1="0" y1="-40" x2="0" y2="40" stroke="rgba(0, 32, 0, 0.8)" stroke-width="0.3"/>
-                <line x1="-40" y1="0" x2="40" y2="0" stroke="rgba(0, 32, 0, 0.8)" stroke-width="0.3"/>
-                <circle cx="0" cy="0" r="0.8" fill="rgba(255, 0, 0, 0.8)"/>
+                <!-- Dust particles -->
+                ${dustParticles}
+
+                <!-- Outer markers -->
+                <path d="M -40,0 L -35,0 M 35,0 L 40,0 M 0,-40 L 0,-35 M 0,35 L 0,40" 
+                      stroke="rgba(0, 32, 0, 0.8)" 
+                      stroke-width="0.5"/>
+
+                <!-- Crosshair -->
+                <line x1="-20" y1="0" x2="20" y2="0" 
+                      stroke="rgba(0, 32, 0, 0.8)" 
+                      stroke-width="0.5"
+                      stroke-dasharray="2 2"/>
+                <line x1="0" y1="-20" x2="0" y2="20" 
+                      stroke="rgba(0, 32, 0, 0.8)" 
+                      stroke-width="0.5"
+                      stroke-dasharray="2 2"/>
+
+                <!-- Small center circle -->
+                <circle cx="0" cy="0" r="0.3" 
+                        fill="rgba(255, 0, 0, 0.8)"
+                        shape-rendering="auto"/>
+
+                <!-- Corner markers -->
+                <path d="M -25,-25 L -25,-22 L -22,-22 L -22,-25 Z 
+                         M 22,-25 L 22,-22 L 25,-22 L 25,-25 Z
+                         M -25,25 L -25,22 L -22,22 L -22,25 Z
+                         M 22,25 L 22,22 L 25,22 L 25,25 Z" 
+                      fill="rgba(0, 32, 0, 0.8)"/>
             </svg>
         </div>
     `;
@@ -188,24 +226,18 @@ export class BottleGun extends ItemBase {
 	}
 
 	private handleInput(input: HeldItemInput, deltaTime: number) {
-		const zoomSpeed = 0.2 * deltaTime * 60;
 		if (input.rightClick) {
 			if (!this.isZoomed) {
 				this.isZoomed = true;
 				if (this.scopeOverlay) {
 					this.scopeOverlay.style.display = 'block';
 				}
-				//hide gun
 				if (this.object) {
 					this.object.visible = false;
 				}
-				// input handling to move to scoped position
+				this.renderer.setTargetHeldItemZoom(10); // Set zoom level
 			}
 			moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
-			this.zoomFactor = THREE.MathUtils.lerp(this.zoomFactor, 10, zoomSpeed);
-
-			this.renderer.getCamera().zoom = this.originalZoom * this.zoomFactor;
-			this.renderer.getCamera().updateProjectionMatrix();
 		} else {
 			if (this.isZoomed) {
 				this.isZoomed = false;
@@ -215,14 +247,10 @@ export class BottleGun extends ItemBase {
 				if (this.object) {
 					this.object.visible = true;
 				}
+				this.renderer.setTargetHeldItemZoom(1); // Reset zoom
 			}
 			moveTowardsPos(this.handPosition, unscopedPosition, 0.1 * deltaTime * 60);
-
-			this.zoomFactor = THREE.MathUtils.lerp(this.zoomFactor, 1, zoomSpeed);
-			this.renderer.getCamera().zoom = this.originalZoom * this.zoomFactor;
-			this.renderer.getCamera().updateProjectionMatrix();
 		}
-
 		this.object.position.copy(this.handPosition);
 		//returns wep to original position
 		moveTowardsRot(this.object.quaternion, unscopedQuaternion, 0.1 * deltaTime * 60);
