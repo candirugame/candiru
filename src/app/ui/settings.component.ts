@@ -41,6 +41,7 @@ import { SettingsManager } from '../../client/core/SettingsManager.ts';
 						<option [ngValue]="1">dot</option>
 						<option [ngValue]="0">cross</option>
 						<option [ngValue]="2">can't decide</option>
+						<option [ngValue]="3">none</option>
 					</select>
 				</div>
 
