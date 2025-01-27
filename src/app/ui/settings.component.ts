@@ -41,8 +41,16 @@ import { SettingsManager } from '../../client/core/SettingsManager.ts';
 						<option [ngValue]="1">dot</option>
 						<option [ngValue]="0">cross</option>
 						<option [ngValue]="2">can't decide</option>
-						<option [ngValue]="3">none</option>
 					</select>
+				</div>
+
+				<div class="setting-item">
+					<label class="mr-2">crosshair opacity</label>
+					<div class="flex items-center min-w-[160px]">
+						<input type="range" min="0" max="1" step="0.05"
+							   [(ngModel)]="settings.crosshairOpacity" (change)="saveSettings()">
+						<span class="w-8 text-left ml-2">{{ settings.crosshairOpacity | number:'1.1-1' }}</span>
+					</div>
 				</div>
 
 				<div class="setting-item">
