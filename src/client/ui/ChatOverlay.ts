@@ -967,6 +967,16 @@ export class ChatOverlay {
 			case 1:
 				ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
 				break;
+			case 2:
+				ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
+				ctx.fillRect(Math.floor(this.screenWidth / 2), 95, 1, 3);
+				ctx.fillRect(Math.floor(this.screenWidth / 2), 103, 1, 3);
+				ctx.fillRect(Math.floor(this.screenWidth / 2 + 3), 100, 3, 1);
+				ctx.fillRect(Math.floor(this.screenWidth / 2 - 5), 100, 3, 1);
+
+				break;
+			case 3:
+				break;
 		}
 	}
 
