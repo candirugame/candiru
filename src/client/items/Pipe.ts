@@ -156,7 +156,7 @@ export class Pipe extends ItemBase {
 	}
 
 	private hitWithPipe() {
-		this.shotHandler.addShotGroup(50, 25, 150, 1.3, .8, .7, true);
+		this.shotHandler.addShotGroup(50, 25, 150, 1.3, .8, 1.4, true);
 	}
 
 	// Method to set world position when used as WorldItem
