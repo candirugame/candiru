@@ -26,6 +26,9 @@ export class Player {
 	public forced = false; //server-controlled
 	public forcedAcknowledged = false;
 	public inventory: number[] = []; //server-controlled
+	public heldItemIndex = 0;
+	public shooting = false;
+	public rightClickHeld = false;
 	public idLastDamagedBy?: number = -1; //server-controlled
 	public playerSpectating = -1; //server-controlled
 	public gameMsgs: string[] = []; //server-controlled

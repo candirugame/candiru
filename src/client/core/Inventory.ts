@@ -7,13 +7,15 @@ import { Networking } from './Networking.ts';
 import { ItemBase, ItemType } from '../items/ItemBase.ts';
 import { FishGun } from '../items/FishGun.ts';
 import { Player } from '../../shared/Player.ts';
+import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
-
+import { ShotHandler } from './ShotHandler.ts';
 export class Inventory {
 	private inventoryItems: ItemBase[] = [];
 	private renderer: Renderer;
 	private inputHandler: InputHandler;
 	private networking: Networking;
+	private shotHandler: ShotHandler;
 	private inventoryScene: THREE.Scene;
 	private selectedInventoryItem: number = 0;
 	private lastSelectedInventoryItem: number = 0;
@@ -24,13 +26,21 @@ export class Inventory {
 	private lastInventoryTouchTime: number = 0;
 	private localPlayer: Player;
 	private oldInventory: number[] = [];
+	private lastShootTime: number = 0;
 
 	private oldDownPressed: boolean = false;
 	private oldUpPressed: boolean = false;
 	private oldQPressed: boolean = false;
 	private oldNumsPressed: boolean[] = new Array(10).fill(false);
 
-	constructor(renderer: Renderer, inputHandler: InputHandler, networking: Networking, localPlayer: Player) {
+	constructor(
+		shotHandler: ShotHandler,
+		renderer: Renderer,
+		inputHandler: InputHandler,
+		networking: Networking,
+		localPlayer: Player,
+	) {
+		this.shotHandler = shotHandler;
 		this.renderer = renderer;
 		this.inputHandler = inputHandler;
 		this.networking = networking;
@@ -44,24 +54,31 @@ export class Inventory {
 	}
 
 	private updateInventoryItems() {
-		if (!this.arraysEqual(this.oldInventory, this.localPlayer.inventory)) {
+		const spectatedPlayer = this.networking.getSpectatedPlayer();
+		const currentInventory = spectatedPlayer ? spectatedPlayer.inventory : this.localPlayer.inventory;
+
+		if (!this.arraysEqual(this.oldInventory, currentInventory)) {
 			for (let i = this.inventoryItems.length - 1; i >= 0; i--) {
 				this.inventoryItems[i].destroy();
 				this.inventoryItems.splice(i, 1);
 			}
 
-			//iterate through every number in localPlayer.inventory
-			for (let i = 0; i < this.localPlayer.inventory.length; i++) {
-				const num = this.localPlayer.inventory[i];
+			for (let i = 0; i < currentInventory.length; i++) {
+				const num = currentInventory[i];
 				switch (num) {
 					case 1: {
-						const banana = new BananaGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+						const banana = new BananaGun(this.renderer, this.shotHandler, i, ItemType.InventoryItem);
 						this.inventoryItems.push(banana);
 						break;
 					}
 					case 2: {
-						const fish = new FishGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+						const fish = new FishGun(this.renderer, this.shotHandler, i, ItemType.InventoryItem);
 						this.inventoryItems.push(fish);
+						break;
+					}
+					case 3: {
+						const bat = new Pipe(this.renderer, this.shotHandler, i, ItemType.InventoryItem);
+						this.inventoryItems.push(bat);
 						break;
 					}
 					case 4: {
@@ -83,7 +100,7 @@ export class Inventory {
 			}
 		}
 
-		this.oldInventory = this.localPlayer.inventory;
+		this.oldInventory = currentInventory;
 	}
 
 	public arraysEqual(a: number[], b: number[]) {
@@ -99,11 +116,26 @@ export class Inventory {
 	public onFrame() {
 		this.updateInventoryItems();
 		const gamepadInputs = this.inputHandler.getGamepadInputs();
-		const heldItemInput = new HeldItemInput(this.inputHandler.getShoot(), this.inputHandler.getAim(), false);
+		const spectatedPlayer = this.networking.getSpectatedPlayer();
+
+		// Handle shooting with tick rate timing
+		const currentTime = Date.now() / 1000;
+		const tickDuration = 1 / this.networking.getServerInfo().tickRate;
+		if (this.inputHandler.getShoot()) {
+			this.lastShootTime = currentTime;
+		}
+		const isShootActive = currentTime - this.lastShootTime < tickDuration;
+
+		// Use spectated player's states if available, otherwise use local states
+		const rightClickHeld = spectatedPlayer ? spectatedPlayer.rightClickHeld : this.inputHandler.getAim();
+		const shooting = spectatedPlayer ? spectatedPlayer.shooting : this.inputHandler.getShoot();
+		const heldItemInput = new HeldItemInput(shooting, rightClickHeld, false);
+
 		let downPressed = (this.inputHandler.getKey('[') || this.inputHandler.getInventoryIterationTouched()) &&
 			!this.localPlayer.chatActive;
 		let upPressed = this.inputHandler.getKey(']') && !this.localPlayer.chatActive;
 		const qPressed = this.inputHandler.getKey('q') && !this.localPlayer.chatActive;
+
 		if (gamepadInputs.leftShoulder && !this.localPlayer.chatActive) upPressed = true;
 		if (gamepadInputs.rightShoulder && !this.localPlayer.chatActive) downPressed = true;
 		const lastScroll = this.inputHandler.getScrollClicks();
@@ -115,19 +147,21 @@ export class Inventory {
 			for (let i = 0; i < nums.length; i++) {
 				const numPressed = this.inputHandler.getKey(nums[i]);
 				if (numPressed && !this.oldNumsPressed[i]) {
-					this.lastSelectedInventoryItem = this.selectedInventoryItem;
-					this.selectedInventoryItem = i;
-					this.lastInventoryTouchTime = Date.now() / 1000;
+					// Only update if selecting different item
+					if (i !== this.selectedInventoryItem) {
+						this.lastSelectedInventoryItem = this.selectedInventoryItem;
+						this.selectedInventoryItem = i;
+						this.lastInventoryTouchTime = currentTime;
+					}
 					break;
 				}
 			}
-
 			for (let i = 0; i < nums.length; i++) {
 				this.oldNumsPressed[i] = this.inputHandler.getKey(nums[i]);
 			}
 		}
 
-		if (downPressed || upPressed) this.lastInventoryTouchTime = Date.now() / 1000;
+		if (downPressed || upPressed) this.lastInventoryTouchTime = currentTime;
 		const deltaTime = this.clock.getDelta();
 
 		if (downPressed && !this.oldDownPressed) {
@@ -139,14 +173,20 @@ export class Inventory {
 			this.selectedInventoryItem--;
 		}
 		if (this.inputHandler.getKey('enter')) {
-			this.lastInventoryTouchTime = 0; //hide inventory
+			this.lastInventoryTouchTime = 0;
 		}
 
 		if (qPressed && !this.oldQPressed) {
-			const temp = this.selectedInventoryItem;
-			this.selectedInventoryItem = this.lastSelectedInventoryItem;
-			this.lastSelectedInventoryItem = temp;
-			//this.lastInventoryTouchTime = Date.now() / 1000 - 1.25;
+			if (this.inventoryItems.length === 2) {
+				// Auto-switch between two items
+				this.lastSelectedInventoryItem = this.selectedInventoryItem;
+				this.selectedInventoryItem = 1 - this.selectedInventoryItem;
+			} else {
+				// Regular swap behavior
+				const temp = this.selectedInventoryItem;
+				this.selectedInventoryItem = this.lastSelectedInventoryItem;
+				this.lastSelectedInventoryItem = temp;
+			}
 		}
 
 		if (this.selectedInventoryItem < 0) {
@@ -163,8 +203,13 @@ export class Inventory {
 			this.lastSelectedInventoryItem = 0;
 		}
 
-		this.cameraY = this.selectedInventoryItem; //might be backwards
-		if (Date.now() / 1000 - this.lastInventoryTouchTime > 2) {
+		// Update localPlayer's states
+		this.localPlayer.heldItemIndex = this.selectedInventoryItem;
+		this.localPlayer.rightClickHeld = this.inputHandler.getAim();
+		this.localPlayer.shooting = isShootActive;
+
+		this.cameraY = this.selectedInventoryItem;
+		if (currentTime - this.lastInventoryTouchTime > 2) {
 			this.cameraX = -1;
 		} else {
 			this.cameraX = 0;
@@ -172,8 +217,10 @@ export class Inventory {
 
 		this.camera.position.lerp(new THREE.Vector3(this.cameraX, this.selectedInventoryItem, 5), 0.4 * deltaTime * 60);
 
+		const currentSelectedItem = spectatedPlayer ? spectatedPlayer.heldItemIndex : this.selectedInventoryItem;
+
 		for (const item of this.inventoryItems) {
-			item.onFrame(heldItemInput, this.selectedInventoryItem);
+			item.onFrame(heldItemInput, currentSelectedItem);
 		}
 
 		this.oldDownPressed = downPressed;

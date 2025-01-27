@@ -20,6 +20,11 @@ export class GameEngine {
 	public serverInfo: ServerInfo = new ServerInfo();
 	public gamemode: Gamemode | false = false;
 
+	private tickProfileSamples: number = 0;
+	private tickProfileTime: number = 0;
+	private cleanupProfileSamples: number = 0;
+	private cleanupProfileTime: number = 0;
+
 	constructor(
 		public playerManager: PlayerManager,
 		public itemManager: ItemManager,
@@ -61,6 +66,14 @@ export class GameEngine {
 				} catch (err) {
 					console.error('⚠ error emitting item data:', err);
 				}
+			}
+
+			this.tickProfileSamples++;
+			this.tickProfileTime += Date.now() / 1000 - currentTime;
+			if (this.tickProfileSamples >= 100) {
+				this.serverInfo.tickComputeTime = this.tickProfileTime / this.tickProfileSamples;
+				this.tickProfileSamples = 0;
+				this.tickProfileTime = 0;
 			}
 		} catch (error) {
 			console.error('⚠ error in serverTick:', error);
@@ -119,6 +132,14 @@ export class GameEngine {
 			});
 
 			if (this.gamemode) this.gamemode.onPeriodicCleanup();
+
+			this.cleanupProfileSamples++;
+			this.cleanupProfileTime += Date.now() / 1000 - currentTime;
+			if (this.cleanupProfileSamples >= 10) {
+				this.serverInfo.cleanupComputeTime = this.cleanupProfileTime / this.cleanupProfileSamples;
+				this.cleanupProfileSamples = 0;
+				this.cleanupProfileTime = 0;
+			}
 		} catch (error) {
 			console.error('⚠ error in periodicCleanup:', error);
 		}
