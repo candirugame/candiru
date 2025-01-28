@@ -74,7 +74,7 @@ export class PeerManager {
 				if (!peer) {
 					peer = new Peer(url);
 					this.peers.push(peer);
-					console.log(`Added peer: ${url}`);
+					console.log(`added peer: ${url}`);
 					await this.addToServersFile(url);
 				}
 				peer.updateServerInfo(result.data);
@@ -97,10 +97,12 @@ export class PeerManager {
 		if (!url) return;
 
 		try {
-			const serverList = this.peers
-				.filter((p) => p.serverInfo)
-				.map((p) => p.url)
-				.slice(0, config.peer.maxServers);
+			const serverList = [
+				config.server.url, // Add self URL first
+				...this.peers
+					.filter((p) => p.serverInfo && p.url !== config.server.url) // Exclude self from peers
+					.map((p) => p.url),
+			].slice(0, config.peer.maxServers);
 
 			await fetch(`${url}/api/shareServerList`, {
 				method: 'POST',
@@ -141,6 +143,8 @@ export class PeerManager {
 	}
 
 	private async addToServersFile(url: string) {
+		if (url === config.server.url) return; // Prevent adding self to file
+
 		const current = await Deno.readTextFile(this.serversFilePath);
 		const urls = current.split('\n').filter((u) => u.trim());
 
@@ -153,6 +157,8 @@ export class PeerManager {
 
 	public handleIncomingServers(urls: string[]) {
 		urls.forEach((url) => {
+			if (url === config.server.url) return; // Skip self URL
+
 			if (
 				!this.updateQueue.includes(url) &&
 				!this.peers.some((p) => p.url === url)
