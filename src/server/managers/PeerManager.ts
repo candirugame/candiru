@@ -17,8 +17,6 @@ export class PeerManager {
 
 	private async initialize() {
 		await this.healthCheck();
-		await this.loadServersFile();
-		this.startQueueProcessors();
 	}
 
 	private async healthCheck() {
@@ -32,6 +30,8 @@ export class PeerManager {
 				});
 				if (response.ok) {
 					console.log('healthcheck success!!');
+					await this.loadServersFile();
+					this.startQueueProcessors();
 					return;
 				}
 			} catch {
@@ -117,14 +117,14 @@ export class PeerManager {
 	private checkStalePeers() {
 		const stalePeers = this.peers.filter((p) =>
 			p.isStale(config.peer.staleThreshold) ||
-			(Date.now() / 1000 - p.lastShare) > config.peer.shareInterval * 1000
+			(Date.now() / 1000 - p.lastShare) > config.peer.shareInterval
 		);
 
 		stalePeers.forEach((peer) => {
 			if (peer.isStale(config.peer.staleThreshold)) {
 				this.updateQueue.push(peer.url);
 			}
-			if ((Date.now() / 1000 - peer.lastShare) > config.peer.shareInterval * 1000) {
+			if ((Date.now() / 1000 - peer.lastShare) > config.peer.shareInterval) {
 				this.shareQueue.push(peer.url);
 			}
 		});
@@ -156,6 +156,7 @@ export class PeerManager {
 	}
 
 	public handleIncomingServers(urls: string[]) {
+		console.log('Received server list:', urls);
 		urls.forEach((url) => {
 			if (url === config.server.url) return; // Skip self URL
 
