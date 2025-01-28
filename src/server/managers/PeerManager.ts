@@ -84,6 +84,8 @@ export class PeerManager {
 				this.handleFailedUpdate(url);
 			}
 		} catch {
+			console.log(`failed to add peer (network error) ${url}`);
+
 			this.handleFailedUpdate(url);
 		} finally {
 			this.updateQueue.push(url);
