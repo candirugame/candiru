@@ -3,6 +3,7 @@ import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
 import { ChatMessage } from './models/ChatMessage.ts';
 import { DamageRequest } from './models/DamageRequest.ts';
 import { Player, PlayerData } from '../shared/Player.ts';
+import { ServerInfo } from './models/ServerInfo.ts';
 
 export class DataValidator {
 	private static SERVER_VERSION = '';
@@ -82,6 +83,20 @@ export class DataValidator {
 		targetPlayer: DataValidator.playerDataSchema,
 		damage: z.number(),
 	}).strict();
+
+	static serverInfoSchema = z.object({
+		name: z.string(),
+		maxPlayers: z.number(),
+		currentPlayers: z.number(),
+		mapName: z.string(),
+		tickRate: z.number(),
+		version: z.string(),
+		gameMode: z.string(),
+		playerMaxHealth: z.number(),
+		skyColor: z.string(),
+		tickComputeTime: z.number(),
+		cleanupComputeTime: z.number(),
+	}).strict().transform((data) => Object.assign(new ServerInfo(), data));
 
 	static validatePlayerData(data: PlayerData) {
 		return DataValidator.playerDataSchema.safeParse(data);

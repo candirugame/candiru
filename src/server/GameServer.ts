@@ -11,6 +11,7 @@ import { DamageSystem } from './managers/DamageSystem.ts';
 import { MapData } from './models/MapData.ts';
 import { DataValidator } from './DataValidator.ts';
 import { CustomServer } from '../shared/messages.ts';
+import { PeerManager } from './managers/PeerManager.ts';
 
 export class GameServer {
 	router: Router = new Router();
@@ -23,6 +24,7 @@ export class GameServer {
 	chatManager: ChatManager;
 	damageSystem: DamageSystem;
 	mapData: MapData;
+	peerManager: PeerManager;
 
 	constructor() {
 		this.mapData = this.loadMapData();
@@ -32,6 +34,8 @@ export class GameServer {
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
 
 		this.playerManager.setItemManager(this.itemManager);
+
+		this.peerManager = new PeerManager();
 
 		this.setupSocketIO();
 		this.setupRoutes();
@@ -127,6 +131,26 @@ export class GameServer {
 					context.response.status = 500;
 					context.response.body = 'Internal Server Error';
 				}
+			}
+		});
+
+		this.router.get('/api/healthcheck', (context) => {
+			const secret = context.request.headers.get('X-Health-Secret');
+			if (secret === this.peerManager.healthSecret) {
+				context.response.status = 200;
+			} else {
+				context.response.status = 403;
+			}
+		});
+
+		this.router.post('/api/shareServerList', async (context) => {
+			try {
+				const body = await context.request.body.json();
+				const urls: string[] = Array.isArray(body) ? body : [];
+				this.peerManager.handleIncomingServers(urls);
+				context.response.status = 200;
+			} catch {
+				context.response.status = 400;
 			}
 		});
 
