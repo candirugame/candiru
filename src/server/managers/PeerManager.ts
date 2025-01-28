@@ -30,7 +30,10 @@ export class PeerManager {
 				const response = await fetch(`${config.server.url}/api/healthcheck`, {
 					headers: { 'X-Health-Secret': this.healthSecret },
 				});
-				if (response.ok) return;
+				if (response.ok) {
+					console.log('healthcheck success!!');
+					return;
+				}
 			} catch {
 				console.error('Healthcheck failed');
 			}
@@ -71,10 +74,13 @@ export class PeerManager {
 				if (!peer) {
 					peer = new Peer(url);
 					this.peers.push(peer);
+					console.log(`Added peer: ${url}`);
 					await this.addToServersFile(url);
 				}
 				peer.updateServerInfo(result.data);
 			} else {
+				console.log(`failed to add peer ${url}`);
+
 				this.handleFailedUpdate(url);
 			}
 		} catch {
