@@ -25,6 +25,8 @@ export class BottleGun extends ItemBase {
 	private addedToHandScene: boolean = false;
 	private scopeOverlay: HTMLDivElement | null = null;
 	private inputHandler: InputHandler;
+	private scopeAnimationTimestamp: number = 0;
+	private scopeAnimationDelay: number = 0.3;
 
 	constructor(
 		renderer: Renderer,
@@ -239,14 +241,20 @@ export class BottleGun extends ItemBase {
 		if (input.rightClick) {
 			if (!this.isZoomed) {
 				this.isZoomed = true;
-				if (this.scopeOverlay) {
-					this.scopeOverlay.style.display = 'block';
-				}
+				this.scopeAnimationTimestamp = Date.now() / 1000;
+			}
+			if (Date.now() / 1000 - this.scopeAnimationTimestamp > this.scopeAnimationDelay) {
 				if (this.object) {
 					this.object.visible = false;
 				}
-				this.renderer.setTargetHeldItemZoom(10); // Set zoom level
+				// Show scope overlay after delay
+				if (this.scopeOverlay) {
+					this.scopeOverlay.style.display = 'block';
+				}
+				// Set zoom after delay
+				this.renderer.setTargetHeldItemZoom(10);
 			}
+
 			moveTowardsPos(this.handPosition, scopedPosition, 0.3 * deltaTime * 60);
 		} else {
 			if (this.isZoomed) {
