@@ -1,4 +1,5 @@
 {
+	"nodeModulesDir": "auto",
 	"tasks": {
 		"dev": "deno run -A --node-modules-dir npm:vite",
 		"build": "deno run -A --node-modules-dir npm:vite build",
