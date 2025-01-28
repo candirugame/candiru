@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { AssetManager } from '../core/AssetManager.ts';
+import { InputHandler } from '../input/InputHandler.ts';
 
 const firingDelay = 2;
 const firingDelayHeld = 2; //longer firing delay when mouse is held down
@@ -23,8 +24,15 @@ export class BottleGun extends ItemBase {
 	private isZoomed: boolean = false;
 	private addedToHandScene: boolean = false;
 	private scopeOverlay: HTMLDivElement | null = null;
+	private inputHandler: InputHandler;
 
-	constructor(renderer: Renderer, networking: Networking, index: number, itemType: ItemType) {
+	constructor(
+		renderer: Renderer,
+		networking: Networking,
+		inputHandler: InputHandler,
+		index: number,
+		itemType: ItemType,
+	) {
 		const scene = itemType === ItemType.WorldItem ? renderer.getEntityScene() : renderer.getHeldItemScene();
 
 		super(itemType, scene, renderer.getInventoryMenuScene(), index);
@@ -32,6 +40,7 @@ export class BottleGun extends ItemBase {
 		this.renderer = renderer;
 		this.networking = networking;
 		this.lastInput = new HeldItemInput();
+		this.inputHandler = inputHandler;
 	}
 
 	private createScopeOverlay(): void {
@@ -201,6 +210,7 @@ export class BottleGun extends ItemBase {
 
 	public override handOnFrame(deltaTime: number, input: HeldItemInput) {
 		if (!this.object) return;
+		this.inputHandler.setSensitivityMultiplier(1.5 / this.renderer.getHeldItemZoom()); //adjust sens
 
 		if (this.shownInHand && !this.addedToHandScene) {
 			this.scene.add(this.object);

@@ -79,7 +79,7 @@ export class Inventory {
 						break;
 					}
 					case 5: {
-						const bottle = new BottleGun(this.renderer, this.networking, i, ItemType.InventoryItem);
+						const bottle = new BottleGun(this.renderer, this.networking, this.inputHandler, i, ItemType.InventoryItem);
 						this.inventoryItems.push(bottle);
 						break;
 					}

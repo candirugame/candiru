@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
+import { InputHandler } from './InputHandler.ts';
 
 // Define a custom event map interface
 interface PointerLockControlEventMap {
@@ -11,11 +12,12 @@ interface PointerLockControlEventMap {
 
 // Extend the EventDispatcher class to use our custom event map
 export class PointerLockControls extends THREE.EventDispatcher<PointerLockControlEventMap> {
+	public inputHandler: InputHandler;
 	public localPlayer: Player;
 	public domElement: Element;
 	public isLocked: boolean = false;
 
-	constructor(localPlayer: Player, domElement: Element) {
+	constructor(localPlayer: Player, inputHandler: InputHandler, domElement: Element) {
 		super();
 
 		if (domElement === undefined) {
@@ -25,6 +27,7 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 
 		this.localPlayer = localPlayer;
 		this.domElement = domElement;
+		this.inputHandler = inputHandler;
 
 		this.connect();
 	}
@@ -72,8 +75,8 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 		const euler = new THREE.Euler(0, 0, 0, 'YXZ');
 		euler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
-		euler.y -= movementX * SettingsManager.settings.sense * .002;
-		euler.x -= movementY * SettingsManager.settings.sense * .002;
+		euler.y -= movementX * SettingsManager.settings.sense * .002 * this.inputHandler.getSensitivityMultiplier();
+		euler.x -= movementY * SettingsManager.settings.sense * .002 * this.inputHandler.getSensitivityMultiplier();
 
 		euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
 

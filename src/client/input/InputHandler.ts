@@ -24,6 +24,7 @@ export class InputHandler {
 	private readonly gamepadInputs: GamepadInputs;
 	private shoot: boolean = false;
 	private aim: boolean = false;
+	private sensitivityMultiplier: number = 1;
 	public nameSettingActive: boolean = false;
 	private touchJoyX: number = 0;
 	private touchJoyY: number = 0;
@@ -39,7 +40,7 @@ export class InputHandler {
 		this.gamepadEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 
 		this.clock = new THREE.Clock();
-		this.mouse = new PointerLockControls(this.localPlayer, document.body);
+		this.mouse = new PointerLockControls(this.localPlayer, this, document.body);
 
 		this.gamepadInputs = new GamepadInputs();
 
@@ -228,6 +229,14 @@ export class InputHandler {
 
 	public getInventoryIterationTouched() {
 		return this.inventoryIterationTouched;
+	}
+
+	public setSensitivityMultiplier(sensitivityMultiplier: number) {
+		this.sensitivityMultiplier = sensitivityMultiplier;
+	}
+
+	public getSensitivityMultiplier(): number {
+		return this.sensitivityMultiplier;
 	}
 
 	private onKeyDown(event: KeyboardEvent) {
