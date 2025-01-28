@@ -38,12 +38,12 @@ export class BananaGun extends ItemBase {
 		AssetManager.getInstance().loadAsset('models/simplified_banana_1.glb', (scene) => {
 			this.object = scene;
 			if (this.itemType === ItemType.InventoryItem) {
-				this.object.traverse((child) => {
+				this.object.traverse((child: THREE.Object3D) => {
 					if ((child as THREE.Mesh).isMesh) {
 						child.renderOrder = 999;
 						const mesh = child as THREE.Mesh;
 						if (Array.isArray(mesh.material)) {
-							mesh.material.forEach((mat) => mat.depthTest = false);
+							mesh.material.forEach((mat: THREE.Material) => mat.depthTest = false);
 						} else {
 							mesh.material.depthTest = false;
 						}

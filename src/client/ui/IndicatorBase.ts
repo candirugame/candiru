@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Player } from '../../shared/Player.ts';
 import { Networking } from '../core/Networking.ts';
@@ -87,9 +87,9 @@ export abstract class IndicatorBase {
 		return new Promise((resolve, reject) => {
 			loader.load(
 				modelPath,
-				(gltf) => {
+				(gltf: GLTF) => {
 					const object = gltf.scene;
-					object.traverse((child) => {
+					object.traverse((child: THREE.Object3D) => {
 						if ((child as THREE.Mesh).isMesh) {
 							(child as THREE.Mesh).renderOrder = 999;
 							this.applyDepthTest(child as THREE.Mesh);

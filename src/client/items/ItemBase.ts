@@ -38,10 +38,10 @@ export class ItemBase {
 		this.inventoryMenuObject = this.object.clone();
 
 		if (this.itemType === ItemType.InventoryItem) {
-			this.object.traverse((child) => {
+			this.object.traverse((child: THREE.Object3D) => {
 				if ((child as THREE.Mesh).isMesh) {
 					child.renderOrder = 999;
-					const applyDepthTest = (material: THREE.Material | THREE.Material[]) => {
+					const applyDepthTest = (material: THREE.Material | THREE.Material[]): void => {
 						if (Array.isArray(material)) {
 							material.forEach((mat) => applyDepthTest(mat)); // Recursively handle array elements
 						} else {
