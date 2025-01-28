@@ -118,8 +118,8 @@ export class PeerManager {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(serverList),
 			});
-		} finally {
-			this.shareQueue.push(url);
+		} catch (err) {
+			console.error(`Failed to share server list with ${url}:`, err);
 		}
 	}
 
@@ -155,7 +155,7 @@ export class PeerManager {
 
 			if (newCount >= config.peer.maxFailedAttempts) {
 				this.updateQueue = this.updateQueue.filter((u) => u !== url);
-				console.log(`Permanently removed failed URL: ${url}`);
+				console.log(`removed failed URL: ${url}`);
 			}
 		}
 	}
@@ -163,7 +163,7 @@ export class PeerManager {
 	private removeFailedPeer(url: string) {
 		this.peers = this.peers.filter((p) => p.url !== url);
 		this.updateQueue = this.updateQueue.filter((u) => u !== url);
-		console.log(`Removed peer from active list: ${url}`);
+		console.log(`removed peer from active list: ${url}`);
 	}
 
 	private async addToServersFile(url: string) {
