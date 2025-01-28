@@ -31,7 +31,7 @@ export class HealthIndicator extends IndicatorBase {
 		this.loadModel('models/simplified_possum.glb')
 			.then((model) => {
 				this.possumObject = model;
-				this.possumObject.traverse((child) => {
+				this.possumObject.traverse((child: THREE.Object3D) => {
 					if ((child as THREE.Mesh).isMesh) {
 						(child as THREE.Mesh).renderOrder = 999;
 						this.applyDepthTest(child as THREE.Mesh);

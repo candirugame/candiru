@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Networking } from './Networking.ts';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
 import { Player, PlayerData } from '../../shared/Player.ts';
@@ -74,7 +74,7 @@ export class RemotePlayerRenderer {
 		this.possumMesh = undefined;
 		this.loader.load(
 			'models/simplified_possum.glb',
-			(gltf) => {
+			(gltf: GLTF) => {
 				console.time('Computing possum BVH');
 				(<THREE.Mesh> gltf.scene.children[0]).geometry.computeBoundsTree();
 				console.timeEnd('Computing possum BVH');
@@ -412,7 +412,7 @@ export class RemotePlayerRenderer {
 		const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
 		this.raycaster.firstHitOnly = false;
 
-		const filteredIntersects = playerIntersects.filter((playerIntersect) => {
+		const filteredIntersects = playerIntersects.filter((playerIntersect: THREE.Intersection) => {
 			for (const wallIntersect of wallIntersects) {
 				if (wallIntersect.distance < playerIntersect.distance) {
 					return false;
@@ -424,7 +424,7 @@ export class RemotePlayerRenderer {
 			return true;
 		});
 
-		return filteredIntersects.map((intersect) => intersect.object);
+		return filteredIntersects.map((intersect: THREE.Intersection) => intersect.object);
 	}
 
 	public getPlayerSpheresInCrosshairWithWalls(): THREE.Object3D[] {
@@ -437,7 +437,7 @@ export class RemotePlayerRenderer {
 		const wallIntersects = this.raycaster.intersectObjects([RemotePlayerRenderer.map]);
 		this.raycaster.firstHitOnly = false;
 
-		const filteredIntersects = playerIntersects.filter((playerIntersect) => {
+		const filteredIntersects = playerIntersects.filter((playerIntersect: THREE.Intersection) => {
 			for (const wallIntersect of wallIntersects) {
 				if (wallIntersect.distance < playerIntersect.distance) {
 					return false;
@@ -446,7 +446,7 @@ export class RemotePlayerRenderer {
 			return true;
 		});
 
-		return filteredIntersects.map((intersect) => intersect.object);
+		return filteredIntersects.map((intersect: THREE.Intersection) => intersect.object);
 	}
 
 	public getShotVectorsToPlayersWithOffset(
@@ -467,7 +467,7 @@ export class RemotePlayerRenderer {
 		this.raycaster.firstHitOnly = false;
 
 		// Filter player intersections based on wall intersections
-		const filteredPlayerIntersects = playerIntersects.filter((playerIntersect) => {
+		const filteredPlayerIntersects = playerIntersects.filter((playerIntersect: THREE.Intersection) => {
 			for (const wallIntersect of wallIntersects) {
 				if (wallIntersect.distance < playerIntersect.distance) {
 					return false; // A wall is blocking the player

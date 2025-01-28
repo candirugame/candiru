@@ -1,24 +1,33 @@
-FROM denoland/deno:2.1.2
-LABEL authors="Candiru <team@candiru.xyz>"
-
-# Set working directory
+# Build stage
+FROM denoland/deno:2.1.2 AS builder
 WORKDIR /app
 
-# Install curl
+# Copy all source files
+COPY . .
+
+# Cache dependencies
+RUN deno cache --import-map=import_map.json main.ts
+
+# Build the application
+RUN deno task build
+
+# Runtime stage
+FROM denoland/deno:2.1.2
+WORKDIR /app
+
+# Install curl for runtime
 USER root
 RUN apt-get update && apt-get install -y curl
 
-# Copy the project files
-COPY . .
+# Copy ALL source files and build artifacts
+COPY --from=builder /app/ ./
 
-# Ensure the deno user has ownership of the necessary files and directories
+# Copy the Deno cache
+COPY --from=builder /deno-dir/ /deno-dir/
+
+# Set permissions
 RUN chown -R deno:deno /app
 
-# Switch back to deno user
 USER deno
-
-# Expose the port
 EXPOSE 3000
-
-# Run the task
-CMD ["task", "start"]
+CMD ["task", "startnobuild"]

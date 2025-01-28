@@ -24,7 +24,7 @@ export class DirectionIndicator extends IndicatorBase {
 		this.loadModel('models/arrow.glb')
 			.then((model) => {
 				this.directionObject = model;
-				this.directionObject.traverse((child) => {
+				this.directionObject.traverse((child: THREE.Object3D) => {
 					if ((child as THREE.Mesh).isMesh) {
 						(child as THREE.Mesh).renderOrder = 999;
 						this.applyDepthTestToMesh(child as THREE.Mesh);
