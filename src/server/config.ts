@@ -26,6 +26,7 @@ const defaults = {
 	//Item settings
 	MAX_ITEMS_IN_WORLD: '10',
 	ITEM_RESPAWN_TIME: '7',
+	ITEM_RESPAWN_RATE: '1:1,2:1,3:1',
 };
 
 async function updateEnvFile(defaults: Record<string, string>) {
@@ -87,6 +88,7 @@ function parseConfig(env: Record<string, string>) {
 		items: {
 			maxItemsInWorld: parseInt(env.MAX_ITEMS_IN_WORLD),
 			respawnTime: parseInt(env.ITEM_RESPAWN_TIME),
+			spawnRates: parseStringToMap(env.ITEM_RESPAWN_RATE),
 		},
 	};
 }
@@ -94,3 +96,18 @@ function parseConfig(env: Record<string, string>) {
 const rawConfig = await updateEnvFile(defaults);
 const config = parseConfig(rawConfig);
 export default config;
+
+function parseStringToMap(input: string): Map<number, number> {
+	const map = new Map<number, number>();
+
+	input.split(',').forEach((pair) => {
+		const [key, value] = pair.split(':').map(Number);
+		if (!isNaN(key) && !isNaN(value)) {
+			map.set(key, value);
+		} else {
+			throw new Error(`Invalid pair: ${pair}`);
+		}
+	});
+
+	return map;
+}

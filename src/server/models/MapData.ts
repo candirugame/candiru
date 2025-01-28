@@ -24,7 +24,7 @@ export class MapData {
 			(irp) =>
 				new ItemRespawnPoint(
 					new THREE.Vector3(irp.position.x, irp.position.y, irp.position.z),
-					irp.itemId,
+					irp.itemIds,
 					irp.spawnChancePerTick,
 				),
 		);
