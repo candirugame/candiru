@@ -18,6 +18,7 @@ export class SettingsManager {
 			name: null,
 			crosshairColor: '#00ffff',
 			crosshairType: 1,
+			crosshairOpacity: 1,
 			viewBobbingStrength: 1,
 			doPrettyText: false,
 			developerMode: false,
@@ -35,6 +36,7 @@ interface Settings {
 	name: null | string;
 	crosshairColor: string;
 	crosshairType: number;
+	crosshairOpacity: number;
 	viewBobbingStrength: number;
 	doPrettyText: boolean;
 	developerMode: boolean;
