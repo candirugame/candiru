@@ -1,12 +1,12 @@
 import { Peer } from '../models/Peer.ts';
 import { DataValidator } from '../DataValidator.ts';
 import config from '../config.ts';
-import { ServerInfo } from '../models/ServerInfo.ts';
 
 export class PeerManager {
 	private peers: Peer[] = [];
 	private updateQueue: string[] = [];
 	private shareQueue: string[] = [];
+	private urlFailureCounts = new Map<string, number>();
 	healthSecret: string;
 	private serversFilePath = './servers.txt';
 
@@ -78,17 +78,26 @@ export class PeerManager {
 					await this.addToServersFile(url);
 				}
 				peer.updateServerInfo(result.data);
+				// Reset URL failure count if it becomes a peer
+				this.urlFailureCounts.delete(url);
 			} else {
 				console.log(`failed to add peer ${url}`);
-
 				this.handleFailedUpdate(url);
 			}
 		} catch {
 			console.log(`failed to add peer (network error) ${url}`);
-
 			this.handleFailedUpdate(url);
 		} finally {
-			this.updateQueue.push(url);
+			// Only requeue if not removed by failure handling
+			const peer = this.peers.find((p) => p.url === url);
+			const urlFailures = this.urlFailureCounts.get(url) || 0;
+
+			const shouldRequeue = !peer?.hasExceededFailures(config.peer.maxFailedAttempts) &&
+				urlFailures < config.peer.maxFailedAttempts;
+
+			if (shouldRequeue) {
+				this.updateQueue.push(url);
+			}
 		}
 	}
 
@@ -137,9 +146,24 @@ export class PeerManager {
 		if (peer) {
 			peer.failedAttempts++;
 			if (peer.hasExceededFailures(config.peer.maxFailedAttempts)) {
-				this.peers = this.peers.filter((p) => p.url !== url);
+				this.removeFailedPeer(url);
+			}
+		} else {
+			// Track failures for URLs that never became peers
+			const newCount = (this.urlFailureCounts.get(url) || 0) + 1;
+			this.urlFailureCounts.set(url, newCount);
+
+			if (newCount >= config.peer.maxFailedAttempts) {
+				this.updateQueue = this.updateQueue.filter((u) => u !== url);
+				console.log(`Permanently removed failed URL: ${url}`);
 			}
 		}
+	}
+
+	private removeFailedPeer(url: string) {
+		this.peers = this.peers.filter((p) => p.url !== url);
+		this.updateQueue = this.updateQueue.filter((u) => u !== url);
+		console.log(`Removed peer from active list: ${url}`);
 	}
 
 	private async addToServersFile(url: string) {

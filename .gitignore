@@ -137,3 +137,5 @@ dist
 .vscode/
 
 .nx/workspace-data/
+
+servers.txt
