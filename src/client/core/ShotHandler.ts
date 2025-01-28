@@ -108,7 +108,6 @@ export class ShotGroup {
 			}
 
 			// If we still have shots to process, schedule the next batch
-			console.log(this.shots.length);
 			if (this.shots.length > 0) {
 				if (typeof requestIdleCallback === 'function') {
 					const idleCallbackId = requestIdleCallback(processShots, { timeout: this.timeout });
