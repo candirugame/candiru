@@ -11,6 +11,7 @@ import { DamageSystem } from './managers/DamageSystem.ts';
 import { MapData } from './models/MapData.ts';
 import { DataValidator } from './DataValidator.ts';
 import { CustomServer } from '../shared/messages.ts';
+import { PeerManager } from './managers/PeerManager.ts';
 
 export class GameServer {
 	router: Router = new Router();
@@ -23,6 +24,7 @@ export class GameServer {
 	chatManager: ChatManager;
 	damageSystem: DamageSystem;
 	mapData: MapData;
+	peerManager: PeerManager;
 
 	constructor() {
 		this.mapData = this.loadMapData();
@@ -32,6 +34,8 @@ export class GameServer {
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
 
 		this.playerManager.setItemManager(this.itemManager);
+
+		this.peerManager = new PeerManager();
 
 		this.setupSocketIO();
 		this.setupRoutes();
@@ -94,6 +98,16 @@ export class GameServer {
 					}
 				});
 
+				socket.on('getServerList', (callback) => {
+					const servers = this.peerManager.peers
+						.filter((p) => p.serverInfo && p.serverInfo.gameMode !== 'bridge')
+						.map((p) => ({
+							url: p.url,
+							info: p.serverInfo!, // Use non-null assertion to ensure info is defined
+						}));
+					callback(servers);
+				});
+
 				socket.on('disconnect', () => {
 					//console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`); //reason is passed
 				});
@@ -102,6 +116,15 @@ export class GameServer {
 	}
 
 	private setupRoutes() {
+		this.router.get('/api/getInfo', (context) => {
+			try {
+				context.response.type = 'application/json';
+				context.response.body = this.gameEngine.serverInfo;
+			} catch (err) {
+				console.error('Error getting server info via API:', err);
+			}
+		});
+
 		this.router.get('/(.*)', async (context) => {
 			try {
 				await send(context, context.params[0], {
@@ -118,6 +141,26 @@ export class GameServer {
 					context.response.status = 500;
 					context.response.body = 'Internal Server Error';
 				}
+			}
+		});
+
+		this.router.get('/api/healthcheck', (context) => {
+			const secret = context.request.headers.get('X-Health-Secret');
+			if (secret === this.peerManager.healthSecret) {
+				context.response.status = 200;
+			} else {
+				context.response.status = 403;
+			}
+		});
+
+		this.router.post('/api/shareServerList', async (context) => {
+			try {
+				const body = await context.request.body.json();
+				const urls: string[] = Array.isArray(body) ? body : [];
+				this.peerManager.handleIncomingServers(urls);
+				context.response.status = 200;
+			} catch {
+				context.response.status = 400;
 			}
 		});
 

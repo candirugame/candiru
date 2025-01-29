@@ -18,7 +18,7 @@ export class Game {
 	private chatOverlay: ChatOverlay;
 	private inputHandler: InputHandler;
 	private touchInputHandler: TouchInputHandler;
-	private networking: Networking;
+	public networking: Networking;
 	private collisionManager: CollisionManager;
 	private shotHandler: ShotHandler;
 	private inventoryManager: Inventory;

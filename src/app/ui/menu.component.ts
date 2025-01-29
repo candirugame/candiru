@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { SettingsComponent } from './settings.component.ts';
 import { BrowseComponent } from './browse.component.ts';
+import { Networking } from '../../client/core/Networking.ts';
 
 @Component({
 	selector: 'app-menu',
@@ -56,7 +57,9 @@ import { BrowseComponent } from './browse.component.ts';
 							  (back)="activePage = 'main'"></app-settings>
 				<app-browse *ngIf="activePage === 'browse'"
 							class="h-full overflow-y-auto"
+							[networking]="networking"
 							(back)="activePage = 'main'"></app-browse>
+
 			</div>
 		</div>
 	`,
@@ -65,6 +68,8 @@ import { BrowseComponent } from './browse.component.ts';
 export class MenuComponent {
 	@Input()
 	visible = false;
+	@Input()
+	networking: Networking | undefined;
 	@Output()
 	close = new EventEmitter<void>();
 	@Output()

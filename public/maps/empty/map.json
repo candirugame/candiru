@@ -1,0 +1,15 @@
+{
+	"name": "empty",
+	"respawnPoints": [
+		{
+			"position": { "x": 0, "y": 100000, "z": 0 },
+			"quaternion": { "x": 0, "y": 1, "z": 0, "w": 0 }
+		}
+	],
+	"itemRespawnPoints": [
+		{
+			"position": { "x": 0, "y": 5, "z": 0 },
+			"itemId": 1
+		}
+	]
+}
