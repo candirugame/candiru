@@ -1,5 +1,4 @@
 import { FFAGamemode } from './FFAGamemode.ts';
-import { Player } from '../../shared/Player.ts';
 
 export class BridgeGamemode extends FFAGamemode {
 	private readonly FLAG_ITEM_TYPE: number = 4;
@@ -21,27 +20,27 @@ export class BridgeGamemode extends FFAGamemode {
 		}
 	}
 
-	override onPlayerConnect(player: Player): void {
+	override onPlayerConnect(): void {
 		//super.onPlayerConnect(player);
 		// Additional connection logic if needed
 	}
 
-	override onPlayerDisconnect(player: Player): void {
+	override onPlayerDisconnect(): void {
 		//super.onPlayerDisconnect(player);
 		// Additional disconnection logic if needed
 	}
 
-	override onPlayerDeath(player: Player): void {
+	override onPlayerDeath(): void {
 		//super.onPlayerDeath(player);
 		// Additional death logic if needed
 	}
 
-	override onPlayerKill(player: Player): void {
+	override onPlayerKill(): void {
 		//super.onPlayerKill(player);
 		// Additional kill logic if needed
 	}
 
-	override onItemPickup(player: Player): void {
+	override onItemPickup(): void {
 		//super.onItemPickup(player);
 	}
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Networking, ServerInfo } from '../../client/core/Networking.ts';
 
@@ -36,13 +36,24 @@ import { Networking, ServerInfo } from '../../client/core/Networking.ts';
 	`,
 	styleUrls: ['./menu-styles.css'],
 })
-export class BrowseComponent implements OnChanges {
+export class BrowseComponent implements OnChanges, OnInit, OnDestroy {
 	@Output()
 	back = new EventEmitter<void>();
 	@Input() // Accept Networking as an input
 	networking: Networking | undefined;
 
 	servers: Array<{ url: string; info: ServerInfo }> = [];
+	private refreshInterval: any; // Store the interval ID
+
+	ngOnInit() {
+		// Start the auto-refresh timer when the component is initialized
+		this.startAutoRefresh();
+	}
+
+	ngOnDestroy() {
+		// Clear the interval when the component is destroyed
+		this.stopAutoRefresh();
+	}
 
 	ngOnChanges(changes: SimpleChanges) {
 		if (changes['networking'] && this.networking) {
@@ -63,5 +74,19 @@ export class BrowseComponent implements OnChanges {
 
 	join(url: string) {
 		globalThis.location.href = url;
+	}
+
+	private startAutoRefresh() {
+		// Refresh every 30 seconds (30000 milliseconds)
+		this.refreshInterval = setInterval(() => {
+			this.refresh();
+		}, 30000);
+	}
+
+	private stopAutoRefresh() {
+		// Clear the interval to stop auto-refreshing
+		if (this.refreshInterval) {
+			clearInterval(this.refreshInterval);
+		}
 	}
 }
