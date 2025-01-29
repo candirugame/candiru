@@ -57,9 +57,13 @@ export class PeerManager {
 	}
 
 	private startQueueProcessors() {
-		setInterval(() => this.processUpdateQueue(), config.peer.updateInterval * 1000);
-		setInterval(() => this.processShareQueue(), config.peer.updateInterval * 1000);
-		setInterval(() => this.checkStalePeers(), config.server.cleanupInterval);
+		setInterval(() => this.updateQueues(), config.peer.updateInterval * 1000);
+	}
+
+	private updateQueues() {
+		this.processUpdateQueue();
+		this.processShareQueue();
+		this.checkStalePeers();
 	}
 
 	private async processUpdateQueue() {
@@ -67,28 +71,29 @@ export class PeerManager {
 		if (!url) return;
 
 		try {
-			const response = await fetch(`${url}/api/getInfo`);
-			const data = await response.json();
-			const result = DataValidator.serverInfoSchema.safeParse(data);
+			const peer = this.peers.find((p) => p.url === url);
+			const needsUpdate = !peer || (Date.now() / 1000 - peer.lastUpdate) > config.peer.staleThreshold;
 
-			if (result.success) {
-				let peer = this.peers.find((p) => p.url === url);
-				if (!peer) {
-					peer = new Peer(url);
-					this.peers.push(peer);
-					console.log(`added peer: ${url}`);
-					await this.addToServersFile(url);
+			if (needsUpdate) {
+				const response = await fetch(`${url}/api/getInfo`);
+				const data = await response.json();
+				const result = DataValidator.serverInfoSchema.safeParse(data);
+
+				if (result.success) {
+					if (!peer) {
+						const newPeer = new Peer(url);
+						this.peers.push(newPeer);
+						console.log(`added peer: ${url}`);
+						await this.addToServersFile(url);
+					}
+					peer?.updateServerInfo(result.data);
+					console.log(`updated peer: ${url}`);
+					this.urlFailureCounts.delete(url);
+				} else {
+					this.handleFailedUpdate(url);
 				}
-				peer.updateServerInfo(result.data);
-				console.log(`updated peer: ${url}`);
-				// Reset URL failure count if it becomes a peer
-				this.urlFailureCounts.delete(url);
-			} else {
-				console.log(`failed to add peer ${url} ${result.error.message}`);
-				this.handleFailedUpdate(url);
 			}
 		} catch {
-			console.log(`failed to add peer (network error) ${url}`);
 			this.handleFailedUpdate(url);
 		}
 	}
@@ -98,37 +103,38 @@ export class PeerManager {
 		if (!url) return;
 
 		try {
-			const serverList = [
-				config.server.url, // Add self URL first
-				...this.peers
-					.filter((p) => p.serverInfo && p.url !== config.server.url) // Exclude self from peers
-					.map((p) => p.url),
-			].slice(0, config.peer.maxServers);
-
-			await fetch(`${url}/api/shareServerList`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(serverList),
-			});
 			const peer = this.peers.find((p) => p.url === url);
-			if (peer) peer.lastShare = Date.now() / 1000;
-			console.log(`shared server list with ${url}`);
+			const canShare = !peer || (Date.now() / 1000 - peer.lastShare) > config.peer.shareInterval;
+
+			if (canShare) {
+				const serverList = [
+					config.server.url,
+					...this.peers
+						.filter((p) => p.serverInfo && p.url !== config.server.url)
+						.map((p) => p.url),
+				].slice(0, config.peer.maxServers);
+
+				await fetch(`${url}/api/shareServerList`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(serverList),
+				});
+
+				if (peer) peer.lastShare = Date.now() / 1000;
+				console.log(`shared server list with ${url}`);
+			}
 		} catch (err) {
 			console.error(`Failed to share server list with ${url}:`, err);
 		}
 	}
 
 	private checkStalePeers() {
-		const stalePeers = this.peers.filter((p) =>
-			p.isStale(config.peer.staleThreshold) ||
-			(Date.now() / 1000 - p.lastShare) > config.peer.shareInterval
-		);
-
-		stalePeers.forEach((peer) => {
-			if (peer.isStale(config.peer.staleThreshold)) {
+		const now = Date.now() / 1000;
+		this.peers.forEach((peer) => {
+			if (now - peer.lastUpdate > config.peer.staleThreshold) {
 				this.updateQueue.push(peer.url);
 			}
-			if ((Date.now() / 1000 - peer.lastShare) > config.peer.shareInterval) {
+			if (now - peer.lastShare > config.peer.shareInterval) {
 				this.shareQueue.push(peer.url);
 			}
 		});
@@ -144,13 +150,11 @@ export class PeerManager {
 				this.removeFailedPeer(url);
 			}
 		} else {
-			// Track failures for URLs that never became peers
 			const newCount = (this.urlFailureCounts.get(url) || 0) + 1;
 			this.urlFailureCounts.set(url, newCount);
 
 			if (newCount >= config.peer.maxFailedAttempts) {
 				this.updateQueue = this.updateQueue.filter((u) => u !== url);
-				console.log(`removed failed URL: ${url}`);
 			}
 		}
 	}
@@ -162,7 +166,7 @@ export class PeerManager {
 	}
 
 	private async addToServersFile(url: string) {
-		if (url === config.server.url) return; // Prevent adding self to file
+		if (url === config.server.url) return;
 
 		const current = await Deno.readTextFile(this.serversFilePath);
 		const urls = current.split('\n').filter((u) => u.trim());
@@ -177,7 +181,7 @@ export class PeerManager {
 	public handleIncomingServers(urls: string[]) {
 		console.log('Received server list:', urls);
 		urls.forEach((url) => {
-			if (url === config.server.url) return; // Skip self URL
+			if (url === config.server.url) return;
 
 			if (
 				!this.updateQueue.includes(url) &&
