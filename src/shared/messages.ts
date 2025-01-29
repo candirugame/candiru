@@ -27,4 +27,5 @@ interface ClientToServerEvents {
 	chatMsg: (message: ChatMessage) => void;
 	applyDamage: (damage: DamageRequest) => void;
 	latencyTest: () => void;
+	getServerList: (callback: (servers: Array<{ url: string; info: ServerInfo }>) => void) => void;
 }

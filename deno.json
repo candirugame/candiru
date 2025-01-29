@@ -1,10 +1,13 @@
 {
+	"nodeModulesDir": "auto",
 	"tasks": {
 		"dev": "deno run -A --node-modules-dir npm:vite",
 		"build": "deno run -A --node-modules-dir npm:vite build",
+		"cache": "deno cache --import-map=import_map.json main.ts",
 		"preview": "deno run -A --node-modules-dir npm:vite preview",
 		"serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/",
-		"start": "deno task build && deno run --allow-read --allow-env --allow-net --allow-write main.ts"
+		"start": "deno task build && deno run --allow-read --allow-env --allow-net --allow-write main.ts",
+		"startnobuild": "deno run --allow-read --allow-env --allow-net --allow-write main.ts"
 	},
 	"compilerOptions": {
 		"lib": ["ES2020", "DOM", "DOM.Iterable", "deno.ns"]

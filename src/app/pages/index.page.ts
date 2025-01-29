@@ -7,7 +7,10 @@ import { MenuComponent } from '../ui/menu.component.ts';
 	standalone: true,
 	template: `
 		<app-game (pointerLockChange)="onPointerLockChange($event)" #gameComponent></app-game>
-		<app-menu [visible]="showMenu" (close)="showMenu = false" (menuVisibilityChange)="onMenuVisibilityChange($event)"></app-menu>
+		<app-menu [visible]="showMenu"
+				  (close)="showMenu = false"
+				  (menuVisibilityChange)="onMenuVisibilityChange($event)"
+				  [networking]="gameComponent.networking"></app-menu>
 	`,
 	styles: ``,
 	imports: [GameComponent, MenuComponent],

@@ -12,6 +12,7 @@ export class ServerInfo {
 	public skyColor: string;
 	public tickComputeTime: number = 0;
 	public cleanupComputeTime: number = 0;
+	public url: string;
 	constructor() {
 		this.name = config.server.name;
 		this.maxPlayers = config.game.maxPlayers;
@@ -22,6 +23,7 @@ export class ServerInfo {
 		this.skyColor = '#000000';
 		this.tickComputeTime = 0;
 		this.cleanupComputeTime = 0;
+		this.url = config.server.url;
 	}
 	toJSON() {
 		return {

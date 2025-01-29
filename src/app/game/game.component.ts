@@ -13,6 +13,11 @@ export class GameComponent implements AfterViewInit {
 	pointerLockChange = new EventEmitter<boolean>();
 	private game?: Game;
 
+	// Expose the Networking instance
+	get networking() {
+		return this.game?.networking;
+	}
+
 	ngAfterViewInit() {
 		this.game = new Game(this.rendererContainer.nativeElement);
 		this.game.start();

@@ -956,18 +956,49 @@ export class ChatOverlay {
 	private renderCrosshair() {
 		const ctx = this.chatCtx;
 		ctx.fillStyle = SettingsManager.settings.crosshairColor;
+		if (ChatOverlay.isHexColor(SettingsManager.settings.crosshairColor)) {
+			ctx.fillStyle = SettingsManager.settings.crosshairColor +
+				ChatOverlay.toTwoDigitHex(SettingsManager.settings.crosshairOpacity);
+		}
+
 		if (this.renderer.crosshairIsFlashing) {
 			ctx.fillStyle = '#FF0000';
 		}
 		switch (SettingsManager.settings.crosshairType) {
 			case 0:
 				ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 3, 1, 7);
-				ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+				//ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 7, 1);
+				ctx.fillRect(Math.floor(this.screenWidth / 2 - 3), 100, 3, 1);
+				ctx.fillRect(Math.floor(this.screenWidth / 2 + 1), 100, 3, 1);
+
 				break;
 			case 1:
 				ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
 				break;
+			case 2:
+				ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
+				ctx.fillRect(Math.floor(this.screenWidth / 2), 95, 1, 3);
+				ctx.fillRect(Math.floor(this.screenWidth / 2), 103, 1, 3);
+				ctx.fillRect(Math.floor(this.screenWidth / 2 + 3), 100, 3, 1);
+				ctx.fillRect(Math.floor(this.screenWidth / 2 - 5), 100, 3, 1);
+
+				break;
+			case 3:
+				break;
 		}
+	}
+
+	public static isHexColor(str: string) {
+		const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+		return hexColorRegex.test(str);
+	}
+
+	public static toTwoDigitHex(value: number) {
+		if (value < 0) value = 0;
+		if (value > 1) value = 1;
+
+		const scaledValue = Math.round(value * 255);
+		return scaledValue.toString(16).padStart(2, '0');
 	}
 
 	private onKeyDown(e: KeyboardEvent) {

@@ -1,4 +1,4 @@
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
 
@@ -31,11 +31,11 @@ export class AssetManager {
 	private cloneWithNewMaterials(scene: THREE.Group): THREE.Group {
 		const clonedScene = scene.clone();
 
-		clonedScene.traverse((node) => {
+		clonedScene.traverse((node: THREE.Object3D) => {
 			if ((node as THREE.Mesh).isMesh) {
 				const mesh = node as THREE.Mesh;
 				if (Array.isArray(mesh.material)) {
-					mesh.material = mesh.material.map((mat) => mat.clone());
+					mesh.material = mesh.material.map((mat: THREE.Material) => mat.clone());
 				} else {
 					mesh.material = mesh.material.clone();
 				}
@@ -60,7 +60,7 @@ export class AssetManager {
 			this.assets.set(url, { scene: new THREE.Group(), isLoaded: false, callbacks: [callback] });
 			this.gltfLoader.load(
 				url,
-				(gltf) => {
+				(gltf: GLTF) => {
 					const assetEntry = this.assets.get(url)!;
 					assetEntry.scene = gltf.scene;
 					assetEntry.isLoaded = true;
@@ -72,7 +72,7 @@ export class AssetManager {
 					assetEntry.callbacks = [];
 				},
 				undefined,
-				(error) => {
+				(error: Error) => {
 					console.error(`Error loading asset ${url}:`, error);
 				},
 			);
