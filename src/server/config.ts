@@ -8,10 +8,10 @@ const defaults = {
 	SERVER_CLEANUP_INTERVAL: '1000',
 
 	// Peer settings
-	PEER_UPDATE_INTERVAL: '5', //update a stale peer from queue every x seconds
-	PEER_SHARE_INTERVAL: '1800', //share peer list every 30 minutes
+	PEER_UPDATE_INTERVAL: '1', //update a stale peer from queue every x seconds
+	PEER_SHARE_INTERVAL: '300', //share peer list every 5 minutes
 	PEER_MAX_FAILED_ATTEMPTS: '5',
-	PEER_STALE_THRESHOLD: '1800', //check peers every 30 minutes
+	PEER_STALE_THRESHOLD: '120', //check peers every 2 minutes
 	PEER_MAX_SERVERS: '200', //max servers to keep track of in memory
 	PEER_HEALTHCHECK_RETRIES: '3',
 
