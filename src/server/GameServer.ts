@@ -98,6 +98,16 @@ export class GameServer {
 					}
 				});
 
+				socket.on('getServerList', (callback) => {
+					const servers = this.peerManager.peers
+						.filter((p) => p.serverInfo) // Filter out peers without serverInfo
+						.map((p) => ({
+							url: p.url,
+							info: p.serverInfo!, // Use non-null assertion to ensure info is defined
+						}));
+					callback(servers);
+				});
+
 				socket.on('disconnect', () => {
 					//console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`); //reason is passed
 				});

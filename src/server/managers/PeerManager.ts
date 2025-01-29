@@ -3,7 +3,7 @@ import { DataValidator } from '../DataValidator.ts';
 import config from '../config.ts';
 
 export class PeerManager {
-	private peers: Peer[] = [];
+	peers: Peer[] = [];
 	private updateQueue: string[] = [];
 	private shareQueue: string[] = [];
 	private urlFailureCounts = new Map<string, number>();
@@ -78,6 +78,7 @@ export class PeerManager {
 					await this.addToServersFile(url);
 				}
 				peer.updateServerInfo(result.data);
+				console.log(`updated peer: ${url}`);
 				// Reset URL failure count if it becomes a peer
 				this.urlFailureCounts.delete(url);
 			} else {
@@ -87,17 +88,6 @@ export class PeerManager {
 		} catch {
 			console.log(`failed to add peer (network error) ${url}`);
 			this.handleFailedUpdate(url);
-		} finally {
-			// Only requeue if not removed by failure handling
-			const peer = this.peers.find((p) => p.url === url);
-			const urlFailures = this.urlFailureCounts.get(url) || 0;
-
-			const shouldRequeue = !peer?.hasExceededFailures(config.peer.maxFailedAttempts) &&
-				urlFailures < config.peer.maxFailedAttempts;
-
-			if (shouldRequeue) {
-				this.updateQueue.push(url);
-			}
 		}
 	}
 

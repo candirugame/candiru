@@ -10,7 +10,7 @@ interface WorldItem {
 	itemType: number;
 }
 
-interface ServerInfo {
+export interface ServerInfo {
 	name: string;
 	maxPlayers: number;
 	currentPlayers: number;
@@ -87,6 +87,11 @@ export class Networking {
 		} catch (e) {
 			console.error(e);
 		}
+	}
+
+	public fetchServerList(callback: (servers: Array<{ url: string; info: ServerInfo }>) => void) {
+		this.socket.emit('getServerList', callback);
+		console.log('fetchServerList');
 	}
 
 	private setupSocketListeners() {
