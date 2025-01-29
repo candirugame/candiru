@@ -110,6 +110,9 @@ export class PeerManager {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(serverList),
 			});
+			const peer = this.peers.find((p) => p.url === url);
+			if (peer) peer.lastShare = Date.now() / 1000;
+			console.log(`shared server list with ${url}`);
 		} catch (err) {
 			console.error(`Failed to share server list with ${url}:`, err);
 		}
