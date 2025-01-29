@@ -100,7 +100,7 @@ export class GameServer {
 
 				socket.on('getServerList', (callback) => {
 					const servers = this.peerManager.peers
-						.filter((p) => p.serverInfo) // Filter out peers without serverInfo
+						.filter((p) => p.serverInfo && p.serverInfo.gameMode !== 'bridge')
 						.map((p) => ({
 							url: p.url,
 							info: p.serverInfo!, // Use non-null assertion to ensure info is defined
