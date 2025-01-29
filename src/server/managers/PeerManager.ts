@@ -21,7 +21,7 @@ export class PeerManager {
 
 	private async healthCheck() {
 		const retries = config.peer.healthcheckRetries;
-		const delay = config.server.cleanupInterval;
+		const delay = config.peer.healthcheckInterval * 1000;
 
 		for (let i = 0; i < retries; i++) {
 			try {

@@ -13,7 +13,8 @@ const defaults = {
 	PEER_MAX_FAILED_ATTEMPTS: '5',
 	PEER_STALE_THRESHOLD: '120', //check peers every 2 minutes
 	PEER_MAX_SERVERS: '200', //max servers to keep track of in memory
-	PEER_HEALTHCHECK_RETRIES: '3',
+	PEER_HEALTHCHECK_RETRIES: '10',
+	PEER_HEALTHCHECK_INTERVAL: '30',
 
 	// Player settings
 	PLAYER_DISCONNECT_TIME: '10',
@@ -83,6 +84,7 @@ function parseConfig(env: Record<string, string>) {
 			staleThreshold: parseInt(env.PEER_STALE_THRESHOLD),
 			maxServers: parseInt(env.PEER_MAX_SERVERS),
 			healthcheckRetries: parseInt(env.PEER_HEALTHCHECK_RETRIES),
+			healthcheckInterval: parseInt(env.PEER_HEALTHCHECK_INTERVAL),
 		},
 		game: {
 			mode: env.GAME_MODE,
