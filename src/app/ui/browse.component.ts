@@ -60,6 +60,6 @@ export class BrowseComponent implements OnChanges {
 	}
 
 	join(url: string) {
-		window.location.href = url;
+		globalThis.location.href = url;
 	}
 }
