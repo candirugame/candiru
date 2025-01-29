@@ -8,11 +8,11 @@ import { Networking, ServerInfo } from '../../client/core/Networking.ts';
 	imports: [CommonModule],
 	template: `
 		<div>
-			<h2 class="text-xl text-gray-100 mb-4">servers</h2>
-			<button class="btn-menu mb-4" (click)="refresh()">refresh</button>
+			<h2 class="text-xl text-gray-100">internet (for possum)</h2>
+			<h3 class="text-gray-300 text-sm mb-4 ">connected to {{ networking?.getServerInfo()?.name ?? 'unknown server :(' }}</h3>
 
 			<div class="space-y-2">
-				<div *ngFor="let server of servers" class="bg-gray-700/50 p-3 rounded">
+				<div *ngFor="let server of servers" class="bg-gray-700/50 p-3 ">
 					<div class="flex justify-between items-center">
 						<div>
 							<h3 class="text-gray-100">{{ server.info.name }}</h3>
@@ -29,7 +29,9 @@ import { Networking, ServerInfo } from '../../client/core/Networking.ts';
 				</div>
 			</div>
 
-			<button class="btn-menu mt-4" (click)="back.emit()">back</button>
+			<button class="btn-menu mt-4 mr-2" (click)="back.emit()">back</button>
+			<button class="btn-menu mb-4" (click)="refresh()">refresh</button>
+
 		</div>
 	`,
 	styleUrls: ['./menu-styles.css'],
