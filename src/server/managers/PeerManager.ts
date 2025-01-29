@@ -47,7 +47,9 @@ export class PeerManager {
 	private async loadServersFile() {
 		try {
 			const content = await Deno.readTextFile(this.serversFilePath);
-			this.updateQueue = content.split('\n').filter((url) => url.trim());
+			this.updateQueue = content
+				.split('\n')
+				.filter((url) => url.trim() && url !== config.server.url);
 		} catch {
 			await Deno.writeTextFile(this.serversFilePath, 'https://bridge.candiru.xyz\n');
 			this.updateQueue = ['https://bridge.candiru.xyz'];
@@ -56,7 +58,7 @@ export class PeerManager {
 
 	private startQueueProcessors() {
 		setInterval(() => this.processUpdateQueue(), config.peer.updateInterval * 1000);
-		setInterval(() => this.processShareQueue(), config.peer.shareInterval * 1000);
+		setInterval(() => this.processShareQueue(), config.peer.updateInterval * 1000);
 		setInterval(() => this.checkStalePeers(), config.server.cleanupInterval);
 	}
 
