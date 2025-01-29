@@ -82,7 +82,7 @@ export class PeerManager {
 				// Reset URL failure count if it becomes a peer
 				this.urlFailureCounts.delete(url);
 			} else {
-				console.log(`failed to add peer ${url}`);
+				console.log(`failed to add peer ${url} ${result.error.message}`);
 				this.handleFailedUpdate(url);
 			}
 		} catch {

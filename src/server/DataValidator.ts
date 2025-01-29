@@ -96,6 +96,7 @@ export class DataValidator {
 		skyColor: z.string(),
 		tickComputeTime: z.number(),
 		cleanupComputeTime: z.number(),
+		url: z.string(),
 	}).strict().transform((data) => Object.assign(new ServerInfo(), data));
 
 	static validatePlayerData(data: PlayerData) {
