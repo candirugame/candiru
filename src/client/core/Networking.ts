@@ -91,7 +91,6 @@ export class Networking {
 
 	public fetchServerList(callback: (servers: Array<{ url: string; info: ServerInfo }>) => void) {
 		this.socket.emit('getServerList', callback);
-		console.log('fetchServerList');
 	}
 
 	private setupSocketListeners() {
