@@ -43,7 +43,7 @@ export class BrowseComponent implements OnChanges, OnInit, OnDestroy {
 	networking: Networking | undefined;
 
 	servers: Array<{ url: string; info: ServerInfo }> = [];
-	private refreshInterval: any; // Store the interval ID
+	private refreshInterval: number | undefined; // Store the interval ID
 
 	ngOnInit() {
 		// Start the auto-refresh timer when the component is initialized
