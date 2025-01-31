@@ -74,6 +74,7 @@ export class PeerManager {
 		if (now - this.lastUrlFailureCountClearTime > config.peer.urlFailureForgetTime) {
 			this.urlFailureCounts.clear();
 			this.lastUrlFailureCountClearTime = now;
+			console.log('Cleared failed url counts');
 		}
 	}
 
