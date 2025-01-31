@@ -8,13 +8,14 @@ const defaults = {
 	SERVER_CLEANUP_INTERVAL: '1000',
 
 	// Peer settings
-	PEER_UPDATE_INTERVAL: '1', //update a stale peer from queue every x seconds
+	PEER_UPDATE_TICK_INTERVAL: '1', //update a stale peer from queue every x seconds
 	PEER_SHARE_INTERVAL: '300', //share peer list every 5 minutes
 	PEER_MAX_FAILED_ATTEMPTS: '5',
 	PEER_STALE_THRESHOLD: '120', //check peers every 2 minutes
 	PEER_MAX_SERVERS: '200', //max servers to keep track of in memory
 	PEER_HEALTHCHECK_RETRIES: '10',
 	PEER_HEALTHCHECK_INTERVAL: '30',
+	PEER_URL_FAILURE_FORGET_TIME: '7200', //forget failed urls after 2 hours
 
 	// Player settings
 	PLAYER_DISCONNECT_TIME: '10',
@@ -78,13 +79,14 @@ function parseConfig(env: Record<string, string>) {
 			cleanupInterval: parseInt(env.SERVER_CLEANUP_INTERVAL),
 		},
 		peer: {
-			updateInterval: parseInt(env.PEER_UPDATE_INTERVAL),
+			updateInterval: parseInt(env.PEER_UPDATE_TICK_INTERVAL),
 			shareInterval: parseInt(env.PEER_SHARE_INTERVAL),
 			maxFailedAttempts: parseInt(env.PEER_MAX_FAILED_ATTEMPTS),
 			staleThreshold: parseInt(env.PEER_STALE_THRESHOLD),
 			maxServers: parseInt(env.PEER_MAX_SERVERS),
 			healthcheckRetries: parseInt(env.PEER_HEALTHCHECK_RETRIES),
 			healthcheckInterval: parseInt(env.PEER_HEALTHCHECK_INTERVAL),
+			urlFailureForgetTime: parseInt(env.PEER_URL_FAILURE_FORGET_TIME),
 		},
 		game: {
 			mode: env.GAME_MODE,
