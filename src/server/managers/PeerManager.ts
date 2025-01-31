@@ -7,6 +7,7 @@ export class PeerManager {
 	private updateQueue: string[] = [];
 	private shareQueue: string[] = [];
 	private urlFailureCounts = new Map<string, number>();
+	private lastUrlFailureCountClearTime: number = 0;
 	healthSecret: string;
 	private serversFilePath = './servers.txt';
 
@@ -64,6 +65,16 @@ export class PeerManager {
 		this.processUpdateQueue();
 		this.processShareQueue();
 		this.checkStalePeers();
+
+		this.clearFailedUrlCounts();
+	}
+
+	private clearFailedUrlCounts() {
+		const now = Date.now() / 1000;
+		if (now - this.lastUrlFailureCountClearTime > config.peer.urlFailureForgetTime) {
+			this.urlFailureCounts.clear();
+			this.lastUrlFailureCountClearTime = now;
+		}
 	}
 
 	private async processUpdateQueue() {
@@ -105,12 +116,11 @@ export class PeerManager {
 		try {
 			const peer = this.peers.find((p) => p.url === url);
 			const canShare = !peer || (Date.now() / 1000 - peer.lastShare) > config.peer.shareInterval;
-
 			if (canShare) {
 				const serverList = [
 					config.server.url,
 					...this.peers
-						.filter((p) => p.serverInfo && p.url !== config.server.url)
+						.filter((p) => p.serverInfo && p.url !== config.server.url) //don't include self again
 						.map((p) => p.url),
 				].slice(0, config.peer.maxServers);
 
