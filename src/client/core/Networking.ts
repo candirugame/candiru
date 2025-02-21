@@ -217,9 +217,19 @@ export class Networking {
 			}
 		}
 		if (
+			this.getServerInfo().maxPlayers <= this.getServerInfo().currentPlayers &&
+			this.getServerInfo().currentPlayers !== 0 &&
+			!this.remotePlayers.some((player) => player.id === this.localPlayer.id)
+		) {
+			this.localPlayer.gameMsgs = [
+				`&cThe server is full. (${this.getServerInfo().currentPlayers + '/' + this.getServerInfo().maxPlayers}) `,
+				`&cYou'll automatically connect when a spot opens up. `,
+			];
+		}
+		if (
 			this.getServerInfo().version && this.localPlayer.gameVersion !== this.getServerInfo().version
 		) {
-			this.localPlayer.gameMsgs = ['&c Your client may be outdated. Try refreshing the page.'];
+			this.localPlayer.gameMsgs = ['&cYour client may be outdated. Try refreshing the page.'];
 		}
 	}
 
