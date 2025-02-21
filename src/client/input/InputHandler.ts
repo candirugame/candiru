@@ -242,6 +242,9 @@ export class InputHandler {
 			} else if (key === 'z') {
 				this.rightMouseDown = true;
 			}
+			if (key === 'p') {
+				this.renderer.createScreenshot();
+			}
 		}
 	}
 

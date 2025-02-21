@@ -31,7 +31,7 @@ interface LineMessage {
 const hitMarkerLifetime = 0.3;
 
 export class ChatOverlay {
-	private chatCanvas: HTMLCanvasElement;
+	public chatCanvas: HTMLCanvasElement;
 	private chatCtx: CanvasRenderingContext2D;
 	private chatMessages: ChatMessage[]; // Typed as ChatMessage[]
 	private chatMessageLifespan: number;
