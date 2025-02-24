@@ -72,7 +72,7 @@ export class AssetManager {
 					assetEntry.callbacks = [];
 				},
 				undefined,
-				(error: Error) => {
+				(error: unknown) => {
 					console.error(`Error loading asset ${url}:`, error);
 				},
 			);
