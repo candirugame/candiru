@@ -38,8 +38,8 @@ export class ShotHandler {
 }
 
 class Shot {
-	private readonly pitchOffset: number;
-	private readonly yawOffset: number;
+	public readonly pitchOffset: number;
+	public readonly yawOffset: number;
 	private readonly maxDistance: number;
 
 	constructor(yawOffset: number = 0, pitchOffset: number = 0, maxDistance: number = Infinity) {
@@ -89,16 +89,62 @@ export class ShotGroup {
 			const timeRemaining = deadline ? deadline.timeRemaining() : 16;
 
 			while (this.shots.length > 0 && timeRemaining > 0) {
-				const shotVectors = this.shots.pop()?.shoot(renderer);
-				if (shotVectors && shotVectors?.length > 0) {
-					for (const shot of shotVectors) {
-						const { playerID, hitPoint } = shot;
+				const shot = this.shots.pop();
+				if (!shot) continue;
+
+				// Calculate the shot direction based on the muzzle direction plus the shot's offset
+				const muzzlePos = renderer.getMuzzlePosition();
+				const baseMuzzleDir = renderer.getMuzzleDirection().clone().normalize();
+
+				// Compute local right vector (cross product of baseMuzzleDir and world up)
+				const worldUp = new THREE.Vector3(0, 1, 0);
+				let right = new THREE.Vector3().crossVectors(baseMuzzleDir, worldUp).normalize();
+				// Fallback in case baseMuzzleDir is parallel to worldUp
+				if (right.lengthSq() === 0) {
+					right = new THREE.Vector3(1, 0, 0);
+				}
+
+				// Create quaternions for yaw (around worldUp) and pitch (around right) based on local axes
+				const yawQuat = new THREE.Quaternion().setFromAxisAngle(worldUp, shot.yawOffset);
+				const pitchQuat = new THREE.Quaternion().setFromAxisAngle(right, shot.pitchOffset);
+
+				// Apply the rotations: yaw followed by pitch
+				const finalQuat = new THREE.Quaternion().multiplyQuaternions(yawQuat, pitchQuat);
+				// Generate the new shot direction in local space
+				const shotDirection = baseMuzzleDir.clone().applyQuaternion(finalQuat).normalize();
+
+				// Emit muzzle flash with shot direction
+				renderer.particleSystem.emit({
+					position: muzzlePos,
+					count: 1,
+					velocity: shotDirection.multiplyScalar(20),
+					spread: 0.1,
+					lifetime: 0.25,
+					size: 0.2,
+					color: new THREE.Color(1, 0.7, 0),
+				});
+
+				// Process raycast shot info
+				const shotVectors = shot.shoot(renderer);
+				if (shotVectors?.length > 0) {
+					for (const { playerID, hitPoint, vector } of shotVectors) {
 						if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
 							hitPlayers.push(playerID);
 							networking.applyDamage(playerID, this.damage);
+
+							renderer.particleSystem.emit({
+								position: hitPoint,
+								count: 16,
+								velocity: new THREE.Vector3(0, 0, 0),
+								spread: 8,
+								lifetime: 2.5,
+								size: 0.1,
+								color: new THREE.Color(0.8, 0, 0),
+							});
+
 							renderer.hitMarkerQueue.push({
 								hitPoint: hitPoint,
-								shotVector: shot.vector,
+								shotVector: vector,
 								timestamp: -1,
 							});
 							renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
@@ -107,12 +153,9 @@ export class ShotGroup {
 				}
 			}
 
-			// If we still have shots to process, schedule the next batch
 			if (this.shots.length > 0) {
 				if (typeof requestIdleCallback === 'function') {
 					const idleCallbackId = requestIdleCallback(processShots, { timeout: this.timeout });
-
-					// Ensure completion within timeout
 					setTimeout(() => {
 						cancelIdleCallback(idleCallbackId);
 						processShots();
@@ -123,11 +166,8 @@ export class ShotGroup {
 			}
 		};
 
-		// Initial call
 		if (typeof requestIdleCallback === 'function') {
 			const idleCallbackId = requestIdleCallback(processShots, { timeout: this.timeout });
-
-			// Ensure first batch starts within timeout
 			setTimeout(() => {
 				cancelIdleCallback(idleCallbackId);
 				processShots();
