@@ -355,6 +355,39 @@ export class Renderer {
 		return this.chatOverlay;
 	}
 
+	public createScreenshot() {
+		this.onFrame(this.localPlayer);
+
+		const width = this.renderer.domElement.width;
+		const height = this.renderer.domElement.height;
+
+		const tempCanvas = document.createElement('canvas');
+		tempCanvas.width = width;
+		tempCanvas.height = height;
+		const tempContext = tempCanvas.getContext('2d');
+
+		if (tempContext) {
+			// Capture the WebGL canvas as an image
+			const webglImage = new Image();
+			webglImage.src = this.renderer.domElement.toDataURL('image/png');
+
+			webglImage.onload = () => {
+				// Draw the WebGL canvas onto the temporary canvas
+				tempContext.drawImage(webglImage, 0, 0, width, height);
+
+				// Draw the chat overlay
+				tempContext.drawImage(this.chatOverlay.chatCanvas, 0, 0, width, height);
+
+				// Trigger a download of the combined image
+				const dataURL = tempCanvas.toDataURL('image/png');
+				const link = document.createElement('a');
+				link.href = dataURL;
+				link.download = 'screenshot.png';
+				link.click();
+			};
+		}
+	}
+
 	public getShotVectorsToPlayersInCrosshair(
 		maxDistance: number | undefined = undefined,
 	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
