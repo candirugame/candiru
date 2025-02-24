@@ -9,6 +9,7 @@ import { Player, PlayerData } from '../../shared/Player.ts';
 import { IndicatorBase } from '../ui/IndicatorBase.ts';
 import { HealthIndicator } from '../ui/HealthIndicator.ts';
 import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
+import { ParticleSystem } from './ParticleSystem.ts';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -32,6 +33,7 @@ export class Renderer {
 	private knockbackVector: THREE.Vector3 = new THREE.Vector3();
 	private bobCycle: number;
 	private lastCameraRoll: number;
+	particleSystem: ParticleSystem;
 
 	public crosshairIsFlashing: boolean = false;
 	public lastShotSomeoneTimestamp: number = 0;
@@ -125,6 +127,8 @@ export class Renderer {
 		// Initialize indicators
 		this.healthIndicator.init();
 		this.directionIndicator.init();
+
+		this.particleSystem = new ParticleSystem(this.scene);
 	}
 
 	public onFrame(localPlayer: Player) {
@@ -307,6 +311,8 @@ export class Renderer {
 
 		this.scene.background = new THREE.Color(this.networking.getServerInfo().skyColor);
 
+		this.particleSystem.update(this.deltaTime);
+
 		this.updateFramerate();
 	}
 
@@ -353,6 +359,16 @@ export class Renderer {
 
 	public getChatOverlay(): ChatOverlay {
 		return this.chatOverlay;
+	}
+
+	public getMuzzlePosition(): THREE.Vector3 {
+		return this.camera.position.clone();
+	}
+
+	public getMuzzleDirection(): THREE.Vector3 {
+		const direction = new THREE.Vector3(0, 0, -1);
+		direction.applyQuaternion(this.camera.quaternion); // Changed from heldItemCamera
+		return direction;
 	}
 
 	public createScreenshot() {
