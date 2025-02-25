@@ -37,11 +37,32 @@ export class ItemManager {
 	createItem() {
 		if (!this.mapData) return;
 
-		const randomIndex = Math.floor(Math.random() * this.mapData.itemRespawnPoints.length);
-		const respawnPoint = this.mapData.itemRespawnPoints[randomIndex];
+		const weaponSpawnRates = config.items.spawnRates;
+		let weaponSpawnRatesTotal = 0;
+		let weaponToSpawn = 0;
+
+		for (const spawnRate of weaponSpawnRates.values()) {
+			weaponSpawnRatesTotal += spawnRate;
+		}
+
+		const magicNumber = Math.floor(Math.random() * weaponSpawnRatesTotal) + 1;
+
+		let index = 0;
+		for (const weapon of weaponSpawnRates.keys()) {
+			const prevIndex = index;
+			index += weaponSpawnRates.get(weapon)!;
+			if (index <= magicNumber && index > prevIndex) {
+				weaponToSpawn = weapon;
+				break;
+			}
+		}
+
+		const respawnPoints = [...this.mapData.itemRespawnPoints].filter((value) => value.itemIds.includes(weaponToSpawn));
+		const randomIndex = Math.floor(Math.random() * respawnPoints.length);
+		const respawnPoint = respawnPoints[randomIndex];
 		const newItem = new WorldItem(
 			new THREE.Vector3(respawnPoint.position.x, respawnPoint.position.y, respawnPoint.position.z),
-			respawnPoint.itemId,
+			weaponToSpawn,
 		);
 
 		if (this.isItemCloseToPoint(newItem.vector, 1)) return; // Another item is too close
