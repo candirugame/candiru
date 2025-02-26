@@ -132,15 +132,15 @@ export class ShotGroup {
 							hitPlayers.push(playerID);
 							networking.applyDamage(playerID, this.damage);
 
-							renderer.particleSystem.emit({
-								position: hitPoint,
-								count: 16,
-								velocity: new THREE.Vector3(0, 0, 0),
-								spread: 8,
-								lifetime: 2.5,
-								size: 0.1,
-								color: new THREE.Color(0.8, 0, 0),
-							});
+							// renderer.particleSystem.emit({
+							// 	position: hitPoint,
+							// 	count: 16,
+							// 	velocity: new THREE.Vector3(0, 0, 0),
+							// 	spread: 8,
+							// 	lifetime: 2.5,
+							// 	size: 0.1,
+							// 	color: new THREE.Color(0.8, 0, 0),
+							// });
 
 							renderer.hitMarkerQueue.push({
 								hitPoint: hitPoint,

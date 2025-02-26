@@ -6,6 +6,7 @@ import { WorldItem } from '../models/WorldItem.ts';
 import { ItemManager } from './ItemManager.ts';
 import { PlayerExtras } from '../models/PlayerExtras.ts';
 import * as THREE from 'three';
+import { GameEngine } from '../GameEngine.ts';
 
 interface PlayerWithExtras {
 	player: Player;
@@ -16,6 +17,7 @@ export class PlayerManager {
 	private players: Map<number, PlayerWithExtras> = new Map();
 	private mapData: MapData;
 	private itemManager!: ItemManager;
+	private gameEngine!: GameEngine;
 
 	constructor(mapData: MapData) {
 		this.mapData = mapData;
@@ -23,6 +25,10 @@ export class PlayerManager {
 
 	setItemManager(itemManager: ItemManager) {
 		this.itemManager = itemManager;
+	}
+
+	setGameEngine(gameEngine: GameEngine) {
+		this.gameEngine = gameEngine;
 	}
 
 	addOrUpdatePlayer(unparsedData: PlayerData): { isNew: false } | { isNew: true; player: Player } {
@@ -129,6 +135,18 @@ export class PlayerManager {
 			this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
 		}
 		player.inventory = [];
+	}
+
+	doDeathParticles(player: Player) {
+		this.gameEngine.emitParticleData({
+			position: player.position.clone(),
+			count: 128,
+			velocity: new THREE.Vector3(0, 0, 0),
+			spread: 6,
+			lifetime: 5,
+			size: 0.1,
+			color: new THREE.Color(1, 0, 0),
+		});
 	}
 
 	respawnPlayer(player: Player) {

@@ -311,6 +311,13 @@ export class Renderer {
 
 		this.scene.background = new THREE.Color(this.networking.getServerInfo().skyColor);
 
+		while (this.networking.particleQueue.length > 0) {
+			const particle = this.networking.particleQueue.shift();
+			if (particle) {
+				this.particleSystem.emit(particle);
+			}
+		}
+
 		this.particleSystem.update(this.deltaTime);
 
 		this.updateFramerate();

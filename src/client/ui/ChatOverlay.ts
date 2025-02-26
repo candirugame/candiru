@@ -175,7 +175,7 @@ export class ChatOverlay {
 		this.clearOldMessages();
 		this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
 
-		//this.renderHitMarkers();
+		this.renderHitMarkers();
 		this.renderSparkles();
 
 		this.renderChatMessages();

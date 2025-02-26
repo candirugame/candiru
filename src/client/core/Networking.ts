@@ -48,6 +48,15 @@ export class Networking {
 	private chatOverlay: ChatOverlay;
 	private damagedTimestamp: number = 0;
 	private serverInfo: ServerInfo;
+	public particleQueue: {
+		position: THREE.Vector3;
+		count: number;
+		velocity: THREE.Vector3;
+		spread: number;
+		lifetime: number;
+		size: number;
+		color: THREE.Color;
+	}[] = [];
 
 	constructor(localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.localPlayer = localPlayer;
@@ -118,6 +127,20 @@ export class Networking {
 				...data,
 			};
 			this.onServerInfo();
+		});
+
+		this.socket.on('particleEmit', (data) => {
+			const particleData = {
+				position: new THREE.Vector3(data.position.x, data.position.y, data.position.z),
+				velocity: new THREE.Vector3(data.velocity.x, data.velocity.y, data.velocity.z),
+				count: data.count,
+				spread: data.spread,
+				lifetime: data.lifetime,
+				size: data.size,
+				color: new THREE.Color(data.color),
+			};
+
+			this.particleQueue.push(particleData);
 		});
 	}
 
