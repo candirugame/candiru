@@ -5,6 +5,7 @@ import type { ServerInfo } from '../server/models/ServerInfo.ts';
 import type { WorldItem } from '../server/models/WorldItem.ts';
 import type { DamageRequest } from '../server/models/DamageRequest.ts';
 import type { PlayerData } from './Player.ts';
+import * as THREE from 'three';
 
 export type CustomServer = Server<ClientToServerEvents, ServerToClientEvents>;
 export type CustomSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -20,6 +21,15 @@ interface ServerToClientEvents {
 	remotePlayerData: (players: PlayerData[]) => void;
 	worldItemData: (items: WorldItem[]) => void;
 	latencyTest: () => void;
+	particleEmit: (options: {
+		position: THREE.Vector3;
+		count: number;
+		velocity: THREE.Vector3;
+		spread: number;
+		lifetime: number;
+		size: number;
+		color: THREE.Color;
+	}) => void;
 }
 
 interface ClientToServerEvents {

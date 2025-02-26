@@ -72,6 +72,8 @@ export class FFAGamemode extends Gamemode {
 		) {
 			const killer = this.gameEngine.playerManager.getPlayerById(player.idLastDamagedBy);
 			if (killer) {
+				this.gameEngine.playerManager.doDeathParticles(player);
+
 				// Redirect spectators of the dead player to the killer
 				for (const otherPlayer of this.gameEngine.playerManager.getAllPlayers()) {
 					if (otherPlayer.playerSpectating === player.id) {
