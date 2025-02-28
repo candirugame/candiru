@@ -17,7 +17,8 @@ export class AssetManager {
 		this.assets = new Map();
 		this.gltfLoader = new GLTFLoader();
 		const dracoLoader = new DRACOLoader();
-		dracoLoader.setDecoderPath('/draco/');
+		dracoLoader.setDecoderPath('/draco/'); // Ensure this matches your public directory structure
+		dracoLoader.setDecoderConfig({ type: 'wasm' }); // Force WASM version
 		this.gltfLoader.setDRACOLoader(dracoLoader);
 	}
 
@@ -29,16 +30,26 @@ export class AssetManager {
 	}
 
 	private cloneWithNewMaterials(scene: THREE.Group): THREE.Group {
-		const clonedScene = scene.clone();
+		const clonedScene = scene.clone(true); // Deep clone
 
-		clonedScene.traverse((node: THREE.Object3D) => {
+		clonedScene.traverse((node) => {
 			if ((node as THREE.Mesh).isMesh) {
 				const mesh = node as THREE.Mesh;
+
+				// Handle material array
 				if (Array.isArray(mesh.material)) {
-					mesh.material = mesh.material.map((mat: THREE.Material) => mat.clone());
+					mesh.material = mesh.material.map((mat) => {
+						const newMat = mat.clone();
+						newMat.needsUpdate = true;
+						return newMat;
+					});
 				} else {
 					mesh.material = mesh.material.clone();
+					mesh.material.needsUpdate = true;
 				}
+
+				// Handle geometry
+				mesh.geometry = mesh.geometry.clone();
 			}
 		});
 
@@ -85,5 +96,14 @@ export class AssetManager {
 
 	public clearCache(): void {
 		this.assets.clear();
+	}
+
+	public async validateCache(): Promise<void> {
+		if ('serviceWorker' in navigator) {
+			const reg = await navigator.serviceWorker.getRegistration();
+			if (reg?.active) {
+				reg.active.postMessage({ type: 'VALIDATE_CACHE' });
+			}
+		}
 	}
 }
