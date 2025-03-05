@@ -102,7 +102,11 @@ export class AssetManager {
 		if ('serviceWorker' in navigator) {
 			const reg = await navigator.serviceWorker.getRegistration();
 			if (reg?.active) {
-				reg.active.postMessage({ type: 'VALIDATE_CACHE' });
+				try {
+					reg.active.postMessage({ type: 'VALIDATE_CACHE' });
+				} catch (error) {
+					console.error('Error sending postMessage to service worker:', error);
+				}
 			}
 		}
 	}
