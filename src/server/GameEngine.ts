@@ -12,7 +12,6 @@ import { Player } from '../shared/Player.ts';
 import * as THREE from 'three';
 import { SoloCTFGamemode } from './gamemodes/SoloCTFGamemode.ts';
 import { BridgeGamemode } from './gamemodes/BridgeGamemode.ts';
-import { Particle } from '../client/core/ParticleSystem.ts';
 
 export class GameEngine {
 	private lastPlayerTickTimestamp: number = Date.now() / 1000;
@@ -154,7 +153,15 @@ export class GameEngine {
 		this.io.emit('serverInfo', this.serverInfo);
 	}
 
-	public emitParticleData(data: Particle) {
+	public emitParticleData(data: {
+		position: THREE.Vector3;
+		count: number;
+		velocity: THREE.Vector3;
+		spread: number;
+		lifetime: number;
+		size: number;
+		color: THREE.Color;
+	}) {
 		this.io.emit('particleEmit', data);
 	}
 
