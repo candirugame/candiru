@@ -318,7 +318,7 @@ export class Renderer {
 			}
 		}
 
-		this.particleSystem.update(this.deltaTime);
+		this.particleSystem.update(this.deltaTime, this.camera.position.clone());
 
 		this.updateFramerate();
 	}

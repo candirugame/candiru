@@ -143,7 +143,7 @@ export class PlayerManager {
 			count: 128,
 			velocity: new THREE.Vector3(0, 0, 0),
 			spread: 6,
-			lifetime: 5,
+			lifetime: 15,
 			size: 0.1,
 			color: new THREE.Color(1, 0, 0),
 		});

@@ -23,6 +23,7 @@ export class ShotHandler {
 		pitchOffsetRange: number = 0,
 		maxDistance: number = Infinity,
 		onlyHitEachPlayerOnce: boolean = false,
+		shotParticleType: ShotParticleType = ShotParticleType.None,
 	) {
 		const shotGroup = new ShotGroup(
 			damage,
@@ -32,6 +33,7 @@ export class ShotHandler {
 			pitchOffsetRange,
 			maxDistance,
 			onlyHitEachPlayerOnce,
+			shotParticleType,
 		);
 		shotGroup.processShots(this.renderer, this.networking);
 	}
@@ -41,16 +43,27 @@ class Shot {
 	public readonly pitchOffset: number;
 	public readonly yawOffset: number;
 	private readonly maxDistance: number;
+	public readonly shotParticleType: ShotParticleType;
 
-	constructor(yawOffset: number = 0, pitchOffset: number = 0, maxDistance: number = Infinity) {
+	constructor(
+		yawOffset: number = 0,
+		pitchOffset: number = 0,
+		maxDistance: number = Infinity,
+		shotParticleType: ShotParticleType = ShotParticleType.None,
+	) {
 		this.pitchOffset = pitchOffset;
 		this.yawOffset = yawOffset;
 		this.maxDistance = maxDistance;
+		this.shotParticleType = shotParticleType;
 	}
 
 	public shoot(renderer: Renderer): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
 		return renderer.getShotVectorsToPlayersWithOffset(this.yawOffset, this.pitchOffset, this.maxDistance);
 	}
+}
+export enum ShotParticleType {
+	None,
+	Shotgun,
 }
 
 export class ShotGroup {
@@ -67,6 +80,7 @@ export class ShotGroup {
 		pitchOffsetRange: number = 0,
 		maxDistance: number = Infinity,
 		onlyHitEachPlayerOnce: boolean = false,
+		particleType: ShotParticleType,
 	) {
 		this.shots = [];
 		this.timeout = timeout;
@@ -77,6 +91,7 @@ export class ShotGroup {
 				(Math.random() - 0.5) * yawOffsetRange,
 				(Math.random() - 0.5) * pitchOffsetRange,
 				maxDistance,
+				particleType,
 			);
 			this.shots.push(shot);
 		}
@@ -114,15 +129,21 @@ export class ShotGroup {
 				const shotDirection = baseMuzzleDir.clone().applyQuaternion(finalQuat).normalize();
 
 				// Emit muzzle flash with shot direction
-				renderer.particleSystem.emit({
-					position: muzzlePos,
-					count: 1,
-					velocity: shotDirection.multiplyScalar(20),
-					spread: 0.1,
-					lifetime: 0.25,
-					size: 0.2,
-					color: new THREE.Color(1, 0.7, 0),
-				});
+				switch (shot.shotParticleType) {
+					case ShotParticleType.Shotgun:
+						renderer.particleSystem.emit({
+							position: muzzlePos,
+							count: 1,
+							velocity: shotDirection.multiplyScalar(20),
+							spread: 0.1,
+							lifetime: 0.25,
+							size: 0.2,
+							color: new THREE.Color(25 / 255, 70 / 255, 25 / 255),
+						});
+						break;
+					default:
+						break;
+				}
 
 				// Process raycast shot info
 				const shotVectors = shot.shoot(renderer);

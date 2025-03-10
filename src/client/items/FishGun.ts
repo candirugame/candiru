@@ -4,7 +4,7 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
-import { ShotHandler } from '../core/ShotHandler.ts';
+import { ShotHandler, ShotParticleType } from '../core/ShotHandler.ts';
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -165,7 +165,7 @@ export class FishGun extends ItemBase {
 	}
 
 	private shootFish() {
-		this.shotHandler.addShotGroup(3, 25, 150, .3, .3);
+		this.shotHandler.addShotGroup(3, 25, 150, .3, .3, Infinity, false, ShotParticleType.Shotgun);
 	}
 
 	// Method to set world position when used as WorldItem

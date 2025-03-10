@@ -38,8 +38,8 @@ export class ParticleSystem {
                     gl_FragColor = vec4(vColor, 1.0);
                 }
             `,
-			transparent: true,
-			depthWrite: false,
+			transparent: false,
+			depthWrite: true,
 			blending: THREE.AdditiveBlending,
 		});
 
@@ -77,7 +77,7 @@ export class ParticleSystem {
 		}
 	}
 
-	update(deltaTime: number) {
+	update(deltaTime: number, cameraPosition: THREE.Vector3) {
 		// Update particle logic and filter out expired particles
 		this.particles = this.particles.filter((p) => {
 			p.lifetime -= deltaTime;
@@ -99,7 +99,11 @@ export class ParticleSystem {
 			colors[i * 3 + 1] = p.color.g;
 			colors[i * 3 + 2] = p.color.b;
 
-			sizes[i] = p.size * (p.lifetime / p.maxLifetime);
+			//sizes[i] = p.size * (p.lifetime / p.maxLifetime);
+			sizes[i] = p.size;
+			if (p.position.distanceTo(cameraPosition) > 10) {
+				p.lifetime = 0;
+			}
 		});
 
 		// Set attributes and flag for update
