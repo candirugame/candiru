@@ -110,11 +110,11 @@ jobs:
         run: docker build -t candiru .
 
       - name: Run Docker container
-        run: docker run -d -p 3000:3000 candiru
+        run: docker run -p 3000:3000 candiru
 
       - name: Health check
         run: |
-          retries=10
+          retries=15
           count=0
           until curl -f http://localhost:3000; do
             count=$((count + 1))
