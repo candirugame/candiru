@@ -9,7 +9,7 @@ export class DataValidator {
 	private static SERVER_VERSION = '';
 
 	public static async updateServerVersion() {
-		const versionFile = await Deno.readTextFile('public/gameVersion.json');
+		const versionFile = await Deno.readTextFile(new URL('../../dist/gameVersion.json', import.meta.url));
 		const versionData = JSON.parse(versionFile);
 		this.SERVER_VERSION = versionData.version;
 		return this.SERVER_VERSION;

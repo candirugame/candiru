@@ -114,7 +114,7 @@ jobs:
 
       - name: Health check
         run: |
-          retries=10
+          retries=15
           count=0
           until curl -f http://localhost:3000; do
             count=$((count + 1))

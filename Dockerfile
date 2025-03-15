@@ -1,17 +1,15 @@
-# Build stage
+# Build stage (unchanged)
 FROM denoland/deno:2.2.3 AS builder
 WORKDIR /app
 COPY . .
-RUN deno cache --import-map=import_map.json main.ts
 RUN deno task build
+RUN deno compile \
+  --allow-read --allow-write --allow-net --allow-env \
+  --include dist/ --output candiru main.ts
 
-# Runtime stage
-FROM denoland/deno:alpine-2.2.3
+# Runtime stage (updated)
+FROM debian:bookworm-slim
 WORKDIR /app
-USER root
-COPY --from=builder /app/ ./
-COPY --from=builder /deno-dir/ /deno-dir/
-RUN chown -R deno:deno /app
-USER deno
+COPY --from=builder /app/candiru .
 EXPOSE 3000
-CMD ["task", "startnobuild"]
+CMD ["/app/candiru"]
