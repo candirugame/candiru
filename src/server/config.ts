@@ -1,6 +1,6 @@
 const defaults = {
 	// Server settings
-	SERVER_PORT: '3000',
+	PORT: '3000',
 	SERVER_NAME: 'my-server',
 	SERVER_URL: 'https://example.com',
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
@@ -71,7 +71,7 @@ async function updateEnvFile(defaults: Record<string, string>) {
 function parseConfig(env: Record<string, string>) {
 	return {
 		server: {
-			port: parseInt(env.SERVER_PORT),
+			port: parseInt(env.PORT),
 			name: env.SERVER_NAME,
 			url: env.SERVER_URL,
 			defaultMap: env.SERVER_DEFAULT_MAP,
