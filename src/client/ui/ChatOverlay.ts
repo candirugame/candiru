@@ -420,6 +420,7 @@ export class ChatOverlay {
 			linesToRender.push(
 				this.networking.getServerInfo().name + ' (' + this.networking.getServerInfo().currentPlayers + '/' +
 					this.networking.getServerInfo().maxPlayers + ')',
+				this.networking.getServerInfo().url,
 			);
 			linesToRender.push(
 				'map: ' + this.networking.getServerInfo().mapName + ', mode: ' + this.networking.getServerInfo().gameMode +
@@ -444,6 +445,7 @@ export class ChatOverlay {
 					'%)',
 			);
 			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
+			linesToRender.push('memUsage: ' + this.networking.getServerInfo().memUsage.toFixed(2) + 'mib');
 		}
 
 		for (const msg of this.localPlayer.gameMsgs2) {

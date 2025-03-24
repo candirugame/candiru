@@ -13,6 +13,7 @@ export class ServerInfo {
 	public tickComputeTime: number = 0;
 	public cleanupComputeTime: number = 0;
 	public url: string;
+	public memUsage: number = 0;
 	constructor() {
 		this.name = config.server.name;
 		this.maxPlayers = config.game.maxPlayers;
@@ -24,6 +25,7 @@ export class ServerInfo {
 		this.tickComputeTime = 0;
 		this.cleanupComputeTime = 0;
 		this.url = config.server.url;
+		this.memUsage = 0;
 	}
 	toJSON() {
 		return {

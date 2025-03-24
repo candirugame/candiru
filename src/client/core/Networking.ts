@@ -22,6 +22,8 @@ export interface ServerInfo {
 	skyColor: string;
 	tickComputeTime: number;
 	cleanupComputeTime: number;
+	url: string;
+	memUsage: number;
 }
 
 interface LastUploadedLocalPlayer {
@@ -74,6 +76,8 @@ export class Networking {
 			skyColor: '#000000',
 			tickComputeTime: 0,
 			cleanupComputeTime: 0,
+			url: '',
+			memUsage: 0,
 		};
 
 		this.setupSocketListeners();
