@@ -23,7 +23,7 @@ export class ServerInfo {
 		this.gameMode = config.game.mode;
 		this.playerMaxHealth = config.player.maxHealth;
 		this.url = config.server.url;
-		this.idleKickTime = config.player.disconnectTime;
+		this.idleKickTime = config.player.afkKickTime;
 	}
 	toJSON() {
 		return {
