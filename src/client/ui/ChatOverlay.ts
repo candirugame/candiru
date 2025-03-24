@@ -444,6 +444,7 @@ export class ChatOverlay {
 					'%)',
 			);
 			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
+			linesToRender.push('memUsage: ' + this.networking.getServerInfo().memUsage.toFixed(2) + 'mib');
 		}
 
 		for (const msg of this.localPlayer.gameMsgs2) {
