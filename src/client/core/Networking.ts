@@ -22,6 +22,9 @@ export interface ServerInfo {
 	skyColor: string;
 	tickComputeTime: number;
 	cleanupComputeTime: number;
+	url: string;
+	memUsage: number;
+	idleKickTime: number;
 }
 
 interface LastUploadedLocalPlayer {
@@ -48,6 +51,7 @@ export class Networking {
 	private chatOverlay: ChatOverlay;
 	private damagedTimestamp: number = 0;
 	private serverInfo: ServerInfo;
+	private lastRealUpdateTime: number = 0;
 	public particleQueue: {
 		position: THREE.Vector3;
 		count: number;
@@ -83,6 +87,9 @@ export class Networking {
 			skyColor: '#000000',
 			tickComputeTime: 0,
 			cleanupComputeTime: 0,
+			url: '',
+			memUsage: 0,
+			idleKickTime: 60,
 		};
 
 		this.setupSocketListeners();
@@ -154,12 +161,17 @@ export class Networking {
 
 		if (this.localPlayer.gameVersion === '') return;
 
-		if (
-			this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) &&
-			currentTime - this.lastUploadTime < 4
-		) {
+		const equalToLastUpload = this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer);
+		if (!equalToLastUpload) this.lastRealUpdateTime = currentTime;
+
+		if (currentTime - this.lastRealUpdateTime > this.serverInfo.idleKickTime) { //disconnect on idle
+			if (!this.remotePlayers.some((player) => player.id === this.localPlayer.id)) {
+				this.localPlayer.gameMsgs = ['&cdisconnected for being idle', '&cmove to reconnect'];
+			}
 			return;
 		}
+
+		if (equalToLastUpload && currentTime - this.lastUploadTime < 4) return;
 
 		this.socket.volatile.emit('playerData', this.localPlayer);
 		this.lastUploadedLocalPlayer = {
