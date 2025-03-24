@@ -909,7 +909,7 @@ export class ChatOverlay {
 		const colorsToRender: string[] = [];
 		const playerData = this.networking.getRemotePlayerData();
 
-		linesToRender.push(playerData.length + ' online - ' + Math.round(this.localPlayer.latency) + 'ms');
+		linesToRender.push(playerData.length + '/' + this.networking.getServerInfo().maxPlayers + ' online');
 		colorsToRender.push('white');
 		for (let i = 0; i < playerData.length; i++) {
 			linesToRender.push(playerData[i].name);
