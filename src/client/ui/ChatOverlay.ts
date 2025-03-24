@@ -420,6 +420,7 @@ export class ChatOverlay {
 			linesToRender.push(
 				this.networking.getServerInfo().name + ' (' + this.networking.getServerInfo().currentPlayers + '/' +
 					this.networking.getServerInfo().maxPlayers + ')',
+				this.networking.getServerInfo().url,
 			);
 			linesToRender.push(
 				'map: ' + this.networking.getServerInfo().mapName + ', mode: ' + this.networking.getServerInfo().gameMode +
