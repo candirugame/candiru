@@ -9,10 +9,12 @@ export class ServerInfo {
 	public version: string = '';
 	public gameMode: string;
 	public playerMaxHealth: number;
-	public skyColor: string;
+	public skyColor: string = '#000000';
 	public tickComputeTime: number = 0;
 	public cleanupComputeTime: number = 0;
 	public url: string;
+	public memUsage: number = 0;
+	public idleKickTime: number;
 	constructor() {
 		this.name = config.server.name;
 		this.maxPlayers = config.game.maxPlayers;
@@ -20,10 +22,8 @@ export class ServerInfo {
 		this.tickRate = config.server.tickRate;
 		this.gameMode = config.game.mode;
 		this.playerMaxHealth = config.player.maxHealth;
-		this.skyColor = '#000000';
-		this.tickComputeTime = 0;
-		this.cleanupComputeTime = 0;
 		this.url = config.server.url;
+		this.idleKickTime = config.player.afkKickTime;
 	}
 	toJSON() {
 		return {

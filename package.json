@@ -57,6 +57,7 @@
 		"semantic-release-replace-plugin": "^1.2.7",
 		"tailwindcss": "^3.3.1",
 		"typescript": "~5.5.0",
+		"vite-plugin-pwa": "^0.21.1",
 		"vite-tsconfig-paths": "^4.2.0",
 		"vitest": "^2.0.0"
 	},

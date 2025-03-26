@@ -69,7 +69,7 @@ export class PlayerManager {
 			};
 			this.players.set(player.id, updatedData);
 			return { isNew: false };
-		} else {
+		} else if (this.players.size < config.game.maxPlayers) {
 			// New player
 			player.inventory = [...config.player.baseInventory];
 			const spawnPoint = this.getRandomSpawnPoint();
@@ -95,6 +95,7 @@ export class PlayerManager {
 
 			return { isNew: true, player: player };
 		}
+		return { isNew: false };
 	}
 
 	removePlayer(playerId: number) {
