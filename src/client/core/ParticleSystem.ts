@@ -101,7 +101,7 @@ export class ParticleSystem {
 
 			//sizes[i] = p.size * (p.lifetime / p.maxLifetime);
 			sizes[i] = p.size;
-			if (p.position.distanceTo(cameraPosition) > 10) {
+			if (p.position.distanceTo(cameraPosition) > 30) {
 				p.lifetime = 0;
 			}
 		});
