@@ -61,6 +61,7 @@ class Shot {
 		return renderer.getShotVectorsToPlayersWithOffset(this.yawOffset, this.pitchOffset, this.maxDistance);
 	}
 }
+
 export enum ShotParticleType {
 	None,
 	Shotgun,
@@ -87,6 +88,7 @@ export class ShotGroup {
 		this.timeout = timeout;
 		this.damage = damage;
 		this.onlyHitEachPlayerOnce = onlyHitEachPlayerOnce;
+
 		for (let i = 0; i < numberOfShots; i++) {
 			const shot = new Shot(
 				(Math.random() - 0.5) * yawOffsetRange,
@@ -108,34 +110,42 @@ export class ShotGroup {
 				const shot = this.shots.pop();
 				if (!shot) continue;
 
-				// Calculate the shot direction based on the muzzle direction plus the shot's offset
+				// Get muzzle position and base direction
 				const muzzlePos = renderer.getMuzzlePosition();
 				const baseMuzzleDir = renderer.getMuzzleDirection().clone().normalize();
 
-				// Compute local right vector (cross product of baseMuzzleDir and world up)
+				// Create stable coordinate system
 				const worldUp = new THREE.Vector3(0, 1, 0);
 				let right = new THREE.Vector3().crossVectors(baseMuzzleDir, worldUp).normalize();
-				// Fallback in case baseMuzzleDir is parallel to worldUp
-				if (right.lengthSq() === 0) {
+
+				// Fallback for when looking straight up/down
+				if (right.lengthSq() < 0.001) {
 					right = new THREE.Vector3(1, 0, 0);
 				}
 
-				// Create quaternions for yaw (around worldUp) and pitch (around right) based on local axes
-				const yawQuat = new THREE.Quaternion().setFromAxisAngle(worldUp, shot.yawOffset);
-				const pitchQuat = new THREE.Quaternion().setFromAxisAngle(right, shot.pitchOffset);
+				const up = new THREE.Vector3().crossVectors(right, baseMuzzleDir).normalize();
 
-				// Apply the rotations: yaw followed by pitch
+				// Convert angular offsets to direction vector
+				const yawAngle = shot.yawOffset;
+				const pitchAngle = shot.pitchOffset;
+
+				// Create rotation quaternions
+				const yawQuat = new THREE.Quaternion().setFromAxisAngle(up, yawAngle);
+				const pitchQuat = new THREE.Quaternion().setFromAxisAngle(right, pitchAngle);
+
+				// Combine rotations (yaw first, then pitch)
 				const finalQuat = new THREE.Quaternion().multiplyQuaternions(yawQuat, pitchQuat);
-				// Generate the new shot direction in local space
+
+				// Apply to base direction
 				const shotDirection = baseMuzzleDir.clone().applyQuaternion(finalQuat).normalize();
 
-				// Emit muzzle flash with shot direction
+				// Emit particles
 				switch (shot.shotParticleType) {
 					case ShotParticleType.Shotgun:
 						renderer.particleSystem.emit({
 							position: muzzlePos,
 							count: 1,
-							velocity: shotDirection.multiplyScalar(20),
+							velocity: shotDirection.clone().multiplyScalar(20),
 							spread: 0.05,
 							lifetime: 0.3,
 							size: 0.2,
@@ -147,7 +157,7 @@ export class ShotGroup {
 						renderer.particleSystem.emit({
 							position: muzzlePos,
 							count: 1,
-							velocity: shotDirection.multiplyScalar(3),
+							velocity: shotDirection.clone().multiplyScalar(3),
 							spread: 0.1,
 							lifetime: 5,
 							size: 0.2,
@@ -158,23 +168,13 @@ export class ShotGroup {
 						break;
 				}
 
-				// Process raycast shot info
+				// Process hits
 				const shotVectors = shot.shoot(renderer);
 				if (shotVectors?.length > 0) {
 					for (const { playerID, hitPoint, vector } of shotVectors) {
 						if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
 							hitPlayers.push(playerID);
 							networking.applyDamage(playerID, this.damage);
-
-							// renderer.particleSystem.emit({
-							// 	position: hitPoint,
-							// 	count: 16,
-							// 	velocity: new THREE.Vector3(0, 0, 0),
-							// 	spread: 8,
-							// 	lifetime: 2.5,
-							// 	size: 0.1,
-							// 	color: new THREE.Color(0.8, 0, 0),
-							// });
 
 							renderer.hitMarkerQueue.push({
 								hitPoint: hitPoint,
