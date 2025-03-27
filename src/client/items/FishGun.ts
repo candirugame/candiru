@@ -21,6 +21,7 @@ export class FishGun extends ItemBase {
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
+	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
 	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType) {
@@ -33,6 +34,7 @@ export class FishGun extends ItemBase {
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
+		this.renderer = renderer;
 	}
 
 	public override init() {
@@ -109,6 +111,7 @@ export class FishGun extends ItemBase {
 		}
 
 		if (this.shownInHand && Date.now() / 1000 - this.shownInHandTimestamp > showInHandDelay) {
+			this.renderer.setScopeOffset(this.handPosition.clone().sub(scopedPosition));
 			this.handleInput(input, deltaTime);
 		} else {
 			this.handPosition.lerp(hiddenPosition, 0.1 * 60 * deltaTime);

@@ -53,6 +53,13 @@ export class Renderer {
 	private healthIndicator: HealthIndicator;
 	private directionIndicator: DirectionIndicator;
 
+	// difference from being scoped in
+	public scopeOffset: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+
+	public setScopeOffset(offset: THREE.Vector3) {
+		this.scopeOffset.copy(offset);
+	}
+
 	constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.networking = networking;
 		this.localPlayer = localPlayer;
@@ -369,7 +376,11 @@ export class Renderer {
 	}
 
 	public getMuzzlePosition(): THREE.Vector3 {
-		return this.camera.position.clone();
+		const position = this.camera.position.clone();
+		const worldCentricOffset = this.scopeOffset.clone().applyQuaternion(this.camera.quaternion);
+		worldCentricOffset.multiplyScalar(0.1); //
+		position.add(worldCentricOffset);
+		return position;
 	}
 
 	public getMuzzleDirection(): THREE.Vector3 {

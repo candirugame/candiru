@@ -64,6 +64,7 @@ class Shot {
 export enum ShotParticleType {
 	None,
 	Shotgun,
+	Pistol,
 }
 
 export class ShotGroup {
@@ -135,8 +136,20 @@ export class ShotGroup {
 							position: muzzlePos,
 							count: 1,
 							velocity: shotDirection.multiplyScalar(20),
+							spread: 0.05,
+							lifetime: 0.3,
+							size: 0.2,
+							color: new THREE.Color(25 / 255, 70 / 255, 25 / 255),
+						});
+						break;
+
+					case ShotParticleType.Pistol:
+						renderer.particleSystem.emit({
+							position: muzzlePos,
+							count: 1,
+							velocity: shotDirection.multiplyScalar(3),
 							spread: 0.1,
-							lifetime: 0.25,
+							lifetime: 5,
 							size: 0.2,
 							color: new THREE.Color(25 / 255, 70 / 255, 25 / 255),
 						});

@@ -446,6 +446,20 @@ export class ChatOverlay {
 			);
 			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
 			linesToRender.push('memUsage: ' + this.networking.getServerInfo().memUsage.toFixed(2) + 'mib');
+			linesToRender.push(
+				'&cbarrelOffset ' + this.renderer.scopeOffset.x.toFixed(2) + ',' + this.renderer.scopeOffset.y.toFixed(2) +
+					',' +
+					this.renderer.scopeOffset.z.toFixed(2),
+			);
+
+			linesToRender.push(
+				'&ccameraPosition ' + this.renderer.getCamera().position.x.toFixed(2) + ',' +
+					this.renderer.getCamera().position.y.toFixed(2) + ',' + this.renderer.getCamera().position.z.toFixed(2),
+			);
+			linesToRender.push(
+				'&cmuzzlePosition ' + this.renderer.getMuzzlePosition().x.toFixed(2) + ',' +
+					this.renderer.getMuzzlePosition().y.toFixed(2) + ',' + this.renderer.getMuzzlePosition().z.toFixed(2),
+			);
 		}
 
 		for (const msg of this.localPlayer.gameMsgs2) {
