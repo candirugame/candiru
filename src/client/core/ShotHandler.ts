@@ -165,12 +165,12 @@ export class ShotGroup {
 						// });
 						renderer.particleSystem.emit({
 							position: muzzlePos.add(shotDirection.clone().multiplyScalar(0.15)),
-							count: 12,
-							velocity: shotDirection.clone().multiplyScalar(9),
+							count: 8,
+							velocity: shotDirection.clone().multiplyScalar(14),
 							spread: 5,
-							lifetime: 0.1,
+							lifetime: 0.08,
 							size: 0.06,
-							color: new THREE.Color(250 / 255, 185 / 255, 0 / 255),
+							color: new THREE.Color(230 / 255, 218 / 255, 140 / 255),
 						});
 						break;
 					default:
