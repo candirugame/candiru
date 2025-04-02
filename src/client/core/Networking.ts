@@ -33,6 +33,9 @@ interface LastUploadedLocalPlayer {
 	chatMsg: string;
 	velocity: THREE.Vector3;
 	name: string;
+	heldItemIndex: number;
+	rightClickHeld: boolean;
+	shooting: boolean;
 }
 
 export class Networking {
@@ -180,6 +183,9 @@ export class Networking {
 			chatMsg: this.localPlayer.chatMsg,
 			velocity: this.localPlayer.velocity.clone(),
 			name: this.localPlayer.name,
+			heldItemIndex: this.localPlayer.heldItemIndex,
+			rightClickHeld: this.localPlayer.rightClickHeld,
+			shooting: this.localPlayer.shooting,
 		};
 
 		this.lastUploadTime = currentTime;
@@ -276,6 +282,9 @@ export class Networking {
 		out = out && player1.chatMsg === player2.chatMsg;
 		out = out && player1.velocity.equals(player2.velocity);
 		out = out && player1.name === player2.name;
+		out = out && player1.heldItemIndex === player2.heldItemIndex;
+		out = out && player1.rightClickHeld === player2.rightClickHeld;
+		out = out && player1.shooting === player2.shooting;
 
 		return out;
 	}
