@@ -4,7 +4,7 @@ import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
-import { ShotHandler } from '../core/ShotHandler.ts';
+import { ShotHandler, ShotParticleType } from '../core/ShotHandler.ts';
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -21,6 +21,7 @@ export class FishGun extends ItemBase {
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
+	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
 	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType) {
@@ -33,6 +34,7 @@ export class FishGun extends ItemBase {
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
+		this.renderer = renderer;
 	}
 
 	public override init() {
@@ -109,6 +111,7 @@ export class FishGun extends ItemBase {
 		}
 
 		if (this.shownInHand && Date.now() / 1000 - this.shownInHandTimestamp > showInHandDelay) {
+			this.renderer.setScopeOffset(this.handPosition.clone().sub(scopedPosition));
 			this.handleInput(input, deltaTime);
 		} else {
 			this.handPosition.lerp(hiddenPosition, 0.1 * 60 * deltaTime);
@@ -165,7 +168,7 @@ export class FishGun extends ItemBase {
 	}
 
 	private shootFish() {
-		this.shotHandler.addShotGroup(3, 25, 150, .3, .3);
+		this.shotHandler.addShotGroup(3, 25, 150, .3, .3, Infinity, false, ShotParticleType.Shotgun);
 	}
 
 	// Method to set world position when used as WorldItem

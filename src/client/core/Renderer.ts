@@ -9,6 +9,7 @@ import { Player, PlayerData } from '../../shared/Player.ts';
 import { IndicatorBase } from '../ui/IndicatorBase.ts';
 import { HealthIndicator } from '../ui/HealthIndicator.ts';
 import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
+import { ParticleSystem } from './ParticleSystem.ts';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -32,6 +33,7 @@ export class Renderer {
 	private knockbackVector: THREE.Vector3 = new THREE.Vector3();
 	private bobCycle: number;
 	private lastCameraRoll: number;
+	particleSystem: ParticleSystem;
 
 	public crosshairIsFlashing: boolean = false;
 	public lastShotSomeoneTimestamp: number = 0;
@@ -50,6 +52,13 @@ export class Renderer {
 	private indicators: IndicatorBase[] = [];
 	private healthIndicator: HealthIndicator;
 	private directionIndicator: DirectionIndicator;
+
+	// difference from being scoped in
+	public scopeOffset: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+
+	public setScopeOffset(offset: THREE.Vector3) {
+		this.scopeOffset.copy(offset);
+	}
 
 	constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.networking = networking;
@@ -125,6 +134,8 @@ export class Renderer {
 		// Initialize indicators
 		this.healthIndicator.init();
 		this.directionIndicator.init();
+
+		this.particleSystem = new ParticleSystem(this.scene);
 	}
 
 	public onFrame(localPlayer: Player) {
@@ -307,6 +318,15 @@ export class Renderer {
 
 		this.scene.background = new THREE.Color(this.networking.getServerInfo().skyColor);
 
+		while (this.networking.particleQueue.length > 0) {
+			const particle = this.networking.particleQueue.shift();
+			if (particle) {
+				this.particleSystem.emit(particle);
+			}
+		}
+
+		this.particleSystem.update(this.deltaTime, this.camera.position.clone());
+
 		this.updateFramerate();
 	}
 
@@ -353,6 +373,20 @@ export class Renderer {
 
 	public getChatOverlay(): ChatOverlay {
 		return this.chatOverlay;
+	}
+
+	public getMuzzlePosition(): THREE.Vector3 {
+		const position = this.camera.position.clone();
+		const worldCentricOffset = this.scopeOffset.clone().applyQuaternion(this.camera.quaternion);
+		worldCentricOffset.multiplyScalar(0.1); //
+		position.add(worldCentricOffset);
+		return position;
+	}
+
+	public getMuzzleDirection(): THREE.Vector3 {
+		const direction = new THREE.Vector3(0, 0, -1);
+		direction.applyQuaternion(this.camera.quaternion); // Changed from heldItemCamera
+		return direction;
 	}
 
 	public createScreenshot() {

@@ -49,6 +49,7 @@ export class GameServer {
 		);
 		this.itemManager.setGamemode(this.gameEngine.gamemode);
 		this.damageSystem.setGameEngine(this.gameEngine);
+		this.playerManager.setGameEngine(this.gameEngine);
 		this.gameEngine.start();
 
 		DataValidator.updateServerVersion();
