@@ -164,7 +164,23 @@ export class BananaGun extends ItemBase {
 	}
 
 	private shootBanana() {
-		this.shotHanlder.addShotGroup(17, 1, 150, 0, 0, Infinity, false, ShotParticleType.Pistol);
+		// Get the current muzzle position and direction from the renderer
+		const muzzlePos = this.renderer.getMuzzlePosition();
+		const muzzleDir = this.renderer.getMuzzleDirection();
+
+		this.shotHanlder.addShotGroup(
+			17,
+			1,
+			150,
+			0,
+			0,
+			Infinity,
+			false,
+			ShotParticleType.Pistol,
+			muzzlePos,
+			muzzleDir,
+			true,
+		);
 	}
 
 	// Method to set world position when used as WorldItem

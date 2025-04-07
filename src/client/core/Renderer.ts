@@ -10,6 +10,7 @@ import { IndicatorBase } from '../ui/IndicatorBase.ts';
 import { HealthIndicator } from '../ui/HealthIndicator.ts';
 import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
 import { ParticleSystem } from './ParticleSystem.ts';
+import { ShotHandler } from './ShotHandler.ts';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -47,6 +48,9 @@ export class Renderer {
 	private collisionManager!: CollisionManager;
 
 	private spectateGroundTruthPosition: THREE.Vector3 | null = null;
+
+	// Add private shotHandler member
+	private shotHandler!: ShotHandler;
 
 	// List of indicators
 	private indicators: IndicatorBase[] = [];
@@ -136,6 +140,13 @@ export class Renderer {
 		this.directionIndicator.init();
 
 		this.particleSystem = new ParticleSystem(this.scene);
+	}
+
+	// Add setShotHandler method
+	public setShotHandler(shotHandler: ShotHandler) {
+		this.shotHandler = shotHandler;
+		// Pass it down to RemotePlayerRenderer (we'll add this method next)
+		this.remotePlayerRenderer.setShotHandler(shotHandler);
 	}
 
 	public onFrame(localPlayer: Player) {

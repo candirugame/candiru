@@ -22,6 +22,7 @@ export class Pipe extends ItemBase {
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
+	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
 	constructor(renderer: Renderer, shotHanlder: ShotHandler, index: number, itemType: ItemType) {
@@ -34,6 +35,7 @@ export class Pipe extends ItemBase {
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
+		this.renderer = renderer;
 	}
 
 	public override init() {
@@ -156,7 +158,23 @@ export class Pipe extends ItemBase {
 	}
 
 	private hitWithPipe() {
-		this.shotHandler.addShotGroup(50, 25, 150, 1.3, .8, 1.4, true);
+		// Get the current muzzle position and direction from the renderer
+		const muzzlePos = this.renderer.getMuzzlePosition();
+		const muzzleDir = this.renderer.getMuzzleDirection();
+
+		this.shotHandler.addShotGroup(
+			50,
+			25,
+			150,
+			1.3,
+			0.8,
+			1.4,
+			true,
+			undefined,
+			muzzlePos,
+			muzzleDir,
+			true,
+		);
 	}
 
 	// Method to set world position when used as WorldItem

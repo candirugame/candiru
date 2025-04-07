@@ -35,14 +35,22 @@ export class Game {
 		this.localPlayer.name = SettingsManager.settings.name ?? this.localPlayer.name;
 		this.chatOverlay = new ChatOverlay(container, this.localPlayer);
 		this.networking = new Networking(this.localPlayer, this.chatOverlay);
+
+		// Create Renderer first
 		this.renderer = new Renderer(container, this.networking, this.localPlayer, this.chatOverlay);
+
+		// Then create ShotHandler, passing the renderer
+		this.shotHandler = new ShotHandler(this.renderer, this.networking);
+
+		// Now set the shotHandler in the renderer
+		this.renderer.setShotHandler(this.shotHandler);
+
 		this.chatOverlay.setRenderer(this.renderer);
 		this.inputHandler = new InputHandler(this.renderer, this.localPlayer, this.gameIndex);
 		this.touchInputHandler = new TouchInputHandler(this.inputHandler, this.chatOverlay);
 		this.renderer.setInputHandler(this.inputHandler);
 		this.collisionManager = new CollisionManager(this.inputHandler);
 		this.renderer.setCollisionManager(this.collisionManager);
-		this.shotHandler = new ShotHandler(this.renderer, this.networking);
 		this.inventoryManager = new Inventory(
 			this.shotHandler,
 			this.renderer,
