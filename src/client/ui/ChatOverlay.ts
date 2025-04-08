@@ -446,6 +446,9 @@ export class ChatOverlay {
 			);
 			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
 			linesToRender.push('memUsage: ' + this.networking.getServerInfo().memUsage.toFixed(2) + 'mib');
+			linesToRender.push('heapTotal: ' + this.networking.getServerInfo().heapTotal.toFixed(2) + 'mib');
+			linesToRender.push('heapUsed: ' + this.networking.getServerInfo().heapUsed.toFixed(2) + 'mib');
+			linesToRender.push('external: ' + this.networking.getServerInfo().external.toFixed(2) + 'mib');
 			// linesToRender.push(
 			// 	'&cbarrelOffset ' + this.renderer.scopeOffset.x.toFixed(2) + ',' + this.renderer.scopeOffset.y.toFixed(2) +
 			// 		',' +

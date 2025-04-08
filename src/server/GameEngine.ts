@@ -150,7 +150,11 @@ export class GameEngine {
 	public emitServerInfo() {
 		this.serverInfo.version = DataValidator.getServerVersion();
 		this.serverInfo.currentPlayers = this.playerManager.getAllPlayers().length;
-		this.serverInfo.memUsage = Deno.memoryUsage().rss / 1024 / 1024;
+		const memoryUsage = Deno.memoryUsage();
+		this.serverInfo.memUsage = memoryUsage.rss / 1024 / 1024;
+		this.serverInfo.heapTotal = memoryUsage.heapTotal / 1024 / 1024;
+		this.serverInfo.heapUsed = memoryUsage.heapUsed / 1024 / 1024;
+		this.serverInfo.external = memoryUsage.external / 1024 / 1024;
 		this.io.emit('serverInfo', this.serverInfo);
 	}
 

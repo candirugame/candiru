@@ -14,6 +14,9 @@ export class ServerInfo {
 	public cleanupComputeTime: number = 0;
 	public url: string;
 	public memUsage: number = 0;
+	public heapTotal: number = 0;
+	public heapUsed: number = 0;
+	public external: number = 0;
 	public idleKickTime: number;
 	constructor() {
 		this.name = config.server.name;
