@@ -16,7 +16,7 @@ const scopedQuaternion = new THREE.Quaternion(0.64, 0.22, -0.69, -0.22);
 const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class BananaGun extends ItemBase {
-	private shotHanlder: ShotHandler;
+	private shotHandler: ShotHandler;
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
@@ -29,7 +29,7 @@ export class BananaGun extends ItemBase {
 		} else {
 			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
 		}
-		this.shotHanlder = shotHandler;
+		this.shotHandler = shotHandler;
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
@@ -164,7 +164,23 @@ export class BananaGun extends ItemBase {
 	}
 
 	private shootBanana() {
-		this.shotHanlder.addShotGroup(17, 1, 150, 0, 0, Infinity, false, ShotParticleType.Pistol);
+		// Get the current muzzle position and direction from the renderer
+		const muzzlePos = this.renderer.getMuzzlePosition();
+		const muzzleDir = this.renderer.getMuzzleDirection();
+
+		this.shotHandler.addShotGroup(
+			17,
+			1,
+			150,
+			0,
+			0,
+			Infinity,
+			false,
+			ShotParticleType.Pistol,
+			muzzlePos,
+			muzzleDir,
+			true,
+		);
 	}
 
 	// Method to set world position when used as WorldItem

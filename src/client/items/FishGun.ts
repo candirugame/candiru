@@ -168,7 +168,23 @@ export class FishGun extends ItemBase {
 	}
 
 	private shootFish() {
-		this.shotHandler.addShotGroup(3, 25, 150, .3, .3, Infinity, false, ShotParticleType.Shotgun);
+		// Get the current muzzle position and direction from the renderer
+		const muzzlePos = this.renderer.getMuzzlePosition();
+		const muzzleDir = this.renderer.getMuzzleDirection();
+
+		this.shotHandler.addShotGroup(
+			3,
+			25,
+			150,
+			0.3,
+			0.3,
+			Infinity,
+			false,
+			ShotParticleType.Shotgun,
+			muzzlePos,
+			muzzleDir,
+			true,
+		);
 	}
 
 	// Method to set world position when used as WorldItem

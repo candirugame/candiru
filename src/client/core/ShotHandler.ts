@@ -24,6 +24,9 @@ export class ShotHandler {
 		maxDistance: number = Infinity,
 		onlyHitEachPlayerOnce: boolean = false,
 		shotParticleType: ShotParticleType = ShotParticleType.None,
+		origin: THREE.Vector3,
+		direction: THREE.Vector3,
+		isLocal: boolean,
 	) {
 		const shotGroup = new ShotGroup(
 			damage,
@@ -34,6 +37,9 @@ export class ShotHandler {
 			maxDistance,
 			onlyHitEachPlayerOnce,
 			shotParticleType,
+			origin,
+			direction,
+			isLocal,
 		);
 		shotGroup.processShots(this.renderer, this.networking);
 	}
@@ -73,6 +79,9 @@ export class ShotGroup {
 	private timeout: number;
 	private damage: number;
 	private onlyHitEachPlayerOnce: boolean;
+	private origin: THREE.Vector3;
+	private direction: THREE.Vector3;
+	private isLocal: boolean;
 
 	constructor(
 		damage: number,
@@ -82,19 +91,25 @@ export class ShotGroup {
 		pitchOffsetRange: number = 0,
 		maxDistance: number = Infinity,
 		onlyHitEachPlayerOnce: boolean = false,
-		particleType: ShotParticleType,
+		shotParticleType: ShotParticleType,
+		origin: THREE.Vector3,
+		direction: THREE.Vector3,
+		isLocal: boolean,
 	) {
 		this.shots = [];
 		this.timeout = timeout;
 		this.damage = damage;
 		this.onlyHitEachPlayerOnce = onlyHitEachPlayerOnce;
+		this.origin = origin;
+		this.direction = direction;
+		this.isLocal = isLocal;
 
 		for (let i = 0; i < numberOfShots; i++) {
 			const shot = new Shot(
 				(Math.random() - 0.5) * yawOffsetRange,
 				(Math.random() - 0.5) * pitchOffsetRange,
 				maxDistance,
-				particleType,
+				shotParticleType,
 			);
 			this.shots.push(shot);
 		}
@@ -111,8 +126,8 @@ export class ShotGroup {
 				if (!shot) continue;
 
 				// Get muzzle position and base direction
-				const muzzlePos = renderer.getMuzzlePosition();
-				const baseMuzzleDir = renderer.getMuzzleDirection().clone().normalize();
+				const muzzlePos = this.origin.clone();
+				const baseMuzzleDir = this.direction.clone().normalize();
 
 				// Create stable coordinate system
 				const worldUp = new THREE.Vector3(0, 1, 0);
@@ -165,12 +180,12 @@ export class ShotGroup {
 						// });
 						renderer.particleSystem.emit({
 							position: muzzlePos.add(shotDirection.clone().multiplyScalar(0.15)),
-							count: 12,
-							velocity: shotDirection.clone().multiplyScalar(9),
+							count: 8,
+							velocity: shotDirection.clone().multiplyScalar(14),
 							spread: 5,
-							lifetime: 0.1,
+							lifetime: 0.08,
 							size: 0.06,
-							color: new THREE.Color(250 / 255, 185 / 255, 0 / 255),
+							color: new THREE.Color(230 / 255, 218 / 255, 140 / 255),
 						});
 						break;
 					default:
@@ -178,19 +193,21 @@ export class ShotGroup {
 				}
 
 				// Process hits
-				const shotVectors = shot.shoot(renderer);
-				if (shotVectors?.length > 0) {
-					for (const { playerID, hitPoint, vector } of shotVectors) {
-						if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
-							hitPlayers.push(playerID);
-							networking.applyDamage(playerID, this.damage);
+				if (this.isLocal) {
+					const shotVectors = shot.shoot(renderer);
+					if (shotVectors?.length > 0) {
+						for (const { playerID, hitPoint, vector } of shotVectors) {
+							if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
+								hitPlayers.push(playerID);
+								networking.applyDamage(playerID, this.damage);
 
-							renderer.hitMarkerQueue.push({
-								hitPoint: hitPoint,
-								shotVector: vector,
-								timestamp: -1,
-							});
-							renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+								renderer.hitMarkerQueue.push({
+									hitPoint: hitPoint,
+									shotVector: vector,
+									timestamp: -1,
+								});
+								renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+							}
 						}
 					}
 				}
