@@ -21,7 +21,6 @@ interface PlayerToRender {
 
 interface WeaponProperties {
 	firingDelay: number;
-	firingDelayHeld: number;
 	particleType: ShotParticleType;
 	numberOfProjectiles: number;
 	yawOffsetRange: number;
@@ -31,8 +30,7 @@ interface WeaponProperties {
 
 const weaponData: Map<number, WeaponProperties> = new Map([
 	[1, { // BananaGun ID (Pistol)
-		firingDelay: 0.12,
-		firingDelayHeld: 0.225,
+		firingDelay: 0.225,
 		particleType: ShotParticleType.Pistol,
 		numberOfProjectiles: 1,
 		yawOffsetRange: 0,
@@ -40,7 +38,6 @@ const weaponData: Map<number, WeaponProperties> = new Map([
 	}],
 	[2, { // FishGun ID (Shotgun)
 		firingDelay: 0.45,
-		firingDelayHeld: 0.45,
 		particleType: ShotParticleType.Shotgun,
 		numberOfProjectiles: 25,
 		yawOffsetRange: 0.3,
