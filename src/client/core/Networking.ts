@@ -23,7 +23,10 @@ export interface ServerInfo {
 	tickComputeTime: number;
 	cleanupComputeTime: number;
 	url: string;
-	memUsage: number;
+	memUsageRss: number;
+	memUsageHeapUsed: number;
+	memUsageHeapTotal: number;
+	memUsageExternal: number;
 	idleKickTime: number;
 }
 
@@ -91,7 +94,10 @@ export class Networking {
 			tickComputeTime: 0,
 			cleanupComputeTime: 0,
 			url: '',
-			memUsage: 0,
+			memUsageRss: 0,
+			memUsageHeapUsed: 0,
+			memUsageHeapTotal: 0,
+			memUsageExternal: 0,
 			idleKickTime: 60,
 		};
 
