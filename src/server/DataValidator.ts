@@ -97,6 +97,11 @@ export class DataValidator {
 		tickComputeTime: z.number(),
 		cleanupComputeTime: z.number(),
 		url: z.string(),
+		memUsageRss: z.number(),
+		memUsageHeapUsed: z.number(),
+		memUsageHeapTotal: z.number(),
+		memUsageExternal: z.number(),
+		idleKickTime: z.number(),
 	}).strict().transform((data) => Object.assign(new ServerInfo(), data));
 
 	static validatePlayerData(data: PlayerData) {
