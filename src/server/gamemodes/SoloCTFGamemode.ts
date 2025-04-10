@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { FFAGamemode } from './FFAGamemode.ts';
 import { Player } from '../../shared/Player.ts';
 import config from '../config.ts';
@@ -10,6 +11,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 	private resetTimestamp: number | null = null;
 	private isAnnouncingWin: boolean = false; // Flag to indicate win announcement
 	private winner: Player | null = null;
+	private lastParticleTimestamp: number = 0;
 
 	override init(): void {
 		super.init();
@@ -78,6 +80,31 @@ export class SoloCTFGamemode extends FFAGamemode {
 					player.directionIndicatorVector = flagItem.vector.clone();
 				}
 			}
+		}
+
+		if (currentTime - this.lastParticleTimestamp > 0.15) {
+			let particlePos = new THREE.Vector3(0, 0, 0);
+			if (flagHolder) {
+				particlePos = flagHolder.position.clone();
+			} else {
+				const flagItem = this.getFlagInWorld();
+				if (flagItem) {
+					particlePos = flagItem.vector.clone();
+				}
+			}
+			particlePos.add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5));
+
+			// stink particle over player
+			this.gameEngine.emitParticleData({
+				position: particlePos,
+				count: 1,
+				velocity: new THREE.Vector3(0, 0.5, 0),
+				spread: 0.3,
+				lifetime: 15,
+				size: 0.2,
+				color: new THREE.Color(0x00aa00),
+			});
+			this.lastParticleTimestamp = currentTime;
 		}
 
 		// Set directionIndicatorVector to undefined for spectating players
