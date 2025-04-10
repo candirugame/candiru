@@ -17,8 +17,8 @@ export class ServerInfo {
 	public memUsageHeapUsed: number = 0;
 	public memUsageHeapTotal: number = 0;
 	public memUsageExternal: number = 0;
-
 	public idleKickTime: number;
+
 	constructor() {
 		this.name = config.server.name;
 		this.maxPlayers = config.game.maxPlayers;
