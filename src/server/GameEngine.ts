@@ -150,7 +150,24 @@ export class GameEngine {
 	public emitServerInfo() {
 		this.serverInfo.version = DataValidator.getServerVersion();
 		this.serverInfo.currentPlayers = this.playerManager.getAllPlayers().length;
+		this.serverInfo.memUsageRss = Deno.memoryUsage().rss / 1024 / 1024;
+		this.serverInfo.memUsageHeapUsed = Deno.memoryUsage().heapUsed / 1024 / 1024;
+		this.serverInfo.memUsageHeapTotal = Deno.memoryUsage().heapTotal / 1024 / 1024;
+		this.serverInfo.memUsageExternal = Deno.memoryUsage().external / 1024 / 1024;
+
 		this.io.emit('serverInfo', this.serverInfo);
+	}
+
+	public emitParticleData(data: {
+		position: THREE.Vector3;
+		count: number;
+		velocity: THREE.Vector3;
+		spread: number;
+		lifetime: number;
+		size: number;
+		color: THREE.Color;
+	}) {
+		this.io.emit('particleEmit', data);
 	}
 
 	public setGameMessage(player: Player, message: string, index: number, timeout?: number) {

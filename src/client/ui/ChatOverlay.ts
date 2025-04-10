@@ -31,7 +31,7 @@ interface LineMessage {
 const hitMarkerLifetime = 0.3;
 
 export class ChatOverlay {
-	private chatCanvas: HTMLCanvasElement;
+	public chatCanvas: HTMLCanvasElement;
 	private chatCtx: CanvasRenderingContext2D;
 	private chatMessages: ChatMessage[]; // Typed as ChatMessage[]
 	private chatMessageLifespan: number;
@@ -420,6 +420,7 @@ export class ChatOverlay {
 			linesToRender.push(
 				this.networking.getServerInfo().name + ' (' + this.networking.getServerInfo().currentPlayers + '/' +
 					this.networking.getServerInfo().maxPlayers + ')',
+				this.networking.getServerInfo().url,
 			);
 			linesToRender.push(
 				'map: ' + this.networking.getServerInfo().mapName + ', mode: ' + this.networking.getServerInfo().gameMode +
@@ -444,6 +445,12 @@ export class ChatOverlay {
 					'%)',
 			);
 			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
+			linesToRender.push(
+				'mem (mib): rss:' + this.networking.getServerInfo().memUsageRss.toFixed(2) + ', heapTotal: ' +
+					this.networking.getServerInfo().memUsageHeapTotal.toFixed(2) + ', heapUsed: ' +
+					this.networking.getServerInfo().memUsageHeapUsed.toFixed(2) + ', external: ' +
+					this.networking.getServerInfo().memUsageExternal.toFixed(2),
+			);
 		}
 
 		for (const msg of this.localPlayer.gameMsgs2) {
@@ -907,7 +914,7 @@ export class ChatOverlay {
 		const colorsToRender: string[] = [];
 		const playerData = this.networking.getRemotePlayerData();
 
-		linesToRender.push(playerData.length + ' online - ' + Math.round(this.localPlayer.latency) + 'ms');
+		linesToRender.push(playerData.length + '/' + this.networking.getServerInfo().maxPlayers + ' online');
 		colorsToRender.push('white');
 		for (let i = 0; i < playerData.length; i++) {
 			linesToRender.push(playerData[i].name);

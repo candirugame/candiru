@@ -49,6 +49,7 @@ export class GameServer {
 		);
 		this.itemManager.setGamemode(this.gameEngine.gamemode);
 		this.damageSystem.setGameEngine(this.gameEngine);
+		this.playerManager.setGameEngine(this.gameEngine);
 		this.gameEngine.start();
 
 		DataValidator.updateServerVersion();
@@ -128,13 +129,13 @@ export class GameServer {
 		this.router.get('/(.*)', async (context) => {
 			try {
 				await send(context, context.params[0], {
-					root: `${Deno.cwd()}/dist`,
+					root: `${import.meta.dirname}/../../dist`,
 					index: 'index.html',
 				});
 			} catch {
 				try {
 					await send(context, 'index.html', {
-						root: `${Deno.cwd()}/dist`,
+						root: `${import.meta.dirname}/../../dist`,
 					});
 				} catch (err) {
 					console.error('Error serving files:', err);
@@ -190,7 +191,9 @@ export class GameServer {
 
 	private loadMapData(): MapData {
 		try {
-			const mapJson = Deno.readTextFileSync(`./dist/maps/${config.server.defaultMap}/map.json`);
+			const mapJson = Deno.readTextFileSync(
+				new URL(`../../dist/maps/${config.server.defaultMap}/map.json`, import.meta.url),
+			);
 			const mapObj = JSON.parse(mapJson);
 			return MapData.fromJSON(mapObj);
 		} catch (error) {

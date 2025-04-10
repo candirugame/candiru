@@ -22,6 +22,12 @@ export interface ServerInfo {
 	skyColor: string;
 	tickComputeTime: number;
 	cleanupComputeTime: number;
+	url: string;
+	memUsageRss: number;
+	memUsageHeapUsed: number;
+	memUsageHeapTotal: number;
+	memUsageExternal: number;
+	idleKickTime: number;
 }
 
 interface LastUploadedLocalPlayer {
@@ -30,6 +36,9 @@ interface LastUploadedLocalPlayer {
 	chatMsg: string;
 	velocity: THREE.Vector3;
 	name: string;
+	heldItemIndex: number;
+	rightClickHeld: boolean;
+	shooting: boolean;
 }
 
 export class Networking {
@@ -48,6 +57,16 @@ export class Networking {
 	private chatOverlay: ChatOverlay;
 	private damagedTimestamp: number = 0;
 	private serverInfo: ServerInfo;
+	private lastRealUpdateTime: number = 0;
+	public particleQueue: {
+		position: THREE.Vector3;
+		count: number;
+		velocity: THREE.Vector3;
+		spread: number;
+		lifetime: number;
+		size: number;
+		color: THREE.Color;
+	}[] = [];
 
 	constructor(localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.localPlayer = localPlayer;
@@ -74,6 +93,12 @@ export class Networking {
 			skyColor: '#000000',
 			tickComputeTime: 0,
 			cleanupComputeTime: 0,
+			url: '',
+			memUsageRss: 0,
+			memUsageHeapUsed: 0,
+			memUsageHeapTotal: 0,
+			memUsageExternal: 0,
+			idleKickTime: 60,
 		};
 
 		this.setupSocketListeners();
@@ -119,6 +144,20 @@ export class Networking {
 			};
 			this.onServerInfo();
 		});
+
+		this.socket.on('particleEmit', (data) => {
+			const particleData = {
+				position: new THREE.Vector3(data.position.x, data.position.y, data.position.z),
+				velocity: new THREE.Vector3(data.velocity.x, data.velocity.y, data.velocity.z),
+				count: data.count,
+				spread: data.spread,
+				lifetime: data.lifetime,
+				size: data.size,
+				color: new THREE.Color(data.color),
+			};
+
+			this.particleQueue.push(particleData);
+		});
 	}
 
 	private onServerInfo() {
@@ -131,12 +170,17 @@ export class Networking {
 
 		if (this.localPlayer.gameVersion === '') return;
 
-		if (
-			this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer) &&
-			currentTime - this.lastUploadTime < 4
-		) {
+		const equalToLastUpload = this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer);
+		if (!equalToLastUpload) this.lastRealUpdateTime = currentTime;
+
+		if (currentTime - this.lastRealUpdateTime > this.serverInfo.idleKickTime) { //disconnect on idle
+			if (!this.remotePlayers.some((player) => player.id === this.localPlayer.id)) {
+				this.localPlayer.gameMsgs = ['&cdisconnected for being idle', '&cmove to reconnect'];
+			}
 			return;
 		}
+
+		if (equalToLastUpload && currentTime - this.lastUploadTime < 4) return;
 
 		this.socket.volatile.emit('playerData', this.localPlayer);
 		this.lastUploadedLocalPlayer = {
@@ -145,6 +189,9 @@ export class Networking {
 			chatMsg: this.localPlayer.chatMsg,
 			velocity: this.localPlayer.velocity.clone(),
 			name: this.localPlayer.name,
+			heldItemIndex: this.localPlayer.heldItemIndex,
+			rightClickHeld: this.localPlayer.rightClickHeld,
+			shooting: this.localPlayer.shooting,
 		};
 
 		this.lastUploadTime = currentTime;
@@ -217,9 +264,19 @@ export class Networking {
 			}
 		}
 		if (
+			this.getServerInfo().maxPlayers <= this.getServerInfo().currentPlayers &&
+			this.getServerInfo().currentPlayers !== 0 &&
+			!this.remotePlayers.some((player) => player.id === this.localPlayer.id)
+		) {
+			this.localPlayer.gameMsgs = [
+				`&cThe server is full. (${this.getServerInfo().currentPlayers + '/' + this.getServerInfo().maxPlayers}) `,
+				`&cYou'll automatically connect when a spot opens up. `,
+			];
+		}
+		if (
 			this.getServerInfo().version && this.localPlayer.gameVersion !== this.getServerInfo().version
 		) {
-			this.localPlayer.gameMsgs = ['&c Your client may be outdated. Try refreshing the page.'];
+			this.localPlayer.gameMsgs = ['&cYour client may be outdated. Try refreshing the page.'];
 		}
 	}
 
@@ -231,6 +288,9 @@ export class Networking {
 		out = out && player1.chatMsg === player2.chatMsg;
 		out = out && player1.velocity.equals(player2.velocity);
 		out = out && player1.name === player2.name;
+		out = out && player1.heldItemIndex === player2.heldItemIndex;
+		out = out && player1.rightClickHeld === player2.rightClickHeld;
+		out = out && player1.shooting === player2.shooting;
 
 		return out;
 	}

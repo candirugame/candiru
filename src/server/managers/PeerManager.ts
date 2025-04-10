@@ -52,8 +52,8 @@ export class PeerManager {
 				.split('\n')
 				.filter((url) => url.trim() && url !== config.server.url);
 		} catch {
-			await Deno.writeTextFile(this.serversFilePath, 'https://bridge.candiru.xyz\n');
-			this.updateQueue = ['https://bridge.candiru.xyz'];
+			await Deno.writeTextFile(this.serversFilePath, 'https://candiru.xyz\n');
+			this.updateQueue = ['https://candiru.xyz'];
 		}
 	}
 
