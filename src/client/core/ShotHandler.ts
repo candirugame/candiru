@@ -97,7 +97,7 @@ class Shot {
 
 			case ShotParticleType.Pistol:
 				renderer.particleSystem.emit({
-					position: origin.add(shotDirection.clone().multiplyScalar(0.15)),
+					position: origin.clone().add(shotDirection.clone().multiplyScalar(0.15)),
 					count: 8,
 					velocity: shotDirection.clone().multiplyScalar(14),
 					spread: 5,
