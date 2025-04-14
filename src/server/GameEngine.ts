@@ -12,6 +12,7 @@ import { Player } from '../shared/Player.ts';
 import * as THREE from 'three';
 import { SoloCTFGamemode } from './gamemodes/SoloCTFGamemode.ts';
 import { BridgeGamemode } from './gamemodes/BridgeGamemode.ts';
+import { KingOfTheHillGamemode } from './gamemodes/KingOfTheHillGamemode.ts';
 
 export class GameEngine {
 	private lastPlayerTickTimestamp: number = Date.now() / 1000;
@@ -186,6 +187,9 @@ export class GameEngine {
 					break;
 				case 'ctf':
 					this.gamemode = new SoloCTFGamemode(this);
+					break;
+				case 'koth':
+					this.gamemode = new KingOfTheHillGamemode(this);
 					break;
 				case 'bridge':
 					this.gamemode = new BridgeGamemode(this);

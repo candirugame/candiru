@@ -28,6 +28,7 @@ const defaults = {
 	GAME_MAX_PLAYERS: '20',
 	RESPAWN_DELAY: '10',
 	POINTS_TO_WIN: '100',
+	POINTS_TO_EVENT: '20',
 
 	// Health settings
 	HEALTH_REGEN_DELAY: '6',
@@ -115,6 +116,7 @@ function parseConfig(env: Record<string, string>) {
 			maxPlayers: parseInt(env.GAME_MAX_PLAYERS),
 			respawnDelay: parseInt(env.RESPAWN_DELAY),
 			pointsToWin: parseInt(env.POINTS_TO_WIN),
+			pointsToEvent: parseInt(env.POINTS_TO_EVENT),
 		},
 		player: {
 			disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),
