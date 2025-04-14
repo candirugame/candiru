@@ -3,7 +3,6 @@ import { FFAGamemode } from './FFAGamemode.ts';
 import { Player } from '../../shared/Player.ts';
 import config from '../config.ts';
 import { WorldItem } from '../models/WorldItem.ts';
-import { ItemRespawnPoint } from '../models/ItemRespawnPoint.ts';
 
 export class KingOfTheHillGamemode extends FFAGamemode {
 	private readonly FLAG_ITEM_TYPE: number = 4;
@@ -210,8 +209,6 @@ export class KingOfTheHillGamemode extends FFAGamemode {
 						`&c${timeToMove} seconds to move`,
 					];
 				} else if (flagHolder) {
-					const flagHolderExtras = this.gameEngine.playerManager.getPlayerExtrasById(flagHolder.id);
-					const flagHolderSeconds = flagHolderExtras ? config.game.pointsToWin - flagHolderExtras.points : 0;
 					player.gameMsgs = [
 						`&c${flagHolder.name} is capturing `,
 						`&c${timeToMove} seconds to move`,
