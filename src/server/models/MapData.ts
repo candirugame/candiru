@@ -2,6 +2,15 @@ import { RespawnPoint } from './RespawnPoint.ts';
 import { ItemRespawnPoint } from './ItemRespawnPoint.ts';
 import * as THREE from 'three';
 
+interface CapturePointJSON {
+	position: {
+		x: number;
+		y: number;
+		z: number;
+	};
+	scale: number;
+}
+
 interface CapturePoint {
 	position: THREE.Vector3;
 	scale: number;
@@ -17,7 +26,7 @@ export class MapData {
 
 	static fromJSON(
 		json: {
-			capturePoints: any;
+			capturePoints: CapturePointJSON[];
 			respawnPoints: RespawnPoint[];
 			itemRespawnPoints: ItemRespawnPoint[];
 			name: string;
@@ -41,7 +50,7 @@ export class MapData {
 		);
 
 		const capturePoints = json.capturePoints.map(
-			(cp: { position: { x: number; y: number; z: number }; scale?: number }) => ({
+			(cp) => ({
 				position: new THREE.Vector3(cp.position.x, cp.position.y, cp.position.z),
 				scale: cp.scale,
 			}),
