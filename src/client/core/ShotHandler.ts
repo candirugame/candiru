@@ -66,6 +66,48 @@ class Shot {
 	public shoot(renderer: Renderer): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
 		return renderer.getShotVectorsToPlayersWithOffset(this.yawOffset, this.pitchOffset, this.maxDistance);
 	}
+
+	public emitParticles(renderer: Renderer, origin: THREE.Vector3, baseDirection: THREE.Vector3) {
+		if (this.shotParticleType === ShotParticleType.None) return;
+
+		// Calculate shot direction (same logic as before)
+		const worldUp = new THREE.Vector3(0, 1, 0);
+		let right = new THREE.Vector3().crossVectors(baseDirection, worldUp).normalize();
+		if (right.lengthSq() < 0.001) right = new THREE.Vector3(1, 0, 0);
+		const up = new THREE.Vector3().crossVectors(right, baseDirection).normalize();
+
+		const yawQuat = new THREE.Quaternion().setFromAxisAngle(up, this.yawOffset);
+		const pitchQuat = new THREE.Quaternion().setFromAxisAngle(right, this.pitchOffset);
+		const finalQuat = new THREE.Quaternion().multiplyQuaternions(yawQuat, pitchQuat);
+		const shotDirection = baseDirection.clone().applyQuaternion(finalQuat).normalize();
+
+		// Emit particles immediately
+		switch (this.shotParticleType) {
+			case ShotParticleType.Shotgun:
+				renderer.particleSystem.emit({
+					position: origin,
+					count: 1,
+					velocity: shotDirection.clone().multiplyScalar(20),
+					spread: 0.05,
+					lifetime: 0.3,
+					size: 0.2,
+					color: new THREE.Color(25 / 255, 70 / 255, 25 / 255),
+				});
+				break;
+
+			case ShotParticleType.Pistol:
+				renderer.particleSystem.emit({
+					position: origin.add(shotDirection.clone().multiplyScalar(0.15)),
+					count: 8,
+					velocity: shotDirection.clone().multiplyScalar(14),
+					spread: 5,
+					lifetime: 0.08,
+					size: 0.06,
+					color: new THREE.Color(230 / 255, 218 / 255, 140 / 255),
+				});
+				break;
+		}
+	}
 }
 
 export enum ShotParticleType {
@@ -118,6 +160,11 @@ export class ShotGroup {
 	public processShots(renderer: Renderer, networking: Networking) {
 		const hitPlayers: number[] = [];
 
+		// Emit particles for all shots immediately
+		for (const shot of this.shots) {
+			shot.emitParticles(renderer, this.origin, this.direction);
+		}
+
 		const processShots = (deadline?: IdleDeadline) => {
 			const timeRemaining = deadline ? deadline.timeRemaining() : 16;
 
@@ -125,74 +172,7 @@ export class ShotGroup {
 				const shot = this.shots.pop();
 				if (!shot) continue;
 
-				// Get muzzle position and base direction
-				const muzzlePos = this.origin.clone();
-				const baseMuzzleDir = this.direction.clone().normalize();
-
-				// Create stable coordinate system
-				const worldUp = new THREE.Vector3(0, 1, 0);
-				let right = new THREE.Vector3().crossVectors(baseMuzzleDir, worldUp).normalize();
-
-				// Fallback for when looking straight up/down
-				if (right.lengthSq() < 0.001) {
-					right = new THREE.Vector3(1, 0, 0);
-				}
-
-				const up = new THREE.Vector3().crossVectors(right, baseMuzzleDir).normalize();
-
-				// Convert angular offsets to direction vector
-				const yawAngle = shot.yawOffset;
-				const pitchAngle = shot.pitchOffset;
-
-				// Create rotation quaternions
-				const yawQuat = new THREE.Quaternion().setFromAxisAngle(up, yawAngle);
-				const pitchQuat = new THREE.Quaternion().setFromAxisAngle(right, pitchAngle);
-
-				// Combine rotations (yaw first, then pitch)
-				const finalQuat = new THREE.Quaternion().multiplyQuaternions(yawQuat, pitchQuat);
-
-				// Apply to base direction
-				const shotDirection = baseMuzzleDir.clone().applyQuaternion(finalQuat).normalize();
-
-				// Emit particles
-				switch (shot.shotParticleType) {
-					case ShotParticleType.Shotgun:
-						renderer.particleSystem.emit({
-							position: muzzlePos,
-							count: 1,
-							velocity: shotDirection.clone().multiplyScalar(20),
-							spread: 0.05,
-							lifetime: 0.3,
-							size: 0.2,
-							color: new THREE.Color(25 / 255, 70 / 255, 25 / 255),
-						});
-						break;
-
-					case ShotParticleType.Pistol:
-						// renderer.particleSystem.emit({
-						// 	position: muzzlePos,
-						// 	count: 1,
-						// 	velocity: shotDirection.clone().multiplyScalar(128),
-						// 	spread: 0.1,
-						// 	lifetime: 2,
-						// 	size: 0.12,
-						// 	color: new THREE.Color(25 / 255, 25 / 255, 25 / 255),
-						// });
-						renderer.particleSystem.emit({
-							position: muzzlePos.add(shotDirection.clone().multiplyScalar(0.15)),
-							count: 8,
-							velocity: shotDirection.clone().multiplyScalar(14),
-							spread: 5,
-							lifetime: 0.08,
-							size: 0.06,
-							color: new THREE.Color(230 / 255, 218 / 255, 140 / 255),
-						});
-						break;
-					default:
-						break;
-				}
-
-				// Process hits
+				// Process hits (particles already emitted)
 				if (this.isLocal) {
 					const shotVectors = shot.shoot(renderer);
 					if (shotVectors?.length > 0) {
