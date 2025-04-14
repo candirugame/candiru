@@ -5,6 +5,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
 import { Player, PlayerData } from '../../shared/Player.ts';
 import { ShotHandler, ShotParticleType } from './ShotHandler.ts';
+import { ChatOverlay } from '../ui/ChatOverlay.ts';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
@@ -437,27 +438,65 @@ export class RemotePlayerRenderer {
 	}
 
 	private createTextSprite(text: string): THREE.Sprite {
-		text = text.replace(/&[0123456789abcdef]/g, '');
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d')!;
+		// Parse color codes and calculate total width
 		const fontSize = 64;
+		const context = document.createElement('canvas').getContext('2d')!;
 		context.font = `${fontSize}px Comic Sans MS`;
 
-		const textWidth = context.measureText(text).width;
-		canvas.width = textWidth * 2;
+		// Split text into color segments
+		const segments: { text: string; color: string }[] = [];
+		let currentColor = '#FFFFFF';
+		let currentSegment = '';
+
+		for (let i = 0; i < text.length; i++) {
+			if (text[i] === '&' && i + 1 < text.length) {
+				const colorCode = text[i + 1].toLowerCase();
+				if (currentSegment) {
+					segments.push({ text: currentSegment, color: currentColor });
+					currentSegment = '';
+				}
+				currentColor = ChatOverlay.COLOR_CODES[colorCode] || '#FFFFFF';
+				i++; // Skip color code character
+			} else {
+				currentSegment += text[i];
+			}
+		}
+		if (currentSegment) {
+			segments.push({ text: currentSegment, color: currentColor });
+		}
+
+		// Calculate total width
+		let totalWidth = 0;
+		const measurements = segments.map((seg) => {
+			const width = context.measureText(seg.text).width;
+			totalWidth += width;
+			return width;
+		});
+
+		// Create canvas
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d')!;
+		canvas.width = totalWidth * 2; // Match original 2x scaling
 		canvas.height = fontSize * 2;
 
-		context.font = `${fontSize}px Comic Sans MS`;
-		context.fillStyle = 'rgba(255,255,255,1)';
-		context.textAlign = 'center';
-		context.textBaseline = 'middle';
-		context.fillText(text, canvas.width / 2, canvas.height / 2);
+		// Draw centered text
+		let xPos = (canvas.width - totalWidth) / 2;
+		ctx.textBaseline = 'middle';
 
+		segments.forEach((seg, index) => {
+			ctx.fillStyle = seg.color;
+			ctx.font = `${fontSize}px Comic Sans MS`;
+			ctx.fillText(seg.text, xPos, canvas.height / 2);
+			xPos += measurements[index];
+		});
+
+		// Create sprite
 		const texture = new THREE.CanvasTexture(canvas);
 		const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
 		const sprite = new THREE.Sprite(spriteMaterial);
 
-		sprite.scale.set((textWidth / fontSize) * 0.4, 0.4, 0.4);
+		// Match original scaling calculation
+		sprite.scale.set((totalWidth / fontSize) * 0.4, 0.4, 0.4);
 
 		return sprite;
 	}
