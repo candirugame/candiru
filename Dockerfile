@@ -1,5 +1,5 @@
 # Build stage (unchanged)
-FROM denoland/deno:2.2.6 AS builder
+FROM denoland/deno:2.2.9 AS builder
 WORKDIR /app
 COPY . .
 RUN deno task build
@@ -12,4 +12,4 @@ FROM debian:bookworm-slim
 WORKDIR /app
 COPY --from=builder /app/candiru .
 EXPOSE 3000
-CMD ["/app/candiru"]
+CMD ["/app/candiru", "--v8-flags=--optimize-for-memory,--max-old-space-size=128"]
