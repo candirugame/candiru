@@ -2,15 +2,26 @@ import { RespawnPoint } from './RespawnPoint.ts';
 import { ItemRespawnPoint } from './ItemRespawnPoint.ts';
 import * as THREE from 'three';
 
+interface CapturePoint {
+	position: THREE.Vector3;
+	scale: number;
+}
+
 export class MapData {
 	constructor(
 		public name: string,
 		public respawnPoints: RespawnPoint[],
 		public itemRespawnPoints: ItemRespawnPoint[],
+		public capturePoints: CapturePoint[] = [],
 	) {}
 
 	static fromJSON(
-		json: { respawnPoints: RespawnPoint[]; itemRespawnPoints: ItemRespawnPoint[]; name: string },
+		json: {
+			capturePoints: any;
+			respawnPoints: RespawnPoint[];
+			itemRespawnPoints: ItemRespawnPoint[];
+			name: string;
+		},
 	): MapData {
 		const respawnPoints = json.respawnPoints.map(
 			(rp) =>
@@ -29,6 +40,13 @@ export class MapData {
 				),
 		);
 
-		return new MapData(json.name, respawnPoints, itemRespawnPoints);
+		const capturePoints = json.capturePoints.map(
+			(cp: { position: { x: number; y: number; z: number }; scale?: number }) => ({
+				position: new THREE.Vector3(cp.position.x, cp.position.y, cp.position.z),
+				scale: cp.scale,
+			}),
+		);
+
+		return new MapData(json.name, respawnPoints, itemRespawnPoints, capturePoints);
 	}
 }
