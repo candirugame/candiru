@@ -66,7 +66,7 @@ export class ChatOverlay {
 	private animationDuration: number = 1; // Adjusted for smoother animation
 
 	// Color code mapping
-	COLOR_CODES: { [key: string]: string } = {
+	public static COLOR_CODES: { [key: string]: string } = {
 		'0': '#000000', // Black
 		'1': '#0000AA', // Dark Blue
 		'2': '#00AA00', // Dark Green
@@ -88,12 +88,12 @@ export class ChatOverlay {
 
 	private getColorCode(code: string): string | false {
 		if (code === 'g') {
-			return this.getRainbowColor();
+			return ChatOverlay.getRainbowColor();
 		}
-		return this.COLOR_CODES[code] || false;
+		return ChatOverlay.COLOR_CODES[code] || false;
 	}
 
-	private getRainbowColor(): string {
+	private static getRainbowColor(): string {
 		const hue = (Date.now() / 20) % 360;
 		return `hsl(${hue}, 100%, 50%)`;
 	}
