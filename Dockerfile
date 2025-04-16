@@ -1,32 +1,30 @@
-# Build stage
+# Build stage (remains the same)
 FROM denoland/deno:2.2.6 AS builder
 WORKDIR /app
 COPY . .
 RUN deno task build
-# Ensure the compile target matches your deployment architecture
 RUN deno compile \
-  --target x86_64-unknown-linux-gnu \
   --allow-read --allow-write --allow-net --allow-env \
   --include dist/ --output candiru main.ts
 
-# Runtime stage (Distroless)
-# Using cc-debian12 as it includes glibc needed by the compiled binary
-FROM gcr.io/distroless/cc-debian12
+# Runtime stage (Debian with tuned jemalloc for x86_64)
+FROM debian:bookworm-slim
 
-# Set working directory to /tmp, which is writable by nonroot
-WORKDIR /tmp
+# Install jemalloc
+RUN apt-get update && \
+    apt-get install -y libjemalloc2 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy the application binary into /tmp AND set its ownership
-# Format is --chown=UID:GID
-COPY --from=builder --chown=65532:65532 /app/candiru .
+WORKDIR /app
+COPY --from=builder /app/candiru .
 
-# Optionally add MALLOC_ARENA_MAX if needed (glibc is still used)
-ENV MALLOC_ARENA_MAX=2
+# Set LD_PRELOAD to use jemalloc
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
+
+# Tune jemalloc to release memory more aggressively
+# dirty_decay_ms: Time (ms) to hold unused dirty pages before purging. 0 = purge immediately.
+# muzzy_decay_ms: Time (ms) to hold unused muzzy pages before purging. 0 = purge immediately.
+ENV MALLOC_CONF=dirty_decay_ms:0,muzzy_decay_ms:0
 
 EXPOSE 3000
-
-# Switch to the non-root user
-USER 65532:65532
-
-# Execute the binary from the /tmp directory
-CMD ["/tmp/candiru"]
+CMD ["/app/candiru"]
