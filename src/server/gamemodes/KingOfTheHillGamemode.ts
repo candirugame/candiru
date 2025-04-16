@@ -128,30 +128,44 @@ export class KingOfTheHillGamemode extends FFAGamemode {
 		}
 
 		if (currentTime - this.lastParticleTimestamp > 0.08 && this.hillCenter) {
-			const particlePos = this.hillCenter.clone();
+			const timeSinceLastParticle = currentTime - this.lastParticleTimestamp;
 
-			let particleColor = 0xaaaaaa; //gray
-			if (hillEmitMode === 'ONE') {
-				particleColor = 0x00b300; // green
-			} else if (hillEmitMode === 'MULTI') {
-				particleColor = 0xb54e00; // orange
+			const particleCountPerFrame = 1;
+			const particleVelocity = 0.3;
+			const rotationSpeed = 3;
+			const lifetime = 3;
+
+			for (let i = 0; i < particleCountPerFrame; i++) {
+				const particlePos = this.hillCenter.clone();
+
+				let particleColor = 0xaaaaaa; //gray
+				if (hillEmitMode === 'ONE') {
+					particleColor = 0x00b300; // green
+				} else if (hillEmitMode === 'MULTI') {
+					particleColor = 0xb54e00; // orange
+				}
+
+				const iterFracTimeDiff = timeSinceLastParticle / particleCountPerFrame * i;
+				const iterFracTime = currentTime - iterFracTimeDiff;
+
+				particlePos.x += Math.cos(iterFracTime * rotationSpeed) * this.hillSize;
+				particlePos.z += Math.sin(iterFracTime * rotationSpeed) * this.hillSize;
+				particlePos.y += iterFracTimeDiff * particleVelocity;
+				//			console.log(iterFracTime + ',' + particleVelocity + ',' + (iterFracTime * particleVelocity));
+
+				//particlePos.add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5));
+
+				this.gameEngine.emitParticleData({
+					position: particlePos,
+					count: 1,
+					velocity: new THREE.Vector3(0, particleVelocity, 0),
+					spread: 0,
+					lifetime: lifetime,
+					size: 0.2,
+					color: new THREE.Color(particleColor),
+				});
 			}
 
-			particlePos.x += Math.cos(currentTime * 3) * this.hillSize;
-			particlePos.z += Math.sin(currentTime * 3) * this.hillSize;
-
-			//particlePos.add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5));
-
-			// stink particle over player
-			this.gameEngine.emitParticleData({
-				position: particlePos,
-				count: 1,
-				velocity: new THREE.Vector3(0, 0.3, 0),
-				spread: 0,
-				lifetime: 3,
-				size: 0.2,
-				color: new THREE.Color(particleColor),
-			});
 			this.lastParticleTimestamp = currentTime;
 		}
 
