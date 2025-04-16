@@ -8,7 +8,7 @@ RUN deno compile \
   --target x86_64-unknown-linux-gnu \
   --include dist/ --output candiru main.ts
 
-# Runtime stage (Debian + jemalloc - Explicit Platform - NO MALLOC_CONF)
+# Runtime stage (Debian + jemalloc - Explicit Platform - WITH MALLOC_CONF)
 FROM debian:bookworm-slim
 WORKDIR /app
 # Install jemalloc
@@ -19,5 +19,6 @@ EXPOSE 3000
 RUN chmod +x /app/candiru
 # Preload jemalloc
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
-# ENV MALLOC_CONF="dirty_decay_ms:0,muzzy_decay_ms:0"
+# Configure jemalloc to aggressively return unused memory
+ENV MALLOC_CONF="dirty_decay_ms:0,muzzy_decay_ms:0"
 CMD ["/app/candiru"]
