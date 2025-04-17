@@ -67,6 +67,7 @@ export class PlayerManager {
 			player.gameMsgs2 = existingPlayerData.player.gameMsgs2;
 			player.playerSpectating = existingPlayerData.player.playerSpectating;
 			player.doPhysics = existingPlayerData.player.doPhysics;
+			player.thirdPerson = existingPlayerData.player.thirdPerson;
 			player.updateTimestamp = Date.now() / 1000;
 
 			const updatedData: PlayerWithExtras = {

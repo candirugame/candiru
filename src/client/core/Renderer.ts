@@ -250,8 +250,24 @@ export class Renderer {
 			}
 		} else {
 			this.spectateGroundTruthPosition = null;
-			this.camera.position.copy(localPlayer.position);
-			this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+			const tpDist = localPlayer.thirdPerson;
+			if (tpDist && tpDist > 0) {
+				// third-person camera: position behind player based on their look direction
+				const heightOffset = 1.5; // camera height above player
+				// world space backward vector = local (0,0,1) rotated by lookQuaternion
+				const backward = new THREE.Vector3(0, 0, 1)
+					.applyQuaternion(localPlayer.lookQuaternion)
+					.multiplyScalar(tpDist);
+				const camPos = localPlayer.position.clone()
+					.add(backward)
+					.add(new THREE.Vector3(0, heightOffset, 0));
+				this.camera.position.copy(camPos);
+				this.camera.lookAt(localPlayer.position);
+			} else {
+				// first-person camera
+				this.camera.position.copy(localPlayer.position);
+				this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+			}
 		}
 
 		this.camera.position.add(this.knockbackVector);

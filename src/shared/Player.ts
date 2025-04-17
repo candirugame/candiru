@@ -38,6 +38,7 @@ export class Player {
 	public directionIndicatorVector?: THREE.Vector3 = undefined; //server-controlled
 	public highlightedVectors: THREE.Vector3[] = []; //new THREE.Vector3(5.92, 1.21, -4.10)
 	public doPhysics: boolean = true; //server-controlled
+	public thirdPerson: number = 0;
 
 	static fromObject(data: Player): Player {
 		const instance = new Player();

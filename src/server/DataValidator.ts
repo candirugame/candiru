@@ -70,6 +70,7 @@ export class DataValidator {
 		directionIndicatorVector: this.vector3Schema.nullable().optional(),
 		highlightedVectors: z.array(this.vector3Schema),
 		doPhysics: z.boolean(),
+		thirdPerson: z.number().optional().default(0),
 	}).strict().transform((data) => Player.fromObject(data as Player));
 
 	static chatMsgSchema = z.object({
