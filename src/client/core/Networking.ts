@@ -125,7 +125,25 @@ export class Networking {
 		});
 
 		this.socket.on('remotePlayerData', (data) => {
+			// full snapshot of all players
 			this.remotePlayers = data;
+			this.processRemotePlayerData();
+		});
+
+		// handle delta updates
+		this.socket.on('remotePlayerDelta', (deltas: Array<Partial<PlayerData> & { id: number }>) => {
+			// apply deltas to existing remotePlayers
+			deltas.forEach((delta) => {
+				console.log('delta', delta);
+				const idx = this.remotePlayers.findIndex((p) => p.id === delta.id);
+				if (idx !== -1) {
+					// update existing player data with changed fields
+					this.remotePlayers[idx] = { ...this.remotePlayers[idx], ...delta } as PlayerData;
+				} else {
+					// new player, add full delta
+					this.remotePlayers.push(delta as PlayerData);
+				}
+			});
 			this.processRemotePlayerData();
 		});
 
