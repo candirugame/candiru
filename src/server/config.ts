@@ -6,6 +6,7 @@ const defaults = {
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
 	SERVER_TICK_RATE: '15',
 	SERVER_CLEANUP_INTERVAL: '1000',
+	FULL_PLAYER_EMIT_INTERVAL: '5000', //send full player data every 5 seconds
 
 	// Peer settings
 	PEER_UPDATE_TICK_INTERVAL: '1', //update a stale peer from queue every x seconds
@@ -100,6 +101,7 @@ function parseConfig(env: Record<string, string>) {
 			defaultMap: env.SERVER_DEFAULT_MAP,
 			tickRate: parseInt(env.SERVER_TICK_RATE),
 			cleanupInterval: parseInt(env.SERVER_CLEANUP_INTERVAL),
+			fullPlayerEmitInterval: parseInt(env.FULL_PLAYER_EMIT_INTERVAL),
 		},
 		peer: {
 			updateInterval: parseInt(env.PEER_UPDATE_TICK_INTERVAL),

@@ -19,7 +19,7 @@ export class GameEngine {
 	private lastPlayerTickTimestamp: number = Date.now() / 1000;
 	private lastFullPlayerEmitTimestamp: number = Date.now() / 1000;
 	private lastEmittedPlayerSnapshot: Map<number, PlayerData> = new Map();
-	private fullPlayerEmitInterval: number = 2; // seconds
+	private fullPlayerEmitInterval: number = config.server.fullPlayerEmitInterval / 1000; // seconds
 	private lastItemUpdateTimestamp: number = Date.now() / 1000;
 	public playerUpdateSinceLastEmit: boolean = false;
 	private itemUpdateSinceLastEmit: boolean = false;
@@ -76,13 +76,16 @@ export class GameEngine {
 								deltas.push(pd);
 								this.lastEmittedPlayerSnapshot.set(pd.id, pd);
 							} else {
-								for (const key in pd) {
+								// iterate over known keys in PlayerData
+								(Object.keys(pd) as Array<keyof PlayerData>).forEach((key) => {
 									const curVal = JSON.stringify(pd[key]);
 									const prevVal = JSON.stringify(prev[key]);
 									if (curVal !== prevVal) {
-										delta[key] = pd[key];
+										// assign via any-cast to satisfy TS
+										// deno-lint-ignore no-explicit-any
+										(delta as any)[key] = pd[key];
 									}
-								}
+								});
 								if (Object.keys(delta).length > 1) {
 									deltas.push(delta);
 									this.lastEmittedPlayerSnapshot.set(pd.id, pd);
