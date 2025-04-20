@@ -134,7 +134,6 @@ export class Networking {
 		this.socket.on('remotePlayerDelta', (deltas: Array<Partial<PlayerData> & { id: number }>) => {
 			// apply deltas to existing remotePlayers
 			deltas.forEach((delta) => {
-				console.log('delta', delta);
 				const idx = this.remotePlayers.findIndex((p) => p.id === delta.id);
 				if (idx !== -1) {
 					// update existing player data with changed fields
