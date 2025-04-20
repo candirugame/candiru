@@ -392,6 +392,7 @@ export class ChatOverlay {
 	}
 
 	private renderPixelText(text: string, x: number, y: number, color: string) {
+		if (!text) return;
 		if (SettingsManager.settings.doPrettyText) {
 			this.renderPrettyText(text, x, y, color);
 		} else {

@@ -30,7 +30,7 @@ export class ItemManager {
 				}
 			}
 		} catch (error) {
-			console.error('⚠ Error in ItemManager tick:', error);
+			console.log('⚠ Error in ItemManager tick:', error);
 		}
 	}
 
