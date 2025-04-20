@@ -52,6 +52,9 @@ export class Player {
 
 		return {
 			...this,
+			inventory: [...this.inventory],
+			gameMsgs: [...this.gameMsgs],
+			gameMsgs2: [...this.gameMsgs2],
 			position: serializableVec3(this.position),
 			velocity: serializableVec3(this.velocity),
 			inputVelocity: serializableVec3(this.inputVelocity),
