@@ -19,6 +19,6 @@ EXPOSE 3000
 RUN chmod +x /app/candiru
 # Preload jemalloc
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
-# Configure jemalloc to aggressively return unused memory
-ENV MALLOC_CONF="dirty_decay_ms:0,muzzy_decay_ms:0"
+# Configure jemalloc: aggressive return + limited arenas + background thread
+ENV MALLOC_CONF="dirty_decay_ms:0,muzzy_decay_ms:0,narenas:2,background_thread:true"
 CMD ["/app/candiru"]
