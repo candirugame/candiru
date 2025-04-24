@@ -20,7 +20,7 @@ FROM gcr.io/distroless/cc
 # Set the working directory inside the container
 WORKDIR /app
 
-# Set Deno environment variables (Corrected format)
+# Set Deno environment variables
 ENV DENO_DIR=/deno-dir/
 ENV DENO_INSTALL_ROOT=/usr/local
 ARG DENO_VERSION
@@ -34,20 +34,20 @@ COPY --from=tini /tini /tini
 
 # Copy Deno configuration files
 COPY deno.json .
-# If you use an import map, uncomment the line below
-# COPY import_map.json .
+COPY import_map.json .
 
-# Copy the rest of your application code
+# Copy the rest of your application source code
 COPY . .
 
-# Cache application dependencies using Deno (Corrected RUN format)
+RUN ["/bin/deno", "task", "build"]
+
+# Cache application dependencies using Deno
 # This step downloads and caches the modules needed by main.ts
 # Use exec form because distroless doesn't have /bin/sh
-RUN ["/bin/deno", "cache", "main.ts"]
-# Alternatively, if your 'cache' task in deno.json is more comprehensive:
-# RUN ["/bin/deno", "task", "cache"]
+#RUN ["/bin/deno", "cache", "main.ts"]
+RUN ["/bin/deno", "task", "cache"]
 
-# Expose the port your application listens on (from your current Dockerfile)
+# Expose the port your application listens on
 EXPOSE 3000
 
 # Set the entrypoint to run Deno via tini
