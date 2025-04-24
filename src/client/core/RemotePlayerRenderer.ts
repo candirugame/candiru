@@ -170,7 +170,6 @@ export class RemotePlayerRenderer {
 
 			const playerDataWithQuaternion: PlayerData = {
 				...remotePlayer,
-				quaternion: remotePlayer.quaternion || { x: 0, y: 0, z: 0, w: 1 },
 				lookQuaternion: remotePlayer.lookQuaternion || { x: 0, y: 0, z: 0, w: 1 },
 			};
 
@@ -355,12 +354,25 @@ export class RemotePlayerRenderer {
 		playerObject.position.z += (Math.random() - 0.5) * 0.05 *
 			(1 - Math.pow(remotePlayerData.health / this.networking.getServerInfo().playerMaxHealth, 2));
 
-		const targetQuaternion = new THREE.Quaternion(
-			remotePlayerData.quaternion.x,
-			remotePlayerData.quaternion.y,
-			remotePlayerData.quaternion.z,
-			remotePlayerData.quaternion.w,
+		const euler = new THREE.Euler().setFromQuaternion(
+			new THREE.Quaternion(
+				remotePlayerData.lookQuaternion.x,
+				remotePlayerData.lookQuaternion.y,
+				remotePlayerData.lookQuaternion.z,
+				remotePlayerData.lookQuaternion.w,
+			),
+			'YXZ',
 		);
+		euler.x = 0;
+		euler.z = 0;
+		const targetQuaternion = new THREE.Quaternion().setFromEuler(euler);
+
+		// const targetQuaternion = new THREE.Quaternion(
+		// 	remotePlayerData.quaternion.x,
+		// 	remotePlayerData.quaternion.y,
+		// 	remotePlayerData.quaternion.z,
+		// 	remotePlayerData.quaternion.w,
+		// );
 		const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
 		targetQuaternion.multiply(rotationQuaternion);
 

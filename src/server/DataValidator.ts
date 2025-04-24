@@ -49,7 +49,6 @@ export class DataValidator {
 		inputVelocity: this.vector3Schema,
 		gravity: z.number(),
 		lookQuaternion: this.quaternionSchema,
-		quaternion: this.quaternionSchema,
 		chatActive: z.boolean(),
 		chatMsg: z.string().max(300),
 		latency: z.number(),

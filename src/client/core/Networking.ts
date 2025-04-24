@@ -32,7 +32,7 @@ export interface ServerInfo {
 
 interface LastUploadedLocalPlayer {
 	position: THREE.Vector3;
-	quaternion: THREE.Quaternion;
+	lookQuaternion: THREE.Quaternion;
 	chatMsg: string;
 	velocity: THREE.Vector3;
 	name: string;
@@ -202,9 +202,9 @@ export class Networking {
 		this.socket.volatile.emit('playerData', this.localPlayer);
 		this.lastUploadedLocalPlayer = {
 			position: this.localPlayer.position.clone(),
-			quaternion: this.localPlayer.quaternion.clone(),
 			chatMsg: this.localPlayer.chatMsg,
 			velocity: this.localPlayer.velocity.clone(),
+			lookQuaternion: this.localPlayer.lookQuaternion.clone(),
 			name: this.localPlayer.name,
 			heldItemIndex: this.localPlayer.heldItemIndex,
 			rightClickHeld: this.localPlayer.rightClickHeld,
@@ -301,7 +301,7 @@ export class Networking {
 		if (player1 === null || player2 === null) return false;
 		let out = true;
 		out = out && player1.position.equals(player2.position);
-		out = out && player1.quaternion.equals(player2.quaternion);
+		out = out && player1.lookQuaternion.equals(player2.lookQuaternion);
 		out = out && player1.chatMsg === player2.chatMsg;
 		out = out && player1.velocity.equals(player2.velocity);
 		out = out && player1.name === player2.name;
