@@ -30,7 +30,7 @@ const defaults = {
 	GAME_MAX_PLAYERS: '20',
 	RESPAWN_DELAY: '10',
 	POINTS_TO_WIN: '100',
-	POINTS_TO_EVENT: '20',
+	POINTS_TO_EVENT: '30',
 
 	// Health settings
 	HEALTH_REGEN_DELAY: '6',
