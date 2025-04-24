@@ -1,6 +1,7 @@
 const defaults = {
 	// Server settings
 	PORT: '3000',
+	SERVER_HOSTNAME: '0.0.0.0',
 	SERVER_NAME: 'my-server',
 	SERVER_URL: 'https://example.com',
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
@@ -96,6 +97,7 @@ function parseConfig(env: Record<string, string>) {
 	return {
 		server: {
 			port: parseInt(env.PORT),
+			hostname: env.SERVER_HOSTNAME,
 			name: env.SERVER_NAME,
 			url: env.SERVER_URL,
 			defaultMap: env.SERVER_DEFAULT_MAP,

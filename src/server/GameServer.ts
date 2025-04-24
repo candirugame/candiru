@@ -182,6 +182,7 @@ export class GameServer {
 
 			await serve(handler, {
 				port: config.server.port,
+				hostname: config.server.hostname,
 			});
 		} catch (error) {
 			console.error('Failed to start server:', error);
