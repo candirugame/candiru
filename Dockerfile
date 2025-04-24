@@ -1,24 +1,59 @@
-# Build stage (unchanged)
-FROM denoland/deno:2.2.6 AS builder
-WORKDIR /app
-COPY . .
-RUN deno task build
-RUN deno compile \
-  --allow-read --allow-write --allow-net --allow-env \
-  --target x86_64-unknown-linux-gnu \
-  --include dist/ --output candiru main.ts
+# Define Deno version (using the version from your current Dockerfile)
+ARG DENO_VERSION=2.2.6
+ARG BIN_IMAGE=denoland/deno:bin-${DENO_VERSION}
 
-# Runtime stage (Debian + jemalloc - Explicit Platform - WITH MALLOC_CONF)
-FROM debian:bookworm-slim
+# Stage to get the Deno binary
+FROM ${BIN_IMAGE} AS bin
+
+# Stage to get tini init system
+FROM buildpack-deps:20.04-curl AS tini
+ARG TINI_VERSION=0.19.0
+ARG TARGETARCH
+# Download tini for the target architecture
+RUN curl -fsSL https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-${TARGETARCH} \
+    --output /tini \
+  && chmod +x /tini
+
+# Final runtime stage using distroless/cc for a minimal image
+FROM gcr.io/distroless/cc
+
+# Set the working directory inside the container
 WORKDIR /app
-# Install jemalloc
-RUN apt-get update && apt-get install -y libjemalloc2 && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/candiru .
+
+# Set Deno environment variables (Corrected format)
+ENV DENO_DIR=/deno-dir/
+ENV DENO_INSTALL_ROOT=/usr/local
+ARG DENO_VERSION
+ENV DENO_VERSION=${DENO_VERSION}
+
+# Copy the Deno binary from the 'bin' stage
+COPY --from=bin /deno /bin/deno
+
+# Copy tini from the 'tini' stage
+COPY --from=tini /tini /tini
+
+# Copy Deno configuration files
+COPY deno.json .
+# If you use an import map, uncomment the line below
+# COPY import_map.json .
+
+# Copy the rest of your application code
+COPY . .
+
+# Cache application dependencies using Deno (Corrected RUN format)
+# This step downloads and caches the modules needed by main.ts
+# Use exec form because distroless doesn't have /bin/sh
+RUN ["/bin/deno", "cache", "main.ts"]
+# Alternatively, if your 'cache' task in deno.json is more comprehensive:
+# RUN ["/bin/deno", "task", "cache"]
+
+# Expose the port your application listens on (from your current Dockerfile)
 EXPOSE 3000
-# Ensure executable
-RUN chmod +x /app/candiru
-# Preload jemalloc
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
-# Configure jemalloc: aggressive return + limited arenas + background thread
-ENV MALLOC_CONF="dirty_decay_ms:0,muzzy_decay_ms:0,narenas:2,background_thread:true"
-CMD ["/app/candiru"]
+
+# Set the entrypoint to run Deno via tini
+# tini handles signal forwarding and zombie reaping
+ENTRYPOINT ["/tini", "--", "/bin/deno"]
+
+# Set the default command to run your main application file
+# Includes the necessary permissions based on your 'start' task in deno.json
+CMD ["run", "--allow-read", "--allow-env", "--allow-net", "--allow-write", "main.ts"]
