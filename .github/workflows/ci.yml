@@ -87,13 +87,13 @@ jobs:
         run: deno task start &
       - name: Health check
         run: |
-          retries=10
+          retries=38
           count=0
           until curl -f http://localhost:3000; do
             count=$((count + 1))
             if [ $count -lt $retries ]; then
-              echo "Health check failed, retrying in 5 seconds... ($count/$retries)"
-              sleep 5
+              echo "Health check failed, retrying in 2 seconds... ($count/$retries)"
+              sleep 2
             else
               echo "Health check failed after $retries attempts, exiting."
               exit 1
@@ -114,13 +114,13 @@ jobs:
 
       - name: Health check
         run: |
-          retries=15
+          retries=38
           count=0
           until curl -f http://localhost:3000; do
             count=$((count + 1))
             if [ $count -lt $retries ]; then
-              echo "Health check failed, retrying in 5 seconds... ($count/$retries)"
-              sleep 5
+              echo "Health check failed, retrying in 2 seconds... ($count/$retries)"
+              sleep 2
             else
               echo "Health check failed after $retries attempts, exiting."
               exit 1
