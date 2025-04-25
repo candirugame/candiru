@@ -3,19 +3,21 @@ import { FFAGamemode } from './FFAGamemode.ts';
 import { Player } from '../../shared/Player.ts';
 import config from '../config.ts';
 import { WorldItem } from '../models/WorldItem.ts';
-import { ItemRespawnPoint } from '../models/ItemRespawnPoint.ts';
 
-export class SoloCTFGamemode extends FFAGamemode {
+export class KingOfTheHillGamemode extends FFAGamemode {
 	private readonly FLAG_ITEM_TYPE: number = 4;
 	private gameActive: boolean = true;
 	private resetTimestamp: number | null = null;
 	private isAnnouncingWin: boolean = false; // Flag to indicate win announcement
 	private winner: Player | null = null;
 	private lastParticleTimestamp: number = 0;
+	private hillCenter: THREE.Vector3 | null = null;
+	private hillSize = 2; // Size of the hill area
+	private capTimeSinceReset = 0;
 
 	override init(): void {
 		super.init();
-		console.log('🚩 Solo CTF Gamemode initialized');
+		console.log('🚩 King of the Hill initialized');
 	}
 
 	override tick(): void {
@@ -34,19 +36,33 @@ export class SoloCTFGamemode extends FFAGamemode {
 		const currentTime = Date.now() / 1000;
 
 		// Only spawn flag if it doesn't exist AND we're not in reset state
-		if (this.gameActive && !this.flagExists()) {
-			console.log('No flag found, spawning new flag');
-			this.spawnFlag();
+		if (this.gameActive && this.hillCenter == null) {
+			this.randomizeHill();
 		}
 
 		const players = this.gameEngine.playerManager.getAllPlayers();
-		const flagHolder = this.getFlagHolder(players);
+		const playersOnHill = this.getPlayersOnHill(players);
 		let winner: Player | null = null;
+		let flagHolder: Player | null = null;
+		let hillEmitMode: 'NONE' | 'ONE' | 'MULTI';
+
+		if (playersOnHill) {
+			hillEmitMode = 'NONE';
+			if (playersOnHill.length == 1) {
+				flagHolder = playersOnHill[0];
+				hillEmitMode = 'ONE';
+			}
+			if (playersOnHill.length > 1) {
+				hillEmitMode = 'MULTI';
+			}
+		} else {
+			hillEmitMode = 'NONE';
+		}
 
 		if (flagHolder) {
 			// Increment points for the flag holder
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(flagHolder.id);
-			if (extras) {
+			if (extras && this.hillCenter) {
 				if (currentTime - extras.lastPointIncrementTime >= 1) { // 1 second has passed
 					extras.points += 1;
 					extras.lastPointIncrementTime = currentTime;
@@ -58,52 +74,98 @@ export class SoloCTFGamemode extends FFAGamemode {
 						this.gameActive = false;
 						this.resetTimestamp = currentTime + config.game.respawnDelay;
 					}
+
+					//count up capture time
+					this.capTimeSinceReset += 1;
+					if (this.capTimeSinceReset >= config.game.pointsToEvent) {
+						this.capTimeSinceReset = 0;
+
+						this.randomizeHill();
+						// this.gameEngine.emitParticleData({ //fireworks!!
+						// 	position: this.hillCenter.clone().add(new THREE.Vector3(0, 0.5, 0)),
+						// 	count: 128,
+						// 	velocity: new THREE.Vector3(0, 0, 0),
+						// 	spread: 6,
+						// 	lifetime: 15,
+						// 	size: 0.15,
+						// 	color: new THREE.Color(0x00ff00), // Green color
+						// });
+					}
 				}
 			}
 		}
 
 		// Update direction indicators
-		if (flagHolder) {
-			// Flag is held by a player
-			for (const player of players) {
-				if (player.id === flagHolder.id) {
-					player.directionIndicatorVector = undefined;
-				} else {
-					player.directionIndicatorVector = flagHolder.position.clone();
-				}
+		// if (flagHolder) {
+		// 	// Flag is held by a player
+		// 	for (const player of players) {
+		// 		if (player.id === flagHolder.id) {
+		// 			player.directionIndicatorVector = undefined;
+		// 		} else {
+		// 			player.directionIndicatorVector = flagHolder.position.clone();
+		// 		}
+		// 	}
+		// } else {
+		// 	// Flag is in the world
+		// 	const flagItem = this.getFlagInWorld();
+		// 	if (flagItem) {
+		// 		for (const player of players) {
+		// 			player.directionIndicatorVector = flagItem.vector.clone();
+		// 		}
+		// 	}
+		// }
+
+		for (const player of players) {
+			if (player.playerSpectating !== -1) {
+				player.directionIndicatorVector = undefined;
 			}
-		} else {
-			// Flag is in the world
-			const flagItem = this.getFlagInWorld();
-			if (flagItem) {
-				for (const player of players) {
-					player.directionIndicatorVector = flagItem.vector.clone();
-				}
+
+			if (this.positionIsOnHill(player.position)) {
+				player.directionIndicatorVector = undefined;
+			} else {
+				if (this.hillCenter) player.directionIndicatorVector = this.hillCenter.clone();
 			}
 		}
 
-		if (currentTime - this.lastParticleTimestamp > 0.15) {
-			let particlePos = new THREE.Vector3(0, 0, 0);
-			if (flagHolder) {
-				particlePos = flagHolder.position.clone();
-			} else {
-				const flagItem = this.getFlagInWorld();
-				if (flagItem) {
-					particlePos = flagItem.vector.clone();
-				}
-			}
-			particlePos.add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5));
+		if (currentTime - this.lastParticleTimestamp > 0.08 && this.hillCenter) {
+			const timeSinceLastParticle = currentTime - this.lastParticleTimestamp;
 
-			// stink particle over player
-			this.gameEngine.emitParticleData({
-				position: particlePos,
-				count: 1,
-				velocity: new THREE.Vector3(0, 0.5, 0),
-				spread: 0.3,
-				lifetime: 15,
-				size: 0.2,
-				color: new THREE.Color(0x00aa00),
-			});
+			const particleCountPerFrame = 1;
+			const particleVelocity = 0.3;
+			const rotationSpeed = 3;
+			const lifetime = 3;
+
+			for (let i = 0; i < particleCountPerFrame; i++) {
+				const particlePos = this.hillCenter.clone();
+
+				let particleColor = 0xaaaaaa; //gray
+				if (hillEmitMode === 'ONE') {
+					particleColor = 0x00b300; // green
+				} else if (hillEmitMode === 'MULTI') {
+					particleColor = 0xb54e00; // orange
+				}
+
+				const iterFracTimeDiff = timeSinceLastParticle / particleCountPerFrame * i;
+				const iterFracTime = currentTime - iterFracTimeDiff;
+
+				particlePos.x += Math.cos(iterFracTime * rotationSpeed) * this.hillSize;
+				particlePos.z += Math.sin(iterFracTime * rotationSpeed) * this.hillSize;
+				particlePos.y += iterFracTimeDiff * particleVelocity;
+				//			console.log(iterFracTime + ',' + particleVelocity + ',' + (iterFracTime * particleVelocity));
+
+				//particlePos.add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5));
+
+				this.gameEngine.emitParticleData({
+					position: particlePos,
+					count: 1,
+					velocity: new THREE.Vector3(0, particleVelocity, 0),
+					spread: 0,
+					lifetime: lifetime,
+					size: 0.2,
+					color: new THREE.Color(particleColor),
+				});
+			}
+
 			this.lastParticleTimestamp = currentTime;
 		}
 
@@ -129,6 +191,8 @@ export class SoloCTFGamemode extends FFAGamemode {
 		let leader: Player | null = null;
 		let maxPoints = -1;
 		let flagHolder: Player | null = null;
+		const playersOnHill = this.getPlayersOnHill(players);
+		if (playersOnHill && playersOnHill.length == 1) flagHolder = playersOnHill[0];
 
 		// Determine leader and flag holder
 		for (const player of players) {
@@ -137,9 +201,6 @@ export class SoloCTFGamemode extends FFAGamemode {
 				if (extras.points > maxPoints) {
 					maxPoints = extras.points;
 					leader = player;
-				}
-				if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
-					flagHolder = player;
 				}
 			}
 		}
@@ -152,23 +213,28 @@ export class SoloCTFGamemode extends FFAGamemode {
 
 			const personalSeconds = config.game.pointsToWin - extras.points;
 
+			const timeToMove = config.game.pointsToEvent - this.capTimeSinceReset;
+
 			// Only update gameMsgs if player is not spectating
 			if (player.playerSpectating === -1) {
-				if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+				if (flagHolder && player.id == flagHolder.id) {
 					player.gameMsgs = [
-						'&ayou have the flag',
-						`&a${personalSeconds} seconds. &4DON'T DIE.`,
+						'&ayou are capturing',
+						`&c${timeToMove} seconds to move`,
 					];
 				} else if (flagHolder) {
-					const flagHolderExtras = this.gameEngine.playerManager.getPlayerExtrasById(flagHolder.id);
-					const flagHolderSeconds = flagHolderExtras ? config.game.pointsToWin - flagHolderExtras.points : 0;
 					player.gameMsgs = [
-						`&c${flagHolder.name} has the flag `,
-						`&c${flagHolderSeconds} seconds remain`,
+						`&c${flagHolder.name} is capturing `,
+						`&c${timeToMove} seconds to move`,
+					];
+				} else if (playersOnHill && playersOnHill.length > 1) {
+					player.gameMsgs = [
+						'&ccapture blocked >:)',
 					];
 				} else {
 					player.gameMsgs = [
-						'&6the flag has been dropped',
+						'&6capture point free',
+						`&6${timeToMove} seconds to move`,
 					];
 				}
 			}
@@ -250,38 +316,46 @@ export class SoloCTFGamemode extends FFAGamemode {
 	/**
 	 * Spawns the flag at a random spawn point.
 	 */
-	private spawnFlag(): void {
-		const spawnPoint = this.getRandomSpawnPoint();
-		if (spawnPoint) {
-			const flag = new WorldItem(spawnPoint.position.clone(), this.FLAG_ITEM_TYPE);
-			this.gameEngine.itemManager.pushItem(flag);
-			console.log(`🚩 Flag spawned at (${spawnPoint.position.x}, ${spawnPoint.position.y}, ${spawnPoint.position.z})`);
-		} else {
-			console.error('⚠️ No spawn points available to spawn the flag.');
+	private randomizeHill(): void {
+		const capturePoints = this.gameEngine.itemManager['mapData'].capturePoints;
+		if (!capturePoints || capturePoints.length === 0) return;
+
+		const randomIndex = Math.floor(Math.random() * capturePoints.length);
+		let randomPoint = capturePoints[randomIndex];
+		if (this.hillCenter && randomPoint.position.clone().sub(this.hillCenter).length() < 1) {
+			randomPoint = capturePoints[(randomIndex + 1) % capturePoints.length];
 		}
-	}
 
-	/**
-	 * Retrieves a random spawn point from the map data.
-	 */
-	private getRandomSpawnPoint(): ItemRespawnPoint | null {
-		const itemSpawnPoints = this.gameEngine.itemManager['mapData'].itemRespawnPoints;
-		if (!itemSpawnPoints || itemSpawnPoints.length === 0) return null;
-
-		const randomIndex = Math.floor(Math.random() * itemSpawnPoints.length);
-		return itemSpawnPoints[randomIndex];
+		if (randomPoint) {
+			this.hillCenter = randomPoint.position.clone();
+			this.hillSize = randomPoint.scale;
+			console.log(`🚩 Hill set to (${randomPoint.position.x}, ${randomPoint.position.y}, ${randomPoint.position.z})`);
+		} else {
+			console.error('⚠️ No spawn points available to spawn the hill.');
+		}
 	}
 
 	/**
 	 * Finds the player currently holding the flag.
 	 */
-	private getFlagHolder(players: Player[]): Player | null {
+	private getPlayersOnHill(players: Player[]): Player[] | null {
+		if (!this.hillCenter) return null;
+		const outPlayers: Player[] = [];
 		for (const player of players) {
-			if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
-				return player;
+			if (player.playerSpectating !== -1) continue; // Skip if player is spectating
+			if (this.positionIsOnHill(player.position.clone())) {
+				outPlayers.push(player);
 			}
 		}
+		if (outPlayers.length > 0) return outPlayers;
 		return null;
+	}
+
+	private positionIsOnHill(position: THREE.Vector3): boolean {
+		if (!this.hillCenter) return false;
+		const xyDist = Math.hypot(position.x - this.hillCenter.x, position.z - this.hillCenter.z);
+		const yDist = Math.abs(position.y - this.hillCenter.y);
+		return xyDist < this.hillSize && yDist < 1;
 	}
 
 	/**
@@ -417,7 +491,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 		this.gameEngine.itemManager.triggerUpdateFlag();
 
 		// Spawn a new flag
-		this.spawnFlag();
+		this.randomizeHill();
 
 		//set sky color to black
 		this.gameEngine.serverInfo.skyColor = '#000000';

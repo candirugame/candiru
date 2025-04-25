@@ -32,13 +32,13 @@ export class AssetManager {
 	private cloneWithNewMaterials(scene: THREE.Group): THREE.Group {
 		const clonedScene = scene.clone(true); // Deep clone
 
-		clonedScene.traverse((node) => {
+		clonedScene.traverse((node: THREE.Object3D) => {
 			if ((node as THREE.Mesh).isMesh) {
 				const mesh = node as THREE.Mesh;
 
 				// Handle material array
 				if (Array.isArray(mesh.material)) {
-					mesh.material = mesh.material.map((mat) => {
+					mesh.material = mesh.material.map((mat: THREE.Material) => {
 						const newMat = mat.clone();
 						newMat.needsUpdate = true;
 						return newMat;

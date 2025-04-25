@@ -1,5 +1,43 @@
 {
 	"name": "crackhouse_1",
+	"capturePoints": [
+		{
+			"position": { "x": 10.5, "y": 0.40, "z": 12.64 },
+			"scale": 2
+		},
+		{
+			"position": { "x": -4.8, "y": 0.90, "z": 10.10 },
+			"scale": 2
+		},
+		{
+			"position": { "x": -5.04, "y": 3.10, "z": 4.09 },
+			"scale": 3
+		},
+		{
+			"position": { "x": 2.26, "y": 3.10, "z": 4.85 },
+			"scale": 2
+		},
+		{
+			"position": { "x": 10.50, "y": 1.78, "z": -10.15 },
+			"scale": 2
+		},
+		{
+			"position": { "x": -13.37, "y": 1.42, "z": -8.08 },
+			"scale": 1.25
+		},
+		{
+			"position": { "x": 18.19, "y": 0.40, "z": 11.12 },
+			"scale": 1.25
+		},
+		{
+			"position": { "x": 23.56, "y": 0.40, "z": -13.82 },
+			"scale": 2
+		},
+		{
+			"position": { "x": -13.12, "y": 0.40, "z": 10.55 },
+			"scale": 2
+		}
+	],
 	"respawnPoints": [
 		{
 			"position": { "x": 12, "y": 2, "z": -7.2 },

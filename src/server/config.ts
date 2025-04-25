@@ -1,11 +1,13 @@
 const defaults = {
 	// Server settings
 	PORT: '3000',
+	SERVER_HOSTNAME: '0.0.0.0',
 	SERVER_NAME: 'my-server',
 	SERVER_URL: 'https://example.com',
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
 	SERVER_TICK_RATE: '15',
 	SERVER_CLEANUP_INTERVAL: '1000',
+	FULL_PLAYER_EMIT_INTERVAL: '5000', //send full player data every 5 seconds
 
 	// Peer settings
 	PEER_UPDATE_TICK_INTERVAL: '1', //update a stale peer from queue every x seconds
@@ -28,6 +30,7 @@ const defaults = {
 	GAME_MAX_PLAYERS: '20',
 	RESPAWN_DELAY: '10',
 	POINTS_TO_WIN: '100',
+	POINTS_TO_EVENT: '30',
 
 	// Health settings
 	HEALTH_REGEN_DELAY: '6',
@@ -94,11 +97,13 @@ function parseConfig(env: Record<string, string>) {
 	return {
 		server: {
 			port: parseInt(env.PORT),
+			hostname: env.SERVER_HOSTNAME,
 			name: env.SERVER_NAME,
 			url: env.SERVER_URL,
 			defaultMap: env.SERVER_DEFAULT_MAP,
 			tickRate: parseInt(env.SERVER_TICK_RATE),
 			cleanupInterval: parseInt(env.SERVER_CLEANUP_INTERVAL),
+			fullPlayerEmitInterval: parseInt(env.FULL_PLAYER_EMIT_INTERVAL),
 		},
 		peer: {
 			updateInterval: parseInt(env.PEER_UPDATE_TICK_INTERVAL),
@@ -115,6 +120,7 @@ function parseConfig(env: Record<string, string>) {
 			maxPlayers: parseInt(env.GAME_MAX_PLAYERS),
 			respawnDelay: parseInt(env.RESPAWN_DELAY),
 			pointsToWin: parseInt(env.POINTS_TO_WIN),
+			pointsToEvent: parseInt(env.POINTS_TO_EVENT),
 		},
 		player: {
 			disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),

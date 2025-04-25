@@ -192,8 +192,8 @@ export class InputHandler {
 		const euler = new THREE.Euler().setFromQuaternion(this.localPlayer.lookQuaternion, 'YXZ');
 		euler.x = 0;
 		euler.z = 0;
-		this.localPlayer.quaternion.setFromEuler(euler);
-		this.localPlayer.inputVelocity.applyQuaternion(this.localPlayer.quaternion);
+		const quaternion = new THREE.Quaternion().setFromEuler(euler);
+		this.localPlayer.inputVelocity.applyQuaternion(quaternion);
 
 		if (this.leftMouseDown || this.touchButtons.includes(0) && !Game.menuOpen) this.shoot = true;
 		if (this.rightMouseDown && !Game.menuOpen) this.aim = true;

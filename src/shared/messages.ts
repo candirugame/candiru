@@ -19,6 +19,8 @@ interface ServerToClientEvents {
 	serverInfo: (info: ServerInfo) => void;
 	chatMsg: (message: ChatMessage) => void;
 	remotePlayerData: (players: PlayerData[]) => void;
+	// Full or delta updates for player state
+	remotePlayerDelta: (deltas: Array<Partial<PlayerData> & { id: number }>) => void;
 	worldItemData: (items: WorldItem[]) => void;
 	latencyTest: () => void;
 	particleEmit: (options: {

@@ -9,12 +9,17 @@ import { Gamemode } from './gamemodes/Gamemode.ts';
 import { FFAGamemode } from './gamemodes/FFAGamemode.ts';
 import { CustomServer } from '../shared/messages.ts';
 import { Player } from '../shared/Player.ts';
+import type { PlayerData } from '../shared/Player.ts';
 import * as THREE from 'three';
 import { SoloCTFGamemode } from './gamemodes/SoloCTFGamemode.ts';
 import { BridgeGamemode } from './gamemodes/BridgeGamemode.ts';
+import { KingOfTheHillGamemode } from './gamemodes/KingOfTheHillGamemode.ts';
 
 export class GameEngine {
 	private lastPlayerTickTimestamp: number = Date.now() / 1000;
+	private lastFullPlayerEmitTimestamp: number = Date.now() / 1000;
+	private lastEmittedPlayerSnapshot: Map<number, PlayerData> = new Map();
+	private fullPlayerEmitInterval: number = config.server.fullPlayerEmitInterval / 1000; // seconds
 	private lastItemUpdateTimestamp: number = Date.now() / 1000;
 	public playerUpdateSinceLastEmit: boolean = false;
 	private itemUpdateSinceLastEmit: boolean = false;
@@ -48,10 +53,49 @@ export class GameEngine {
 			this.itemManager.tick(currentTime);
 			if (this.gamemode) this.gamemode.tick();
 
-			// Emit player data if there are updates or enough time has passed
+			// Emit player data (full or delta) if there are updates or enough time has passed
 			if (this.playerUpdateSinceLastEmit || currentTime - this.lastPlayerTickTimestamp > 1 / config.server.tickRate) {
 				try {
-					this.io.volatile.emit('remotePlayerData', this.playerManager.getAllPlayers());
+					const players = this.playerManager.getAllPlayers();
+					// decide full snapshot or delta
+					if (currentTime - this.lastFullPlayerEmitTimestamp > this.fullPlayerEmitInterval) {
+						// full state emit
+						const fullData = players.map((p) => p.toJSON());
+						this.io.volatile.emit('remotePlayerData', fullData);
+						this.lastFullPlayerEmitTimestamp = currentTime;
+						this.lastEmittedPlayerSnapshot.clear();
+						fullData.forEach((pd) => this.lastEmittedPlayerSnapshot.set(pd.id, pd));
+					} else {
+						// delta emit
+						const currentData = players.map((p) => p.toJSON());
+						const deltas: Array<Partial<PlayerData> & { id: number }> = [];
+						currentData.forEach((pd) => {
+							const prev = this.lastEmittedPlayerSnapshot.get(pd.id);
+							const delta: Partial<PlayerData> & { id: number } = { id: pd.id };
+							if (!prev) {
+								deltas.push(pd);
+								this.lastEmittedPlayerSnapshot.set(pd.id, pd);
+							} else {
+								// iterate over known keys in PlayerData
+								(Object.keys(pd) as Array<keyof PlayerData>).forEach((key) => {
+									const curVal = JSON.stringify(pd[key]);
+									const prevVal = JSON.stringify(prev[key]);
+									if (curVal !== prevVal) {
+										// assign via any-cast to satisfy TS
+										// deno-lint-ignore no-explicit-any
+										(delta as any)[key] = pd[key];
+									}
+								});
+								if (Object.keys(delta).length > 1) {
+									deltas.push(delta);
+									this.lastEmittedPlayerSnapshot.set(pd.id, pd);
+								}
+							}
+						});
+						if (deltas.length > 0) {
+							this.io.volatile.emit('remotePlayerDelta', deltas);
+						}
+					}
 					this.playerUpdateSinceLastEmit = false;
 					this.lastPlayerTickTimestamp = currentTime;
 				} catch (err) {
@@ -186,6 +230,9 @@ export class GameEngine {
 					break;
 				case 'ctf':
 					this.gamemode = new SoloCTFGamemode(this);
+					break;
+				case 'koth':
+					this.gamemode = new KingOfTheHillGamemode(this);
 					break;
 				case 'bridge':
 					this.gamemode = new BridgeGamemode(this);
