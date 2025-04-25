@@ -110,7 +110,7 @@ jobs:
         run: docker build -t candiru .
 
       - name: Run Docker container
-        run: docker run -d -p 3000:3000 candiru
+        run: docker run --memory=400mb -d -p 3000:3000 candiru
 
       - name: Health check
         run: |
