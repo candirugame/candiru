@@ -39,6 +39,9 @@ const defaults = {
 	//Item settings
 	MAX_ITEMS_IN_WORLD: '10',
 	ITEM_RESPAWN_TIME: '7',
+
+	//platform-specific settings
+	DOKPLOY_DEPLOY_URL: '',
 };
 
 async function updateEnvFile(defaults: Record<string, string>) {
@@ -99,7 +102,7 @@ function parseConfig(env: Record<string, string>) {
 			port: parseInt(env.PORT),
 			hostname: env.SERVER_HOSTNAME,
 			name: env.SERVER_NAME,
-			url: env.SERVER_URL,
+			url: env.DOKPLOY_DEPLOY_URL ? 'https://' + env.DOKPLOY_DEPLOY_URL : env.SERVER_URL,
 			defaultMap: env.SERVER_DEFAULT_MAP,
 			tickRate: parseInt(env.SERVER_TICK_RATE),
 			cleanupInterval: parseInt(env.SERVER_CLEANUP_INTERVAL),
