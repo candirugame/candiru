@@ -257,9 +257,9 @@ export class Networking {
 				}
 				if (remotePlayer.health < this.localPlayer.health) this.damagedTimestamp = Date.now() / 1000;
 				this.localPlayer.health = remotePlayer.health;
-				this.localPlayer.highlightedVectors = remotePlayer.highlightedVectors.map(
-					(vec) => new THREE.Vector3(vec.x, vec.y, vec.z),
-				);
+				// this.localPlayer.highlightedVectors = remotePlayer.highlightedVectors.map(
+				// 	(vec) => new THREE.Vector3(vec.x, vec.y, vec.z),
+				// );
 				this.localPlayer.directionIndicatorVector = remotePlayer.directionIndicatorVector
 					? new THREE.Vector3(
 						remotePlayer.directionIndicatorVector.x,

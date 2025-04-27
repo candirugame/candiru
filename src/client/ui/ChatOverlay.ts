@@ -176,7 +176,6 @@ export class ChatOverlay {
 		this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
 
 		this.renderHitMarkers();
-		this.renderSparkles();
 
 		this.renderChatMessages();
 		this.renderGameText();
@@ -759,84 +758,84 @@ export class ChatOverlay {
 		return size * scaleFactor;
 	}
 
-	private sparkleParticles: {
-		basePos: THREE.Vector3;
-		offset: THREE.Vector3;
-		speed: number;
-		phase: number;
-		radius: number;
-	}[] = [];
+	// private sparkleParticles: {
+	// 	basePos: THREE.Vector3;
+	// 	offset: THREE.Vector3;
+	// 	speed: number;
+	// 	phase: number;
+	// 	radius: number;
+	// }[] = [];
+	//
+	// private readonly SPARKLE_COUNT = 6;
+	// private readonly SPARKLE_RADIUS = 0.5; // World units instead of screen pixels
 
-	private readonly SPARKLE_COUNT = 6;
-	private readonly SPARKLE_RADIUS = 0.5; // World units instead of screen pixels
-
-	public renderSparkles() {
-		const positions = this.localPlayer.highlightedVectors.slice(0);
-		//const positions = [new THREE.Vector3(0, 3 + Math.sin(Date.now() / 1000), 0)];
-
-		// Initialize or update sparkle particles
-		while (this.sparkleParticles.length < positions.length * this.SPARKLE_COUNT) {
-			this.sparkleParticles.push({
-				basePos: new THREE.Vector3(),
-				offset: new THREE.Vector3(
-					Math.random() * 2 - 1,
-					Math.random() * 2 - 1,
-					Math.random() * 2 - 1,
-				).normalize(),
-				speed: 0.5 + Math.random() * 1.5,
-				phase: Math.random() * Math.PI * 2,
-				radius: this.SPARKLE_RADIUS * (0.5 + Math.random() * 0.5),
-			});
-		}
-
-		// Remove excess particles
-		while (this.sparkleParticles.length > positions.length * this.SPARKLE_COUNT) {
-			this.sparkleParticles.pop();
-		}
-
-		const ctx = this.chatCtx;
-		ctx.fillStyle = 'rgba(46,163,46,0.8)';
-		const time = Date.now() / 1000;
-
-		// Update and render each sparkle
-		for (let i = 0; i < positions.length; i++) {
-			const basePos = positions[i];
-
-			// Update and draw sparkles for this position
-			for (let j = 0; j < this.SPARKLE_COUNT; j++) {
-				const particle = this.sparkleParticles[i * this.SPARKLE_COUNT + j];
-				particle.basePos.copy(basePos);
-
-				// Calculate 3D orbital motion
-				const angle = particle.phase + time * particle.speed;
-				const wobble = Math.sin(time * 3 + particle.phase) * 0.3;
-
-				// Create orbital motion around the base position
-				const orbitPos = new THREE.Vector3().copy(particle.offset)
-					.multiplyScalar(particle.radius * (1 + wobble))
-					.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle)
-					.add(particle.basePos);
-
-				// Project to screen space
-				const projected = this.getProjected3D(orbitPos);
-
-				// Skip if behind camera
-				if (orbitPos.clone().project(this.renderer.getCamera()).z >= 1) continue;
-
-				// Calculate size based on distance to camera
-				const distance = orbitPos.distanceTo(this.renderer.getCamera().position);
-				const size = Math.max(1, Math.min(3, this.getSize(distance) * 0.5));
-
-				// Draw particle
-				ctx.fillRect(
-					Math.round(projected.x - size / 2),
-					Math.round(projected.y - size / 2),
-					Math.ceil(size),
-					Math.ceil(size),
-				);
-			}
-		}
-	}
+	// public renderSparkles() {
+	// 	const positions = this.localPlayer.highlightedVectors.slice(0);
+	// 	//const positions = [new THREE.Vector3(0, 3 + Math.sin(Date.now() / 1000), 0)];
+	//
+	// 	// Initialize or update sparkle particles
+	// 	while (this.sparkleParticles.length < positions.length * this.SPARKLE_COUNT) {
+	// 		this.sparkleParticles.push({
+	// 			basePos: new THREE.Vector3(),
+	// 			offset: new THREE.Vector3(
+	// 				Math.random() * 2 - 1,
+	// 				Math.random() * 2 - 1,
+	// 				Math.random() * 2 - 1,
+	// 			).normalize(),
+	// 			speed: 0.5 + Math.random() * 1.5,
+	// 			phase: Math.random() * Math.PI * 2,
+	// 			radius: this.SPARKLE_RADIUS * (0.5 + Math.random() * 0.5),
+	// 		});
+	// 	}
+	//
+	// 	// Remove excess particles
+	// 	while (this.sparkleParticles.length > positions.length * this.SPARKLE_COUNT) {
+	// 		this.sparkleParticles.pop();
+	// 	}
+	//
+	// 	const ctx = this.chatCtx;
+	// 	ctx.fillStyle = 'rgba(46,163,46,0.8)';
+	// 	const time = Date.now() / 1000;
+	//
+	// 	// Update and render each sparkle
+	// 	for (let i = 0; i < positions.length; i++) {
+	// 		const basePos = positions[i];
+	//
+	// 		// Update and draw sparkles for this position
+	// 		for (let j = 0; j < this.SPARKLE_COUNT; j++) {
+	// 			const particle = this.sparkleParticles[i * this.SPARKLE_COUNT + j];
+	// 			particle.basePos.copy(basePos);
+	//
+	// 			// Calculate 3D orbital motion
+	// 			const angle = particle.phase + time * particle.speed;
+	// 			const wobble = Math.sin(time * 3 + particle.phase) * 0.3;
+	//
+	// 			// Create orbital motion around the base position
+	// 			const orbitPos = new THREE.Vector3().copy(particle.offset)
+	// 				.multiplyScalar(particle.radius * (1 + wobble))
+	// 				.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle)
+	// 				.add(particle.basePos);
+	//
+	// 			// Project to screen space
+	// 			const projected = this.getProjected3D(orbitPos);
+	//
+	// 			// Skip if behind camera
+	// 			if (orbitPos.clone().project(this.renderer.getCamera()).z >= 1) continue;
+	//
+	// 			// Calculate size based on distance to camera
+	// 			const distance = orbitPos.distanceTo(this.renderer.getCamera().position);
+	// 			const size = Math.max(1, Math.min(3, this.getSize(distance) * 0.5));
+	//
+	// 			// Draw particle
+	// 			ctx.fillRect(
+	// 				Math.round(projected.x - size / 2),
+	// 				Math.round(projected.y - size / 2),
+	// 				Math.ceil(size),
+	// 				Math.ceil(size),
+	// 			);
+	// 		}
+	// 	}
+	// }
 
 	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
 	private minTimeBetweenHitMarkers = 0.016;
