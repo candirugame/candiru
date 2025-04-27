@@ -162,8 +162,8 @@ export class InputHandler {
 			if (this.getKey(' ')) this.jump = true;
 		}
 
-		this.gamepadEuler.y -= this.touchLookX * touchSensitivity;
-		this.gamepadEuler.x -= this.touchLookY * touchSensitivity;
+		this.gamepadEuler.y -= this.touchLookX * touchSensitivity * SettingsManager.settings.sense;
+		this.gamepadEuler.x -= this.touchLookY * touchSensitivity * SettingsManager.settings.sense;
 		this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
 		this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
 
