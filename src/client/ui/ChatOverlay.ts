@@ -469,7 +469,11 @@ export class ChatOverlay {
 
 		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
-			const currentMessage = current[i] || null;
+			if (!line) {
+				console.error(`Line at index ${i} is missing!`);
+				continue; // Skip this iteration
+			}
+			const currentMessage = current[i] || '';
 
 			if (!line.currentMessage) {
 				if (currentMessage) {
