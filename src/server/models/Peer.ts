@@ -1,4 +1,5 @@
 import { ServerInfo } from './ServerInfo.ts';
+import config from '../config.ts';
 
 export class Peer {
 	public url: string;
@@ -21,9 +22,13 @@ export class Peer {
 
 	updateVerificationLevel() {
 		const hostname = new URL(this.url).hostname;
-		if (hostname.endsWith('candiru.xyz')) {
-			this.verificationLevel = 'candiru-official';
+		for (const domain of config.peer.verifiedDomains) {
+			if (hostname.endsWith(domain)) {
+				this.verificationLevel = 'verified-community-server';
+			}
 		}
+
+		if (hostname.endsWith('candiru.xyz')) this.verificationLevel = 'candiru-official';
 	}
 
 	isStale(threshold: number) {
