@@ -198,6 +198,13 @@ export class InputHandler {
 		if (this.leftMouseDown || this.touchButtons.includes(0) && !Game.menuOpen) this.shoot = true;
 		if (this.rightMouseDown && !Game.menuOpen) this.aim = true;
 
+		if (this.touchButtons.includes(-3) && !Game.menuOpen) {
+			const event = new KeyboardEvent('keydown', {
+				key: 'Escape',
+			});
+			document.dispatchEvent(event);
+		}
+
 		if (this.localPlayer.playerSpectating !== -1) {
 			this.inputX = 0;
 			this.inputZ = 0;
