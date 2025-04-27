@@ -18,6 +18,7 @@ const defaults = {
 	PEER_HEALTHCHECK_RETRIES: '10',
 	PEER_HEALTHCHECK_INTERVAL: '30',
 	PEER_URL_FAILURE_FORGET_TIME: '7200', //forget failed urls after 2 hours
+	PEER_VERIFIED_DOMAINS: 'candiru.xyz,deathgrips.org', //comma-separated list of domains to verify
 
 	// Player settings
 	PLAYER_DISCONNECT_TIME: '10',
@@ -117,6 +118,9 @@ function parseConfig(env: Record<string, string>) {
 			healthcheckRetries: parseInt(env.PEER_HEALTHCHECK_RETRIES),
 			healthcheckInterval: parseInt(env.PEER_HEALTHCHECK_INTERVAL),
 			urlFailureForgetTime: parseInt(env.PEER_URL_FAILURE_FORGET_TIME),
+			verifiedDomains: env.PEER_VERIFIED_DOMAINS
+				? env.PEER_VERIFIED_DOMAINS.split(',').map((domain) => domain.trim())
+				: [],
 		},
 		game: {
 			mode: env.GAME_MODE,

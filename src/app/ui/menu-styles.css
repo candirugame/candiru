@@ -39,3 +39,7 @@ input[type='text'], select, input[type='color'] {
 input[type='checkbox'] {
 	@apply w-4 h-4 accent-cyan-500;
 }
+
+.align-middle-img {
+	vertical-align: middle;
+}

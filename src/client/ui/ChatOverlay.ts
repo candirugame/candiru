@@ -466,6 +466,7 @@ export class ChatOverlay {
 
 	private detectGameMessagesChanges(now: number) {
 		const current = this.gameMessages;
+		if (!current) return;
 
 		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
