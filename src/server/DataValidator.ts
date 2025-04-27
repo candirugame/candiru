@@ -83,10 +83,10 @@ export class DataValidator {
 	}).strict();
 
 	static serverInfoSchema = z.object({
-		name: z.string(),
+		name: z.string().max(24),
 		maxPlayers: z.number(),
 		currentPlayers: z.number(),
-		mapName: z.string(),
+		mapName: z.string().max(24),
 		tickRate: z.number(),
 		version: z.string(),
 		gameMode: z.string(),
