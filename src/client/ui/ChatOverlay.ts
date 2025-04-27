@@ -670,6 +670,10 @@ export class ChatOverlay {
 		y += squareHeight + 4;
 		y += squareHeight + 4;
 		this.drawButton(x, y, squareWidth, squareHeight, cornerRadius, '[]', 1, 1);
+		for (let i = 0; i < 4; i++) y -= squareHeight + 4;
+		this.drawButton(x, y, squareWidth, squareHeight, cornerRadius, '...', 1, -3);
+		// y += squareHeight + 4;
+		// this.drawButton(x, y, squareWidth, squareHeight, cornerRadius, ':O', 1, 3);
 	}
 
 	public setButtonsHeld(buttons: number[]) {

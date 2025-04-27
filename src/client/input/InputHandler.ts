@@ -162,8 +162,8 @@ export class InputHandler {
 			if (this.getKey(' ')) this.jump = true;
 		}
 
-		this.gamepadEuler.y -= this.touchLookX * touchSensitivity;
-		this.gamepadEuler.x -= this.touchLookY * touchSensitivity;
+		this.gamepadEuler.y -= this.touchLookX * touchSensitivity * SettingsManager.settings.sense;
+		this.gamepadEuler.x -= this.touchLookY * touchSensitivity * SettingsManager.settings.sense;
 		this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
 		this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
 
@@ -197,6 +197,13 @@ export class InputHandler {
 
 		if (this.leftMouseDown || this.touchButtons.includes(0) && !Game.menuOpen) this.shoot = true;
 		if (this.rightMouseDown && !Game.menuOpen) this.aim = true;
+
+		if (this.touchButtons.includes(-3) && !Game.menuOpen) {
+			const event = new KeyboardEvent('keydown', {
+				key: 'Escape',
+			});
+			document.dispatchEvent(event);
+		}
 
 		if (this.localPlayer.playerSpectating !== -1) {
 			this.inputX = 0;
