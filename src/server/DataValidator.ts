@@ -86,7 +86,7 @@ export class DataValidator {
 		name: z.string().max(24),
 		maxPlayers: z.number(),
 		currentPlayers: z.number(),
-		mapName: z.string().max(24),
+		mapName: z.string().min(1).max(24),
 		tickRate: z.number(),
 		version: z.string(),
 		gameMode: z.string(),

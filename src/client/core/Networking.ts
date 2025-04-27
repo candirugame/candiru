@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { CustomClientSocket } from '../../shared/messages.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
+import { Peer } from '../../server/models/Peer.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
@@ -114,7 +115,7 @@ export class Networking {
 		}
 	}
 
-	public fetchServerList(callback: (servers: Array<{ url: string; info: ServerInfo }>) => void) {
+	public fetchServerList(callback: (servers: Peer[]) => void) {
 		this.socket.emit('getServerList', callback);
 	}
 

@@ -6,6 +6,7 @@ import type { WorldItem } from '../server/models/WorldItem.ts';
 import type { DamageRequest } from '../server/models/DamageRequest.ts';
 import type { PlayerData } from './Player.ts';
 import * as THREE from 'three';
+import { Peer } from '../server/models/Peer.ts';
 
 export type CustomServer = Server<ClientToServerEvents, ServerToClientEvents>;
 export type CustomSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -39,5 +40,5 @@ interface ClientToServerEvents {
 	chatMsg: (message: ChatMessage) => void;
 	applyDamage: (damage: DamageRequest) => void;
 	latencyTest: () => void;
-	getServerList: (callback: (servers: Array<{ url: string; info: ServerInfo }>) => void) => void;
+	getServerList: (callback: (servers: Peer[]) => void) => void;
 }
