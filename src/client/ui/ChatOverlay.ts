@@ -452,9 +452,10 @@ export class ChatOverlay {
 					this.networking.getServerInfo().memUsageExternal.toFixed(2),
 			);
 		}
-
-		for (const msg of this.localPlayer.gameMsgs2) {
-			linesToRender.push(msg);
+		if (this.localPlayer.gameMsgs2.length) {
+			for (const msg of this.localPlayer.gameMsgs2) {
+				linesToRender.push(msg);
+			}
 		}
 
 		for (let i = 0; i < linesToRender.length; i++) {
