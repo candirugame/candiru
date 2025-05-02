@@ -1,34 +1,24 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Networking, ServerInfo } from '../../client/core/Networking.ts';
+import { Networking } from '../../client/core/Networking.ts';
+import { Peer } from '../../server/models/Peer.ts';
+import { ServerListingComponent } from './server-listing.component.ts';
 
 @Component({
 	selector: 'app-browse',
 	standalone: true,
-	imports: [CommonModule],
+	imports: [CommonModule, ServerListingComponent],
 	template: `
 		<div>
 			<h2 class="text-xl text-gray-100">internet (for possum)</h2>
-			<h3 class="text-gray-300 text-sm mb-4 ">connected to {{ networking?.getServerInfo()?.name ?? 'unknown server :(' }}</h3>
+			<h3 class="text-gray-300 text-sm mb-4 ">connected
+				to {{ networking?.getServerInfo()?.name ?? 'unknown server :(' }}</h3>
 
 			<div class="space-y-2">
-				<div *ngFor="let server of servers" class="bg-gray-700/50 p-3 ">
-					<div class="flex justify-between items-center">
-						<div>
-							<h3 class="text-gray-100">{{ server.info.name }}</h3>
-							<p class="text-sm text-gray-300">
-								{{ server.info.currentPlayers }}/{{ server.info.maxPlayers }} ·
-								{{ server.info.gameMode }} · {{ server.info.mapName }}
-							</p>
-						</div>
-						<button class="btn-menu" (click)="join(server.url)">join</button>
-					</div>
-					<div class="text-xs text-gray-400 mt-1">
-						v{{ server.info.version }} · {{ server.info.tickRate }}Hz
-					</div>
+				<div *ngFor="let peer of peers" class="bg-gray-700/50 p-3 ">
+						<app-server-listing [peer]="peer"></app-server-listing>
 				</div>
 			</div>
-
 			<button class="btn-menu mt-4 mr-2" (click)="back.emit()">back</button>
 			<button class="btn-menu mb-4" (click)="refresh()">refresh</button>
 
@@ -42,7 +32,7 @@ export class BrowseComponent implements OnChanges, OnInit, OnDestroy {
 	@Input() // Accept Networking as an input
 	networking: Networking | undefined;
 
-	servers: Array<{ url: string; info: ServerInfo }> = [];
+	peers: Peer[] = [];
 	private refreshInterval: number | undefined; // Store the interval ID
 
 	ngOnInit() {
@@ -68,7 +58,7 @@ export class BrowseComponent implements OnChanges, OnInit, OnDestroy {
 		}
 
 		this.networking.fetchServerList((servers) => {
-			this.servers = servers;
+			this.peers = servers;
 		});
 	}
 

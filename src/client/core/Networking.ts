@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { CustomClientSocket } from '../../shared/messages.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
+import { Peer } from '../../server/models/Peer.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
@@ -114,8 +115,105 @@ export class Networking {
 		}
 	}
 
-	public fetchServerList(callback: (servers: Array<{ url: string; info: ServerInfo }>) => void) {
+	public fetchServerList(callback: (servers: Peer[]) => void) {
 		this.socket.emit('getServerList', callback);
+	}
+
+	// Updates the local player state based on received data (full or partial)
+	private updateLocalPlayerState(data: Partial<PlayerData>) {
+		// Forced position/velocity/look updates
+		if (data.forced) {
+			if (data.position) this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
+			if (data.velocity) this.localPlayer.velocity.set(data.velocity.x, data.velocity.y, data.velocity.z);
+			if (data.lookQuaternion) {
+				this.localPlayer.lookQuaternion.set(
+					data.lookQuaternion.x,
+					data.lookQuaternion.y,
+					data.lookQuaternion.z,
+					data.lookQuaternion.w,
+				);
+			}
+			if (data.gravity !== undefined) this.localPlayer.gravity = data.gravity;
+			this.localPlayer.forcedAcknowledged = true;
+		} else if (data.forced === false) {
+			this.localPlayer.forcedAcknowledged = false;
+		}
+
+		// Health update
+		if (data.health !== undefined) {
+			if (data.health < this.localPlayer.health) {
+				this.damagedTimestamp = Date.now() / 1000;
+			}
+			this.localPlayer.health = data.health;
+		}
+
+		// Optional fields: Only update if present in data
+		if (data.inventory !== undefined) {
+			this.localPlayer.inventory = data.inventory;
+		}
+		if (data.gameMsgs !== undefined) {
+			this.localPlayer.gameMsgs = data.gameMsgs;
+		}
+		if (data.gameMsgs2 !== undefined) {
+			this.localPlayer.gameMsgs2 = data.gameMsgs2;
+		}
+		if (data.directionIndicatorVector !== undefined) {
+			this.localPlayer.directionIndicatorVector = data.directionIndicatorVector
+				? new THREE.Vector3(
+					data.directionIndicatorVector.x,
+					data.directionIndicatorVector.y,
+					data.directionIndicatorVector.z,
+				)
+				: undefined;
+		}
+		if (data.idLastDamagedBy !== undefined) {
+			this.localPlayer.idLastDamagedBy = data.idLastDamagedBy;
+		}
+		if (data.playerSpectating !== undefined) {
+			this.localPlayer.playerSpectating = data.playerSpectating;
+		}
+		if (data.doPhysics !== undefined) {
+			this.localPlayer.doPhysics = data.doPhysics;
+		}
+	}
+
+	// NEW: Processes non-local player data (chat messages, server status)
+	private processNonLocalPlayerData() {
+		this.messagesBeingTyped = [];
+		let isLocalPlayerInList = false;
+
+		for (const remotePlayer of this.remotePlayers) {
+			if (remotePlayer.id === this.localPlayer.id) {
+				isLocalPlayerInList = true;
+				continue;
+			}
+
+			if (remotePlayer.chatActive) {
+				this.messagesBeingTyped.push(`${remotePlayer.name}: ${remotePlayer.chatMsg}`);
+			}
+		}
+
+		// Server full/version checks
+		const serverInfo = this.getServerInfo();
+		if (
+			serverInfo.maxPlayers > 0 &&
+			serverInfo.currentPlayers >= serverInfo.maxPlayers &&
+			!isLocalPlayerInList
+		) {
+			this.localPlayer.gameMsgs = [
+				`&cThe server is full. (${serverInfo.currentPlayers}/${serverInfo.maxPlayers}) `,
+				`&cYou'll automatically connect when a spot opens up. `,
+			];
+		}
+		if (
+			serverInfo.version &&
+			this.localPlayer.gameVersion &&
+			this.localPlayer.gameVersion !== serverInfo.version
+		) {
+			if (!this.localPlayer.gameMsgs || this.localPlayer.gameMsgs.length === 0) {
+				this.localPlayer.gameMsgs = ['&cYour client may be outdated. Try refreshing the page.'];
+			}
+		}
 	}
 
 	private setupSocketListeners() {
@@ -124,26 +222,46 @@ export class Networking {
 			this.lastLatencyTestGotResponse = true;
 		});
 
-		this.socket.on('remotePlayerData', (data) => {
-			// full snapshot of all players
+		this.socket.on('remotePlayerData', (data: PlayerData[]) => {
+			// Full snapshot - update local store
 			this.remotePlayers = data;
-			this.processRemotePlayerData();
+
+			// Find and update local player data
+			const localPlayerData = this.remotePlayers.find((p) => p.id === this.localPlayer.id);
+			if (localPlayerData) {
+				this.updateLocalPlayerState(localPlayerData);
+			}
+
+			// Process other players
+			this.processNonLocalPlayerData();
 		});
 
-		// handle delta updates
 		this.socket.on('remotePlayerDelta', (deltas: Array<Partial<PlayerData> & { id: number }>) => {
-			// apply deltas to existing remotePlayers
+			let localPlayerDelta: (Partial<PlayerData> & { id: number }) | undefined;
+
+			// Apply deltas to remotePlayers
 			deltas.forEach((delta) => {
 				const idx = this.remotePlayers.findIndex((p) => p.id === delta.id);
 				if (idx !== -1) {
-					// update existing player data with changed fields
-					this.remotePlayers[idx] = { ...this.remotePlayers[idx], ...delta } as PlayerData;
+					this.remotePlayers[idx] = { ...this.remotePlayers[idx], ...delta };
+					if (delta.id === this.localPlayer.id) {
+						localPlayerDelta = delta;
+					}
 				} else {
-					// new player, add full delta
 					this.remotePlayers.push(delta as PlayerData);
+					if (delta.id === this.localPlayer.id) {
+						localPlayerDelta = delta;
+					}
 				}
 			});
-			this.processRemotePlayerData();
+
+			// Update local player with delta
+			if (localPlayerDelta) {
+				this.updateLocalPlayerState(localPlayerDelta);
+			}
+
+			// Process other players
+			this.processNonLocalPlayerData();
 		});
 
 		this.socket.on('worldItemData', (data) => {
@@ -156,14 +274,12 @@ export class Networking {
 		});
 
 		this.socket.on('serverInfo', (data) => {
-			this.serverInfo = {
-				...data,
-			};
+			this.serverInfo = { ...data };
 			this.onServerInfo();
 		});
 
 		this.socket.on('particleEmit', (data) => {
-			const particleData = {
+			this.particleQueue.push({
 				position: new THREE.Vector3(data.position.x, data.position.y, data.position.z),
 				velocity: new THREE.Vector3(data.velocity.x, data.velocity.y, data.velocity.z),
 				count: data.count,
@@ -171,15 +287,14 @@ export class Networking {
 				lifetime: data.lifetime,
 				size: data.size,
 				color: new THREE.Color(data.color),
-			};
-
-			this.particleQueue.push(particleData);
+			});
 		});
 	}
 
 	private onServerInfo() {
 		this.uploadWait = 1 / this.serverInfo.tickRate;
 	}
+
 	public updatePlayerData() {
 		const currentTime = Date.now() / 1000;
 		this.localPlayer.gameVersion = this.gameVersion;
@@ -190,7 +305,7 @@ export class Networking {
 		const equalToLastUpload = this.playersAreEqualEnough(this.localPlayer, this.lastUploadedLocalPlayer);
 		if (!equalToLastUpload) this.lastRealUpdateTime = currentTime;
 
-		if (currentTime - this.lastRealUpdateTime > this.serverInfo.idleKickTime) { //disconnect on idle
+		if (currentTime - this.lastRealUpdateTime > this.serverInfo.idleKickTime) {
 			if (!this.remotePlayers.some((player) => player.id === this.localPlayer.id)) {
 				this.localPlayer.gameMsgs = ['&cdisconnected for being idle', '&cmove to reconnect'];
 			}
@@ -236,80 +351,18 @@ export class Networking {
 		return this.remotePlayers.find((player) => player.id === this.localPlayer.playerSpectating);
 	}
 
-	private processRemotePlayerData() {
-		this.messagesBeingTyped = [];
-		for (const remotePlayer of this.remotePlayers) {
-			if (remotePlayer.id === this.localPlayer.id) {
-				if (remotePlayer.forced) {
-					this.localPlayer.position.set(remotePlayer.position.x, remotePlayer.position.y, remotePlayer.position.z);
-					this.localPlayer.velocity.set(remotePlayer.velocity.x, remotePlayer.velocity.y, remotePlayer.velocity.z);
-					this.localPlayer.lookQuaternion.set(
-						remotePlayer.lookQuaternion.x,
-						remotePlayer.lookQuaternion.y,
-						remotePlayer.lookQuaternion.z,
-						remotePlayer.lookQuaternion.w,
-					);
-					//this.localPlayer.name = remotePlayer.name;
-					this.localPlayer.gravity = remotePlayer.gravity;
-					this.localPlayer.forcedAcknowledged = true;
-				} else {
-					this.localPlayer.forcedAcknowledged = false;
-				}
-				if (remotePlayer.health < this.localPlayer.health) this.damagedTimestamp = Date.now() / 1000;
-				this.localPlayer.health = remotePlayer.health;
-				this.localPlayer.highlightedVectors = remotePlayer.highlightedVectors.map(
-					(vec) => new THREE.Vector3(vec.x, vec.y, vec.z),
-				);
-				this.localPlayer.directionIndicatorVector = remotePlayer.directionIndicatorVector
-					? new THREE.Vector3(
-						remotePlayer.directionIndicatorVector.x,
-						remotePlayer.directionIndicatorVector.y,
-						remotePlayer.directionIndicatorVector.z,
-					)
-					: undefined;
-
-				this.localPlayer.idLastDamagedBy = remotePlayer.idLastDamagedBy;
-				this.localPlayer.inventory = remotePlayer.inventory;
-				this.localPlayer.playerSpectating = remotePlayer.playerSpectating;
-				this.localPlayer.gameMsgs = remotePlayer.gameMsgs;
-				this.localPlayer.gameMsgs2 = remotePlayer.gameMsgs2;
-				this.localPlayer.doPhysics = remotePlayer.doPhysics;
-				continue;
-			}
-			if (remotePlayer.chatActive) {
-				this.messagesBeingTyped.push(`${remotePlayer.name}: ${remotePlayer.chatMsg}`);
-			}
-		}
-		if (
-			this.getServerInfo().maxPlayers <= this.getServerInfo().currentPlayers &&
-			this.getServerInfo().currentPlayers !== 0 &&
-			!this.remotePlayers.some((player) => player.id === this.localPlayer.id)
-		) {
-			this.localPlayer.gameMsgs = [
-				`&cThe server is full. (${this.getServerInfo().currentPlayers + '/' + this.getServerInfo().maxPlayers}) `,
-				`&cYou'll automatically connect when a spot opens up. `,
-			];
-		}
-		if (
-			this.getServerInfo().version && this.localPlayer.gameVersion !== this.getServerInfo().version
-		) {
-			this.localPlayer.gameMsgs = ['&cYour client may be outdated. Try refreshing the page.'];
-		}
-	}
-
 	private playersAreEqualEnough(player1: Player, player2: LastUploadedLocalPlayer | null) {
 		if (player1 === null || player2 === null) return false;
-		let out = true;
-		out = out && player1.position.equals(player2.position);
-		out = out && player1.lookQuaternion.equals(player2.lookQuaternion);
-		out = out && player1.chatMsg === player2.chatMsg;
-		out = out && player1.velocity.equals(player2.velocity);
-		out = out && player1.name === player2.name;
-		out = out && player1.heldItemIndex === player2.heldItemIndex;
-		out = out && player1.rightClickHeld === player2.rightClickHeld;
-		out = out && player1.shooting === player2.shooting;
-
-		return out;
+		return (
+			player1.position.equals(player2.position) &&
+			player1.lookQuaternion.equals(player2.lookQuaternion) &&
+			player1.chatMsg === player2.chatMsg &&
+			player1.velocity.equals(player2.velocity) &&
+			player1.name === player2.name &&
+			player1.heldItemIndex === player2.heldItemIndex &&
+			player1.rightClickHeld === player2.rightClickHeld &&
+			player1.shooting === player2.shooting
+		);
 	}
 
 	public getDamagedTimestamp() {

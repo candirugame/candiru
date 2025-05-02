@@ -100,12 +100,11 @@ export class GameServer {
 				});
 
 				socket.on('getServerList', (callback) => {
-					const servers = this.peerManager.peers
-						.filter((p) => p.serverInfo && p.serverInfo.gameMode !== 'bridge')
-						.map((p) => ({
-							url: p.url,
-							info: p.serverInfo!, // Use non-null assertion to ensure info is defined
-						}));
+					const servers = this.peerManager.peers;
+					//.filter((p) => p.serverInfo && p.serverInfo.gameMode !== 'bridge')
+					//	.map((p) => ({
+					//		info: p.serverInfo!, // Use non-null assertion to ensure info is defined
+					//	}));
 					callback(servers);
 				});
 
