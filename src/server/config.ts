@@ -18,7 +18,7 @@ const defaults = {
 	PEER_HEALTHCHECK_RETRIES: '10',
 	PEER_HEALTHCHECK_INTERVAL: '30',
 	PEER_URL_FAILURE_FORGET_TIME: '7200', //forget failed urls after 2 hours
-	PEER_VERIFIED_DOMAINS: 'candiru.xyz,deathgrips.org', //comma-separated list of domains to verify
+	PEER_VERIFIED_DOMAINS: 'candiru.xyz,isaacthoman.com,napst.xyz,deathgrips.org', //comma-separated list of domains to verify
 
 	// Player settings
 	PLAYER_DISCONNECT_TIME: '10',
