@@ -1,11 +1,13 @@
 const defaults = {
 	// Server settings
 	PORT: '3000',
+	SERVER_HOSTNAME: '0.0.0.0',
 	SERVER_NAME: 'my-server',
 	SERVER_URL: 'https://example.com',
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
 	SERVER_TICK_RATE: '15',
 	SERVER_CLEANUP_INTERVAL: '1000',
+	FULL_PLAYER_EMIT_INTERVAL: '5000', //send full player data every 5 seconds
 
 	// Peer settings
 	PEER_UPDATE_TICK_INTERVAL: '1', //update a stale peer from queue every x seconds
@@ -16,6 +18,7 @@ const defaults = {
 	PEER_HEALTHCHECK_RETRIES: '10',
 	PEER_HEALTHCHECK_INTERVAL: '30',
 	PEER_URL_FAILURE_FORGET_TIME: '7200', //forget failed urls after 2 hours
+	PEER_VERIFIED_DOMAINS: 'candiru.xyz,isaacthoman.com,napst.xyz,deathgrips.org', //comma-separated list of domains to verify
 
 	// Player settings
 	PLAYER_DISCONNECT_TIME: '10',
@@ -28,7 +31,7 @@ const defaults = {
 	GAME_MAX_PLAYERS: '20',
 	RESPAWN_DELAY: '10',
 	POINTS_TO_WIN: '100',
-	POINTS_TO_EVENT: '20',
+	POINTS_TO_EVENT: '30',
 
 	// Health settings
 	HEALTH_REGEN_DELAY: '6',
@@ -37,6 +40,9 @@ const defaults = {
 	//Item settings
 	MAX_ITEMS_IN_WORLD: '10',
 	ITEM_RESPAWN_TIME: '7',
+
+	//platform-specific settings
+	DOKPLOY_DEPLOY_URL: '',
 };
 
 async function updateEnvFile(defaults: Record<string, string>) {
@@ -95,11 +101,13 @@ function parseConfig(env: Record<string, string>) {
 	return {
 		server: {
 			port: parseInt(env.PORT),
+			hostname: env.SERVER_HOSTNAME,
 			name: env.SERVER_NAME,
-			url: env.SERVER_URL,
+			url: env.DOKPLOY_DEPLOY_URL ? 'https://' + env.DOKPLOY_DEPLOY_URL : env.SERVER_URL,
 			defaultMap: env.SERVER_DEFAULT_MAP,
 			tickRate: parseInt(env.SERVER_TICK_RATE),
 			cleanupInterval: parseInt(env.SERVER_CLEANUP_INTERVAL),
+			fullPlayerEmitInterval: parseInt(env.FULL_PLAYER_EMIT_INTERVAL),
 		},
 		peer: {
 			updateInterval: parseInt(env.PEER_UPDATE_TICK_INTERVAL),
@@ -110,6 +118,9 @@ function parseConfig(env: Record<string, string>) {
 			healthcheckRetries: parseInt(env.PEER_HEALTHCHECK_RETRIES),
 			healthcheckInterval: parseInt(env.PEER_HEALTHCHECK_INTERVAL),
 			urlFailureForgetTime: parseInt(env.PEER_URL_FAILURE_FORGET_TIME),
+			verifiedDomains: env.PEER_VERIFIED_DOMAINS
+				? env.PEER_VERIFIED_DOMAINS.split(',').map((domain) => domain.trim())
+				: [],
 		},
 		game: {
 			mode: env.GAME_MODE,

@@ -70,7 +70,7 @@ export class GameServer {
 							this.gameEngine.emitServerInfo();
 						}
 					} catch (err) {
-						console.error(`Error handling playerData:`, err);
+						console.log(`Error handling playerData:`, err);
 					}
 				});
 
@@ -87,7 +87,7 @@ export class GameServer {
 					try {
 						this.damageSystem.handleDamageRequest(data);
 					} catch (err) {
-						console.error(`Error handling damage request:`, err);
+						console.log(`Error handling damage request:`, err);
 					}
 				});
 
@@ -100,12 +100,11 @@ export class GameServer {
 				});
 
 				socket.on('getServerList', (callback) => {
-					const servers = this.peerManager.peers
-						.filter((p) => p.serverInfo && p.serverInfo.gameMode !== 'bridge')
-						.map((p) => ({
-							url: p.url,
-							info: p.serverInfo!, // Use non-null assertion to ensure info is defined
-						}));
+					const servers = this.peerManager.peers;
+					//.filter((p) => p.serverInfo && p.serverInfo.gameMode !== 'bridge')
+					//	.map((p) => ({
+					//		info: p.serverInfo!, // Use non-null assertion to ensure info is defined
+					//	}));
 					callback(servers);
 				});
 
@@ -182,6 +181,7 @@ export class GameServer {
 
 			await serve(handler, {
 				port: config.server.port,
+				hostname: config.server.hostname,
 			});
 		} catch (error) {
 			console.error('Failed to start server:', error);

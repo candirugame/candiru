@@ -57,7 +57,7 @@ export class PeerManager {
 					console.log('Initial healthcheck successful.');
 					return true; // Health check passed
 				} else {
-					console.warn(
+					console.log(
 						`Healthcheck attempt ${i + 1} failed with status: ${response.status}`,
 					);
 				}
@@ -88,7 +88,7 @@ export class PeerManager {
 			console.log(`Loaded ${this.updateQueue.length} initial peers from ${this.serversFilePath}`);
 		} catch (error) {
 			if (error instanceof Deno.errors.NotFound) {
-				console.warn(`${this.serversFilePath} not found. Creating with default.`);
+				console.log(`${this.serversFilePath} not found. Creating with default.`);
 				try {
 					const defaultUrl = 'https://candiru.xyz'; // Example default
 					await Deno.writeTextFile(this.serversFilePath, `${defaultUrl}\n`);
@@ -126,7 +126,7 @@ export class PeerManager {
 	 */
 	private async runUpdateCycle() {
 		if (!this.isOperational) {
-			console.warn('PeerManager is not operational. Skipping update cycle.');
+			console.log('PeerManager is not operational. Skipping update cycle.');
 			return; // Do not run if not operational
 		}
 
@@ -176,7 +176,7 @@ export class PeerManager {
 					// Reset failure count for the *peer* on success
 					existingPeer.failedAttempts = 0;
 				} else {
-					console.warn(`Invalid data received from ${url}:`, result.error.issues);
+					console.log(`Invalid data received from ${url}:`, result.error.issues);
 					this.handleFailedUpdate(url); // Treat invalid data as a failure
 				}
 			} else {
@@ -218,7 +218,7 @@ export class PeerManager {
 				if (response.ok) {
 					peer.lastShare = Date.now() / 1000; // Update last share time on success
 				} else {
-					console.warn(`Failed to share server list with ${url}, status: ${response.status}`);
+					console.log(`Failed to share server list with ${url}, status: ${response.status}`);
 					// Note: No specific failure handling for sharing attempts currently
 				}
 			} else {
@@ -288,12 +288,12 @@ export class PeerManager {
 		if (peer) {
 			// Only track failures for established peers now
 			peer.failedAttempts++;
-			console.warn(`Peer ${url} failed update. Attempt ${peer.failedAttempts}/${config.peer.maxFailedAttempts}`);
+			console.log(`Peer ${url} failed update. Attempt ${peer.failedAttempts}/${config.peer.maxFailedAttempts}`);
 			// Removal of the peer happens in checkStalePeers based on this count.
 		} else {
 			// Failure occurred for a URL not currently in the active peers list.
 			// No separate tracking (urlFailureCounts removed). It might be retried if still in updateQueue.
-			console.warn(`Update failed for URL ${url} (not an active peer).`);
+			console.log(`Update failed for URL ${url} (not an active peer).`);
 		}
 	}
 
@@ -338,7 +338,7 @@ export class PeerManager {
 				}
 			}
 		} catch (error) {
-			console.error(`Failed to add ${url} to ${this.serversFilePath}:`, error);
+			console.log(`Failed to add ${url} to ${this.serversFilePath}:`, error);
 		}
 	}
 
@@ -355,7 +355,7 @@ export class PeerManager {
 				content = await Deno.readTextFile(this.serversFilePath);
 			} catch (error) {
 				if (error instanceof Deno.errors.NotFound) {
-					console.warn(`Tried to remove ${url} from non-existent ${this.serversFilePath}`);
+					console.log(`Tried to remove ${url} from non-existent ${this.serversFilePath}`);
 					return; // File doesn't exist, nothing to remove
 				}
 				throw error; // Rethrow unexpected errors
@@ -392,7 +392,7 @@ export class PeerManager {
 		urls.forEach((url) => {
 			// Basic validation
 			if (!url || typeof url !== 'string' || !url.startsWith('http')) {
-				console.warn(`Received invalid URL format: ${url}`);
+				console.log(`Received invalid URL format: ${url}`);
 				return;
 			}
 

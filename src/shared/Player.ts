@@ -12,7 +12,6 @@ export class Player {
 	public inputVelocity = new THREE.Vector3();
 	public gravity = 0;
 	public lookQuaternion = new THREE.Quaternion(); //actual look direction
-	public quaternion = new THREE.Quaternion(); // model rotation, used for movement and remotePlayer model rotation
 	public id = Math.floor(Math.random() * 1000000000); //unique player id, generated on client
 	public gameVersion = ''; //client game version, pulled from dist/gameVersion.json
 	public name = '';
@@ -36,7 +35,6 @@ export class Player {
 	public updateTimestamp?: number; //server-controlled
 	public lastDamageTime?: number; //server-controlled
 	public directionIndicatorVector?: THREE.Vector3 = undefined; //server-controlled
-	public highlightedVectors: THREE.Vector3[] = []; //new THREE.Vector3(5.92, 1.21, -4.10)
 	public doPhysics: boolean = true; //server-controlled
 	public thirdPerson: number = 0;
 
@@ -53,11 +51,13 @@ export class Player {
 
 		return {
 			...this,
+			inventory: [...this.inventory],
+			gameMsgs: [...this.gameMsgs],
+			gameMsgs2: [...this.gameMsgs2],
 			position: serializableVec3(this.position),
 			velocity: serializableVec3(this.velocity),
 			inputVelocity: serializableVec3(this.inputVelocity),
 			lookQuaternion: serializableQuaternion(this.lookQuaternion),
-			quaternion: serializableQuaternion(this.quaternion),
 			directionIndicatorVector: this.directionIndicatorVector ? serializableVec3(this.directionIndicatorVector) : null,
 		};
 	}
