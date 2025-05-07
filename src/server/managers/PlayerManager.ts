@@ -77,6 +77,7 @@ export class PlayerManager {
 			return { isNew: false };
 		} else if (this.players.size < config.game.maxPlayers) {
 			// New player
+
 			player.inventory = [...config.player.baseInventory];
 			const spawnPoint = this.getRandomSpawnPoint();
 			player.position = spawnPoint.vec;
@@ -90,6 +91,15 @@ export class PlayerManager {
 				spawnPoint.quaternion.z,
 				spawnPoint.quaternion.w,
 			);
+			player.gravity = 0;
+			player.speed = 5;
+			player.acceleration = 100;
+			player.protection = 1;
+			player.idLastDamagedBy = -1;
+			player.playerSpectating = -1;
+			player.lastDamageTime = 0;
+			player.directionIndicatorVector = undefined;
+			player.doPhysics = true;
 			player.forced = true;
 
 			const newPlayerData: PlayerWithExtras = {
