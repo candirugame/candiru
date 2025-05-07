@@ -93,6 +93,8 @@ export class PlayerManager {
 			);
 			player.forced = true;
 
+			player.updateTimestamp = Date.now() / 1000;
+
 			const newPlayerData: PlayerWithExtras = {
 				player: player,
 				extras: new PlayerExtras(),
