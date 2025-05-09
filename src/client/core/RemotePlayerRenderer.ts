@@ -141,7 +141,7 @@ export class RemotePlayerRenderer {
 		return this.entityScene;
 	}
 
-	public update(deltaTime: number): void {
+	public onFrame(deltaTime: number): void {
 		this.deltaTime = deltaTime;
 		this.updateRemotePlayers();
 	}

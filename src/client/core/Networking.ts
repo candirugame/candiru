@@ -4,6 +4,7 @@ import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { CustomClientSocket } from '../../shared/messages.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
 import { Peer } from '../../server/models/Peer.ts';
+import { PropData } from '../../shared/Prop.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
@@ -46,6 +47,7 @@ export class Networking {
 	private socket: CustomClientSocket;
 	private gameVersion: string = '';
 	private remotePlayers: PlayerData[] = [];
+	private props: PropData[] = [];
 	private worldItems: WorldItem[] = [];
 	private lastUploadedLocalPlayer: LastUploadedLocalPlayer | null = null;
 	private lastUploadTime: number;
@@ -90,7 +92,7 @@ export class Networking {
 			tickRate: 0,
 			version: '',
 			gameMode: '',
-			playerMaxHealth: 0,
+			playerMaxHealth: 100,
 			skyColor: '#000000',
 			tickComputeTime: 0,
 			cleanupComputeTime: 0,
@@ -177,7 +179,7 @@ export class Networking {
 		}
 	}
 
-	// NEW: Processes non-local player data (chat messages, server status)
+	// Processes non-local player data (chat messages, server status)
 	private processNonLocalPlayerData() {
 		this.messagesBeingTyped = [];
 		let isLocalPlayerInList = false;
@@ -220,6 +222,10 @@ export class Networking {
 		this.socket.on('latencyTest', () => {
 			this.localPlayer.latency = (Date.now() / 1000 - this.lastLatencyTestEmit) * 1000;
 			this.lastLatencyTestGotResponse = true;
+		});
+
+		this.socket.on('propData', (data: PropData[]) => {
+			this.props = data;
 		});
 
 		this.socket.on('remotePlayerData', (data: PlayerData[]) => {
@@ -371,6 +377,10 @@ export class Networking {
 
 	public getMessagesBeingTyped() {
 		return this.messagesBeingTyped;
+	}
+
+	public getPropData(): PropData[] {
+		return this.props;
 	}
 
 	public getRemotePlayerData(): PlayerData[] {

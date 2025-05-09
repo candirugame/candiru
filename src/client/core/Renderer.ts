@@ -11,6 +11,7 @@ import { HealthIndicator } from '../ui/HealthIndicator.ts';
 import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
 import { ParticleSystem } from './ParticleSystem.ts';
 import { ShotHandler } from './ShotHandler.ts';
+import { PropRenderer } from './PropRenderer.ts';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -44,6 +45,7 @@ export class Renderer {
 	private inventoryMenuScene: THREE.Scene;
 	private inventoryMenuCamera: THREE.OrthographicCamera;
 	private remotePlayerRenderer: RemotePlayerRenderer;
+	public propRenderer: PropRenderer;
 	private inputHandler!: InputHandler;
 	private collisionManager!: CollisionManager;
 
@@ -120,6 +122,12 @@ export class Renderer {
 			this.camera,
 			this.scene,
 		);
+
+		this.propRenderer = new PropRenderer(
+			this.scene,
+			this.networking,
+		);
+
 		this.remotePlayerRenderer.getEntityScene().fog = new THREE.FogExp2('#111111', 0.1);
 		this.remotePlayerRenderer.getEntityScene().add(ambientLight3);
 		this.renderer.domElement.style.touchAction = 'none';
@@ -162,7 +170,8 @@ export class Renderer {
 		this.renderer.autoClear = false;
 
 		// Update and render remote players
-		this.remotePlayerRenderer.update(this.deltaTime);
+		this.remotePlayerRenderer.onFrame(this.deltaTime);
+		this.propRenderer.onFrame(this.deltaTime);
 		this.renderer.render(this.remotePlayerRenderer.getEntityScene(), this.camera);
 
 		// Render the held item scene normally (full screen)

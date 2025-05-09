@@ -12,6 +12,7 @@ import { MapData } from './models/MapData.ts';
 import { DataValidator } from './DataValidator.ts';
 import { CustomServer } from '../shared/messages.ts';
 import { PeerManager } from './managers/PeerManager.ts';
+import { PropManager } from './managers/PropManager.ts';
 
 export class GameServer {
 	router: Router = new Router();
@@ -25,6 +26,7 @@ export class GameServer {
 	damageSystem: DamageSystem;
 	mapData: MapData;
 	peerManager: PeerManager;
+	propManager: PropManager;
 
 	constructor() {
 		this.mapData = this.loadMapData();
@@ -32,6 +34,7 @@ export class GameServer {
 		this.chatManager = new ChatManager(this.io, this.playerManager);
 		this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
+		this.propManager = new PropManager(this.mapData);
 
 		this.playerManager.setItemManager(this.itemManager);
 
@@ -42,6 +45,7 @@ export class GameServer {
 
 		this.gameEngine = new GameEngine(
 			this.playerManager,
+			this.propManager,
 			this.itemManager,
 			this.chatManager,
 			this.damageSystem,
