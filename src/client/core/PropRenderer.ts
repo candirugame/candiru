@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
-import { PropData } from '../../shared/Prop.ts';
+import { PropData } from '../../shared/Prop.ts'; // Assuming these types exist
 import { Networking } from './Networking.ts';
 import { AssetManager } from './AssetManager.ts';
 import { CollisionManager } from '../input/CollisionManager.ts';
@@ -10,7 +10,7 @@ interface PropToRender {
 	url: string;
 	object?: THREE.Group;
 	isLoading: boolean;
-	serverData: PropData;
+	serverData: PropData; // Stores the latest authoritative state from the server (targets for interpolation)
 }
 
 export class PropRenderer {
@@ -19,12 +19,19 @@ export class PropRenderer {
 	private assetManager = AssetManager.getInstance();
 	private propsToRender = new Map<number, PropToRender>();
 
+	private deltaTime: number = 0;
+	// A value of 0.1 means it covers ~10% of the distance to the target per frame at 60FPS.
+	private readonly INTERPOLATION_RATE = 0.10;
+
+	// Reusable objects for interpolation to avoid allocations in the loop
+	private tempTargetPosition = new THREE.Vector3();
+	private tempTargetQuaternion = new THREE.Quaternion();
+
 	constructor(scene: THREE.Scene, networking: Networking) {
 		this.scene = scene;
 		this.networking = networking;
 
-		// Ensure BVH methods are available on BufferGeometry prototype
-		// This might also be done in CollisionManager or globally elsewhere
+		// Ensure BVH methods are available (can be done globally too)
 		if (!THREE.BufferGeometry.prototype.computeBoundsTree) {
 			THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 		}
@@ -33,29 +40,61 @@ export class PropRenderer {
 		}
 	}
 
-	public onFrame(_deltaTime: number): void {
-		// 1) Sync props with server
+	public onFrame(deltaTime: number): void {
+		this.deltaTime = deltaTime;
+		const interpolationAlpha = Math.min(1, this.INTERPOLATION_RATE * this.deltaTime * 60); // Cap at 1 to prevent overshooting if deltaTime is huge
+
+		// 1) Sync props with server data (updates targets, handles new/removed props)
 		const allPropData = this.networking.getPropData();
-		const currentIds = new Set<number>();
+		const currentServerIds = new Set<number>();
 
 		for (const pd of allPropData) {
-			currentIds.add(pd.id);
-			const entry = this.propsToRender.get(pd.id);
-			if (entry) {
-				this.updateProp(entry, pd);
+			currentServerIds.add(pd.id);
+			const existingEntry = this.propsToRender.get(pd.id);
+
+			if (existingEntry) {
+				this.updateProp(existingEntry, pd); // Updates serverData (target) and handles non-interpolated changes
 			} else {
-				this.addNewProp(pd);
+				this.addNewProp(pd); // Adds new prop and sets its initial state directly
 			}
 		}
 
-		// 2) Remove any props no longer on server
+		// 2) Remove any props no longer present on the server
 		for (const id of Array.from(this.propsToRender.keys())) {
-			if (!currentIds.has(id)) {
+			if (!currentServerIds.has(id)) {
 				this.removeProp(id);
 			}
 		}
 
-		// 3) Update collision manager
+		// 3) Interpolate visual state for all loaded props
+		for (const entry of this.propsToRender.values()) {
+			if (entry.object && !entry.isLoading) {
+				// Set target position and quaternion from the latest server data
+				this.tempTargetPosition.set(
+					entry.serverData.position.x,
+					entry.serverData.position.y,
+					entry.serverData.position.z,
+				);
+				this.tempTargetQuaternion.set(
+					entry.serverData.quaternion.x,
+					entry.serverData.quaternion.y,
+					entry.serverData.quaternion.z,
+					entry.serverData.quaternion.w,
+				);
+
+				// Interpolate position
+				entry.object.position.lerp(this.tempTargetPosition, interpolationAlpha);
+
+				// Interpolate rotation
+				entry.object.quaternion.slerp(this.tempTargetQuaternion, interpolationAlpha);
+
+				// Scale is applied directly in updateProp/addNewProp, not interpolated here.
+			}
+		}
+
+		// 4) Update collision manager
+		// This will use the (now interpolated) positions of the prop objects.
+		// If highly precise, server-authoritative collision is needed, this might require adjustment.
 		CollisionManager.updateDynamicColliders(this.getCollidablePropObjects());
 	}
 
@@ -70,65 +109,85 @@ export class PropRenderer {
 			id: propData.id,
 			url: propData.url,
 			isLoading: true,
-			serverData: { ...propData }, // Store a copy
+			serverData: { ...propData }, // Store a copy of the initial server data
 		};
 		this.propsToRender.set(propData.id, newEntry);
 
 		this.assetManager.loadAsset(propData.url, (model) => {
 			const current = this.propsToRender.get(propData.id);
-			if (!current || current.url !== propData.url) { // Check if still relevant
-				if (model.parent) model.parent.remove(model); // Clean up if model was loaded but entry removed
+			// Check if the prop is still relevant (e.g., not removed while loading, URL hasn't changed)
+			if (!current || current.url !== propData.url) {
+				if (model.parent) model.parent.remove(model);
+				// Potentially dispose of model resources if AssetManager doesn't handle it
 				return;
 			}
 
 			current.object = model;
 			current.isLoading = false;
-			// Server data might have updated while loading, use the latest
-			// current.serverData = { ...propData }; // Already set, but ensure it's the one from the map
 
-			this.applyCorePropDataToModel(model, current.serverData);
+			// Apply the initial state directly, no interpolation needed for the first appearance.
+			// Ensure we use the latest serverData for this prop, in case it updated during load.
+			this.applyInitialModelState(model, current.serverData);
 			this.manageBVHForProp(model, current.serverData, false); // Initial BVH setup
 			this.scene.add(model);
 		});
 	}
 
+	private applyInitialModelState(model: THREE.Group, propData: PropData): void {
+		model.position.set(propData.position.x, propData.position.y, propData.position.z);
+		model.quaternion.set(propData.quaternion.x, propData.quaternion.y, propData.quaternion.z, propData.quaternion.w);
+		model.scale.set(propData.scale.x, propData.scale.y, propData.scale.z);
+		this.updateModelUserData(model, propData);
+	}
+
+	private updateModelUserData(model: THREE.Group, propData: PropData): void {
+		model.userData.propId = propData.id;
+		model.userData.playersCollide = propData.playersCollide;
+		model.userData.propName = propData.name;
+		// model.userData.bvhComputed is managed in manageBVHForProp
+	}
+
 	private updateProp(entry: PropToRender, newData: PropData): void {
 		const oldData = entry.serverData;
 
+		// If the model URL changes, we need to reload it.
 		if (entry.url !== newData.url) {
-			this.removeProp(entry.id); // This will handle BVH disposal of the old object
-			this.addNewProp(newData);
+			this.removeProp(entry.id); // Handles disposal of the old object and its BVH
+			this.addNewProp(newData); // Adds the new prop
 			return;
 		}
 
-		entry.serverData = { ...newData }; // Update server data
+		// Update the stored serverData. This becomes the new target for interpolation.
+		entry.serverData = { ...newData };
 
 		if (entry.object && !entry.isLoading) {
-			this.applyCorePropDataToModel(entry.object, newData);
+			// Apply scale changes directly (not interpolated)
+			const scaleChanged = !this.areScalesEqual(oldData, newData);
+			if (scaleChanged) {
+				entry.object.scale.set(newData.scale.x, newData.scale.y, newData.scale.z);
+			}
 
-			const scaleChanged = !this.areScalesEqual(oldData.scale, newData.scale);
+			// Update user data which might have changed
+			this.updateModelUserData(entry.object, newData);
+
+			// Manage BVH if collision properties or scale changed
 			const collisionToggled = oldData.playersCollide !== newData.playersCollide;
 			let needsBVHManagement = false;
-			let forceGeometryRecompute = false;
+			let forceGeometryRecomputeForBVH = false;
 
 			if (collisionToggled) {
 				needsBVHManagement = true;
-				// If it became collidable and scale changed, force recompute.
-				// If it became non-collidable, manageBVH will dispose.
-				// If it became collidable and scale didn't change, no force recompute needed, just setup.
 				if (newData.playersCollide && scaleChanged) {
-					forceGeometryRecompute = true;
+					forceGeometryRecomputeForBVH = true;
 				}
-			} else if (newData.playersCollide) { // Stays collidable or was already collidable
+			} else if (newData.playersCollide) { // Stays collidable
 				if (scaleChanged) {
 					needsBVHManagement = true;
-					forceGeometryRecompute = true;
+					forceGeometryRecomputeForBVH = true;
 				} else if (!entry.object.userData.bvhComputed) {
-					// Flag indicates it wasn't set up, or was reset
-					needsBVHManagement = true;
+					needsBVHManagement = true; // Needs setup if not already computed
 				} else {
-					// It's collidable, scale didn't change, bvhComputed is true.
-					// Sanity check for the server reboot scenario: ensure BVH actually exists.
+					// Sanity check for BVH existence if flagged as computed
 					let bvhMissingOnMeshes = false;
 					entry.object.traverse((o) => {
 						if ((o as THREE.Mesh).isMesh && !(o as THREE.Mesh).geometry.boundsTree) {
@@ -137,99 +196,80 @@ export class PropRenderer {
 					});
 					if (bvhMissingOnMeshes) {
 						console.warn(
-							`[PropRenderer] Prop ${newData.id} had bvhComputed=true but BVH was missing on meshes. Re-managing.`,
+							`[PropRenderer] Prop ${newData.id} (URL: ${newData.url}) had bvhComputed=true but BVH was missing. Re-managing.`,
 						);
 						needsBVHManagement = true;
-						// forceGeometryRecompute remains false, we just need to set up existing geometry
 					}
 				}
 			}
-			// If it's not collidable and wasn't (collisionToggled is false), no BVH management needed unless it was previously collidable.
-			// manageBVHForProp handles the case where playersCollide becomes false.
+			// If it became non-collidable, manageBVHForProp will handle disposal.
 
 			if (needsBVHManagement) {
-				this.manageBVHForProp(entry.object, newData, forceGeometryRecompute);
+				this.manageBVHForProp(entry.object, newData, forceGeometryRecomputeForBVH);
 			}
 		}
 	}
 
 	private manageBVHForProp(
 		model: THREE.Group,
-		propData: PropData,
+		propData: PropData, // Use current propData for playersCollide flag
 		forceRecomputeGeometry: boolean,
 	): void {
 		if (propData.playersCollide) {
 			let needsBVHSetup = false;
-
-			if (forceRecomputeGeometry) {
+			if (forceRecomputeGeometry) { // e.g. scale changed
 				model.traverse((o) => {
 					if ((o as THREE.Mesh).isMesh) {
 						const mesh = o as THREE.Mesh;
 						const geom = mesh.geometry as THREE.BufferGeometry;
-						if (geom.boundsTree) { // Check if disposeBoundsTree is a function
-							if (typeof geom.disposeBoundsTree === 'function') {
-								geom.disposeBoundsTree();
-							} else { // Fallback if disposeBoundsTree is not on this specific geometry instance
-								disposeBoundsTree.call(geom);
-							}
+						if (geom.boundsTree) {
+							typeof geom.disposeBoundsTree === 'function' ? geom.disposeBoundsTree() : disposeBoundsTree.call(geom);
 						}
 						geom.boundsTree = undefined!; // Explicitly clear
 					}
 				});
-				needsBVHSetup = true;
+				needsBVHSetup = true; // Must recompute after disposal
 			} else {
-				// Check if BVH is missing on any mesh
+				// Check if BVH is missing on any mesh if not forcing recompute
 				model.traverse((o) => {
 					if ((o as THREE.Mesh).isMesh && !(o as THREE.Mesh).geometry.boundsTree) {
-						needsBVHSetup = true;
+						needsBVHSetup = true; // Found a mesh needing BVH
 					}
 				});
 			}
 
-			// If the main flag indicates it wasn't computed, it also needs setup
+			// If the main model flag indicates BVH wasn't computed, it also needs setup
 			if (!model.userData.bvhComputed) {
 				needsBVHSetup = true;
 			}
 
 			if (needsBVHSetup) {
+				// console.log(`[PropRenderer] Setting up BVH for prop ${propData.id} (URL: ${propData.url}), forceRecompute: ${forceRecomputeGeometry}`);
 				model.traverse((o) => {
 					if ((o as THREE.Mesh).isMesh) {
 						const mesh = o as THREE.Mesh;
 						const geom = mesh.geometry as THREE.BufferGeometry;
-
-						// Only compute if it's actually missing or forced
-						if (!geom.boundsTree || forceRecomputeGeometry) {
-							// Attempt to get shared BVH (AssetManager should handle this ideally)
-							// For now, if AssetManager doesn't provide it, we compute.
+						if (!geom.boundsTree || forceRecomputeGeometry) { // Only compute if missing or forced
 							const sharedBVH = this.assetManager.getOriginalBVH(geom, propData.url);
-
 							if (sharedBVH && !forceRecomputeGeometry) {
 								geom.boundsTree = sharedBVH;
 							} else {
-								// Ensure computeBoundsTree is available
-								if (typeof geom.computeBoundsTree !== 'function') {
-									geom.computeBoundsTree = computeBoundsTree; // Monkey-patch if missing on this instance
-								}
-								geom.computeBoundsTree(); // Compute for this instance
+								typeof geom.computeBoundsTree === 'function' ? geom.computeBoundsTree() : computeBoundsTree.call(geom);
 							}
 						}
 					}
 				});
 				model.userData.bvhComputed = true;
 			}
-		} else {
-			// No longer collidable: dispose BVH if it had one
+		} else { // Not collidable
 			if (model.userData.bvhComputed) { // Only dispose if it thought it had one
+				// console.log(`[PropRenderer] Disposing BVH for prop ${propData.id} (URL: ${propData.url}) as it's no longer collidable.`);
 				model.traverse((o) => {
 					if ((o as THREE.Mesh).isMesh) {
 						const mesh = o as THREE.Mesh;
 						const geom = mesh.geometry as THREE.BufferGeometry;
 						if (geom.boundsTree) {
-							if (typeof geom.disposeBoundsTree === 'function') {
-								geom.disposeBoundsTree();
-							} else {
-								disposeBoundsTree.call(geom);
-							}
+							typeof geom.disposeBoundsTree === 'function' ? geom.disposeBoundsTree() : disposeBoundsTree.call(geom);
 							geom.boundsTree = undefined!;
 						}
 					}
@@ -239,67 +279,48 @@ export class PropRenderer {
 		}
 	}
 
-	private applyCorePropDataToModel(
-		model: THREE.Group,
-		propData: PropData,
-	): void {
-		model.position.set(propData.position.x, propData.position.y, propData.position.z);
-		model.quaternion.set(propData.quaternion.x, propData.quaternion.y, propData.quaternion.z, propData.quaternion.w);
-		model.scale.set(propData.scale.x, propData.scale.y, propData.scale.z);
-
-		model.userData.propId = propData.id;
-		model.userData.playersCollide = propData.playersCollide; // Store for reference
-		model.userData.propName = propData.name;
-		// model.userData.bvhComputed is managed in manageBVHForProp
-	}
-
 	private removeProp(propId: number): void {
 		const entry = this.propsToRender.get(propId);
 		if (!entry) return;
 
 		if (entry.object) {
-			// Ensure BVH is disposed if it was collidable or thought it was computed
+			// Ensure BVH is disposed if it was collidable or flagged as computed
 			if (entry.object.userData.bvhComputed || entry.serverData.playersCollide) {
+				// Pass a modified PropData to ensure playersCollide=false for disposal logic
 				this.manageBVHForProp(
 					entry.object,
-					{ ...entry.serverData, playersCollide: false }, // Temporarily mark as non-collidable for disposal logic
-					false, // Not forcing geometry recompute, just disposal
+					{ ...entry.serverData, playersCollide: false },
+					false, // Not forcing geometry recompute, just ensuring disposal
 				);
 			}
 			this.scene.remove(entry.object);
-			// Note: If AssetManager clones geometries, they will be disposed with the object.
-			// If AssetManager shares geometries, they should not be disposed here.
-			// Three.js GLTFLoader typically creates unique geometries per load unless explicitly shared.
+			// AssetManager should handle whether to dispose of geometry/materials
+			// if they are shared or unique.
 		}
 		this.propsToRender.delete(propId);
 	}
 
-	/**
-	 * Clears all props from the renderer. Useful for full state resets, e.g., on new server connection.
-	 */
 	public clearAllProps(): void {
 		for (const id of Array.from(this.propsToRender.keys())) {
-			this.removeProp(id); // removeProp handles BVH disposal and scene removal
+			this.removeProp(id);
 		}
-		// propsToRender is already cleared by removeProp, but an explicit clear is fine.
-		this.propsToRender.clear();
+		this.propsToRender.clear(); // Should be empty, but good for safety
 		console.log('[PropRenderer] All props cleared.');
-		CollisionManager.updateDynamicColliders([]); // Also clear colliders in CollisionManager
+		CollisionManager.updateDynamicColliders([]);
 	}
 
 	private areScalesEqual(
-		a: { x: number; y: number; z: number },
-		b: { x: number; y: number; z: number },
+		a: PropData, // Assuming PropDataScale is { x: number; y: number; z: number }
+		b: PropData,
 	): boolean {
-		const e = 1e-5; // Epsilon for float comparison
+		const e = 1e-5; // Epsilon for floating point comparison
 		return (
-			Math.abs(a.x - b.x) < e &&
-			Math.abs(a.y - b.y) < e &&
-			Math.abs(a.z - b.z) < e
+			Math.abs(a.scale.x - b.scale.x) < e &&
+			Math.abs(a.scale.y - b.scale.y) < e &&
+			Math.abs(a.scale.z - b.scale.z) < e
 		);
 	}
 
-	/** Optional: get all prop Objects (collidable or not) */
 	public getPropObjects(): THREE.Object3D[] {
 		return Array.from(this.propsToRender.values())
 			.filter((p) => p.object && !p.isLoading)
