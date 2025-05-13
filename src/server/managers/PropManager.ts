@@ -1,17 +1,20 @@
 import { Prop, PropData } from '../../shared/Prop.ts';
 import * as THREE from 'three';
-import { MapData } from '../models/MapData.ts'; // For THREE.Vector3 etc. if used in methods
 
 export class PropManager {
 	private props: Map<number, Prop> = new Map();
 	public hasUpdates: boolean = false;
-	private mapData: MapData;
 
-	constructor(mapData: MapData) {
-		this.mapData = mapData;
+	//public testProp!: Prop;
+
+	constructor() {
+		//this.testProp = this.addProp('models/simplified_possum.glb', new THREE.Vector3(0, 0.5, 0));
 	}
 
 	public onTick(_deltaTime: number) {
+		// this.testProp.position.x = Math.sin(Date.now() / 1000) * 3;
+		// this.testProp.velocity.x = Math.cos(Date.now() / 1000) * 3;
+		// this.hasUpdates = true;
 	}
 
 	public addProp(

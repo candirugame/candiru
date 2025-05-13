@@ -34,7 +34,7 @@ export class GameServer {
 		this.chatManager = new ChatManager(this.io, this.playerManager);
 		this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
-		this.propManager = new PropManager(this.mapData);
+		this.propManager = new PropManager();
 
 		this.playerManager.setItemManager(this.itemManager);
 

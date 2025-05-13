@@ -228,6 +228,16 @@ export class Networking {
 			this.props = data;
 		});
 
+		this.socket.on('propDelta', (deltas: Array<Partial<PropData> & { id: number }>) => {
+			console.log(`Received prop delta: ${JSON.stringify(deltas)}`);
+			deltas.forEach((delta) => {
+				const idx = this.props.findIndex((p) => p.id === delta.id);
+				if (idx !== -1) {
+					this.props[idx] = { ...this.props[idx], ...delta };
+				}
+			});
+		});
+
 		this.socket.on('remotePlayerData', (data: PlayerData[]) => {
 			// Full snapshot - update local store
 			this.remotePlayers = data;
