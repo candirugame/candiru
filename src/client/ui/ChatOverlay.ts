@@ -418,6 +418,10 @@ export class ChatOverlay {
 		//const playerX = Math.round(this.localPlayer.position.x);
 		if (SettingsManager.settings.developerMode) {
 			linesToRender.push(
+				'pos:' + this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +
+					this.localPlayer.position.z.toFixed(2),
+			);
+			linesToRender.push(
 				this.networking.getServerInfo().name + ' (' + this.networking.getServerInfo().currentPlayers + '/' +
 					this.networking.getServerInfo().maxPlayers + ')',
 				this.networking.getServerInfo().url,
@@ -429,12 +433,7 @@ export class ChatOverlay {
 			);
 
 			linesToRender.push('tps: ' + this.networking.getServerInfo().tickRate);
-			linesToRender.push('maxHealth: ' + this.networking.getServerInfo().playerMaxHealth);
-			linesToRender.push('health: ' + this.localPlayer.health);
-			linesToRender.push(
-				'pos:' + this.localPlayer.position.x.toFixed(2) + ',' + this.localPlayer.position.y.toFixed(2) + ',' +
-					this.localPlayer.position.z.toFixed(2),
-			);
+
 			const tickTimeMs = this.networking.getServerInfo().tickComputeTime * 1000;
 			const cleanupTimeMs = this.networking.getServerInfo().cleanupComputeTime * 1000;
 			const tickSpeedMs = 1 / this.networking.getServerInfo().tickRate * 1000;
@@ -444,9 +443,12 @@ export class ChatOverlay {
 				'tickTime: ' + tickTimeMs.toFixed(2) + '/' + tickSpeedMs.toFixed(2) + 'ms (' + tickTimePercent.toFixed(2) +
 					'%)',
 			);
+
+			linesToRender.push(`health: ${this.localPlayer.health} / ${this.networking.getServerInfo().playerMaxHealth}`);
+
 			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
 			linesToRender.push(
-				'mem (mib): rss:' + this.networking.getServerInfo().memUsageRss.toFixed(2) + ', heapTotal: ' +
+				'mem (mib): rss:' + this.networking.getServerInfo().memUsageRss.toFixed(2) + ', heapTotal:' +
 					this.networking.getServerInfo().memUsageHeapTotal.toFixed(2) + ', heapUsed: ' +
 					this.networking.getServerInfo().memUsageHeapUsed.toFixed(2) + ', external: ' +
 					this.networking.getServerInfo().memUsageExternal.toFixed(2),

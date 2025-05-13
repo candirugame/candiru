@@ -14,14 +14,17 @@ import * as THREE from 'three';
 import { SoloCTFGamemode } from './gamemodes/SoloCTFGamemode.ts';
 import { BridgeGamemode } from './gamemodes/BridgeGamemode.ts';
 import { KingOfTheHillGamemode } from './gamemodes/KingOfTheHillGamemode.ts';
+import { PropManager } from './managers/PropManager.ts';
+import { PropData } from '../shared/Prop.ts';
 
 export class GameEngine {
 	private lastPlayerTickTimestamp: number = Date.now() / 1000;
 	private lastFullPlayerEmitTimestamp: number = Date.now() / 1000;
 	private lastEmittedPlayerSnapshot: Map<number, PlayerData> = new Map();
-	private fullPlayerEmitInterval: number = config.server.fullPlayerEmitInterval / 1000; // seconds
+	private lastEmittedPropSnapshot: Map<number, PropData> = new Map();
 	private lastItemUpdateTimestamp: number = Date.now() / 1000;
 	public playerUpdateSinceLastEmit: boolean = false;
+	public propUpdateSinceLastEmit: boolean = false;
 	private itemUpdateSinceLastEmit: boolean = false;
 	public serverInfo: ServerInfo = new ServerInfo();
 	public gamemode: Gamemode | false = false;
@@ -33,6 +36,7 @@ export class GameEngine {
 
 	constructor(
 		public playerManager: PlayerManager,
+		public propManager: PropManager,
 		public itemManager: ItemManager,
 		public chatManager: ChatManager,
 		private damageSystem: DamageSystem,
@@ -51,18 +55,65 @@ export class GameEngine {
 			const currentTime = Date.now() / 1000;
 			this.playerManager.regenerateHealth();
 			this.itemManager.tick(currentTime);
+			this.propManager.onTick(currentTime);
 			if (this.gamemode) this.gamemode.tick();
+			const doFullEmit = currentTime - this.lastFullPlayerEmitTimestamp > (config.server.fullPlayerEmitInterval / 1000);
+			if (doFullEmit) this.lastFullPlayerEmitTimestamp = currentTime;
+
+			// Check for prop updates
+			if (this.propManager.hasUpdates) {
+				this.propUpdateSinceLastEmit = true;
+				this.propManager.clearUpdatesFlag();
+			}
+
+			//Emit prop data (full or delta)
+			if (this.propUpdateSinceLastEmit || doFullEmit) {
+				const props = this.propManager.getAllPropsData();
+				if (doFullEmit) {
+					this.io.volatile.emit('propData', props);
+					this.lastEmittedPropSnapshot.clear();
+					props.forEach((pd) => this.lastEmittedPropSnapshot.set(pd.id, pd));
+				} else {
+					const deltas: Array<Partial<PropData> & { id: number }> = [];
+					props.forEach((pd) => {
+						const prev = this.lastEmittedPropSnapshot.get(pd.id);
+						const delta: Partial<PropData> & { id: number } = { id: pd.id };
+						if (!prev) {
+							deltas.push(pd);
+							this.lastEmittedPropSnapshot.set(pd.id, pd);
+						} else {
+							// iterate over known keys in PropData
+							(Object.keys(pd) as Array<keyof PropData>).forEach((key) => {
+								const curVal = JSON.stringify(pd[key]);
+								const prevVal = JSON.stringify(prev[key]);
+								if (curVal !== prevVal) {
+									// assign via any-cast to satisfy TS
+									// deno-lint-ignore no-explicit-any
+									(delta as any)[key] = pd[key];
+								}
+							});
+							if (Object.keys(delta).length > 1) { // Only push if there's more than just the id
+								deltas.push(delta);
+								this.lastEmittedPropSnapshot.set(pd.id, pd); // Update snapshot with new full data
+							}
+						}
+					});
+					if (deltas.length > 0) {
+						this.io.volatile.emit('propDelta', deltas);
+					}
+				}
+				this.propUpdateSinceLastEmit = false;
+			}
 
 			// Emit player data (full or delta) if there are updates or enough time has passed
-			if (this.playerUpdateSinceLastEmit || currentTime - this.lastPlayerTickTimestamp > 1 / config.server.tickRate) {
+			if (this.playerUpdateSinceLastEmit || currentTime - this.lastPlayerTickTimestamp > 1 / config.server.tickRate) { //TODO: tickRate is inappropriate here
 				try {
 					const players = this.playerManager.getAllPlayers();
 					// decide full snapshot or delta
-					if (currentTime - this.lastFullPlayerEmitTimestamp > this.fullPlayerEmitInterval) {
+					if (doFullEmit) {
 						// full state emit
 						const fullData = players.map((p) => p.toJSON());
 						this.io.volatile.emit('remotePlayerData', fullData);
-						this.lastFullPlayerEmitTimestamp = currentTime;
 						this.lastEmittedPlayerSnapshot.clear();
 						fullData.forEach((pd) => this.lastEmittedPlayerSnapshot.set(pd.id, pd));
 					} else {

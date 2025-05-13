@@ -36,6 +36,7 @@ export class Player {
 	public lastDamageTime?: number; //server-controlled
 	public directionIndicatorVector?: THREE.Vector3 = undefined; //server-controlled
 	public doPhysics: boolean = true; //server-controlled
+	public thirdPerson: number = 0;
 
 	static fromObject(data: Player): Player {
 		const instance = new Player();

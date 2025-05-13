@@ -7,6 +7,7 @@ import type { DamageRequest } from '../server/models/DamageRequest.ts';
 import type { PlayerData } from './Player.ts';
 import * as THREE from 'three';
 import { Peer } from '../server/models/Peer.ts';
+import { PropData } from './Prop.ts';
 
 export type CustomServer = Server<ClientToServerEvents, ServerToClientEvents>;
 export type CustomSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -33,6 +34,8 @@ interface ServerToClientEvents {
 		size: number;
 		color: THREE.Color;
 	}) => void;
+	propData: (props: PropData[]) => void;
+	propDelta: (deltas: Array<Partial<PropData> & { id: number }>) => void;
 }
 
 interface ClientToServerEvents {
