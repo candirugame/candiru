@@ -54,6 +54,9 @@ export class ChatOverlay {
 	private joystickInputY: number = 0;
 	private buttonsHeld: number[] = [];
 	private lastRoutineMs = 0;
+	private containerElement: HTMLElement;
+
+	private gameIndex: number;
 
 	private offscreenCanvas: HTMLCanvasElement;
 	private offscreenCtx: CanvasRenderingContext2D;
@@ -86,6 +89,14 @@ export class ChatOverlay {
 		'g': this.getRainbowColor(),
 	};
 
+	public destroy() {
+		this.chatCanvas.remove();
+		this.offscreenCanvas.remove();
+		this.lines = [];
+		this.gameMessages = [];
+		this.previousGameMessages = [];
+	}
+
 	private getColorCode(code: string): string | false {
 		if (code === 'g') {
 			return ChatOverlay.getRainbowColor();
@@ -98,8 +109,10 @@ export class ChatOverlay {
 		return `hsl(${hue}, 100%, 50%)`;
 	}
 
-	constructor(container: HTMLElement, localPlayer: Player) {
+	constructor(container: HTMLElement, localPlayer: Player, gameIndex: number) {
 		this.localPlayer = localPlayer;
+		this.containerElement = container;
+		this.gameIndex = gameIndex;
 		this.chatCanvas = document.createElement('canvas');
 		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
@@ -125,8 +138,8 @@ export class ChatOverlay {
 		this.chatCanvas.style.top = '0';
 		this.chatCanvas.style.left = '0';
 
-		this.chatCanvas.style.height = '100vh';
-		document.body.style.margin = '0';
+		this.chatCanvas.style.height = '100%';
+		this.chatCanvas.style.width = '100%';
 		this.chatCanvas.style.imageRendering = 'pixelated';
 		this.chatCanvas.style.textRendering = 'pixelated';
 
@@ -141,11 +154,13 @@ export class ChatOverlay {
 			pendingMessage: null,
 		}));
 
-		//document.body.appendChild(this.chatCanvas);
 		container.appendChild(this.chatCanvas);
 
 		globalThis.addEventListener('resize', this.onWindowResize.bind(this));
 		globalThis.addEventListener('orientationchange', this.onWindowResize.bind(this));
+
+		// Initial resize
+		this.onWindowResize();
 	}
 
 	public setRenderer(renderer: Renderer) {
@@ -187,18 +202,10 @@ export class ChatOverlay {
 		this.renderCrosshair();
 		this.renderTouchControls();
 
-		this.screenWidth = Math.floor(this.renderer.getCamera().aspect * 200);
-
-		if (this.oldScreenWidth !== this.screenWidth) {
-			//if(this.chatCanvas.width < this.screenWidth)
-			this.chatCanvas.width = this.screenWidth;
-			this.oldScreenWidth = this.screenWidth;
+		// Periodically check if we need to resize
+		if (Math.random() < 0.05) {
+			this.onWindowResize();
 		}
-
-		// this.chatCanvas.width = this.screenWidth;
-		// this.chatCtx.fillRect(0,0,10,10);
-
-		this.onWindowResize();
 
 		this.inputHandler.nameSettingActive = this.nameSettingActive;
 		if (Math.random() < 0.03) {
@@ -207,8 +214,22 @@ export class ChatOverlay {
 	}
 
 	private onWindowResize() {
-		this.chatCanvas.style.width = globalThis.innerWidth + 'px';
-		this.chatCanvas.style.height = globalThis.innerHeight + 'px';
+		// Use container dimensions instead of window dimensions for display size
+		this.chatCanvas.style.width = this.containerElement.clientWidth + 'px';
+		this.chatCanvas.style.height = this.containerElement.clientHeight + 'px';
+
+		// Update the canvas logical size to match the container aspect ratio
+		// Set a reasonable limit for canvas width to prevent performance issues
+		const containerAspect = this.containerElement.clientWidth / this.containerElement.clientHeight;
+		const newWidth = Math.min(800, Math.floor(containerAspect * 200));
+
+		// Only update if changed to avoid resetting the canvas
+		if (this.chatCanvas.width !== newWidth) {
+			this.chatCanvas.width = newWidth;
+			this.chatCanvas.height = 200; // Keep height consistent at 200px for scaling
+			this.oldScreenWidth = newWidth;
+			this.screenWidth = newWidth;
+		}
 	}
 
 	private renderChatMessages() {
@@ -434,6 +455,8 @@ export class ChatOverlay {
 
 			linesToRender.push('tps: ' + this.networking.getServerInfo().tickRate);
 
+			linesToRender.push(`health: ${this.localPlayer.health} / ${this.networking.getServerInfo().playerMaxHealth}`);
+
 			const tickTimeMs = this.networking.getServerInfo().tickComputeTime * 1000;
 			const cleanupTimeMs = this.networking.getServerInfo().cleanupComputeTime * 1000;
 			const tickSpeedMs = 1 / this.networking.getServerInfo().tickRate * 1000;
@@ -443,9 +466,6 @@ export class ChatOverlay {
 				'tickTime: ' + tickTimeMs.toFixed(2) + '/' + tickSpeedMs.toFixed(2) + 'ms (' + tickTimePercent.toFixed(2) +
 					'%)',
 			);
-
-			linesToRender.push(`health: ${this.localPlayer.health} / ${this.networking.getServerInfo().playerMaxHealth}`);
-
 			linesToRender.push('cleanupTime: ' + cleanupTimeMs.toFixed(2) + 'ms');
 			linesToRender.push(
 				'mem (mib): rss:' + this.networking.getServerInfo().memUsageRss.toFixed(2) + ', heapTotal:' +
@@ -453,6 +473,7 @@ export class ChatOverlay {
 					this.networking.getServerInfo().memUsageHeapUsed.toFixed(2) + ', external: ' +
 					this.networking.getServerInfo().memUsageExternal.toFixed(2),
 			);
+			linesToRender.push('propCount: ' + this.networking.getPropData().length);
 		}
 		if (this.localPlayer.gameMsgs2) {
 			for (const msg of this.localPlayer.gameMsgs2) {
@@ -1021,6 +1042,8 @@ export class ChatOverlay {
 	}
 
 	private onKeyDown(e: KeyboardEvent) {
+		if (this.gameIndex !== Game.nextGameIndex - 1) return;
+
 		if (e.key === 'Backspace' && (this.localPlayer.chatActive || this.nameSettingActive)) {
 			this.localPlayer.chatMsg = this.localPlayer.chatMsg.slice(0, -1);
 			return;
@@ -1147,5 +1170,10 @@ export class ChatOverlay {
 
 	private generateUniqueId(): string {
 		return Math.random().toString(36).substr(2, 9);
+	}
+
+	// Public method to trigger a resize
+	public triggerResize() {
+		this.onWindowResize();
 	}
 }

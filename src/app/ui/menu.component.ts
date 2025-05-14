@@ -2,12 +2,14 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { SettingsComponent } from './settings.component.ts';
 import { BrowseComponent } from './browse.component.ts';
+import { MultiplayerComponent } from './multiplayer.component.ts';
 import { Networking } from '../../client/core/Networking.ts';
+import { Game } from '../../client/core/Game.ts';
 
 @Component({
 	selector: 'app-menu',
 	standalone: true,
-	imports: [CommonModule, SettingsComponent, BrowseComponent, NgOptimizedImage],
+	imports: [CommonModule, SettingsComponent, BrowseComponent, MultiplayerComponent, NgOptimizedImage],
 	template: `
 		<div *ngIf="visible" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50"
 			 (click)="onBackdropClick($event)">
@@ -24,6 +26,8 @@ import { Networking } from '../../client/core/Networking.ts';
 					<button class="btn-menu" (click)="navigate('settings')">settings</button>
 					<br>
 					<button class="btn-menu" (click)="navigate('browse')">servers</button>
+					<br>
+					<button class="btn-menu" (click)="navigate('multiplayer')">splitscreen</button>
 
 
 					<div class="mt-4 flex gap-0">
@@ -59,6 +63,10 @@ import { Networking } from '../../client/core/Networking.ts';
 							class="h-full overflow-y-auto"
 							[networking]="networking"
 							(back)="activePage = 'main'"></app-browse>
+				<app-multiplayer *ngIf="activePage === 'multiplayer'"
+							class="h-full overflow-y-auto"
+							(back)="activePage = 'main'"
+							(setGameCount)="setGameCount($event)"></app-multiplayer>
 
 			</div>
 		</div>
@@ -73,12 +81,16 @@ export class MenuComponent {
 	@Output()
 	close = new EventEmitter<void>();
 	@Output()
-	menuVisibilityChange = new EventEmitter<boolean>(); // New event to emit menu visibility
+	menuVisibilityChange = new EventEmitter<boolean>();
+	@Output()
+	resetGameRequest = new EventEmitter<void>();
+	@Output()
+	changeGameCount = new EventEmitter<number>();
 
-	activePage: 'main' | 'settings' | 'browse' = 'main';
+	activePage: 'main' | 'settings' | 'browse' | 'multiplayer' = 'main';
+	gameCount = 1;
 
 	ngOnChanges() {
-		// Emit the visibility status whenever it changes
 		this.menuVisibilityChange.emit(this.visible);
 	}
 
@@ -89,12 +101,20 @@ export class MenuComponent {
 		}
 	}
 
-	navigate(page: 'settings' | 'browse' | 'play') {
+	navigate(page: 'settings' | 'browse' | 'play' | 'multiplayer') {
 		if (page === 'play') {
 			this.close.emit();
 			document.body.requestPointerLock();
 			return;
 		}
 		this.activePage = page;
+	}
+
+	setGameCount(count: number) {
+		Game.nextGameIndex = 0;
+		this.gameCount = count;
+		this.changeGameCount.emit(this.gameCount);
+		this.close.emit();
+		this.activePage = 'main';
 	}
 }

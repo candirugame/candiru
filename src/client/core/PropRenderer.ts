@@ -104,6 +104,10 @@ export class PropRenderer {
 			.map((e) => e.object!);
 	}
 
+	public destroy() {
+		this.clearAllProps();
+	}
+
 	private addNewProp(propData: PropData): void {
 		const newEntry: PropToRender = {
 			id: propData.id,

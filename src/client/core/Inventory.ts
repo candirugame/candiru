@@ -227,4 +227,12 @@ export class Inventory {
 		this.oldUpPressed = upPressed;
 		this.oldQPressed = qPressed;
 	}
+
+	public destroy() {
+		for (let i = this.inventoryItems.length - 1; i >= 0; i--) {
+			this.inventoryItems[i].destroy();
+			this.inventoryItems.splice(i, 1);
+		}
+		this.inventoryScene.remove(this.camera);
+	}
 }

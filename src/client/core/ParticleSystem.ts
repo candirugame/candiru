@@ -122,7 +122,7 @@ export class ParticleSystem {
 		this.geometry.computeBoundingSphere();
 	}
 
-	dispose() {
+	destroy() {
 		this.scene.remove(this.mesh);
 		this.geometry.dispose();
 		this.material.dispose();

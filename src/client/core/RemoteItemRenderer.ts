@@ -115,4 +115,11 @@ export class RemoteItemRenderer {
 			itemEntry.item.onFrame(undefined, undefined); // Passing null for input and selectedIndex
 		});
 	}
+
+	public destroy() {
+		this.itemsToRender.forEach((itemEntry) => {
+			itemEntry.item.destroy();
+		});
+		this.itemsToRender = [];
+	}
 }

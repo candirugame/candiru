@@ -25,4 +25,16 @@ export class MapLoader {
 			this.scene.add(this.mapObject);
 		});
 	}
+	public destroy() {
+		if (this.mapObject) {
+			this.scene.remove(this.mapObject);
+			this.mapObject = undefined;
+		}
+		this.mapUrl = '';
+		// Remove the bounds tree if it exists
+		if (this.scene.userData.boundsTree) {
+			this.scene.userData.boundsTree.dispose();
+			delete this.scene.userData.boundsTree;
+		}
+	}
 }

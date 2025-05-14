@@ -49,6 +49,12 @@ export class TouchInputHandler {
 		}
 	}
 
+	public destroy() {
+		document.removeEventListener('touchstart', this.onTouchStart.bind(this), false);
+		document.removeEventListener('touchmove', this.onTouchMove.bind(this), false);
+		document.removeEventListener('touchend', this.onTouchEnd.bind(this), false);
+	}
+
 	private setupEventListeners() {
 		document.addEventListener('touchstart', this.onTouchStart.bind(this), false);
 		document.addEventListener('touchmove', this.onTouchMove.bind(this), false);

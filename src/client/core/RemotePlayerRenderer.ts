@@ -141,6 +141,16 @@ export class RemotePlayerRenderer {
 		return this.entityScene;
 	}
 
+	public destroy() {
+		this.entityScene.clear();
+		this.sphereScene.clear();
+		this.playersToRender.forEach((player) => {
+			this.entityScene.remove(player.object);
+			this.entityScene.remove(player.nameLabel);
+			this.sphereScene.remove(player.sphere);
+		});
+	}
+
 	public onFrame(deltaTime: number): void {
 		this.deltaTime = deltaTime;
 		this.updateRemotePlayers();
