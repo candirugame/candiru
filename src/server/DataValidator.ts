@@ -4,6 +4,7 @@ import { ChatMessage } from './models/ChatMessage.ts';
 import { DamageRequest } from './models/DamageRequest.ts';
 import { Player, PlayerData } from '../shared/Player.ts';
 import { ServerInfo } from './models/ServerInfo.ts';
+import { Prop } from '../shared/Prop.ts';
 
 export class DataValidator {
 	private static SERVER_VERSION = '';
@@ -68,7 +69,20 @@ export class DataValidator {
 		gameMsgs2: z.array(z.string()),
 		directionIndicatorVector: this.vector3Schema.nullable().optional(),
 		doPhysics: z.boolean(),
+		thirdPerson: z.number().optional().default(0),
 	}).strict().transform((data) => Player.fromObject(data as Player));
+
+	static propDataSchema = z.object({ //used for message types
+		url: z.string(),
+		position: this.vector3Schema,
+		velocity: this.vector3Schema,
+		quaternion: this.quaternionSchema,
+		scale: this.vector3Schema,
+		id: z.number(),
+		name: z.string().max(42),
+		doPhysics: z.boolean(),
+		playersCollide: z.boolean(),
+	}).strict().transform((data) => Prop.fromObject(data as Prop));
 
 	static chatMsgSchema = z.object({
 		id: z.number(),

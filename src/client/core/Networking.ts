@@ -4,6 +4,7 @@ import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { CustomClientSocket } from '../../shared/messages.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
 import { Peer } from '../../server/models/Peer.ts';
+import { PropData } from '../../shared/Prop.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
@@ -46,6 +47,7 @@ export class Networking {
 	private socket: CustomClientSocket;
 	private gameVersion: string = '';
 	private remotePlayers: PlayerData[] = [];
+	private props: PropData[] = [];
 	private worldItems: WorldItem[] = [];
 	private lastUploadedLocalPlayer: LastUploadedLocalPlayer | null = null;
 	private lastUploadTime: number;
@@ -90,7 +92,7 @@ export class Networking {
 			tickRate: 0,
 			version: '',
 			gameMode: '',
-			playerMaxHealth: 0,
+			playerMaxHealth: 100,
 			skyColor: '#000000',
 			tickComputeTime: 0,
 			cleanupComputeTime: 0,
@@ -103,6 +105,18 @@ export class Networking {
 		};
 
 		this.setupSocketListeners();
+	}
+
+	public destroy() {
+		this.socket.disconnect();
+		this.socket.removeAllListeners();
+		this.remotePlayers = [];
+		this.props = [];
+		this.worldItems = [];
+		this.particleQueue = [];
+		this.messagesBeingTyped = [];
+		this.lastUploadedLocalPlayer = null;
+		this.lastUploadTime = 0;
 	}
 
 	private async fetchVersion() {
@@ -177,7 +191,7 @@ export class Networking {
 		}
 	}
 
-	// NEW: Processes non-local player data (chat messages, server status)
+	// Processes non-local player data (chat messages, server status)
 	private processNonLocalPlayerData() {
 		this.messagesBeingTyped = [];
 		let isLocalPlayerInList = false;
@@ -222,6 +236,20 @@ export class Networking {
 			this.lastLatencyTestGotResponse = true;
 		});
 
+		this.socket.on('propData', (data: PropData[]) => {
+			this.props = data;
+		});
+
+		this.socket.on('propDelta', (deltas: Array<Partial<PropData> & { id: number }>) => {
+			console.log(`Received prop delta: ${JSON.stringify(deltas)}`);
+			deltas.forEach((delta) => {
+				const idx = this.props.findIndex((p) => p.id === delta.id);
+				if (idx !== -1) {
+					this.props[idx] = { ...this.props[idx], ...delta };
+				}
+			});
+		});
+
 		this.socket.on('remotePlayerData', (data: PlayerData[]) => {
 			// Full snapshot - update local store
 			this.remotePlayers = data;
@@ -248,7 +276,7 @@ export class Networking {
 						localPlayerDelta = delta;
 					}
 				} else {
-					this.remotePlayers.push(delta as PlayerData);
+					//	this.remotePlayers.push(delta as PlayerData);
 					if (delta.id === this.localPlayer.id) {
 						localPlayerDelta = delta;
 					}
@@ -371,6 +399,10 @@ export class Networking {
 
 	public getMessagesBeingTyped() {
 		return this.messagesBeingTyped;
+	}
+
+	public getPropData(): PropData[] {
+		return this.props;
 	}
 
 	public getRemotePlayerData(): PlayerData[] {

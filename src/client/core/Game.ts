@@ -26,14 +26,16 @@ export class Game {
 	private healthIndicator: HealthIndicator;
 	private remoteItemRenderer: RemoteItemRenderer;
 	private gameIndex: number;
-	private static nextGameIndex: number = 0;
+	public static nextGameIndex: number = 0;
 	public static menuOpen: boolean = false;
+
+	public stopped: boolean = false;
 
 	constructor(container: HTMLElement) {
 		this.gameIndex = Game.nextGameIndex++;
 		this.localPlayer = new Player();
 		this.localPlayer.name = SettingsManager.settings.name ?? this.localPlayer.name;
-		this.chatOverlay = new ChatOverlay(container, this.localPlayer);
+		this.chatOverlay = new ChatOverlay(container, this.localPlayer, this.gameIndex);
 		this.networking = new Networking(this.localPlayer, this.chatOverlay);
 
 		// Create Renderer first
@@ -71,6 +73,7 @@ export class Game {
 	}
 
 	animate() {
+		if (this.stopped) return;
 		this.inputHandler.handleInputs();
 		this.touchInputHandler.onFrame();
 		this.collisionManager.collisionPeriodic(this.localPlayer);
@@ -91,7 +94,26 @@ export class Game {
 		this.animate();
 	}
 
+	destroy() {
+		this.stopped = true;
+		this.chatOverlay.destroy();
+		this.inputHandler.destroy();
+		this.touchInputHandler.destroy();
+		this.renderer.destroy();
+		this.inventoryManager.destroy();
+		this.mapLoader.destroy();
+		this.healthIndicator.destroy();
+		this.remoteItemRenderer.destroy();
+		this.networking.destroy();
+	}
+
 	setMenuOpen(isMenuOpen: boolean) {
 		Game.menuOpen = isMenuOpen;
+	}
+
+	// Method to trigger renderer resize
+	public resizeRenderer() {
+		this.renderer.triggerResize();
+		this.chatOverlay.triggerResize();
 	}
 }

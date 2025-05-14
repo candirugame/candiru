@@ -11,6 +11,7 @@ import { HealthIndicator } from '../ui/HealthIndicator.ts';
 import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
 import { ParticleSystem } from './ParticleSystem.ts';
 import { ShotHandler } from './ShotHandler.ts';
+import { PropRenderer } from './PropRenderer.ts';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -44,6 +45,7 @@ export class Renderer {
 	private inventoryMenuScene: THREE.Scene;
 	private inventoryMenuCamera: THREE.OrthographicCamera;
 	private remotePlayerRenderer: RemotePlayerRenderer;
+	public propRenderer: PropRenderer;
 	private inputHandler!: InputHandler;
 	private collisionManager!: CollisionManager;
 
@@ -64,10 +66,13 @@ export class Renderer {
 		this.scopeOffset.copy(offset);
 	}
 
+	private containerElement: HTMLElement;
+
 	constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.networking = networking;
 		this.localPlayer = localPlayer;
 		this.chatOverlay = chatOverlay;
+		this.containerElement = container;
 
 		this.clock = new THREE.Clock();
 		this.scene = new THREE.Scene();
@@ -120,6 +125,12 @@ export class Renderer {
 			this.camera,
 			this.scene,
 		);
+
+		this.propRenderer = new PropRenderer(
+			this.scene,
+			this.networking,
+		);
+
 		this.remotePlayerRenderer.getEntityScene().fog = new THREE.FogExp2('#111111', 0.1);
 		this.remotePlayerRenderer.getEntityScene().add(ambientLight3);
 		this.renderer.domElement.style.touchAction = 'none';
@@ -142,6 +153,18 @@ export class Renderer {
 		this.particleSystem = new ParticleSystem(this.scene);
 	}
 
+	public destroy() {
+		this.renderer.dispose();
+		this.scene.clear();
+		this.heldItemScene.clear();
+		this.inventoryMenuScene.clear();
+		this.remotePlayerRenderer.destroy();
+		this.propRenderer.destroy();
+		this.particleSystem.destroy();
+		globalThis.removeEventListener('resize', this.onWindowResize.bind(this), false);
+		globalThis.removeEventListener('orientationchange', this.onWindowResize.bind(this), false);
+	}
+
 	// Add setShotHandler method
 	public setShotHandler(shotHandler: ShotHandler) {
 		this.shotHandler = shotHandler;
@@ -162,7 +185,8 @@ export class Renderer {
 		this.renderer.autoClear = false;
 
 		// Update and render remote players
-		this.remotePlayerRenderer.update(this.deltaTime);
+		this.remotePlayerRenderer.onFrame(this.deltaTime);
+		this.propRenderer.onFrame(this.deltaTime);
 		this.renderer.render(this.remotePlayerRenderer.getEntityScene(), this.camera);
 
 		// Render the held item scene normally (full screen)
@@ -175,8 +199,8 @@ export class Renderer {
 		}
 
 		// Render inventory view
-		const screenWidth = globalThis.innerWidth;
-		const screenHeight = globalThis.innerHeight;
+		const screenWidth = this.containerElement.clientWidth;
+		const screenHeight = this.containerElement.clientHeight;
 
 		const inventoryWidth = 20;
 		const inventoryHeight = inventoryWidth * 5;
@@ -250,8 +274,24 @@ export class Renderer {
 			}
 		} else {
 			this.spectateGroundTruthPosition = null;
-			this.camera.position.copy(localPlayer.position);
-			this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+			const tpDist = localPlayer.thirdPerson;
+			if (tpDist && tpDist > 0) {
+				// third-person camera: position behind player based on their look direction
+				const heightOffset = 1.5; // camera height above player
+				// world space backward vector = local (0,0,1) rotated by lookQuaternion
+				const backward = new THREE.Vector3(0, 0, 1)
+					.applyQuaternion(localPlayer.lookQuaternion)
+					.multiplyScalar(tpDist);
+				const camPos = localPlayer.position.clone()
+					.add(backward)
+					.add(new THREE.Vector3(0, heightOffset, 0));
+				this.camera.position.copy(camPos);
+				this.camera.lookAt(localPlayer.position);
+			} else {
+				// first-person camera
+				this.camera.position.copy(localPlayer.position);
+				this.camera.setRotationFromQuaternion(this.localPlayer.lookQuaternion);
+			}
 		}
 
 		this.camera.position.add(this.knockbackVector);
@@ -464,13 +504,20 @@ export class Renderer {
 	}
 
 	private onWindowResize() {
-		this.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-		this.camera.updateProjectionMatrix();
-		this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
-		this.renderer.setPixelRatio(200 / globalThis.innerHeight);
+		// Get container dimensions instead of using global window dimensions
+		const containerWidth = this.containerElement.clientWidth;
+		const containerHeight = this.containerElement.clientHeight;
 
-		this.screenPixelsInGamePixel = globalThis.innerHeight / 200;
-		this.heldItemCamera.aspect = globalThis.innerWidth / globalThis.innerHeight;
+		// Update camera aspect ratio based on container dimensions
+		this.camera.aspect = containerWidth / containerHeight;
+		this.camera.updateProjectionMatrix();
+
+		// Set renderer size to container dimensions
+		this.renderer.setSize(containerWidth, containerHeight);
+		this.renderer.setPixelRatio(200 / containerHeight);
+
+		this.screenPixelsInGamePixel = containerHeight / 200;
+		this.heldItemCamera.aspect = containerWidth / containerHeight;
 		this.heldItemCamera.updateProjectionMatrix();
 	}
 
@@ -485,5 +532,10 @@ export class Renderer {
 			if (output >= approach) return approach;
 		}
 		return output;
+	}
+
+	// Public method to trigger a resize
+	public triggerResize() {
+		this.onWindowResize();
 	}
 }

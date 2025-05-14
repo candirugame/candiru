@@ -21,7 +21,7 @@ import { Peer } from '../../server/models/Peer.ts';
 						{{ peer.serverInfo.gameMode }} · {{ peer.serverInfo.mapName }}
 					</p>
 				</div>
-				<button class="btn-menu" (click)="join(peer.serverInfo.url)">join</button>
+				<button class="btn-menu" [title]="peer.serverInfo.url" (click)="join(peer.serverInfo.url)">join</button>
 			</div>
 			<div class="text-xs text-gray-400 mt-1">
 				v{{ peer.serverInfo.version }} · {{ peer.serverInfo.tickRate }}Hz
