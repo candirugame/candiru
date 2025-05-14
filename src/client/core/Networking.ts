@@ -107,6 +107,18 @@ export class Networking {
 		this.setupSocketListeners();
 	}
 
+	public destroy() {
+		this.socket.disconnect();
+		this.socket.removeAllListeners();
+		this.remotePlayers = [];
+		this.props = [];
+		this.worldItems = [];
+		this.particleQueue = [];
+		this.messagesBeingTyped = [];
+		this.lastUploadedLocalPlayer = null;
+		this.lastUploadTime = 0;
+	}
+
 	private async fetchVersion() {
 		try {
 			const response = await fetch('gameVersion.json');

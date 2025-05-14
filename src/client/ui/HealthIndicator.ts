@@ -123,6 +123,18 @@ export class HealthIndicator extends IndicatorBase {
 			healthIndicatorHeight * this.parentRenderer.getScreenPixelsInGamePixel(),
 		);
 	}
+
+	public destroy() {
+		if (this.sceneAdded) {
+			this.scene.remove(this.possumObject);
+			this.sceneAdded = false;
+		}
+		this.possumObject = undefined!;
+		this.lightRGBI = [0, 0, 0, 0];
+		this.rotatedAngle = 0;
+		this.lastHealth = 0;
+		this.lastHealthChangeWasDamage = false;
+	}
 }
 
 const basePosition = new THREE.Vector3(0, 0, 1.2);

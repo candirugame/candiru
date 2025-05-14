@@ -52,6 +52,22 @@ export class InputHandler {
 		this.setupEventListeners();
 	}
 
+	public destroy() {
+		this.mouse.dispose();
+		this.keys = {};
+		this.leftMouseDown = false;
+		this.rightMouseDown = false;
+		this.inputX = 0;
+		this.inputZ = 0;
+		this.jump = false;
+		this.prevInputVelocity.set(0, 0, 0);
+		this.scrollClicksSinceLastCheck = 0;
+		this.gamepadInputs.leftJoyX = 0;
+		this.gamepadInputs.leftJoyY = 0;
+		this.gamepadInputs.rightJoyX = 0;
+		this.gamepadInputs.rightJoyY = 0;
+	}
+
 	private setupEventListeners() {
 		document.addEventListener('keydown', this.onKeyDown.bind(this));
 		document.addEventListener('keyup', this.onKeyUp.bind(this));

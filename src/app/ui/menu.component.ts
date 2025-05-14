@@ -3,6 +3,7 @@ import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { SettingsComponent } from './settings.component.ts';
 import { BrowseComponent } from './browse.component.ts';
 import { Networking } from '../../client/core/Networking.ts';
+import { Game } from '../../client/core/Game.ts';
 
 @Component({
 	selector: 'app-menu',
@@ -24,6 +25,8 @@ import { Networking } from '../../client/core/Networking.ts';
 					<button class="btn-menu" (click)="navigate('settings')">settings</button>
 					<br>
 					<button class="btn-menu" (click)="navigate('browse')">servers</button>
+					<br>
+					<button class="btn-menu" (click)="cycleGameCount()">games: {{gameCount}}</button>
 
 
 					<div class="mt-4 flex gap-0">
@@ -73,9 +76,14 @@ export class MenuComponent {
 	@Output()
 	close = new EventEmitter<void>();
 	@Output()
-	menuVisibilityChange = new EventEmitter<boolean>(); // New event to emit menu visibility
+	menuVisibilityChange = new EventEmitter<boolean>();
+	@Output()
+	resetGameRequest = new EventEmitter<void>(); // New event for game reset
+	@Output()
+	changeGameCount = new EventEmitter<number>(); // New event for changing game count
 
 	activePage: 'main' | 'settings' | 'browse' = 'main';
+	gameCount = 1; // Track number of games
 
 	ngOnChanges() {
 		// Emit the visibility status whenever it changes
@@ -96,5 +104,13 @@ export class MenuComponent {
 			return;
 		}
 		this.activePage = page;
+	}
+
+	cycleGameCount() {
+		Game.nextGameIndex = 0;
+		this.gameCount = this.gameCount % 4 + 1; // Cycle 1->2->3->4->1
+		this.changeGameCount.emit(this.gameCount);
+		this.close.emit();
+		this.activePage = 'main';
 	}
 }
