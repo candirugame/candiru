@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
+import { Game } from '../core/Game.ts';
 
 // Define a custom event map interface
 interface PointerLockControlEventMap {
@@ -14,9 +15,11 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 	public localPlayer: Player;
 	public domElement: Element;
 	public isLocked: boolean = false;
+	private gameIndex: number;
 
-	constructor(localPlayer: Player, domElement: Element) {
+	constructor(localPlayer: Player, domElement: Element, gameIndex: number) {
 		super();
+		this.gameIndex = gameIndex;
 
 		if (domElement === undefined) {
 			console.warn('THREE.PointerLockControls: The second parameter "domElement" is now mandatory.');
@@ -63,6 +66,7 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 
 	private onMouseMove = (event: MouseEvent): void => {
 		if (!this.isLocked) return;
+		if (this.gameIndex !== Game.nextGameIndex - 1) return;
 
 		// deno-lint-ignore no-explicit-any
 		const movementX = event.movementX || (event as any).mozMovementX || (event as any).webkitMovementX || 0;

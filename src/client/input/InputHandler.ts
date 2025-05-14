@@ -32,18 +32,18 @@ export class InputHandler {
 	private inventoryIterationTouched: boolean = false;
 	private touchButtons: number[] = [];
 
-	constructor(renderer: Renderer, localPlayer: Player, nextGameIndex: number) {
+	constructor(renderer: Renderer, localPlayer: Player, gameIndex: number) {
 		this.renderer = renderer;
 		this.localPlayer = localPlayer;
 		this.prevInputVelocity = new THREE.Vector3();
 		this.gamepadEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 
 		this.clock = new THREE.Clock();
-		this.mouse = new PointerLockControls(this.localPlayer, document.body);
+		this.mouse = new PointerLockControls(this.localPlayer, document.body, gameIndex);
 
 		this.gamepadInputs = new GamepadInputs();
 
-		this.gameIndex = nextGameIndex;
+		this.gameIndex = gameIndex;
 
 		if (!navigator.getGamepads()) {
 			console.log('Browser does not support Gamepad API.');
@@ -254,6 +254,8 @@ export class InputHandler {
 	}
 
 	private onKeyDown(event: KeyboardEvent) {
+		if (this.gameIndex !== Game.nextGameIndex - 1) return;
+
 		//event.preventDefault();
 		if (event.key === 'Tab' || event.key === "'" || event.key === '/') event.preventDefault();
 		const key = event.key.toLowerCase();
@@ -272,6 +274,8 @@ export class InputHandler {
 	}
 
 	private onKeyUp(event: KeyboardEvent) {
+		if (this.gameIndex !== Game.nextGameIndex - 1) return;
+
 		const key = event.key.toLowerCase();
 		this.keys[key] = false;
 
@@ -285,6 +289,8 @@ export class InputHandler {
 	}
 
 	private onMouseDown(event: MouseEvent) {
+		if (this.gameIndex !== Game.nextGameIndex - 1) return;
+
 		if (event.button === 0 && !Game.menuOpen) {
 			this.leftMouseDown = true;
 		} else if (event.button === 2 && !Game.menuOpen) {
@@ -293,6 +299,8 @@ export class InputHandler {
 	}
 
 	private onMouseUp(event: MouseEvent) {
+		if (this.gameIndex !== Game.nextGameIndex - 1) return;
+
 		if (event.button === 0) {
 			this.leftMouseDown = false;
 		} else if (event.button === 2) {

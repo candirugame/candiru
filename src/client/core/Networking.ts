@@ -276,7 +276,7 @@ export class Networking {
 						localPlayerDelta = delta;
 					}
 				} else {
-					this.remotePlayers.push(delta as PlayerData);
+					//	this.remotePlayers.push(delta as PlayerData);
 					if (delta.id === this.localPlayer.id) {
 						localPlayerDelta = delta;
 					}

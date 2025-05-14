@@ -35,7 +35,7 @@ export class Game {
 		this.gameIndex = Game.nextGameIndex++;
 		this.localPlayer = new Player();
 		this.localPlayer.name = SettingsManager.settings.name ?? this.localPlayer.name;
-		this.chatOverlay = new ChatOverlay(container, this.localPlayer);
+		this.chatOverlay = new ChatOverlay(container, this.localPlayer, this.gameIndex);
 		this.networking = new Networking(this.localPlayer, this.chatOverlay);
 
 		// Create Renderer first

@@ -56,6 +56,8 @@ export class ChatOverlay {
 	private lastRoutineMs = 0;
 	private containerElement: HTMLElement;
 
+	private gameIndex: number;
+
 	private offscreenCanvas: HTMLCanvasElement;
 	private offscreenCtx: CanvasRenderingContext2D;
 
@@ -107,9 +109,10 @@ export class ChatOverlay {
 		return `hsl(${hue}, 100%, 50%)`;
 	}
 
-	constructor(container: HTMLElement, localPlayer: Player) {
+	constructor(container: HTMLElement, localPlayer: Player, gameIndex: number) {
 		this.localPlayer = localPlayer;
 		this.containerElement = container;
+		this.gameIndex = gameIndex;
 		this.chatCanvas = document.createElement('canvas');
 		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
@@ -1039,6 +1042,8 @@ export class ChatOverlay {
 	}
 
 	private onKeyDown(e: KeyboardEvent) {
+		if (this.gameIndex !== Game.nextGameIndex - 1) return;
+
 		if (e.key === 'Backspace' && (this.localPlayer.chatActive || this.nameSettingActive)) {
 			this.localPlayer.chatMsg = this.localPlayer.chatMsg.slice(0, -1);
 			return;
