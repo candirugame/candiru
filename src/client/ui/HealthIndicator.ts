@@ -100,25 +100,26 @@ export class HealthIndicator extends IndicatorBase {
 	}
 
 	protected setupScissorAndViewport(): void {
-		const screenHeight = globalThis.innerHeight;
+		const chatOverlay = this.parentRenderer.getChatOverlay();
+		const screenHeight = chatOverlay.chatCanvas.height;
 
 		const healthIndicatorWidth = 60; // native
 		const healthIndicatorHeight = healthIndicatorWidth; // 1:1 aspect ratio
 
+		// Position indicator right below the debug text
+		const debugTextHeight = this.parentRenderer.getChatOverlay().getDebugTextHeight();
+		const yPos = screenHeight - healthIndicatorHeight - debugTextHeight - 1;
+
 		this.scissor.set(
 			2 * this.parentRenderer.getScreenPixelsInGamePixel(),
-			screenHeight -
-				(healthIndicatorHeight + 1 + this.parentRenderer.getChatOverlay().getDebugTextHeight()) *
-					this.parentRenderer.getScreenPixelsInGamePixel(),
+			yPos * this.parentRenderer.getScreenPixelsInGamePixel(),
 			healthIndicatorWidth * this.parentRenderer.getScreenPixelsInGamePixel(),
 			healthIndicatorHeight * this.parentRenderer.getScreenPixelsInGamePixel(),
 		);
 
 		this.viewport.set(
 			2 * this.parentRenderer.getScreenPixelsInGamePixel(),
-			screenHeight -
-				(healthIndicatorHeight + 1 + this.parentRenderer.getChatOverlay().getDebugTextHeight()) *
-					this.parentRenderer.getScreenPixelsInGamePixel(),
+			yPos * this.parentRenderer.getScreenPixelsInGamePixel(),
 			healthIndicatorWidth * this.parentRenderer.getScreenPixelsInGamePixel(),
 			healthIndicatorHeight * this.parentRenderer.getScreenPixelsInGamePixel(),
 		);

@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
 	imports: [CommonModule],
 	template: `
 		<div>
-			<h2 class="text-xl text-gray-100 mb-4">splitscreen</h2>
+			<h2 class="text-xl text-gray-100 mb-4">local splitscreen</h2>
 				<button class="btn-menu space-y-2" (click)="selectGameCount(1)">1 player</button>
 				<br>
 				<button class="btn-menu space-y-2" (click)="selectGameCount(2)">2 players</button>

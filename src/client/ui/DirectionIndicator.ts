@@ -97,27 +97,29 @@ export class DirectionIndicator extends IndicatorBase {
 	}
 
 	protected setupScissorAndViewport(): void {
-		const screenWidth = globalThis.innerWidth;
-		const screenHeight = globalThis.innerHeight;
+		// Get dimensions from renderer instead of global window
+		const chatOverlay = this.parentRenderer.getChatOverlay();
+		const screenWidth = chatOverlay.chatCanvas.width;
+		const screenHeight = chatOverlay.chatCanvas.height;
 
 		// Smaller size
 		const directionIndicatorWidth = 40;
 		const directionIndicatorHeight = 40;
 
 		// Center bottom placement
-		const xOffset = (screenWidth - directionIndicatorWidth * this.parentRenderer.getScreenPixelsInGamePixel()) / 2;
-		const yOffset = screenHeight - (directionIndicatorHeight + 150) * this.parentRenderer.getScreenPixelsInGamePixel();
+		const xOffset = Math.floor((screenWidth - directionIndicatorWidth) / 2);
+		const yOffset = screenHeight - (directionIndicatorHeight + 150);
 
 		this.scissor.set(
-			xOffset,
-			yOffset,
+			xOffset * this.parentRenderer.getScreenPixelsInGamePixel(),
+			yOffset * this.parentRenderer.getScreenPixelsInGamePixel(),
 			directionIndicatorWidth * this.parentRenderer.getScreenPixelsInGamePixel(),
 			directionIndicatorHeight * this.parentRenderer.getScreenPixelsInGamePixel(),
 		);
 
 		this.viewport.set(
-			xOffset,
-			yOffset,
+			xOffset * this.parentRenderer.getScreenPixelsInGamePixel(),
+			yOffset * this.parentRenderer.getScreenPixelsInGamePixel(),
 			directionIndicatorWidth * this.parentRenderer.getScreenPixelsInGamePixel(),
 			directionIndicatorHeight * this.parentRenderer.getScreenPixelsInGamePixel(),
 		);
