@@ -34,27 +34,117 @@ export default defineConfig({
 		VitePWA({
 			strategies: 'generateSW',
 			registerType: 'autoUpdate',
+			injectRegister: 'auto',
+			devOptions: {
+				// Enable dev debugging
+				enabled: true,
+				type: 'module',
+			},
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,glb,json,wasm,ttf}'],
+				// Precache only essential files for core functionality
+				globPatterns: [
+					'index.html',
+					'favicon.ico',
+					'assets/index-*.js', 
+					'assets/index-*.css',
+					'style.css',
+					'draco/**', // Include all draco decoder files
+				],
+				// Don't precache other large assets
+				globIgnores: [
+					'**/{models,maps}/**', // Exclude large directories
+					'**/*.{png,glb,json,wasm,ttf,jpg,jpeg}', // Exclude images and other large file types
+					'**/socket.io/**', // Explicitly exclude socket.io
+				],
+				// Don't use navigateFallback for APIs or socket.io
+				navigateFallbackDenylist: [
+					/^\/api\//,
+					/^\/socket\.io\//,
+				],
+				// Socket.io should never be handled by the service worker
 				runtimeCaching: [
-					// Removed socket.io rule to avoid intercepting WebSocket traffic
+					// First rule to completely bypass the service worker for socket.io
 					{
-						urlPattern: /\/.*\.(glb|json|wasm|ttf)/,
+						urlPattern: ({ url }: { url: URL }) => {
+							return url.pathname.startsWith('/socket.io');
+						},
+						handler: 'NetworkOnly',
+					},
+					// Static assets
+					{
+						urlPattern: ({ request }: { request: Request }) => {
+							return request.destination === 'style' || 
+								   request.destination === 'script' || 
+								   request.destination === 'font';
+						},
 						handler: 'CacheFirst',
 						options: {
-							cacheName: 'asset-cache',
+							cacheName: 'static-resources',
 							expiration: {
-								maxEntries: 100,
-								maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+								maxEntries: 60,
+								maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+							},
+							cacheableResponse: {
+								statuses: [0, 200]
 							},
 						},
 					},
+					// Images
+					{
+						urlPattern: ({ request }: { request: Request }) => {
+							return request.destination === 'image';
+						},
+						handler: 'CacheFirst',
+						options: {
+							cacheName: 'images',
+							expiration: {
+								maxEntries: 60,
+								maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+							},
+							cacheableResponse: {
+								statuses: [0, 200]
+							},
+						},
+					},
+					// 3D Models and assets
+					{
+						urlPattern: ({ url }: { url: URL }) => {
+							return /\.(glb|json|wasm)$/.test(url.pathname) ||
+								   url.pathname.includes('/models/') ||
+								   url.pathname.includes('/maps/');
+						},
+						handler: 'CacheFirst',
+						options: {
+							cacheName: '3d-assets',
+							expiration: {
+								maxEntries: 50,
+								maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+							},
+							cacheableResponse: {
+								statuses: [0, 200]
+							},
+						},
+					},
+					// HTML navigation
+					{
+						urlPattern: ({ request }: { request: Request }) => {
+							return request.mode === 'navigate';
+						},
+						handler: 'NetworkFirst',
+						options: {
+							cacheName: 'pages',
+							expiration: {
+								maxEntries: 20,
+								maxAgeSeconds: 60 * 60 * 24, // 1 day
+							},
+							cacheableResponse: {
+								statuses: [0, 200]
+							},
+						},
+					}
 				],
-				navigateFallbackDenylist: [
-					/^\/api/,
-					/\.(glb|json|wasm|ttf)$/,
-					/\/socket.io\//, // Added socket.io to denylist to prevent service worker interference
-				],
+				skipWaiting: true,
+				clientsClaim: true,
 			},
 			manifest: {
 				name: 'Candiru',
@@ -63,11 +153,12 @@ export default defineConfig({
 				icons: [
 					{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
 				],
+				start_url: '/',
+				display: 'standalone',
+				orientation: 'portrait',
 			},
-			includeAssets: [
-				'**/*.{glb,json,wasm,ttf}',
-				'draco/**/*', // Explicitly include Draco files
-			],
+			// Add draco directory explicitly to assets
+			includeAssets: ['draco/**/*'],
 		}) as PluginOption, // Explicitly cast to PluginOption
 	],
 });
