@@ -917,8 +917,8 @@ export class ChatOverlay {
 		// }
 
 		//extend crosshair to radius
-		ctx.fillStyle = SettingsManager.settings.crosshairColor;
-		ctx.globalAlpha = 0.3;
+		//ctx.fillStyle = SettingsManager.settings.crosshairColor;
+		//ctx.globalAlpha = 0.3;
 
 		for (let i = 0; i < radius / 5; i++) {
 			let positiveLength = 3;
