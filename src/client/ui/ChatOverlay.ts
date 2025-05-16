@@ -896,7 +896,22 @@ export class ChatOverlay {
 		// Restore normal compositing
 		ctx.globalCompositeOperation = 'source-over';
 
-		this.renderPixelText(this.sniperOverlayPower.toFixed(1), centerX + 3, circleY + 3, 'green');
+		//this.renderPixelText(this.sniperOverlayPower.toFixed(1), centerX + 3, circleY + 3, 'green');
+		// const barColors = ['green', 'green', 'yellow', 'yellow', 'orange', 'orange', 'red'];
+		// for (let i = 0; i < barColors.length; i++) {
+		// 	if (this.sniperOverlayPower >= (i + 1) / barColors.length) ctx.fillStyle = barColors[i];
+		// 	else ctx.fillStyle = 'gray';
+		// 	ctx.fillRect(centerX + 7 + i, circleY - i, 1, i + 1);
+		// }
+
+		const barCount = 16;
+		for (let i = 0; i < barCount; i++) {
+			if (this.sniperOverlayPower >= (i + 1) / barCount) {
+				ctx.fillStyle = `hsl(${120 - (i / barCount) * 120}, 100%, 50%)`;
+			} else ctx.fillStyle = 'gray';
+			const h = Math.floor(i / 2);
+			ctx.fillRect(centerX + 16 + i, circleY - h, 1, h + 1);
+		}
 	}
 
 	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];

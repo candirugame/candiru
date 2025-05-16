@@ -5,10 +5,10 @@ import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
 import { ShotHandler, ShotParticleType } from '../core/ShotHandler.ts';
 
-const firingDelay = 1;
-const firingDelayHeld = 1.5; //longer firing delay when mouse is held down
+const firingDelay = 0.5;
+const firingDelayHeld = 0.5; //longer firing delay when mouse is held down
 const showInHandDelay = 0.1;
-const timeToFullPower = 6;
+const timeToFullPower = 5;
 
 const scopedPosition = new THREE.Vector3(0, 0, 4.2);
 const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
