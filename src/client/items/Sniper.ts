@@ -174,6 +174,7 @@ export class Sniper extends ItemBase {
 	public override showInHand() {
 		if (this.shownInHand) return;
 		this.shownInHand = true;
+		this.powerStartTimestamp = Date.now() / 1000;
 		this.shownInHandTimestamp = Date.now() / 1000;
 		if (!this.addedToHandScene && this.object) {
 			this.scene.add(this.object);
@@ -185,6 +186,7 @@ export class Sniper extends ItemBase {
 		if (!this.shownInHand) return;
 		this.shownInHand = false;
 		this.renderer.targetZoom = 1.0;
+		this.renderer.getChatOverlay().sniperOverlayEnabled = false;
 	}
 	public itemDepleted(): boolean {
 		return false;
