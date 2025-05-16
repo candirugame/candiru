@@ -910,7 +910,7 @@ export class ChatOverlay {
 		// 	ctx.fillRect(centerX + 7 + i, circleY - i, 1, i + 1);
 		// }
 
-		const headshotIsDeadly = this.sniperOverlayPower > 0.58;
+		const headshotIsDeadly = this.sniperOverlayPower > 1 / (0.99 * 4.25); //0.99 damage, 5x multiplier
 		if (headshotIsDeadly) {
 			ctx.fillStyle = 'rgba(255,0,0,0.5)';
 			//ctx.fillRect(centerX + 16 + 8, circleY + 4, 4, 4);

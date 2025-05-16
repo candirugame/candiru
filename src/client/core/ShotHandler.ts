@@ -242,7 +242,7 @@ export class ShotGroup {
 											damageAfterHeadshot *= 1.5;
 											break;
 										case ShotParticleType.Sniper:
-											damageAfterHeadshot *= 2.5;
+											damageAfterHeadshot *= 4.25;
 											break;
 									}
 								}
