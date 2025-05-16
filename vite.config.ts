@@ -6,9 +6,7 @@ export default defineConfig({
 	define: {
 		'process.env': {
 			NODE_ENV: JSON.stringify(process.env.NODE_ENV),
-			// Add any other environment variables you need
 		},
-		// Fallbacks for other process references
 		'process.platform': JSON.stringify('browser'),
 		'process.version': JSON.stringify(''),
 	},
@@ -18,7 +16,6 @@ export default defineConfig({
 			output: {
 				manualChunks: {
 					three: ['three'],
-					// Add other large dependencies here
 				},
 			},
 		},
@@ -30,14 +27,29 @@ export default defineConfig({
 			prerender: {
 				routes: [],
 			},
-		}) as PluginOption, // Explicitly cast to PluginOption
+		}) as PluginOption,
 		VitePWA({
 			strategies: 'generateSW',
 			registerType: 'autoUpdate',
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,glb,json,wasm,ttf}'],
+				maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB - adjust as needed
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'], // Removed model file extensions
+				globIgnores: ['**/original_models/**'], // Explicitly ignore models directory
 				runtimeCaching: [
-					// Removed socket.io rule to avoid intercepting WebSocket traffic
+					{
+						urlPattern: /\/original_models\/.*\.(glb|json|wasm|ttf)/,
+						handler: 'CacheFirst',
+						options: {
+							cacheName: 'models-cache',
+							expiration: {
+								maxEntries: 100,
+								maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+							},
+							cacheableResponse: {
+								statuses: [0, 200],
+							},
+						},
+					},
 					{
 						urlPattern: /\/.*\.(glb|json|wasm|ttf)/,
 						handler: 'CacheFirst',
@@ -47,13 +59,16 @@ export default defineConfig({
 								maxEntries: 100,
 								maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
 							},
+							cacheableResponse: {
+								statuses: [0, 200],
+							},
 						},
 					},
 				],
 				navigateFallbackDenylist: [
 					/^\/api/,
 					/\.(glb|json|wasm|ttf)$/,
-					/\/socket.io\//, // Added socket.io to denylist to prevent service worker interference
+					/\/socket.io\//,
 				],
 			},
 			manifest: {
@@ -65,9 +80,9 @@ export default defineConfig({
 				],
 			},
 			includeAssets: [
-				'**/*.{glb,json,wasm,ttf}',
-				'draco/**/*', // Explicitly include Draco files
+				'**/*.{js,css,html,ico,png,svg,woff,woff2}', // Not including models here
+				'draco/**/*',
 			],
-		}) as PluginOption, // Explicitly cast to PluginOption
+		}) as PluginOption,
 	],
 });

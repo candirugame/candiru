@@ -44,6 +44,13 @@ const weaponData: Map<number, WeaponProperties> = new Map([
 		yawOffsetRange: 0.3,
 		pitchOffsetRange: 0.3,
 	}],
+	[5, { // Sniper
+		firingDelay: 0.5,
+		particleType: ShotParticleType.Sniper,
+		numberOfProjectiles: 1,
+		yawOffsetRange: 0,
+		pitchOffsetRange: 0,
+	}],
 	// Pipe (ID 3) doesn't shoot particles.
 	// Flag (ID 4) doesn't shoot.
 ]);

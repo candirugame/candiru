@@ -38,8 +38,9 @@ const defaults = {
 	HEALTH_REGEN_RATE: '5',
 
 	//Item settings
-	MAX_ITEMS_IN_WORLD: '10',
-	ITEM_RESPAWN_TIME: '7',
+	MAX_ITEMS_IN_WORLD: '14',
+	ITEM_RESPAWN_TIME: '5',
+	ITEM_DESPAWN_TIME: '300', //5 minutes, set to 0 to disable
 
 	//platform-specific settings
 	DOKPLOY_DEPLOY_URL: '',
@@ -142,6 +143,7 @@ function parseConfig(env: Record<string, string>) {
 		items: {
 			maxItemsInWorld: parseInt(env.MAX_ITEMS_IN_WORLD),
 			respawnTime: parseInt(env.ITEM_RESPAWN_TIME),
+			despawnTime: parseInt(env.ITEM_DESPAWN_TIME),
 		},
 	};
 }

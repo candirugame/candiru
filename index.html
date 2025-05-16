@@ -20,13 +20,7 @@
 	</head>
 	<body>
 		<app-root></app-root>
-		<script>
-			if ('serviceWorker' in navigator) {
-				window.addEventListener('load', () => {
-					navigator.serviceWorker.register('/sw.js');
-				});
-			}
-		</script>
+		<!-- Service worker registration will be handled by VitePWA plugin -->
 		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>

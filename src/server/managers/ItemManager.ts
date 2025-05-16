@@ -29,6 +29,18 @@ export class ItemManager {
 					this.lastItemCreationTimestamp = currentTime;
 				}
 			}
+			// despawn old items
+			if (config.items.despawnTime != 0) {
+				this.worldItems = this.worldItems.filter((item) => {
+					const itemAge = currentTime - item.creationTimestamp;
+					if (itemAge > config.items.despawnTime) {
+						this.itemUpdateFlag = true;
+						console.log(`🗑️ Item ${item.id} despawned after ${itemAge} seconds.`);
+						return false; // Remove the item
+					}
+					return true; // Keep the item
+				});
+			}
 		} catch (error) {
 			console.log('⚠ Error in ItemManager tick:', error);
 		}
@@ -103,6 +115,13 @@ export class ItemManager {
 							player.inventory.push(4);
 							shouldPickup = true;
 							console.log(`🚩 ${player.name} picked up the flag!`);
+						}
+						break;
+					case 5: // bottle
+						if (!player.inventory.includes(5)) {
+							player.inventory.push(5);
+							shouldPickup = true;
+							console.log(`🍌 ${player.name} picked up sniper!`);
 						}
 						break;
 				}

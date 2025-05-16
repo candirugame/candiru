@@ -10,6 +10,7 @@ import { Player } from '../../shared/Player.ts';
 import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
 import { ShotHandler } from './ShotHandler.ts';
+import { Sniper } from '../items/Sniper.ts';
 export class Inventory {
 	private inventoryItems: ItemBase[] = [];
 	private renderer: Renderer;
@@ -84,6 +85,11 @@ export class Inventory {
 					case 4: {
 						const flag = new FlagItem(this.renderer, i, ItemType.InventoryItem);
 						this.inventoryItems.push(flag);
+						break;
+					}
+					case 5: {
+						const banana = new Sniper(this.renderer, this.shotHandler, i, ItemType.InventoryItem);
+						this.inventoryItems.push(banana);
 						break;
 					}
 					default: {

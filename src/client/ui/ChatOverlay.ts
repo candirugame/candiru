@@ -117,6 +117,9 @@ export class ChatOverlay {
 		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
 
+		this.redguySmall.src = '/redguy_6px.webp';
+		this.redguy.src = '/redguy.webp';
+
 		this.chatCanvas.width = 400;
 		this.chatCanvas.height = 200;
 
@@ -189,6 +192,8 @@ export class ChatOverlay {
 
 		this.clearOldMessages();
 		this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+
+		this.renderSniperOverlay();
 
 		this.renderHitMarkers();
 
@@ -788,7 +793,7 @@ export class ChatOverlay {
 		// Adjust this based on your desired base size
 		const scaleFactor = 9;
 
-		return size * scaleFactor;
+		return size * scaleFactor * this.renderer.targetZoom;
 	}
 
 	// private sparkleParticles: {
@@ -869,6 +874,82 @@ export class ChatOverlay {
 	// 		}
 	// 	}
 	// }
+
+	public sniperOverlayEnabled: boolean = false;
+	public sniperOverlayPower: number = 0;
+	public redguySmall: HTMLImageElement = new Image();
+	public redguy: HTMLImageElement = new Image();
+
+	public renderSniperOverlay() {
+		if (!this.sniperOverlayEnabled) return;
+
+		const ctx = this.chatCtx;
+		const centerX = Math.floor(this.chatCanvas.width / 2);
+		const radius = 65;
+		const circleY = 100;
+
+		//				ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2), 95, 1, 3);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2), 103, 1, 3);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2 + 3), 100, 3, 1);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2 - 5), 100, 3, 1);
+
+		// METHOD 2: Using compositing
+		// First draw the overlay
+		ctx.fillStyle = 'rgba(4, 25, 4, 0.7)';
+		ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+
+		// Then punch a hole in it
+		ctx.globalCompositeOperation = 'destination-out';
+		ctx.beginPath();
+		ctx.arc(centerX, circleY, radius, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Restore normal compositing
+		ctx.globalCompositeOperation = 'source-over';
+
+		//this.renderPixelText(this.sniperOverlayPower.toFixed(1), centerX + 3, circleY + 3, 'green');
+		// const barColors = ['green', 'green', 'yellow', 'yellow', 'orange', 'orange', 'red'];
+		// for (let i = 0; i < barColors.length; i++) {
+		// 	if (this.sniperOverlayPower >= (i + 1) / barColors.length) ctx.fillStyle = barColors[i];
+		// 	else ctx.fillStyle = 'gray';
+		// 	ctx.fillRect(centerX + 7 + i, circleY - i, 1, i + 1);
+		// }
+
+		//extend crosshair to radius
+		ctx.fillStyle = SettingsManager.settings.crosshairColor;
+		ctx.globalAlpha = 0.3;
+
+		for (let i = 0; i < radius / 5; i++) {
+			let positiveLength = 3;
+			if (radius / 5 - i < 2) positiveLength = 2; //crosshair bleeds one pixel out of the circle
+			ctx.fillRect(Math.floor(this.screenWidth / 2 + 3 + i * 5), 100, positiveLength, 1);
+			ctx.fillRect(Math.floor(this.screenWidth / 2), 100 + 3 + i * 5, 1, positiveLength);
+
+			ctx.fillRect(Math.floor(this.screenWidth / 2 - 5 - i * 5), 100, 3, 1);
+			ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 5 - i * 5, 1, 3);
+		}
+		ctx.globalAlpha = 1;
+
+		const headshotIsDeadly = this.sniperOverlayPower > 1 / (0.99 * 4.25); //0.99 damage, 5x multiplier
+		if (headshotIsDeadly) {
+			ctx.fillStyle = 'rgba(255,0,0,0.5)';
+			//ctx.fillRect(centerX + 16 + 8, circleY + 4, 4, 4);
+			const now = Date.now() / 1000;
+			const flashOn = now % 0.1 < 0.05;
+			if (this.redguySmall.complete && this.redguySmall.naturalWidth > 0 && flashOn) {
+				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3, circleY + 2, 6, 6);
+			}
+		}
+		const barCount = 16;
+		for (let i = 0; i < barCount; i++) {
+			if (this.sniperOverlayPower >= (i + 1) / barCount) {
+				ctx.fillStyle = `hsl(${120 - (i / barCount) * 120}, 100%, 50%)`;
+			} else ctx.fillStyle = 'gray';
+			const h = Math.floor(i / 2);
+			ctx.fillRect(centerX + 16 + i, circleY - 2 - h, 1, h + 1);
+		}
+	}
 
 	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
 	private minTimeBetweenHitMarkers = 0.016;
@@ -987,9 +1068,18 @@ export class ChatOverlay {
 
 	private renderEvil() {
 		const ctx = this.chatCtx;
-		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.05) {
+		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07) {
 			ctx.fillStyle = 'rgba(255,0,0,0.1)';
 			ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+
+			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.14) {
+				ctx.globalAlpha = 0.2;
+
+				if (this.redguy.complete && this.redguy.naturalWidth > 0) {
+					ctx.drawImage(this.redguy, 0, 0, this.chatCanvas.width, this.chatCanvas.height);
+				}
+				ctx.globalAlpha = 1;
+			}
 		}
 	}
 
