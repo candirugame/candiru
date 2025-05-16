@@ -6,9 +6,7 @@ export default defineConfig({
 	define: {
 		'process.env': {
 			NODE_ENV: JSON.stringify(process.env.NODE_ENV),
-			// Add any other environment variables you need
 		},
-		// Fallbacks for other process references
 		'process.platform': JSON.stringify('browser'),
 		'process.version': JSON.stringify(''),
 	},
@@ -18,7 +16,6 @@ export default defineConfig({
 			output: {
 				manualChunks: {
 					three: ['three'],
-					// Add other large dependencies here
 				},
 			},
 		},
@@ -30,121 +27,49 @@ export default defineConfig({
 			prerender: {
 				routes: [],
 			},
-		}) as PluginOption, // Explicitly cast to PluginOption
+		}) as PluginOption,
 		VitePWA({
 			strategies: 'generateSW',
 			registerType: 'autoUpdate',
-			injectRegister: 'auto',
-			devOptions: {
-				// Enable dev debugging
-				enabled: true,
-				type: 'module',
-			},
 			workbox: {
-				// Precache only essential files for core functionality
-				globPatterns: [
-					'index.html',
-					'favicon.ico',
-					'assets/index-*.js', 
-					'assets/index-*.css',
-					'style.css',
-					'draco/**', // Include all draco decoder files
-				],
-				// Don't precache other large assets
-				globIgnores: [
-					'**/{models,maps}/**', // Exclude large directories
-					'**/*.{png,glb,json,wasm,ttf,jpg,jpeg}', // Exclude images and other large file types
-					'**/socket.io/**', // Explicitly exclude socket.io
-				],
-				// Don't use navigateFallback for APIs or socket.io
-				navigateFallbackDenylist: [
-					/^\/api\//,
-					/^\/socket\.io\//,
-				],
-				// Socket.io should never be handled by the service worker
+				maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB - adjust as needed
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'], // Removed model file extensions
+				globIgnores: ['**/original_models/**'], // Explicitly ignore models directory
 				runtimeCaching: [
-					// First rule to completely bypass the service worker for socket.io
 					{
-						urlPattern: ({ url }: { url: URL }) => {
-							return url.pathname.startsWith('/socket.io');
-						},
-						handler: 'NetworkOnly',
-					},
-					// Static assets
-					{
-						urlPattern: ({ request }: { request: Request }) => {
-							return request.destination === 'style' || 
-								   request.destination === 'script' || 
-								   request.destination === 'font';
-						},
+						urlPattern: /\/original_models\/.*\.(glb|json|wasm|ttf)/,
 						handler: 'CacheFirst',
 						options: {
-							cacheName: 'static-resources',
+							cacheName: 'models-cache',
 							expiration: {
-								maxEntries: 60,
-								maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+								maxEntries: 100,
+								maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
 							},
 							cacheableResponse: {
-								statuses: [0, 200]
+								statuses: [0, 200],
 							},
 						},
 					},
-					// Images
 					{
-						urlPattern: ({ request }: { request: Request }) => {
-							return request.destination === 'image';
-						},
+						urlPattern: /\/.*\.(glb|json|wasm|ttf)/,
 						handler: 'CacheFirst',
 						options: {
-							cacheName: 'images',
+							cacheName: 'asset-cache',
 							expiration: {
-								maxEntries: 60,
-								maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+								maxEntries: 100,
+								maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
 							},
 							cacheableResponse: {
-								statuses: [0, 200]
+								statuses: [0, 200],
 							},
 						},
 					},
-					// 3D Models and assets
-					{
-						urlPattern: ({ url }: { url: URL }) => {
-							return /\.(glb|json|wasm)$/.test(url.pathname) ||
-								   url.pathname.includes('/models/') ||
-								   url.pathname.includes('/maps/');
-						},
-						handler: 'CacheFirst',
-						options: {
-							cacheName: '3d-assets',
-							expiration: {
-								maxEntries: 50,
-								maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-							},
-							cacheableResponse: {
-								statuses: [0, 200]
-							},
-						},
-					},
-					// HTML navigation
-					{
-						urlPattern: ({ request }: { request: Request }) => {
-							return request.mode === 'navigate';
-						},
-						handler: 'NetworkFirst',
-						options: {
-							cacheName: 'pages',
-							expiration: {
-								maxEntries: 20,
-								maxAgeSeconds: 60 * 60 * 24, // 1 day
-							},
-							cacheableResponse: {
-								statuses: [0, 200]
-							},
-						},
-					}
 				],
-				skipWaiting: true,
-				clientsClaim: true,
+				navigateFallbackDenylist: [
+					/^\/api/,
+					/\.(glb|json|wasm|ttf)$/,
+					/\/socket.io\//,
+				],
 			},
 			manifest: {
 				name: 'Candiru',
@@ -153,12 +78,11 @@ export default defineConfig({
 				icons: [
 					{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
 				],
-				start_url: '/',
-				display: 'standalone',
-				orientation: 'portrait',
 			},
-			// Add draco directory explicitly to assets
-			includeAssets: ['draco/**/*'],
-		}) as PluginOption, // Explicitly cast to PluginOption
+			includeAssets: [
+				'**/*.{js,css,html,ico,png,svg,woff,woff2}', // Not including models here
+				'draco/**/*',
+			],
+		}) as PluginOption,
 	],
 });
