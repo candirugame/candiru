@@ -117,6 +117,9 @@ export class ChatOverlay {
 		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
 
+		this.redguySmall.src = '/redguy_6px.webp';
+		this.redguy.src = '/redguy.webp';
+
 		this.chatCanvas.width = 400;
 		this.chatCanvas.height = 200;
 
@@ -874,6 +877,9 @@ export class ChatOverlay {
 
 	public sniperOverlayEnabled: boolean = false;
 	public sniperOverlayPower: number = 0;
+	public redguySmall: HTMLImageElement = new Image();
+	public redguy: HTMLImageElement = new Image();
+
 	public renderSniperOverlay() {
 		if (!this.sniperOverlayEnabled) return;
 
@@ -904,6 +910,16 @@ export class ChatOverlay {
 		// 	ctx.fillRect(centerX + 7 + i, circleY - i, 1, i + 1);
 		// }
 
+		const headshotIsDeadly = this.sniperOverlayPower > 0.58;
+		if (headshotIsDeadly) {
+			ctx.fillStyle = 'rgba(255,0,0,0.5)';
+			//ctx.fillRect(centerX + 16 + 8, circleY + 4, 4, 4);
+			const now = Date.now() / 1000;
+			const flashOn = now % 0.1 < 0.05;
+			if (this.redguySmall.complete && flashOn) {
+				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3, circleY + 4, 6, 6);
+			}
+		}
 		const barCount = 16;
 		for (let i = 0; i < barCount; i++) {
 			if (this.sniperOverlayPower >= (i + 1) / barCount) {
@@ -1034,6 +1050,13 @@ export class ChatOverlay {
 		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07) {
 			ctx.fillStyle = 'rgba(255,0,0,0.1)';
 			ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+
+			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.14) {
+				ctx.globalAlpha = 0.2;
+
+				ctx.drawImage(this.redguy, 0, 0, this.chatCanvas.width, this.chatCanvas.height);
+				ctx.globalAlpha = 1;
+			}
 		}
 	}
 

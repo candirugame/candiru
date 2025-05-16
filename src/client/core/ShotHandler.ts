@@ -229,7 +229,7 @@ export class ShotGroup {
 									const playerRelativeVector = vectorInWorldSpace.clone().applyQuaternion(inverseTargetQuaternion);
 									//console.log(playerRelativeVector);
 									headshot = playerRelativeVector.y > -0.16 && playerRelativeVector.z < -0.35;
-									console.log(headshot);
+									//console.log(headshot);
 								}
 
 								let damageAfterHeadshot = this.damage;
