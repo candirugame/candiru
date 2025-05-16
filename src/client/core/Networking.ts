@@ -409,6 +409,10 @@ export class Networking {
 		return this.remotePlayers;
 	}
 
+	public getRemotePlayerById(id: number): PlayerData | undefined {
+		return this.remotePlayers.find((player) => player.id === id);
+	}
+
 	public sendMessage(msg: string) {
 		const chatMessage = {
 			message: msg,
