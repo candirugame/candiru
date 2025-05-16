@@ -58,7 +58,7 @@ export class Sniper extends ItemBase {
 			}
 
 			this.inventoryMenuObject = this.object.clone();
-			this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+			this.inventoryMenuObject.scale.set(0.6, 0.6, 0.6);
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.45, 0.45, 0.45);
