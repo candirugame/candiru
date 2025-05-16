@@ -888,6 +888,12 @@ export class ChatOverlay {
 		const radius = 65;
 		const circleY = 100;
 
+		//				ctx.fillRect(Math.floor(this.screenWidth / 2), 100, 1, 1);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2), 95, 1, 3);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2), 103, 1, 3);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2 + 3), 100, 3, 1);
+		// 				ctx.fillRect(Math.floor(this.screenWidth / 2 - 5), 100, 3, 1);
+
 		// METHOD 2: Using compositing
 		// First draw the overlay
 		ctx.fillStyle = 'rgba(4, 25, 4, 0.7)';
@@ -910,6 +916,21 @@ export class ChatOverlay {
 		// 	ctx.fillRect(centerX + 7 + i, circleY - i, 1, i + 1);
 		// }
 
+		//extend crosshair to radius
+		ctx.fillStyle = SettingsManager.settings.crosshairColor;
+		ctx.globalAlpha = 0.3;
+
+		for (let i = 0; i < radius / 5; i++) {
+			let positiveLength = 3;
+			if (radius / 5 - i < 2) positiveLength = 2; //crosshair bleeds one pixel out of the circle
+			ctx.fillRect(Math.floor(this.screenWidth / 2 + 3 + i * 5), 100, positiveLength, 1);
+			ctx.fillRect(Math.floor(this.screenWidth / 2), 100 + 3 + i * 5, 1, positiveLength);
+
+			ctx.fillRect(Math.floor(this.screenWidth / 2 - 5 - i * 5), 100, 3, 1);
+			ctx.fillRect(Math.floor(this.screenWidth / 2), 100 - 5 - i * 5, 1, 3);
+		}
+		ctx.globalAlpha = 1;
+
 		const headshotIsDeadly = this.sniperOverlayPower > 1 / (0.99 * 4.25); //0.99 damage, 5x multiplier
 		if (headshotIsDeadly) {
 			ctx.fillStyle = 'rgba(255,0,0,0.5)';
@@ -917,7 +938,7 @@ export class ChatOverlay {
 			const now = Date.now() / 1000;
 			const flashOn = now % 0.1 < 0.05;
 			if (this.redguySmall.complete && flashOn) {
-				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3, circleY + 4, 6, 6);
+				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3, circleY + 2, 6, 6);
 			}
 		}
 		const barCount = 16;
@@ -926,7 +947,7 @@ export class ChatOverlay {
 				ctx.fillStyle = `hsl(${120 - (i / barCount) * 120}, 100%, 50%)`;
 			} else ctx.fillStyle = 'gray';
 			const h = Math.floor(i / 2);
-			ctx.fillRect(centerX + 16 + i, circleY - h, 1, h + 1);
+			ctx.fillRect(centerX + 16 + i, circleY - 2 - h, 1, h + 1);
 		}
 	}
 
