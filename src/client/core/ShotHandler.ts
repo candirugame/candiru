@@ -64,7 +64,20 @@ class Shot {
 	}
 
 	public shoot(renderer: Renderer): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
-		return renderer.getShotVectorsToPlayersWithOffset(this.yawOffset, this.pitchOffset, this.maxDistance);
+		const out = renderer.getShotVectorsToPlayersWithOffset(this.yawOffset, this.pitchOffset, this.maxDistance);
+		// //const hitPositions = out.map((hit) => hit.vector);
+		// for (const hit of out) {
+		// 	renderer.particleSystem.emit({
+		// 		position: hit.hitPoint,
+		// 		count: 1,
+		// 		velocity: new THREE.Vector3(),
+		// 		spread: 0,
+		// 		lifetime: 30,
+		// 		size: 0.2,
+		// 		color: new THREE.Color(1, 1, 1),
+		// 	});
+		// }
+		return out;
 	}
 
 	public emitParticles(renderer: Renderer, origin: THREE.Vector3, baseDirection: THREE.Vector3) {
@@ -191,8 +204,50 @@ export class ShotGroup {
 					if (shotVectors?.length > 0) {
 						for (const { playerID, hitPoint, vector } of shotVectors) {
 							if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
-								hitPlayers.push(playerID);
-								networking.applyDamage(playerID, this.damage);
+								hitPlayers.push(playerID); //log player hit to avoid hitting again (used for melee)
+
+								const player = networking.getRemotePlayerById(playerID);
+								let headshot = false;
+								if (player) {
+									const hitPlayerPosition = new THREE.Vector3(player.position.x, player.position.y, player.position.z);
+
+									const euler = new THREE.Euler().setFromQuaternion(
+										new THREE.Quaternion(
+											player.lookQuaternion.x,
+											player.lookQuaternion.y,
+											player.lookQuaternion.z,
+											player.lookQuaternion.w,
+										),
+										'YXZ',
+									);
+									euler.x = 0;
+									euler.z = 0;
+									const targetQuaternion = new THREE.Quaternion().setFromEuler(euler);
+
+									const vectorInWorldSpace = new THREE.Vector3().subVectors(hitPoint, hitPlayerPosition);
+									const inverseTargetQuaternion = targetQuaternion.clone().invert();
+									const playerRelativeVector = vectorInWorldSpace.clone().applyQuaternion(inverseTargetQuaternion);
+									//console.log(playerRelativeVector);
+									headshot = playerRelativeVector.y > -0.16 && playerRelativeVector.z < -0.35;
+									//console.log(headshot);
+								}
+
+								let damageAfterHeadshot = this.damage;
+								if (headshot) {
+									switch (shot.shotParticleType) {
+										case ShotParticleType.Shotgun:
+											damageAfterHeadshot *= 1.10;
+											break;
+										case ShotParticleType.Pistol:
+											damageAfterHeadshot *= 1.5;
+											break;
+										case ShotParticleType.Sniper:
+											damageAfterHeadshot *= 2.5;
+											break;
+									}
+								}
+
+								networking.applyDamage(playerID, damageAfterHeadshot);
 
 								renderer.hitMarkerQueue.push({
 									hitPoint: hitPoint,

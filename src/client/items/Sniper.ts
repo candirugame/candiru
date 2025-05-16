@@ -5,10 +5,10 @@ import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
 import { ShotHandler, ShotParticleType } from '../core/ShotHandler.ts';
 
-const firingDelay = 1;
-const firingDelayHeld = 1.5; //longer firing delay when mouse is held down
+const firingDelay = 0.5;
+const firingDelayHeld = 0.5; //longer firing delay when mouse is held down
 const showInHandDelay = 0.1;
-const timeToFullPower = 6;
+const timeToFullPower = 5;
 
 const scopedPosition = new THREE.Vector3(0, 0, 4.2);
 const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
@@ -174,6 +174,7 @@ export class Sniper extends ItemBase {
 	public override showInHand() {
 		if (this.shownInHand) return;
 		this.shownInHand = true;
+		this.powerStartTimestamp = Date.now() / 1000;
 		this.shownInHandTimestamp = Date.now() / 1000;
 		if (!this.addedToHandScene && this.object) {
 			this.scene.add(this.object);
@@ -185,6 +186,7 @@ export class Sniper extends ItemBase {
 		if (!this.shownInHand) return;
 		this.shownInHand = false;
 		this.renderer.targetZoom = 1.0;
+		this.renderer.getChatOverlay().sniperOverlayEnabled = false;
 	}
 	public itemDepleted(): boolean {
 		return false;
@@ -202,7 +204,7 @@ export class Sniper extends ItemBase {
 		const muzzleDir = this.renderer.getMuzzleDirection();
 
 		this.shotHandler.addShotGroup(
-			99 * power,
+			70 * power,
 			1,
 			150,
 			0,

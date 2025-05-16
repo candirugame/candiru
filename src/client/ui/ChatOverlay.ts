@@ -117,6 +117,9 @@ export class ChatOverlay {
 		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
 
+		this.redguySmall.src = '/redguy_6px.webp';
+		this.redguy.src = '/redguy.webp';
+
 		this.chatCanvas.width = 400;
 		this.chatCanvas.height = 200;
 
@@ -874,6 +877,9 @@ export class ChatOverlay {
 
 	public sniperOverlayEnabled: boolean = false;
 	public sniperOverlayPower: number = 0;
+	public redguySmall: HTMLImageElement = new Image();
+	public redguy: HTMLImageElement = new Image();
+
 	public renderSniperOverlay() {
 		if (!this.sniperOverlayEnabled) return;
 
@@ -896,7 +902,32 @@ export class ChatOverlay {
 		// Restore normal compositing
 		ctx.globalCompositeOperation = 'source-over';
 
-		this.renderPixelText(this.sniperOverlayPower.toFixed(1), centerX + 3, circleY + 3, 'green');
+		//this.renderPixelText(this.sniperOverlayPower.toFixed(1), centerX + 3, circleY + 3, 'green');
+		// const barColors = ['green', 'green', 'yellow', 'yellow', 'orange', 'orange', 'red'];
+		// for (let i = 0; i < barColors.length; i++) {
+		// 	if (this.sniperOverlayPower >= (i + 1) / barColors.length) ctx.fillStyle = barColors[i];
+		// 	else ctx.fillStyle = 'gray';
+		// 	ctx.fillRect(centerX + 7 + i, circleY - i, 1, i + 1);
+		// }
+
+		const headshotIsDeadly = this.sniperOverlayPower > 0.58;
+		if (headshotIsDeadly) {
+			ctx.fillStyle = 'rgba(255,0,0,0.5)';
+			//ctx.fillRect(centerX + 16 + 8, circleY + 4, 4, 4);
+			const now = Date.now() / 1000;
+			const flashOn = now % 0.1 < 0.05;
+			if (this.redguySmall.complete && flashOn) {
+				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3, circleY + 4, 6, 6);
+			}
+		}
+		const barCount = 16;
+		for (let i = 0; i < barCount; i++) {
+			if (this.sniperOverlayPower >= (i + 1) / barCount) {
+				ctx.fillStyle = `hsl(${120 - (i / barCount) * 120}, 100%, 50%)`;
+			} else ctx.fillStyle = 'gray';
+			const h = Math.floor(i / 2);
+			ctx.fillRect(centerX + 16 + i, circleY - h, 1, h + 1);
+		}
 	}
 
 	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
@@ -1019,6 +1050,13 @@ export class ChatOverlay {
 		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07) {
 			ctx.fillStyle = 'rgba(255,0,0,0.1)';
 			ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+
+			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.14) {
+				ctx.globalAlpha = 0.2;
+
+				ctx.drawImage(this.redguy, 0, 0, this.chatCanvas.width, this.chatCanvas.height);
+				ctx.globalAlpha = 1;
+			}
 		}
 	}
 

@@ -59,6 +59,7 @@ export class Networking {
 	private localPlayer: Player;
 	private chatOverlay: ChatOverlay;
 	private damagedTimestamp: number = 0;
+	public severelyDamagedTimestamp: number = 0;
 	private serverInfo: ServerInfo;
 	private lastRealUpdateTime: number = 0;
 	public particleQueue: {
@@ -157,6 +158,7 @@ export class Networking {
 		if (data.health !== undefined) {
 			if (data.health < this.localPlayer.health) {
 				this.damagedTimestamp = Date.now() / 1000;
+				if (this.localPlayer.health - data.health > 80) this.severelyDamagedTimestamp = Date.now() / 1000;
 			}
 			this.localPlayer.health = data.health;
 		}
@@ -407,6 +409,10 @@ export class Networking {
 
 	public getRemotePlayerData(): PlayerData[] {
 		return this.remotePlayers;
+	}
+
+	public getRemotePlayerById(id: number): PlayerData | undefined {
+		return this.remotePlayers.find((player) => player.id === id);
 	}
 
 	public sendMessage(msg: string) {
