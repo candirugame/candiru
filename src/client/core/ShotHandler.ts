@@ -126,7 +126,7 @@ class Shot {
 					count: 1,
 					velocity: shotDirection.clone().multiplyScalar(30),
 					spread: 0,
-					lifetime: 0.2,
+					lifetime: 0.8,
 					size: 0.1,
 					color: new THREE.Color(50 / 255, 100 / 255, 50 / 255),
 				});
