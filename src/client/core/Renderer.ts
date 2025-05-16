@@ -36,6 +36,7 @@ export class Renderer {
 	private bobCycle: number;
 	private lastCameraRoll: number;
 	particleSystem: ParticleSystem;
+	public targetZoom: number = 1;
 
 	public crosshairIsFlashing: boolean = false;
 	public lastShotSomeoneTimestamp: number = 0;
@@ -191,7 +192,6 @@ export class Renderer {
 
 		// Render the held item scene normally (full screen)
 		this.renderer.render(this.heldItemScene, this.heldItemCamera);
-
 		// Update and render indicators
 		for (const indicator of this.indicators) {
 			indicator.onFrame(this.deltaTime);
@@ -377,6 +377,13 @@ export class Renderer {
 		}
 
 		this.particleSystem.update(this.deltaTime, this.camera.position.clone());
+
+		const currentZoom = this.camera.zoom;
+		const newZoom = currentZoom + (this.targetZoom - currentZoom) * 0.3 * this.deltaTime * 60;
+		if (currentZoom !== newZoom) {
+			this.camera.zoom = newZoom;
+			this.camera.updateProjectionMatrix();
+		}
 
 		this.updateFramerate();
 	}

@@ -190,6 +190,8 @@ export class ChatOverlay {
 		this.clearOldMessages();
 		this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
 
+		this.renderSniperOverlay();
+
 		this.renderHitMarkers();
 
 		this.renderChatMessages();
@@ -788,7 +790,7 @@ export class ChatOverlay {
 		// Adjust this based on your desired base size
 		const scaleFactor = 9;
 
-		return size * scaleFactor;
+		return size * scaleFactor * this.renderer.targetZoom;
 	}
 
 	// private sparkleParticles: {
@@ -869,6 +871,33 @@ export class ChatOverlay {
 	// 		}
 	// 	}
 	// }
+
+	public sniperOverlayEnabled: boolean = false;
+	public sniperOverlayPower: number = 0;
+	public renderSniperOverlay() {
+		if (!this.sniperOverlayEnabled) return;
+
+		const ctx = this.chatCtx;
+		const centerX = Math.floor(this.chatCanvas.width / 2);
+		const radius = 65;
+		const circleY = 100;
+
+		// METHOD 2: Using compositing
+		// First draw the overlay
+		ctx.fillStyle = 'rgba(4, 25, 4, 0.7)';
+		ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
+
+		// Then punch a hole in it
+		ctx.globalCompositeOperation = 'destination-out';
+		ctx.beginPath();
+		ctx.arc(centerX, circleY, radius, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Restore normal compositing
+		ctx.globalCompositeOperation = 'source-over';
+
+		this.renderPixelText(this.sniperOverlayPower.toFixed(1), centerX + 3, circleY + 3, 'green');
+	}
 
 	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
 	private minTimeBetweenHitMarkers = 0.016;
@@ -987,7 +1016,7 @@ export class ChatOverlay {
 
 	private renderEvil() {
 		const ctx = this.chatCtx;
-		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.05) {
+		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07) {
 			ctx.fillStyle = 'rgba(255,0,0,0.1)';
 			ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
 		}

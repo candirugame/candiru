@@ -106,6 +106,18 @@ class Shot {
 					color: new THREE.Color(230 / 255, 218 / 255, 140 / 255),
 				});
 				break;
+
+			case ShotParticleType.Sniper:
+				renderer.particleSystem.emit({
+					position: origin.clone().add(new THREE.Vector3()),
+					count: 1,
+					velocity: shotDirection.clone().multiplyScalar(30),
+					spread: 0,
+					lifetime: 0.2,
+					size: 0.1,
+					color: new THREE.Color(50 / 255, 100 / 255, 50 / 255),
+				});
+				break;
 		}
 	}
 }
@@ -114,6 +126,7 @@ export enum ShotParticleType {
 	None,
 	Shotgun,
 	Pistol,
+	Sniper,
 }
 
 export class ShotGroup {

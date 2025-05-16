@@ -39,7 +39,7 @@ export class InputHandler {
 		this.gamepadEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 
 		this.clock = new THREE.Clock();
-		this.mouse = new PointerLockControls(this.localPlayer, document.body, gameIndex);
+		this.mouse = new PointerLockControls(this.localPlayer, document.body, gameIndex, this.renderer);
 
 		this.gamepadInputs = new GamepadInputs();
 
@@ -138,9 +138,9 @@ export class InputHandler {
 				if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
 				const aimAdjust = this.calculateAimAssist();
 				this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * SettingsManager.settings.controllerSense * deltaTime *
-					aimAdjust * 4;
+					aimAdjust * 4 / this.renderer.targetZoom;
 				this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * SettingsManager.settings.controllerSense * deltaTime *
-					aimAdjust * 4;
+					aimAdjust * 4 / this.renderer.targetZoom;
 				this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
 				this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
 			}
@@ -164,22 +164,28 @@ export class InputHandler {
 			if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
 			const aimAdjust = this.calculateAimAssist();
 			if (this.getKey('arrowright')) {
-				this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+				this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
+					this.renderer.targetZoom;
 			}
 			if (this.getKey('arrowleft')) {
-				this.gamepadEuler.y += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+				this.gamepadEuler.y += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
+					this.renderer.targetZoom;
 			}
 			if (this.getKey('arrowup')) {
-				this.gamepadEuler.x += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+				this.gamepadEuler.x += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
+					this.renderer.targetZoom;
 			}
 			if (this.getKey('arrowdown')) {
-				this.gamepadEuler.x -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4;
+				this.gamepadEuler.x -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
+					this.renderer.targetZoom;
 			}
 			if (this.getKey(' ')) this.jump = true;
 		}
 
-		this.gamepadEuler.y -= this.touchLookX * touchSensitivity * SettingsManager.settings.sense;
-		this.gamepadEuler.x -= this.touchLookY * touchSensitivity * SettingsManager.settings.sense;
+		this.gamepadEuler.y -= this.touchLookX * touchSensitivity * SettingsManager.settings.sense /
+			this.renderer.targetZoom;
+		this.gamepadEuler.x -= this.touchLookY * touchSensitivity * SettingsManager.settings.sense /
+			this.renderer.targetZoom;
 		this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
 		this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
 
@@ -362,19 +368,19 @@ export class InputHandler {
 	}
 
 	private calculateAimAssist(): number {
-		if (this.gamepad) {
-			if ((Math.abs(this.gamepadInputs.rightJoyX) >= .1 || Math.abs(this.gamepadInputs.rightJoyY) >= .1)) {
-				if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0) {
-					return .5;
-				}
-			}
-		} else if (
-			this.getKey('arrowup') || this.getKey('arrowdown') || this.getKey('arrowleft') || this.getKey('arrowright')
-		) {
-			if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0) {
-				return .5;
-			}
-		}
+		// if (this.gamepad) {
+		// 	if ((Math.abs(this.gamepadInputs.rightJoyX) >= .1 || Math.abs(this.gamepadInputs.rightJoyY) >= .1)) {
+		// 		if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0) {
+		// 			return .5;
+		// 		}
+		// 	}
+		// } else if (
+		// 	this.getKey('arrowup') || this.getKey('arrowdown') || this.getKey('arrowleft') || this.getKey('arrowright')
+		// ) {
+		// 	if (this.renderer.getPlayerSpheresInCrosshairWithWalls().length > 0) {
+		// 		return .5;
+		// 	}
+		// }
 		return 1;
 	}
 }

@@ -7,6 +7,7 @@ import { FishGun } from '../items/FishGun.ts';
 import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
 import { ShotHandler } from './ShotHandler.ts';
+import { Sniper } from '../items/Sniper.ts';
 
 // Custom types
 type Vector3Data = {
@@ -97,6 +98,8 @@ export class RemoteItemRenderer {
 				return new Pipe(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
 			case 4:
 				return new FlagItem(this.renderer, 0, ItemType.WorldItem);
+			case 5:
+				return new Sniper(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
 			default:
 				// Return a generic item
 				console.log('Unknown item type:', itemType);

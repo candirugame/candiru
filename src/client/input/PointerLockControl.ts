@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
 import { Game } from '../core/Game.ts';
+import { Renderer } from '../core/Renderer.ts';
 
 // Define a custom event map interface
 interface PointerLockControlEventMap {
@@ -16,8 +17,9 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 	public domElement: Element;
 	public isLocked: boolean = false;
 	private gameIndex: number;
+	private renderer: Renderer;
 
-	constructor(localPlayer: Player, domElement: Element, gameIndex: number) {
+	constructor(localPlayer: Player, domElement: Element, gameIndex: number, renderer: Renderer) {
 		super();
 		this.gameIndex = gameIndex;
 
@@ -28,6 +30,8 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 
 		this.localPlayer = localPlayer;
 		this.domElement = domElement;
+
+		this.renderer = renderer;
 
 		this.connect();
 	}
@@ -76,8 +80,8 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 		const euler = new THREE.Euler(0, 0, 0, 'YXZ');
 		euler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
-		euler.y -= movementX * SettingsManager.settings.sense * .002;
-		euler.x -= movementY * SettingsManager.settings.sense * .002;
+		euler.y -= movementX * SettingsManager.settings.sense * .002 / this.renderer.targetZoom;
+		euler.x -= movementY * SettingsManager.settings.sense * .002 / this.renderer.targetZoom;
 
 		euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
 
