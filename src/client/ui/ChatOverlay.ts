@@ -937,7 +937,7 @@ export class ChatOverlay {
 			//ctx.fillRect(centerX + 16 + 8, circleY + 4, 4, 4);
 			const now = Date.now() / 1000;
 			const flashOn = now % 0.1 < 0.05;
-			if (this.redguySmall.complete && flashOn) {
+			if (this.redguySmall.complete && this.redguySmall.naturalWidth > 0 && flashOn) {
 				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3, circleY + 2, 6, 6);
 			}
 		}
@@ -1075,7 +1075,9 @@ export class ChatOverlay {
 			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.14) {
 				ctx.globalAlpha = 0.2;
 
-				ctx.drawImage(this.redguy, 0, 0, this.chatCanvas.width, this.chatCanvas.height);
+				if (this.redguy.complete && this.redguy.naturalWidth > 0) {
+					ctx.drawImage(this.redguy, 0, 0, this.chatCanvas.width, this.chatCanvas.height);
+				}
 				ctx.globalAlpha = 1;
 			}
 		}
