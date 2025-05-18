@@ -8,6 +8,7 @@ import type { PlayerData } from './Player.ts';
 import * as THREE from 'three';
 import { Peer } from '../server/models/Peer.ts';
 import { PropData } from './Prop.ts';
+import { PropDamageRequest } from '../server/models/PropDamageRequest.ts';
 
 export type CustomServer = Server<ClientToServerEvents, ServerToClientEvents>;
 export type CustomSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -42,6 +43,7 @@ interface ClientToServerEvents {
 	playerData: (player: PlayerData) => void;
 	chatMsg: (message: ChatMessage) => void;
 	applyDamage: (damage: DamageRequest) => void;
+	applyPropDamage: (damage: PropDamageRequest) => void;
 	latencyTest: () => void;
 	getServerList: (callback: (servers: Peer[]) => void) => void;
 }

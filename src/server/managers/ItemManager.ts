@@ -35,7 +35,7 @@ export class ItemManager {
 					const itemAge = currentTime - item.creationTimestamp;
 					if (itemAge > config.items.despawnTime) {
 						this.itemUpdateFlag = true;
-						console.log(`🗑️ Item ${item.id} despawned after ${itemAge} seconds.`);
+						//	console.log(`🗑️ Item ${item.id} despawned after ${itemAge} seconds.`);
 						return false; // Remove the item
 					}
 					return true; // Keep the item

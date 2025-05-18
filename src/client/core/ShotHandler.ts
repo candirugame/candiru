@@ -63,8 +63,11 @@ class Shot {
 		this.shotParticleType = shotParticleType;
 	}
 
-	public shoot(renderer: Renderer): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
-		const out = renderer.getShotVectorsToPlayersWithOffset(this.yawOffset, this.pitchOffset, this.maxDistance);
+	public shoot(renderer: Renderer): {
+		playerHits: { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[];
+		propHits: { propID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[];
+	} {
+		const playerHits = renderer.getShotVectorsToPlayersWithOffset(this.yawOffset, this.pitchOffset, this.maxDistance);
 		// //const hitPositions = out.map((hit) => hit.vector);
 		// for (const hit of out) {
 		// 	renderer.particleSystem.emit({
@@ -77,7 +80,9 @@ class Shot {
 		// 		color: new THREE.Color(1, 1, 1),
 		// 	});
 		// }
-		return out;
+
+		// We don't need to calculate prop hits here as the processShots method handles it directly
+		return { playerHits, propHits: [] };
 	}
 
 	public emitParticles(renderer: Renderer, origin: THREE.Vector3, baseDirection: THREE.Vector3) {
@@ -146,7 +151,7 @@ export class ShotGroup {
 	private shots: Shot[];
 	private timeout: number;
 	private damage: number;
-	private onlyHitEachPlayerOnce: boolean;
+	private onlyHitEachPlayerOnce: boolean; // When true, this also prevents hitting the same prop multiple times
 	private origin: THREE.Vector3;
 	private direction: THREE.Vector3;
 	private isLocal: boolean;
@@ -185,6 +190,7 @@ export class ShotGroup {
 
 	public processShots(renderer: Renderer, networking: Networking) {
 		const hitPlayers: number[] = [];
+		const hitProps: number[] = [];
 
 		// Emit particles for all shots immediately
 		for (const shot of this.shots) {
@@ -200,9 +206,21 @@ export class ShotGroup {
 
 				// Process hits (particles already emitted)
 				if (this.isLocal) {
-					const shotVectors = shot.shoot(renderer);
-					if (shotVectors?.length > 0) {
-						for (const { playerID, hitPoint, vector } of shotVectors) {
+					// Get player hits
+					const { playerHits } = shot.shoot(renderer);
+
+					// Get prop hits
+					const propHits = renderer.getShotVectorsToPropsWithOffset(
+						shot.yawOffset,
+						shot.pitchOffset,
+						Infinity,
+						renderer.getCamera().position,
+						this.direction,
+					);
+
+					// Process player hits
+					if (playerHits?.length > 0) {
+						for (const { playerID, hitPoint, vector } of playerHits) {
 							if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
 								hitPlayers.push(playerID); //log player hit to avoid hitting again (used for melee)
 
@@ -249,10 +267,38 @@ export class ShotGroup {
 
 								networking.applyDamage(playerID, damageAfterHeadshot);
 
+								// Calculate vector from camera position for consistent hit marker sizing
+								const hitVector = new THREE.Vector3().subVectors(hitPoint, renderer.getCamera().position);
+
 								renderer.hitMarkerQueue.push({
 									hitPoint: hitPoint,
-									shotVector: vector,
+									shotVector: hitVector,
 									timestamp: -1,
+									type: 'player',
+								});
+								renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
+							}
+						}
+					}
+
+					// Process prop hits
+					if (propHits?.length > 0) {
+						for (const { propID, hitPoint, vector } of propHits) {
+							if (!hitProps.includes(propID) || !this.onlyHitEachPlayerOnce) {
+								hitProps.push(propID);
+
+								// Apply damage to prop
+								networking.applyPropDamage(propID, this.damage);
+
+								// Calculate vector from camera position for consistent hit marker sizing
+								const hitVector = new THREE.Vector3().subVectors(hitPoint, renderer.getCamera().position);
+
+								// Add hit marker
+								renderer.hitMarkerQueue.push({
+									hitPoint: hitPoint,
+									shotVector: hitVector,
+									timestamp: -1,
+									type: 'prop',
 								});
 								renderer.lastShotSomeoneTimestamp = Date.now() / 1000;
 							}

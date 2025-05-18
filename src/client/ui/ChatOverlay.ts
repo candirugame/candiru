@@ -951,7 +951,12 @@ export class ChatOverlay {
 		}
 	}
 
-	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
+	private hitMarkersNow: {
+		hitPoint: THREE.Vector3;
+		shotVector: THREE.Vector3;
+		timestamp: number;
+		type: 'player' | 'prop';
+	}[] = [];
 	private minTimeBetweenHitMarkers = 0.016;
 	private lastHitMarkerTime = 0;
 
@@ -996,7 +1001,11 @@ export class ChatOverlay {
 			const projected = this.getProjected3D(hitVec);
 
 			if (hitVec.clone().project(this.renderer.getCamera()).z < 1) {
-				this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+				if (this.hitMarkersNow[i].type === 'player') {
+					this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+				} else {
+					this.chatCtx.fillStyle = 'rgba(230,230,230,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+				}
 
 				const sizeMultiplier = this.getSize(this.hitMarkersNow[i].shotVector.length());
 				const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier;

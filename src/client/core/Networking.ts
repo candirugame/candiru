@@ -243,7 +243,7 @@ export class Networking {
 		});
 
 		this.socket.on('propDelta', (deltas: Array<Partial<PropData> & { id: number }>) => {
-			console.log(`Received prop delta: ${JSON.stringify(deltas)}`);
+			//console.log(`Received prop delta: ${JSON.stringify(deltas)}`);
 			deltas.forEach((delta) => {
 				const idx = this.props.findIndex((p) => p.id === delta.id);
 				if (idx !== -1) {
@@ -441,6 +441,13 @@ export class Networking {
 			damage: damage,
 		};
 		this.socket.emit('applyDamage', damageRequest);
+		console.log(`Applying damage: ${id} - ${damage}`);
+	}
+
+	public applyPropDamage(id: number, damage: number) {
+		this.socket.emit('applyPropDamage', { playerID: this.localPlayer.id, targetPropID: id, damage: damage });
+
+		console.log(`Applying prop damage: ${id} - ${damage}`);
 	}
 
 	public getWorldItemsData() {

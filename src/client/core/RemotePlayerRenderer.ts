@@ -682,4 +682,8 @@ export class RemotePlayerRenderer {
 	public static setMap(map: THREE.Mesh) {
 		this.map = map;
 	}
+
+	public static getMap(): THREE.Mesh {
+		return this.map;
+	}
 }

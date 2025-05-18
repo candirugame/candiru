@@ -327,7 +327,96 @@ export class PropRenderer {
 
 	public getPropObjects(): THREE.Object3D[] {
 		return Array.from(this.propsToRender.values())
-			.filter((p) => p.object && !p.isLoading)
-			.map((p) => p.object!);
+			.filter((e) => e.object && !e.isLoading)
+			.map((e) => e.object!);
+	}
+
+	public getShotVectorsToProps(origin: THREE.Vector3, direction: THREE.Vector3, maxDistance: number = Infinity): { propID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
+		const result: { propID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] = [];
+		const raycaster = new THREE.Raycaster(origin, direction.clone().normalize(), 0, maxDistance);
+		
+		// Get all prop objects that are loaded
+		const propObjects: THREE.Object3D[] = this.getPropObjects();
+		
+		// Check for intersections with props
+		const intersects = raycaster.intersectObjects(propObjects, true);
+		
+		// Process intersections
+		for (const intersection of intersects) {
+			// Find the root prop object from the intersected object
+			let rootObject: THREE.Object3D | null = intersection.object;
+			while (rootObject && rootObject.parent && !rootObject.userData.propId) {
+				rootObject = rootObject.parent;
+			}
+			
+			if (rootObject && rootObject.userData.propId !== undefined) {
+				const propID = rootObject.userData.propId;
+				result.push({
+					propID,
+					vector: new THREE.Vector3().subVectors(intersection.point, origin),
+					hitPoint: intersection.point,
+				});
+				
+				// Only return the first hit for a prop
+				break;
+			}
+		}
+		
+		return result;
+	}
+
+	public getShotVectorsToPropsWithWallCheck(
+		origin: THREE.Vector3, 
+		direction: THREE.Vector3, 
+		maxDistance: number = Infinity,
+		mapObject: THREE.Mesh
+	): { propID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
+		const result: { propID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] = [];
+		const raycaster = new THREE.Raycaster(origin, direction.clone().normalize(), 0, maxDistance);
+		
+		// Get all prop objects that are loaded
+		const propObjects: THREE.Object3D[] = this.getPropObjects();
+		
+		// Check for intersections with props
+		const propIntersects = raycaster.intersectObjects(propObjects, true);
+		
+		// Check for intersections with walls (using firstHitOnly for efficiency)
+		raycaster.firstHitOnly = true;
+		const wallIntersects = raycaster.intersectObject(mapObject);
+		raycaster.firstHitOnly = false;
+		
+		// Filter out prop intersections that are behind walls
+		const filteredPropIntersects = propIntersects.filter((propIntersect) => {
+			// Check if any wall is closer than this prop
+			for (const wallIntersect of wallIntersects) {
+				if (wallIntersect.distance < propIntersect.distance) {
+					return false;
+				}
+			}
+			return true;
+		});
+		
+		// Process intersections
+		for (const intersection of filteredPropIntersects) {
+			// Find the root prop object from the intersected object
+			let rootObject: THREE.Object3D | null = intersection.object;
+			while (rootObject && rootObject.parent && !rootObject.userData.propId) {
+				rootObject = rootObject.parent;
+			}
+			
+			if (rootObject && rootObject.userData.propId !== undefined) {
+				const propID = rootObject.userData.propId;
+				result.push({
+					propID,
+					vector: new THREE.Vector3().subVectors(intersection.point, origin),
+					hitPoint: intersection.point,
+				});
+				
+				// Only return the first hit for a prop
+				break;
+			}
+		}
+		
+		return result;
 	}
 }
