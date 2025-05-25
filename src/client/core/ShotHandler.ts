@@ -48,7 +48,7 @@ export class ShotHandler {
 class Shot {
 	public readonly pitchOffset: number;
 	public readonly yawOffset: number;
-	private readonly maxDistance: number;
+	public readonly maxDistance: number;
 	public readonly shotParticleType: ShotParticleType;
 
 	constructor(
@@ -213,7 +213,7 @@ export class ShotGroup {
 					const propHits = renderer.getShotVectorsToPropsWithOffset(
 						shot.yawOffset,
 						shot.pitchOffset,
-						Infinity,
+						shot.maxDistance,
 						renderer.getCamera().position,
 						this.direction,
 					);
@@ -260,7 +260,7 @@ export class ShotGroup {
 											damageAfterHeadshot *= 1.5;
 											break;
 										case ShotParticleType.Sniper:
-											damageAfterHeadshot *= 4.25;
+											damageAfterHeadshot *= 5;
 											break;
 									}
 								}
