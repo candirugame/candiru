@@ -14,6 +14,7 @@ export class Prop {
 	public name = '';
 	public doPhysics: boolean = true;
 	public playersCollide: boolean = true;
+	public health: number | undefined = 100;
 
 	constructor(url?: string, position?: THREE.Vector3, quaternion?: THREE.Quaternion, scale?: THREE.Vector3) {
 		if (url) this.url = url;
