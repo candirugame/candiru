@@ -220,7 +220,7 @@ export class ShotGroup {
 
 					// Process player hits
 					if (playerHits?.length > 0) {
-						for (const { playerID, hitPoint, vector } of playerHits) {
+						for (const { playerID, hitPoint } of playerHits) {
 							if (!hitPlayers.includes(playerID) || !this.onlyHitEachPlayerOnce) {
 								hitPlayers.push(playerID); //log player hit to avoid hitting again (used for melee)
 
@@ -283,7 +283,7 @@ export class ShotGroup {
 
 					// Process prop hits
 					if (propHits?.length > 0) {
-						for (const { propID, hitPoint, vector } of propHits) {
+						for (const { propID, hitPoint } of propHits) {
 							if (!hitProps.includes(propID) || !this.onlyHitEachPlayerOnce) {
 								hitProps.push(propID);
 
