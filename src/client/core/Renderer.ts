@@ -40,7 +40,12 @@ export class Renderer {
 
 	public crosshairIsFlashing: boolean = false;
 	public lastShotSomeoneTimestamp: number = 0;
-	public hitMarkerQueue: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
+	public hitMarkerQueue: {
+		hitPoint: THREE.Vector3;
+		shotVector: THREE.Vector3;
+		timestamp: number;
+		type: 'player' | 'prop';
+	}[] = [];
 
 	private screenPixelsInGamePixel: number = 1;
 	private inventoryMenuScene: THREE.Scene;
@@ -496,6 +501,33 @@ export class Renderer {
 		maxDistance: number = Infinity,
 	): { playerID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
 		return this.remotePlayerRenderer.getShotVectorsToPlayersWithOffset(yawOffset, pitchOffset, maxDistance);
+	}
+
+	public getShotVectorsToPropsWithOffset(
+		yawOffset: number,
+		pitchOffset: number,
+		maxDistance: number = Infinity,
+		origin: THREE.Vector3,
+		baseDirection: THREE.Vector3,
+	): { propID: number; vector: THREE.Vector3; hitPoint: THREE.Vector3 }[] {
+		// Calculate shot direction with offset
+		const worldUp = new THREE.Vector3(0, 1, 0);
+		let right = new THREE.Vector3().crossVectors(baseDirection, worldUp).normalize();
+		if (right.lengthSq() < 0.001) right = new THREE.Vector3(1, 0, 0);
+		const up = new THREE.Vector3().crossVectors(right, baseDirection).normalize();
+
+		const yawQuat = new THREE.Quaternion().setFromAxisAngle(up, yawOffset);
+		const pitchQuat = new THREE.Quaternion().setFromAxisAngle(right, pitchOffset);
+		const finalQuat = new THREE.Quaternion().multiplyQuaternions(yawQuat, pitchQuat);
+		const shotDirection = baseDirection.clone().applyQuaternion(finalQuat).normalize();
+
+		// Use the map from RemotePlayerRenderer to check for walls
+		return this.propRenderer.getShotVectorsToPropsWithWallCheck(
+			origin,
+			shotDirection,
+			maxDistance,
+			RemotePlayerRenderer.getMap(),
+		);
 	}
 
 	public getEntityScene(): THREE.Scene {

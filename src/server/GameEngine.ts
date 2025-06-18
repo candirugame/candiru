@@ -24,10 +24,10 @@ export class GameEngine {
 	private lastEmittedPropSnapshot: Map<number, PropData> = new Map();
 	private lastItemUpdateTimestamp: number = Date.now() / 1000;
 	public playerUpdateSinceLastEmit: boolean = false;
-	public propUpdateSinceLastEmit: boolean = false;
 	private itemUpdateSinceLastEmit: boolean = false;
 	public serverInfo: ServerInfo = new ServerInfo();
 	public gamemode: Gamemode | false = false;
+	private fullEmitNudged: boolean = false;
 
 	private tickProfileSamples: number = 0;
 	private tickProfileTime: number = 0;
@@ -46,7 +46,7 @@ export class GameEngine {
 	start() {
 		setInterval(() => this.serverTick(), 1000 / config.server.tickRate);
 		setInterval(() => this.periodicCleanup(), config.server.cleanupInterval);
-		setInterval(() => this.emitServerInfo(), config.server.cleanupInterval);
+		//	setInterval(() => this.emitServerInfo(), config.server.cleanupInterval);
 		this.initGamemode();
 	}
 
@@ -57,52 +57,48 @@ export class GameEngine {
 			this.itemManager.tick(currentTime);
 			this.propManager.onTick(currentTime);
 			if (this.gamemode) this.gamemode.tick();
-			const doFullEmit = currentTime - this.lastFullPlayerEmitTimestamp > (config.server.fullPlayerEmitInterval / 1000);
+			const doFullEmit =
+				currentTime - this.lastFullPlayerEmitTimestamp > (config.server.fullPlayerEmitInterval / 1000) ||
+				this.fullEmitNudged;
+			this.fullEmitNudged = false;
 			if (doFullEmit) this.lastFullPlayerEmitTimestamp = currentTime;
-
-			// Check for prop updates
-			if (this.propManager.hasUpdates) {
-				this.propUpdateSinceLastEmit = true;
-				this.propManager.clearUpdatesFlag();
-			}
+			if (doFullEmit) this.emitServerInfo();
 
 			//Emit prop data (full or delta)
-			if (this.propUpdateSinceLastEmit || doFullEmit) {
-				const props = this.propManager.getAllPropsData();
-				if (doFullEmit) {
-					this.io.volatile.emit('propData', props);
-					this.lastEmittedPropSnapshot.clear();
-					props.forEach((pd) => this.lastEmittedPropSnapshot.set(pd.id, pd));
-				} else {
-					const deltas: Array<Partial<PropData> & { id: number }> = [];
-					props.forEach((pd) => {
-						const prev = this.lastEmittedPropSnapshot.get(pd.id);
-						const delta: Partial<PropData> & { id: number } = { id: pd.id };
-						if (!prev) {
-							deltas.push(pd);
-							this.lastEmittedPropSnapshot.set(pd.id, pd);
-						} else {
-							// iterate over known keys in PropData
-							(Object.keys(pd) as Array<keyof PropData>).forEach((key) => {
-								const curVal = JSON.stringify(pd[key]);
-								const prevVal = JSON.stringify(prev[key]);
-								if (curVal !== prevVal) {
-									// assign via any-cast to satisfy TS
-									// deno-lint-ignore no-explicit-any
-									(delta as any)[key] = pd[key];
-								}
-							});
-							if (Object.keys(delta).length > 1) { // Only push if there's more than just the id
-								deltas.push(delta);
-								this.lastEmittedPropSnapshot.set(pd.id, pd); // Update snapshot with new full data
+			const props = this.propManager.getAllPropsData();
+			if (doFullEmit || this.propManager.hasUpdates) {
+				this.io.volatile.emit('propData', props);
+				this.lastEmittedPropSnapshot.clear();
+				props.forEach((pd) => this.lastEmittedPropSnapshot.set(pd.id, pd));
+				this.propManager.clearUpdatesFlag();
+			} else {
+				const deltas: Array<Partial<PropData> & { id: number }> = [];
+				props.forEach((pd) => {
+					const prev = this.lastEmittedPropSnapshot.get(pd.id);
+					const delta: Partial<PropData> & { id: number } = { id: pd.id };
+					if (!prev) {
+						deltas.push(pd);
+						this.lastEmittedPropSnapshot.set(pd.id, pd);
+					} else {
+						// iterate over known keys in PropData
+						(Object.keys(pd) as Array<keyof PropData>).forEach((key) => {
+							const curVal = JSON.stringify(pd[key]);
+							const prevVal = JSON.stringify(prev[key]);
+							if (curVal !== prevVal) {
+								// assign via any-cast to satisfy TS
+								// deno-lint-ignore no-explicit-any
+								(delta as any)[key] = pd[key];
 							}
+						});
+						if (Object.keys(delta).length > 1) { // Only push if there's more than just the id
+							deltas.push(delta);
+							this.lastEmittedPropSnapshot.set(pd.id, pd); // Update snapshot with new full data
 						}
-					});
-					if (deltas.length > 0) {
-						this.io.volatile.emit('propDelta', deltas);
 					}
+				});
+				if (deltas.length > 0) {
+					this.io.volatile.emit('propDelta', deltas);
 				}
-				this.propUpdateSinceLastEmit = false;
 			}
 
 			// Emit player data (full or delta) if there are updates or enough time has passed
@@ -174,6 +170,10 @@ export class GameEngine {
 		} catch (error) {
 			console.error('⚠ error in serverTick:', error);
 		}
+	}
+
+	public nudgeFullEmit() {
+		this.fullEmitNudged = true;
 	}
 
 	public periodicCleanup() {

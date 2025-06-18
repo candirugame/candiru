@@ -204,7 +204,7 @@ export class Sniper extends ItemBase {
 		const muzzleDir = this.renderer.getMuzzleDirection();
 
 		this.shotHandler.addShotGroup(
-			99 * power,
+			100 * power,
 			1,
 			150,
 			0,

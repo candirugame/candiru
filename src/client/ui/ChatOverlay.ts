@@ -917,8 +917,8 @@ export class ChatOverlay {
 		// }
 
 		//extend crosshair to radius
-		ctx.fillStyle = SettingsManager.settings.crosshairColor;
-		ctx.globalAlpha = 0.3;
+		//ctx.fillStyle = SettingsManager.settings.crosshairColor;
+		//ctx.globalAlpha = 0.3;
 
 		for (let i = 0; i < radius / 5; i++) {
 			let positiveLength = 3;
@@ -931,14 +931,23 @@ export class ChatOverlay {
 		}
 		ctx.globalAlpha = 1;
 
-		const headshotIsDeadly = this.sniperOverlayPower > 1 / (0.99 * 4.25); //0.99 damage, 5x multiplier
+		const headshotIsDeadly = this.sniperOverlayPower > 1 / (1.0 * 5); //0.99 damage, 5x multiplier
+		const bodyShotIsDeadly = this.sniperOverlayPower >= 1;
 		if (headshotIsDeadly) {
 			ctx.fillStyle = 'rgba(255,0,0,0.5)';
 			//ctx.fillRect(centerX + 16 + 8, circleY + 4, 4, 4);
 			const now = Date.now() / 1000;
-			const flashOn = now % 0.1 < 0.05;
+			const flashOn = now % 0.1 < 0.05 || bodyShotIsDeadly;
+
+			let offsetX = 0;
+			let offsetY = 0;
+			if (bodyShotIsDeadly) {
+				offsetX = Math.round((Math.random() - 0.5) * 1.02);
+				offsetY = Math.round((Math.random() - 0.5) * 1.02);
+			}
+
 			if (this.redguySmall.complete && this.redguySmall.naturalWidth > 0 && flashOn) {
-				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3, circleY + 2, 6, 6);
+				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3 + offsetX, circleY + 2 + offsetY, 6, 6);
 			}
 		}
 		const barCount = 16;
@@ -951,7 +960,12 @@ export class ChatOverlay {
 		}
 	}
 
-	private hitMarkersNow: { hitPoint: THREE.Vector3; shotVector: THREE.Vector3; timestamp: number }[] = [];
+	private hitMarkersNow: {
+		hitPoint: THREE.Vector3;
+		shotVector: THREE.Vector3;
+		timestamp: number;
+		type: 'player' | 'prop';
+	}[] = [];
 	private minTimeBetweenHitMarkers = 0.016;
 	private lastHitMarkerTime = 0;
 
@@ -996,7 +1010,11 @@ export class ChatOverlay {
 			const projected = this.getProjected3D(hitVec);
 
 			if (hitVec.clone().project(this.renderer.getCamera()).z < 1) {
-				this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+				if (this.hitMarkersNow[i].type === 'player') {
+					this.chatCtx.fillStyle = 'rgba(255,0,0,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+				} else {
+					this.chatCtx.fillStyle = 'rgba(230,230,230,' + (1 - Math.pow(lifePercent, 1.25)) + ')';
+				}
 
 				const sizeMultiplier = this.getSize(this.hitMarkersNow[i].shotVector.length());
 				const radius = Math.pow(lifePercent, 0.7) * 7 * sizeMultiplier;

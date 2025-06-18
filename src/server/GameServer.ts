@@ -71,7 +71,7 @@ export class GameServer {
 							if (this.gameEngine.gamemode) this.gameEngine.gamemode.onPlayerConnect(result.player);
 							this.chatManager.broadcastChat(`${result.player.name} joined`);
 							console.log(`🟢 ${result.player.name}(${result.player.id}) joined`);
-							this.gameEngine.emitServerInfo();
+							this.gameEngine.nudgeFullEmit();
 						}
 					} catch (err) {
 						console.log(`Error handling playerData:`, err);
@@ -92,6 +92,14 @@ export class GameServer {
 						this.damageSystem.handleDamageRequest(data);
 					} catch (err) {
 						console.log(`Error handling damage request:`, err);
+					}
+				});
+
+				socket.on('applyPropDamage', (data) => {
+					try {
+						this.propManager.handleDamageRequest(data);
+					} catch (err) {
+						console.log(`Error handling PROP damage request:`, err);
 					}
 				});
 
