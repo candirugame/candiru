@@ -6,16 +6,16 @@ export class PropManager {
 	private props: Map<number, Prop> = new Map();
 	public hasUpdates: boolean = false; //triggers an early full data broadcast.. mostly for when adding and deleting props
 
-	public testProp!: Prop;
+	//	public testProp!: Prop;
 
 	constructor() {
-		this.testProp = this.addProp('models/hexagon.glb', new THREE.Vector3(0, 0.5, 0));
-		this.addProp('models/hexagon.glb', new THREE.Vector3(0, 10, 0));
+		// this.testProp = this.addProp('models/hexagon.glb', new THREE.Vector3(0, 0.5, 0));
+		// this.addProp('models/hexagon.glb', new THREE.Vector3(0, 10, 0));
 	}
 
 	public onTick(_deltaTime: number) {
-		this.testProp.position.x = Math.sin(Date.now() / 1000) * 3;
-		this.testProp.velocity.x = Math.cos(Date.now() / 1000) * 3;
+		// this.testProp.position.x = Math.sin(Date.now() / 1000) * 3;
+		// this.testProp.velocity.x = Math.cos(Date.now() / 1000) * 3;
 	}
 
 	public addProp(
