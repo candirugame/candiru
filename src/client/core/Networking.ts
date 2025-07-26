@@ -229,8 +229,8 @@ export class Networking {
 		) {
 			if (!this.localPlayer.gameMsgs || this.localPlayer.gameMsgs.length === 0) {
 				this.localPlayer.gameMsgs = ['&cYour client may be outdated. Try refreshing the page.'];
-				clearCacheAndReload();
 			}
+			clearCacheAndReload();
 		}
 	}
 
