@@ -36,6 +36,7 @@ export class ChatOverlay {
 	private chatMessages: ChatMessage[]; // Typed as ChatMessage[]
 	private chatMessageLifespan: number;
 	private charsToRemovePerSecond: number;
+	private maxMessagesOnScreen: number;
 	private nameSettingActive: boolean;
 	private localPlayer: Player;
 	private renderer!: Renderer;
@@ -125,6 +126,7 @@ export class ChatOverlay {
 		this.chatMessages = [];
 		this.chatMessageLifespan = 40; // 40 seconds
 		this.charsToRemovePerSecond = 30;
+		this.maxMessagesOnScreen = 32;
 
 		this.nameSettingActive = false;
 		this.screenWidth = 100;
@@ -148,6 +150,12 @@ export class ChatOverlay {
 
 		this.offscreenCanvas = document.createElement('canvas');
 		this.offscreenCtx = this.offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
+
+		// Initialize lines for per-line message management
+		this.lines = Array(this.maxMessagesOnScreen).fill(null).map(() => ({
+			currentMessage: null,
+			pendingMessage: null,
+		}));
 
 		container.appendChild(this.chatCanvas);
 
@@ -490,13 +498,13 @@ export class ChatOverlay {
 		const current = this.gameMessages;
 		if (!current) return;
 
-		for (let i = 0; i < SettingsManager.settings.chatMaxLines; i++) {
+		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
 			if (!line) continue; // Skip this iteration
 
 			const currentMessage = current[i] || '';
 
-			if (!line || !line.currentMessage) {
+			if (!line.currentMessage) {
 				if (currentMessage) {
 					line.currentMessage = {
 						id: this.generateUniqueId(),
@@ -524,7 +532,7 @@ export class ChatOverlay {
 	}
 
 	private updateAnimatedGameMessages(now: number) {
-		for (let i = 0; i < SettingsManager.settings.chatMaxLines; i++) {
+		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
 			if (!line || !line.currentMessage) continue; // Early return if null
 
@@ -563,7 +571,7 @@ export class ChatOverlay {
 		ctx.font = '8px Tiny5';
 		const centerY = this.chatCanvas.height / 2 + 48;
 
-		for (let i = 0; i < SettingsManager.settings.chatMaxLines; i++) {
+		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
 			if (!line || !line.currentMessage) continue;
 
