@@ -44,6 +44,7 @@ const defaults = {
 
 	//platform-specific settings
 	DOKPLOY_DEPLOY_URL: '',
+	APPEND_CLIENT_HASH_TO_VERSION: 'false',
 };
 
 async function updateEnvFile(defaults: Record<string, string>) {
@@ -144,6 +145,9 @@ function parseConfig(env: Record<string, string>) {
 			maxItemsInWorld: parseInt(env.MAX_ITEMS_IN_WORLD),
 			respawnTime: parseInt(env.ITEM_RESPAWN_TIME),
 			despawnTime: parseInt(env.ITEM_DESPAWN_TIME),
+		},
+		dev: {
+			appendClientHashToVersion: env.APPEND_CLIENT_HASH_TO_VERSION === 'true',
 		},
 	};
 }
