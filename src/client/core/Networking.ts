@@ -5,6 +5,7 @@ import { CustomClientSocket } from '../../shared/messages.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
 import { Peer } from '../../server/models/Peer.ts';
 import { PropData } from '../../shared/Prop.ts';
+import { clearCacheAndReload } from './cache.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
@@ -229,6 +230,7 @@ export class Networking {
 			if (!this.localPlayer.gameMsgs || this.localPlayer.gameMsgs.length === 0) {
 				this.localPlayer.gameMsgs = ['&cYour client may be outdated. Try refreshing the page.'];
 			}
+			clearCacheAndReload();
 		}
 	}
 

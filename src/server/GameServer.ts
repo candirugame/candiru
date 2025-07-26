@@ -13,22 +13,34 @@ import { DataValidator } from './DataValidator.ts';
 import { CustomServer } from '../shared/messages.ts';
 import { PeerManager } from './managers/PeerManager.ts';
 import { PropManager } from './managers/PropManager.ts';
+import { setupDevClientVersion } from './dev.ts';
 
 export class GameServer {
-	router: Router = new Router();
-	app: Application = new Application();
-	io: CustomServer = new Server();
+	router: Router;
+	app: Application;
+	io: CustomServer;
 
-	gameEngine: GameEngine;
-	playerManager: PlayerManager;
-	itemManager: ItemManager;
-	chatManager: ChatManager;
-	damageSystem: DamageSystem;
-	mapData: MapData;
-	peerManager: PeerManager;
-	propManager: PropManager;
+	gameEngine!: GameEngine;
+	playerManager!: PlayerManager;
+	itemManager!: ItemManager;
+	chatManager!: ChatManager;
+	damageSystem!: DamageSystem;
+	mapData!: MapData;
+	peerManager!: PeerManager;
+	propManager!: PropManager;
 
 	constructor() {
+		this.router = new Router();
+		this.app = new Application();
+		this.io = new Server();
+	}
+
+	public async init() {
+		if (config.dev.appendClientHashToVersion) {
+			await setupDevClientVersion();
+		}
+		await DataValidator.updateServerVersion();
+
 		this.mapData = this.loadMapData();
 		this.playerManager = new PlayerManager(this.mapData);
 		this.chatManager = new ChatManager(this.io, this.playerManager);
@@ -56,7 +68,6 @@ export class GameServer {
 		this.playerManager.setGameEngine(this.gameEngine);
 		this.gameEngine.start();
 
-		DataValidator.updateServerVersion();
 		this.start();
 	}
 

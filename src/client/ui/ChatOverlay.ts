@@ -126,7 +126,7 @@ export class ChatOverlay {
 		this.chatMessages = [];
 		this.chatMessageLifespan = 40; // 40 seconds
 		this.charsToRemovePerSecond = 30;
-		this.maxMessagesOnScreen = 12;
+		this.maxMessagesOnScreen = 32;
 
 		this.nameSettingActive = false;
 		this.screenWidth = 100;
@@ -239,7 +239,7 @@ export class ChatOverlay {
 
 	private renderChatMessages() {
 		const ctx = this.chatCtx;
-
+		ctx.globalAlpha = SettingsManager.settings.chatOpacity;
 		this.offscreenCtx.font = '8px Tiny5';
 		this.offscreenCtx.fillStyle = 'white';
 
@@ -332,6 +332,7 @@ export class ChatOverlay {
 			}
 			ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
 		}
+		ctx.globalAlpha = 1;
 	}
 
 	private renderPrettyText(text: string, x: number, y: number, defaultColor: string) {
@@ -499,10 +500,8 @@ export class ChatOverlay {
 
 		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
-			if (!line) {
-				console.error(`Line at index ${i} is missing!`);
-				continue; // Skip this iteration
-			}
+			if (!line) continue; // Skip this iteration
+
 			const currentMessage = current[i] || '';
 
 			if (!line.currentMessage) {
@@ -535,7 +534,7 @@ export class ChatOverlay {
 	private updateAnimatedGameMessages(now: number) {
 		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
-			if (!line.currentMessage) continue; // Early return if null
+			if (!line || !line.currentMessage) continue; // Early return if null
 
 			const elapsed = now - line.currentMessage.timestamp;
 			let progress = Math.min(elapsed / this.animationDuration, 1);
@@ -574,7 +573,7 @@ export class ChatOverlay {
 
 		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
-			if (!line.currentMessage) continue;
+			if (!line || !line.currentMessage) continue;
 
 			let visibleText = line.currentMessage.message;
 
@@ -1223,7 +1222,7 @@ export class ChatOverlay {
 		}
 
 		for (let i = this.chatMessages.length - 1; i >= 0; i--) {
-			if (i < this.chatMessages.length - this.maxMessagesOnScreen) {
+			if (i < this.chatMessages.length - SettingsManager.settings.chatMaxLines) {
 				this.chatMessages[i].timestamp = Math.min(
 					Date.now() / 1000 - this.chatMessageLifespan,
 					this.chatMessages[i].timestamp,
