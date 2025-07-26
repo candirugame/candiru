@@ -22,6 +22,7 @@ export class SettingsManager {
 			crosshairOpacity: 1,
 			viewBobbingStrength: 1,
 			chatOpacity: 0.7,
+			chatMaxLines: 10,
 			doPrettyText: false,
 			developerMode: false,
 		};
@@ -42,6 +43,7 @@ interface Settings {
 	crosshairOpacity: number;
 	viewBobbingStrength: number;
 	chatOpacity: number;
+	chatMaxLines: number;
 	doPrettyText: boolean;
 	developerMode: boolean;
 }

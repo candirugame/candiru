@@ -36,7 +36,6 @@ export class ChatOverlay {
 	private chatMessages: ChatMessage[]; // Typed as ChatMessage[]
 	private chatMessageLifespan: number;
 	private charsToRemovePerSecond: number;
-	private maxMessagesOnScreen: number;
 	private nameSettingActive: boolean;
 	private localPlayer: Player;
 	private renderer!: Renderer;
@@ -126,7 +125,6 @@ export class ChatOverlay {
 		this.chatMessages = [];
 		this.chatMessageLifespan = 40; // 40 seconds
 		this.charsToRemovePerSecond = 30;
-		this.maxMessagesOnScreen = 12;
 
 		this.nameSettingActive = false;
 		this.screenWidth = 100;
@@ -150,12 +148,6 @@ export class ChatOverlay {
 
 		this.offscreenCanvas = document.createElement('canvas');
 		this.offscreenCtx = this.offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
-
-		// Initialize lines for per-line message management
-		this.lines = Array(this.maxMessagesOnScreen).fill(null).map(() => ({
-			currentMessage: null,
-			pendingMessage: null,
-		}));
 
 		container.appendChild(this.chatCanvas);
 
@@ -498,15 +490,13 @@ export class ChatOverlay {
 		const current = this.gameMessages;
 		if (!current) return;
 
-		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
+		for (let i = 0; i < SettingsManager.settings.chatMaxLines; i++) {
 			const line = this.lines[i];
-			if (!line) {
-				console.error(`Line at index ${i} is missing!`);
-				continue; // Skip this iteration
-			}
+			if (!line) continue; // Skip this iteration
+
 			const currentMessage = current[i] || '';
 
-			if (!line.currentMessage) {
+			if (!line || !line.currentMessage) {
 				if (currentMessage) {
 					line.currentMessage = {
 						id: this.generateUniqueId(),
@@ -534,9 +524,9 @@ export class ChatOverlay {
 	}
 
 	private updateAnimatedGameMessages(now: number) {
-		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
+		for (let i = 0; i < SettingsManager.settings.chatMaxLines; i++) {
 			const line = this.lines[i];
-			if (!line.currentMessage) continue; // Early return if null
+			if (!line || !line.currentMessage) continue; // Early return if null
 
 			const elapsed = now - line.currentMessage.timestamp;
 			let progress = Math.min(elapsed / this.animationDuration, 1);
@@ -573,9 +563,9 @@ export class ChatOverlay {
 		ctx.font = '8px Tiny5';
 		const centerY = this.chatCanvas.height / 2 + 48;
 
-		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
+		for (let i = 0; i < SettingsManager.settings.chatMaxLines; i++) {
 			const line = this.lines[i];
-			if (!line.currentMessage) continue;
+			if (!line || !line.currentMessage) continue;
 
 			let visibleText = line.currentMessage.message;
 
@@ -1224,7 +1214,7 @@ export class ChatOverlay {
 		}
 
 		for (let i = this.chatMessages.length - 1; i >= 0; i--) {
-			if (i < this.chatMessages.length - this.maxMessagesOnScreen) {
+			if (i < this.chatMessages.length - SettingsManager.settings.chatMaxLines) {
 				this.chatMessages[i].timestamp = Math.min(
 					Date.now() / 1000 - this.chatMessageLifespan,
 					this.chatMessages[i].timestamp,
