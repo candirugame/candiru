@@ -33,7 +33,7 @@ import { SettingsManager } from '../../client/core/SettingsManager.ts';
 				<div class="setting-item">
 					<label class="mr-2">zoom sens t</label>
 					<div class="flex items-center min-w-[160px]">
-						<input type="range" min="0" max="2" step="0.05"
+						<input type="range" min="0" max="2" step="0.1"
 							   [(ngModel)]="settings.zoomSensT" (change)="saveSettings()">
 						<span class="w-8 text-left ml-2">{{ settings.zoomSensT | number:'1.1-1' }}</span>
 					</div>
@@ -57,9 +57,18 @@ import { SettingsManager } from '../../client/core/SettingsManager.ts';
 				<div class="setting-item">
 					<label class="mr-2">crosshair opacity</label>
 					<div class="flex items-center min-w-[160px]">
-						<input type="range" min="0" max="1" step="0.05"
+						<input type="range" min="0" max="1" step="0.1"
 							   [(ngModel)]="settings.crosshairOpacity" (change)="saveSettings()">
 						<span class="w-8 text-left ml-2">{{ settings.crosshairOpacity | number:'1.1-1' }}</span>
+					</div>
+				</div>
+
+				<div class="setting-item">
+					<label class="mr-2">chat opacity</label>
+					<div class="flex items-center min-w-[160px]">
+						<input type="range" min="0" max="1" step="0.1"
+							   [(ngModel)]="settings.chatOpacity" (change)="saveSettings()">
+						<span class="w-8 text-left ml-2">{{ settings.chatOpacity | number:'1.1-1' }}</span>
 					</div>
 				</div>
 

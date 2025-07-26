@@ -239,7 +239,7 @@ export class ChatOverlay {
 
 	private renderChatMessages() {
 		const ctx = this.chatCtx;
-
+		ctx.globalAlpha = SettingsManager.settings.chatOpacity;
 		this.offscreenCtx.font = '8px Tiny5';
 		this.offscreenCtx.fillStyle = 'white';
 
@@ -332,6 +332,7 @@ export class ChatOverlay {
 			}
 			ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
 		}
+		ctx.globalAlpha = 1;
 	}
 
 	private renderPrettyText(text: string, x: number, y: number, defaultColor: string) {
