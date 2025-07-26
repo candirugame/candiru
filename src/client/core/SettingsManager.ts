@@ -14,6 +14,7 @@ export class SettingsManager {
 	public static reset() {
 		SettingsManager.settings = {
 			sense: 1,
+			zoomSensT: 1,
 			controllerSense: 1,
 			name: null,
 			crosshairColor: '#00ffff',
@@ -33,6 +34,7 @@ export class SettingsManager {
 interface Settings {
 	sense: number;
 	controllerSense: number;
+	zoomSensT: number; // zoom is lerped from 1 to camera zoom, with this as the t value
 	name: null | string;
 	crosshairColor: string;
 	crosshairType: number;

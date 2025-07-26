@@ -31,6 +31,15 @@ import { SettingsManager } from '../../client/core/SettingsManager.ts';
 				</div>
 
 				<div class="setting-item">
+					<label class="mr-2">zoom sens t</label>
+					<div class="flex items-center min-w-[160px]">
+						<input type="range" min="0" max="2" step="0.05"
+							   [(ngModel)]="settings.zoomSensT" (change)="saveSettings()">
+						<span class="w-8 text-left ml-2">{{ settings.zoomSensT | number:'1.1-1' }}</span>
+					</div>
+				</div>
+
+				<div class="setting-item">
 					<label class="mr-2">crosshair color</label>
 					<input type="color" [(ngModel)]="settings.crosshairColor" (change)="saveSettings()">
 				</div>

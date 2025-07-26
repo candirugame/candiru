@@ -3,6 +3,7 @@ import { SettingsManager } from '../core/SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
 import { Game } from '../core/Game.ts';
 import { Renderer } from '../core/Renderer.ts';
+import { lerp } from '../../shared/Utils.ts';
 
 // Define a custom event map interface
 interface PointerLockControlEventMap {
@@ -80,8 +81,10 @@ export class PointerLockControls extends THREE.EventDispatcher<PointerLockContro
 		const euler = new THREE.Euler(0, 0, 0, 'YXZ');
 		euler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
-		euler.y -= movementX * SettingsManager.settings.sense * .002 / this.renderer.targetZoom;
-		euler.x -= movementY * SettingsManager.settings.sense * .002 / this.renderer.targetZoom;
+		euler.y -= movementX * SettingsManager.settings.sense * .002 /
+			lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
+		euler.x -= movementY * SettingsManager.settings.sense * .002 /
+			lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 
 		euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
 
