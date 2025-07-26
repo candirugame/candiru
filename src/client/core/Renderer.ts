@@ -12,6 +12,7 @@ import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
 import { ParticleSystem } from './ParticleSystem.ts';
 import { ShotHandler } from './ShotHandler.ts';
 import { PropRenderer } from './PropRenderer.ts';
+import { Quaternion } from 'three';
 
 export class Renderer {
 	private clock: THREE.Clock;
@@ -230,53 +231,52 @@ export class Renderer {
 
 		// Restore autoClear to true
 		this.renderer.autoClear = true;
-
+		let remotePlayer = undefined;
 		if (localPlayer.playerSpectating !== -1) {
-			const remotePlayer = this.networking.getRemotePlayerData().find((player) =>
-				player.id === localPlayer.playerSpectating
-			);
-			if (remotePlayer !== undefined) {
-				if (!this.spectateGroundTruthPosition) {
-					this.spectateGroundTruthPosition = new THREE.Vector3(
-						remotePlayer.position.x,
-						remotePlayer.position.y,
-						remotePlayer.position.z,
-					);
-				}
+			remotePlayer = this.networking.getRemotePlayerData().find((player) => player.id === localPlayer.playerSpectating);
+		}
 
-				this.spectateGroundTruthPosition.x += remotePlayer.velocity.x * this.deltaTime;
-				this.spectateGroundTruthPosition.y += remotePlayer.velocity.y * this.deltaTime;
-				this.spectateGroundTruthPosition.z += remotePlayer.velocity.z * this.deltaTime;
-
-				if (remotePlayer.forced) {
-					this.spectateGroundTruthPosition.set(
-						remotePlayer.position.x,
-						remotePlayer.position.y,
-						remotePlayer.position.z,
-					);
-				}
-
-				this.spectateGroundTruthPosition.lerp(
-					new THREE.Vector3(
-						remotePlayer.position.x,
-						remotePlayer.position.y,
-						remotePlayer.position.z,
-					),
-					0.1 * this.deltaTime * 60,
-				);
-
-				this.camera.position.copy(this.spectateGroundTruthPosition);
-
-				this.camera.quaternion.slerp(
-					new THREE.Quaternion(
-						remotePlayer.lookQuaternion.x,
-						remotePlayer.lookQuaternion.y,
-						remotePlayer.lookQuaternion.z,
-						remotePlayer.lookQuaternion.w,
-					),
-					0.3 * this.deltaTime * 60,
+		if (remotePlayer !== undefined) {
+			if (!this.spectateGroundTruthPosition) {
+				this.spectateGroundTruthPosition = new THREE.Vector3(
+					remotePlayer.position.x,
+					remotePlayer.position.y,
+					remotePlayer.position.z,
 				);
 			}
+
+			this.spectateGroundTruthPosition.x += remotePlayer.velocity.x * this.deltaTime;
+			this.spectateGroundTruthPosition.y += remotePlayer.velocity.y * this.deltaTime;
+			this.spectateGroundTruthPosition.z += remotePlayer.velocity.z * this.deltaTime;
+
+			if (remotePlayer.forced) {
+				this.spectateGroundTruthPosition.set(
+					remotePlayer.position.x,
+					remotePlayer.position.y,
+					remotePlayer.position.z,
+				);
+			}
+
+			this.spectateGroundTruthPosition.lerp(
+				new THREE.Vector3(
+					remotePlayer.position.x,
+					remotePlayer.position.y,
+					remotePlayer.position.z,
+				),
+				0.1 * this.deltaTime * 60,
+			);
+
+			this.camera.position.copy(this.spectateGroundTruthPosition);
+
+			this.camera.quaternion.slerp(
+				new THREE.Quaternion(
+					remotePlayer.lookQuaternion.x,
+					remotePlayer.lookQuaternion.y,
+					remotePlayer.lookQuaternion.z,
+					remotePlayer.lookQuaternion.w,
+				),
+				0.3 * this.deltaTime * 60,
+			);
 		} else {
 			this.spectateGroundTruthPosition = null;
 			const tpDist = localPlayer.thirdPerson;
@@ -333,10 +333,12 @@ export class Renderer {
 		this.lastPlayerHealth = this.localPlayer.health;
 
 		const vel = Math.sqrt(
-			Math.pow(this.localPlayer.inputVelocity.x, 2) + Math.pow(this.localPlayer.inputVelocity.z, 2),
+			remotePlayer !== undefined
+				? Math.pow(remotePlayer.velocity.x, 2) + Math.pow(remotePlayer.velocity.z, 2)
+				: Math.pow(this.localPlayer.inputVelocity.x, 2) + Math.pow(this.localPlayer.inputVelocity.z, 2),
 		);
 
-		if (vel == 0 || this.collisionManager.isPlayerInAir() || this.localPlayer.playerSpectating !== -1) {
+		if (vel == 0 || this.collisionManager.isPlayerInAir()) {
 			this.bobCycle = 0;
 		} else {
 			this.bobCycle += this.deltaTime * 4.8 * vel;
@@ -349,8 +351,19 @@ export class Renderer {
 		let newHandZ = Math.sin(this.bobCycle / 1.8) * .015 * SettingsManager.settings.viewBobbingStrength;
 		newHandY += localPlayer.velocity.y * 0.04 * SettingsManager.settings.viewBobbingStrength;
 
-		const playerVelocity = new THREE.Vector3().copy(localPlayer.velocity);
-		playerVelocity.applyQuaternion(localPlayer.lookQuaternion.clone().invert());
+		const playerVelocity = remotePlayer == undefined
+			? new THREE.Vector3().copy(localPlayer.velocity)
+			: new THREE.Vector3().copy(remotePlayer.velocity);
+
+		if (remotePlayer == undefined) playerVelocity.applyQuaternion(localPlayer.lookQuaternion.clone().invert());
+		else {playerVelocity.applyQuaternion(
+				new Quaternion(
+					remotePlayer.lookQuaternion.x,
+					remotePlayer.lookQuaternion.y,
+					remotePlayer.lookQuaternion.z,
+					remotePlayer.lookQuaternion.w,
+				).invert(),
+			);}
 		newHandX += playerVelocity.x * 0.02 * SettingsManager.settings.viewBobbingStrength;
 		newHandZ -= -playerVelocity.z * 0.02 * SettingsManager.settings.viewBobbingStrength;
 
