@@ -1,5 +1,5 @@
 # Define Deno version (using the version from your current Dockerfile)
-ARG DENO_VERSION=2.3.1
+ARG DENO_VERSION=2.4.2
 ARG BIN_IMAGE=denoland/deno:bin-${DENO_VERSION}
 
 # Stage to get the Deno binary

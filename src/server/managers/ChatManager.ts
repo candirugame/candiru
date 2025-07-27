@@ -7,17 +7,18 @@ export class ChatManager {
 	constructor(private io: CustomServer, private playerManager: PlayerManager) {}
 
 	handleChatMessage(unparsedData: ChatMessage, socket: CustomSocket) {
-		const { data, error } = DataValidator.validateChatMessage(unparsedData);
-		if (error) {
-			console.warn(`Invalid chat message: ${error.message}`);
+		const result = DataValidator.validateChatMessage(unparsedData);
+		if (!result.success) {
+			console.warn(`Invalid chat message: ${result.error.message}`);
 			return;
 		}
+		const data = result.data;
 
 		const isCommand = this.parseCommand(data.message, socket, data.id);
 		if (!isCommand) {
 			if (data.message.startsWith('>')) data.message = '&2' + data.message;
 			console.log(`💬 ${data.name}: ${data.message}`);
-			this.io.emit('chatMsg', data);
+			this.io.emit('chatMsg', { id: data.id, name: data.name, message: data.message });
 		}
 	}
 
