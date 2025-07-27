@@ -77,7 +77,7 @@ export class GameEngine {
 					const prev = this.lastEmittedPropSnapshot.get(pd.id);
 					const delta: Partial<PropData> & { id: number } = { id: pd.id };
 					if (!prev) {
-						deltas.push(pd);
+						deltas.push(pd as Partial<PropData> & { id: number });
 						this.lastEmittedPropSnapshot.set(pd.id, pd);
 					} else {
 						// iterate over known keys in PropData
@@ -120,7 +120,7 @@ export class GameEngine {
 							const prev = this.lastEmittedPlayerSnapshot.get(pd.id);
 							const delta: Partial<PlayerData> & { id: number } = { id: pd.id };
 							if (!prev) {
-								deltas.push(pd);
+								deltas.push(pd as Partial<PlayerData> & { id: number });
 								this.lastEmittedPlayerSnapshot.set(pd.id, pd);
 							} else {
 								// iterate over known keys in PlayerData

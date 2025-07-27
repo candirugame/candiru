@@ -15,7 +15,7 @@ permissions:
   id-token: write # To enable use of OIDC for npm provenance
 
 env:
-  DENO_VERSION: '2.3.1'
+  DENO_VERSION: '2.4.2'
 
 jobs:
   # Build Job

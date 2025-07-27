@@ -307,7 +307,14 @@ export class Renderer {
 				player.id === this.localPlayer.idLastDamagedBy
 			);
 			if (remotePlayer !== undefined) {
-				const diff = new THREE.Vector3().subVectors(this.localPlayer.position, remotePlayer.position);
+				const diff = new THREE.Vector3().subVectors(
+					this.localPlayer.position,
+					new THREE.Vector3(
+						remotePlayer.position.x,
+						remotePlayer.position.y,
+						remotePlayer.position.z,
+					),
+				);
 				this.knockbackVector.copy(diff.normalize().multiplyScalar(0.2));
 			}
 		}
