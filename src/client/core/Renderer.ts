@@ -410,6 +410,11 @@ export class Renderer {
 			this.camera.updateProjectionMatrix();
 		}
 
+		if (this.networking.forcedZoomTick()) {
+			this.camera.zoom = 3;
+			this.camera.updateProjectionMatrix();
+		}
+
 		this.updateFramerate();
 	}
 

@@ -135,6 +135,14 @@ export class Networking {
 		this.socket.emit('getServerList', callback);
 	}
 
+	private forcedZoomTriggered: boolean = false;
+	public forcedZoomTick(): boolean {
+		if (this.forcedZoomTriggered) {
+			this.forcedZoomTriggered = false;
+			return true;
+		}
+		return false;
+	}
 	// Updates the local player state based on received data (full or partial)
 	private updateLocalPlayerState(data: Partial<PlayerData>) {
 		// Forced position/velocity/look updates
@@ -150,6 +158,7 @@ export class Networking {
 				);
 			}
 			if (data.gravity !== undefined) this.localPlayer.gravity = data.gravity;
+			this.forcedZoomTriggered = true;
 			this.localPlayer.forcedAcknowledged = true;
 		} else if (data.forced === false) {
 			this.localPlayer.forcedAcknowledged = false;
