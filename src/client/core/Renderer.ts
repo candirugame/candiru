@@ -345,7 +345,7 @@ export class Renderer {
 				: Math.pow(this.localPlayer.inputVelocity.x, 2) + Math.pow(this.localPlayer.inputVelocity.z, 2),
 		);
 
-		if (vel == 0 || this.collisionManager.isPlayerInAir()) {
+		if (vel == 0 || this.collisionManager.isPlayerInAir() || remotePlayer !== undefined) { //TODO: remove remotePlayer check, instead check if remotePlayer is in air. can happen on client OR remotePlayer
 			this.bobCycle = 0;
 		} else {
 			this.bobCycle += this.deltaTime * 4.8 * vel;
