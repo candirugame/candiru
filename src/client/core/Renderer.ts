@@ -408,11 +408,13 @@ export class Renderer {
 		if (currentZoom !== newZoom) {
 			this.camera.zoom = newZoom;
 			this.camera.updateProjectionMatrix();
+			this.particleSystem.updateCameraZoom(newZoom);
 		}
 
 		if (this.networking.forcedZoomTick()) {
 			this.camera.zoom = 3;
 			this.camera.updateProjectionMatrix();
+			this.particleSystem.updateCameraZoom(3);
 		}
 
 		this.updateFramerate();
