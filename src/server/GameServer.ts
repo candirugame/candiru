@@ -80,7 +80,7 @@ export class GameServer {
 						const result = this.playerManager.addOrUpdatePlayer(data);
 						if (result.isNew) {
 							if (this.gameEngine.gamemode) this.gameEngine.gamemode.onPlayerConnect(result.player);
-							this.chatManager.broadcastChat(`${result.player.name} joined`);
+							this.chatManager.broadcastEventMessage(`${result.player.name} joined`);
 							console.log(`🟢 ${result.player.name}(${result.player.id}) joined`);
 							this.gameEngine.nudgeFullEmit();
 						}

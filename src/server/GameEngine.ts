@@ -200,7 +200,7 @@ export class GameEngine {
 				if ((player.updateTimestamp || 0) + config.player.disconnectTime < currentTime) {
 					if (this.gamemode) this.gamemode.onPlayerDisconnect(player);
 					console.log(`🟠 ${player.name}(${player.id}) left`);
-					this.chatManager.broadcastChat(`${player.name} left`);
+					this.chatManager.broadcastEventMessage(`${player.name} left`);
 					this.playerManager.removePlayer(player.id);
 				}
 			});
