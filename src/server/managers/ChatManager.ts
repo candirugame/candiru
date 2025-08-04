@@ -77,6 +77,10 @@ export class ChatManager {
 		this.io.emit('chatMsg', chatMessage);
 	}
 
+	broadcastEventMessage(message: string) {
+		this.io.emit('eventMsg', message);
+	}
+
 	whisperChatMessage(message: string, socket: CustomSocket) {
 		const chatMessage: ChatMessage = {
 			id: -1,

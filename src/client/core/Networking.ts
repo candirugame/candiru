@@ -311,7 +311,13 @@ export class Networking {
 		});
 
 		this.socket.on('chatMsg', (data) => {
-			if (data.id !== this.localPlayer.id) this.chatOverlay.addChatMessage(data);
+			if (data.id !== this.localPlayer.id) {
+				this.chatOverlay.addChatMessage(data);
+			}
+		});
+
+		this.socket.on('eventMsg', (msg) => {
+			this.chatOverlay.addEventMessage(msg);
 		});
 
 		this.socket.on('serverInfo', (data) => {
@@ -440,6 +446,7 @@ export class Networking {
 		}
 		chatMessage.message = '&f' + chatMessage.message;
 		this.chatOverlay.addChatMessage(chatMessage);
+		//this.chatOverlay.addEventMessage(chatMessage.message);
 		this.socket.emit('chatMsg', chatMessage);
 	}
 

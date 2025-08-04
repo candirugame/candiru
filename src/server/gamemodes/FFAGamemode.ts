@@ -121,7 +121,7 @@ export class FFAGamemode extends Gamemode {
 				this.gameEngine.setGameMessage(player, colorCode + extras.killStreak + ' kill streak', 1, 5);
 			}
 			if (extras.killStreak >= 5) {
-				this.gameEngine.chatManager.broadcastChat(
+				this.gameEngine.chatManager.broadcastEventMessage(
 					colorCode + player.name + ' is on a ' + extras.killStreak + ' kill streak',
 				);
 			}
