@@ -8,7 +8,7 @@ import { ShotHandler, ShotParticleType } from '../core/ShotHandler.ts';
 const firingDelay = 0.5;
 const firingDelayHeld = 0.5; //longer firing delay when mouse is held down
 const showInHandDelay = 0.1;
-const timeToFullPower = 8;
+const timeToFullPower = 3.8;
 
 const scopedPosition = new THREE.Vector3(0, 0, 4.2);
 const unscopedPosition = new THREE.Vector3(0.85, -0.8, 3.2);
