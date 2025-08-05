@@ -1,6 +1,7 @@
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { InputHandler } from '../input/InputHandler.ts';
+import { SpriteManager } from './SpriteManager.ts';
 import { CommandManager } from '../core/CommandManager.ts';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
@@ -64,6 +65,7 @@ export class ChatOverlay {
 	private buttonsHeld: number[] = [];
 	private lastRoutineMs = 0;
 	private containerElement: HTMLElement;
+	private spriteManager: SpriteManager;
 
 	private gameIndex: number;
 
@@ -127,7 +129,8 @@ export class ChatOverlay {
 		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
 
-		this.redguySmall.src = '/redguy_6px.webp';
+		this.spriteManager = new SpriteManager();
+
 		this.redguy.src = '/redguy.webp';
 
 		this.chatCanvas.width = 400;
@@ -940,7 +943,6 @@ export class ChatOverlay {
 
 	public sniperOverlayEnabled: boolean = false;
 	public sniperOverlayPower: number = 0;
-	public redguySmall: HTMLImageElement = new Image();
 	public redguy: HTMLImageElement = new Image();
 
 	public renderSniperOverlay() {
@@ -1009,8 +1011,8 @@ export class ChatOverlay {
 				offsetY = Math.round((Math.random() - 0.5) * 1.02);
 			}
 
-			if (this.redguySmall.complete && this.redguySmall.naturalWidth > 0 && flashOn) {
-				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3 + offsetX, circleY + 2 + offsetY, 6, 6);
+			if (flashOn) {
+				this.spriteManager.renderSprite(ctx, 'redguy', centerX + 16 + 8 - 3 + offsetX, circleY + 2 + offsetY);
 			}
 		}
 		const barCount = 16;
