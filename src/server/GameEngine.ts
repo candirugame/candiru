@@ -188,7 +188,7 @@ export class GameEngine {
 				if (player.position.y < -150) {
 					player.health = 0;
 					player.velocity = new THREE.Vector3(0, 0, 0);
-					this.chatManager.broadcastChat(`${player.name} fell off :'(`);
+					this.chatManager.broadcastEventMessage(`${player.name} fell off :'(`);
 					console.log(`💔 ${player.name}(${player.id}) fell off the map`);
 				}
 
