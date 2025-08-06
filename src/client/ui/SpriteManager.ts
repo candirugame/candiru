@@ -3,6 +3,7 @@ export class SpriteManager {
 	private spriteDefinitions: Record<string, { x: number; y: number; width: number; height: number }> = {
 		'redguy_6px': { x: 0, y: 0, width: 6, height: 6 },
 		'redguy_8px': { x: 7, y: 0, width: 8, height: 8 },
+		'yellowguy': { x: 16, y: 0, width: 8, height: 8 },
 
 		'redguy': { x: 0, y: 8, width: 58, height: 58 },
 	};

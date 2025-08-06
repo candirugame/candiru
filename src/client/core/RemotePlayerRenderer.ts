@@ -6,6 +6,7 @@ import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-
 import { Player, PlayerData } from '../../shared/Player.ts';
 import { ShotHandler, ShotParticleType } from './ShotHandler.ts';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
+import { SpriteManager } from '../ui/SpriteManager.ts';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
@@ -87,6 +88,7 @@ export class RemotePlayerRenderer {
 	private static map: THREE.Mesh = new THREE.Mesh();
 
 	private crosshairVec = new THREE.Vector2();
+	private spriteManager: SpriteManager;
 
 	constructor(
 		networking: Networking,
@@ -111,6 +113,8 @@ export class RemotePlayerRenderer {
 		this.dracoLoader = new DRACOLoader();
 		this.dracoLoader.setDecoderPath('/draco/');
 		this.loader.setDRACOLoader(this.dracoLoader);
+
+		this.spriteManager = new SpriteManager();
 
 		this.possumMesh = undefined;
 		this.loader.load(
@@ -466,41 +470,60 @@ export class RemotePlayerRenderer {
 		});
 	}
 
+	private getColorCode(code: string): string | false {
+		if (code === 'g') {
+			return this.getRainbowColor();
+		}
+		return ChatOverlay.COLOR_CODES[code] || false;
+	}
+
+	private getRainbowColor(): string {
+		const hue = (Date.now() / 20) % 360;
+		return `hsl(${hue}, 100%, 50%)`;
+	}
+
 	private createTextSprite(text: string): THREE.Sprite {
-		// Parse color codes and calculate total width
+		// Parse color codes and sprites, and calculate total width
 		const fontSize = 64;
 		const context = document.createElement('canvas').getContext('2d')!;
 		context.font = `${fontSize}px Comic Sans MS`;
 
-		// Split text into color segments
-		const segments: { text: string; color: string }[] = [];
+		// Split text into segments (text and sprites)
+		const segments: { type: 'text' | 'sprite'; content: string; color?: string; width: number }[] = [];
 		let currentColor = '#FFFFFF';
 		let currentSegment = '';
+		let totalWidth = 0;
+
+		const pushTextSegment = () => {
+			if (currentSegment) {
+				const width = context.measureText(currentSegment).width;
+				segments.push({ type: 'text', content: currentSegment, color: currentColor, width });
+				totalWidth += width;
+				currentSegment = '';
+			}
+		};
 
 		for (let i = 0; i < text.length; i++) {
-			if (text[i] === '&' && i + 1 < text.length) {
-				const colorCode = text[i + 1].toLowerCase();
-				if (currentSegment) {
-					segments.push({ text: currentSegment, color: currentColor });
-					currentSegment = '';
-				}
-				currentColor = ChatOverlay.COLOR_CODES[colorCode] || '#FFFFFF';
-				i++; // Skip color code character
-			} else {
+			// Check for color codes
+			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
+				pushTextSegment();
+				currentColor = <string> this.getColorCode(text[i + 1]);
+				i++; // Skip the color code character
+			} // Check for sprite codes
+			else if (text[i] === '^' && i + 1 < text.length && ChatOverlay.SPRITE_CODES[text[i + 1]]) {
+				pushTextSegment();
+				const spriteName = ChatOverlay.SPRITE_CODES[text[i + 1]];
+				// Sprites have a fixed width in the texture (convert to fontSize scale)
+				const spriteWidth = (8 / 8) * fontSize; // 8px sprite scaled to fontSize
+				segments.push({ type: 'sprite', content: spriteName, width: spriteWidth });
+				totalWidth += spriteWidth;
+				i++; // Skip the sprite code character
+			} // Handle regular characters
+			else {
 				currentSegment += text[i];
 			}
 		}
-		if (currentSegment) {
-			segments.push({ text: currentSegment, color: currentColor });
-		}
-
-		// Calculate total width
-		let totalWidth = 0;
-		const measurements = segments.map((seg) => {
-			const width = context.measureText(seg.text).width;
-			totalWidth += width;
-			return width;
-		});
+		pushTextSegment();
 
 		// Create canvas
 		const canvas = document.createElement('canvas');
@@ -508,15 +531,28 @@ export class RemotePlayerRenderer {
 		canvas.width = totalWidth * 2; // Match original 2x scaling
 		canvas.height = fontSize * 2;
 
-		// Draw centered text
+		// Draw centered content
 		let xPos = (canvas.width - totalWidth) / 2;
 		ctx.textBaseline = 'middle';
 
-		segments.forEach((seg, index) => {
-			ctx.fillStyle = seg.color;
-			ctx.font = `${fontSize}px Comic Sans MS`;
-			ctx.fillText(seg.text, xPos, canvas.height / 2);
-			xPos += measurements[index];
+		segments.forEach((segment) => {
+			if (segment.type === 'text') {
+				ctx.fillStyle = segment.color!;
+				ctx.font = `${fontSize}px Comic Sans MS`;
+				ctx.fillText(segment.content, xPos, canvas.height / 2);
+			} else if (segment.type === 'sprite') {
+				// Render sprite to the canvas
+				// Scale sprite to match font size (sprite is 8px, fontSize is 64px)
+				this.spriteManager.renderSprite(
+					ctx,
+					segment.content,
+					xPos,
+					canvas.height / 2 - (fontSize / 2), // Center vertically
+					segment.width, // Width scaled down by 2x factor
+					fontSize, // Height to match font size
+				);
+			}
+			xPos += segment.width;
 		});
 
 		// Create sprite

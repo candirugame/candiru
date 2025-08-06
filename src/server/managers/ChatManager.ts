@@ -49,6 +49,12 @@ export class ChatManager {
 			case 'octopus':
 				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
 				break;
+			case 'goblin': {
+				let goblin = '';
+				for (let i = 0; i < 50; i++) goblin += '^a';
+				for (let i = 0; i < 50; i++) this.whisperChatMessage(goblin, socket);
+				break;
+			}
 			case 'ping':
 				this.whisperChatMessage(message + ' -> pong!', socket);
 				break;
