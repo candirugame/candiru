@@ -131,8 +131,6 @@ export class ChatOverlay {
 
 		this.spriteManager = new SpriteManager();
 
-		this.redguy.src = '/redguy.webp';
-
 		this.chatCanvas.width = 400;
 		this.chatCanvas.height = 200;
 
@@ -943,7 +941,6 @@ export class ChatOverlay {
 
 	public sniperOverlayEnabled: boolean = false;
 	public sniperOverlayPower: number = 0;
-	public redguy: HTMLImageElement = new Image();
 
 	public renderSniperOverlay() {
 		if (!this.sniperOverlayEnabled) return;
@@ -1012,7 +1009,7 @@ export class ChatOverlay {
 			}
 
 			if (flashOn) {
-				this.spriteManager.renderSprite(ctx, 'redguy', centerX + 16 + 8 - 3 + offsetX, circleY + 2 + offsetY);
+				this.spriteManager.renderSprite(ctx, 'redguy_6px', centerX + 16 + 8 - 3 + offsetX, circleY + 2 + offsetY);
 			}
 		}
 		const barCount = 16;
@@ -1151,16 +1148,16 @@ export class ChatOverlay {
 
 	private renderEvil() {
 		const ctx = this.chatCtx;
-		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07) {
+		if (
+			Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07
+		) {
 			ctx.fillStyle = 'rgba(255,0,0,0.1)';
 			ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
 
-			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.14) {
+			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.07) {
 				ctx.globalAlpha = 0.2;
+				this.spriteManager.renderSprite(ctx, 'redguy', 0, 0, this.chatCanvas.width, this.chatCanvas.height);
 
-				if (this.redguy.complete && this.redguy.naturalWidth > 0) {
-					ctx.drawImage(this.redguy, 0, 0, this.chatCanvas.width, this.chatCanvas.height);
-				}
 				ctx.globalAlpha = 1;
 			}
 		}

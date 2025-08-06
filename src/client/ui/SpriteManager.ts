@@ -1,10 +1,11 @@
 export class SpriteManager {
 	private spriteSheet: HTMLImageElement = new Image();
 	private spriteDefinitions: Record<string, { x: number; y: number; width: number; height: number }> = {
-		'redguy': { x: 0, y: 0, width: 6, height: 6 },
+		'redguy_6px': { x: 0, y: 0, width: 6, height: 6 },
+		'redguy': { x: 0, y: 8, width: 58, height: 58 },
 	};
 	constructor() {
-		this.spriteSheet.src = '/redguy_6px.webp';
+		this.spriteSheet.src = '/spritesheet.webp';
 	}
 	public renderSprite(
 		ctx: CanvasRenderingContext2D,
