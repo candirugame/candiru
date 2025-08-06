@@ -62,7 +62,9 @@ export class DamageSystem {
 		if (targetPlayer.health <= 0) {
 			const killerName = localPlayer.name;
 			const killedName = targetPlayer.name;
-			this.chatManager.broadcastEventMessage(`&c${killerName} killed ${killedName}`);
+			if (data.damage == 100) this.chatManager.broadcastEventMessage(`&c${killerName} ^a ${killedName}`);
+			else this.chatManager.broadcastEventMessage(`&c${killerName} killed ${killedName}`);
+
 			console.log(`💔 ${killerName} killed ${killedName}`);
 			//this.playerManager.respawnPlayer(targetPlayer);
 			this.gameEngine.periodicCleanup();

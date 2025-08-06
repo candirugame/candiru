@@ -459,7 +459,7 @@ export class Networking {
 			damage: damage,
 		};
 		this.socket.emit('applyDamage', damageRequest);
-		console.log(`Applying damage: ${id} - ${damage}`);
+		//	console.log(`Applying damage: ${id} - ${damage}`);
 	}
 
 	public applyPropDamage(id: number, damage: number) {

@@ -102,6 +102,10 @@ export class ChatOverlay {
 		'g': this.getRainbowColor(),
 	};
 
+	public static SPRITE_CODES: { [key: string]: string } = {
+		'a': 'redguy_8px',
+	};
+
 	public destroy() {
 		this.chatCanvas.remove();
 		this.offscreenCanvas.remove();
@@ -126,7 +130,7 @@ export class ChatOverlay {
 		this.containerElement = container;
 		this.gameIndex = gameIndex;
 		this.chatCanvas = document.createElement('canvas');
-		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
+		this.chatCtx = this.chatCanvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
 
 		this.spriteManager = new SpriteManager();
@@ -160,7 +164,7 @@ export class ChatOverlay {
 		this.chatCanvas.style.touchAction = 'none';
 
 		this.offscreenCanvas = document.createElement('canvas');
-		this.offscreenCtx = this.offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
+		this.offscreenCtx = this.offscreenCanvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 
 		// Initialize lines for per-line message management
 		this.lines = Array(this.maxMessagesOnScreen).fill(null).map(() => ({
@@ -348,95 +352,82 @@ export class ChatOverlay {
 		ctx.globalAlpha = 1;
 	}
 
-	private renderPrettyText(text: string, x: number, y: number, defaultColor: string) {
-		let currentX = x;
-		const segments: { text: string; color: string }[] = [];
-		let currentColor = defaultColor;
-		let currentSegment = '';
-
-		// Parse color codes and split into segments
-		for (let i = 0; i < text.length; i++) {
-			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
-				if (currentSegment) {
-					segments.push({ text: currentSegment, color: currentColor });
-				}
-				currentColor = <string> this.getColorCode(text[i + 1]);
-				currentSegment = '';
-				i++; // Skip the color code character
-			} else {
-				currentSegment += text[i];
-			}
-		}
-
-		if (currentSegment) {
-			segments.push({ text: currentSegment, color: currentColor });
-		}
-
-		// Render each segment
-		for (const segment of segments) {
-			this.offscreenCtx.font = '8px Tiny5';
-			const textMetrics = this.offscreenCtx.measureText(segment.text);
-			const textWidth = Math.max(Math.ceil(textMetrics.width), 1);
-			const textHeight = 8;
-
-			if (this.offscreenCanvas.width !== textWidth || this.offscreenCanvas.height !== textHeight) {
-				this.offscreenCanvas.width = textWidth;
-				this.offscreenCanvas.height = textHeight;
-			}
-
-			this.offscreenCtx.clearRect(0, 0, textWidth, textHeight);
-			this.offscreenCtx.font = '8px Tiny5';
-			this.offscreenCtx.fillStyle = segment.color;
-			this.offscreenCtx.fillText(segment.text, 0, textHeight - 1);
-
-			const imageData = this.offscreenCtx.getImageData(0, 0, textWidth, textHeight);
-			const data = imageData.data;
-
-			for (let i = 0; i < data.length; i += 4) {
-				data[i + 3] = data[i + 3] > 170 ? 255 : 0;
-			}
-
-			this.offscreenCtx.putImageData(imageData, 0, 0);
-			this.chatCtx.drawImage(this.offscreenCanvas, currentX, y - textHeight + 1);
-			currentX += textWidth;
-		}
-	}
-
-	private renderUglyText(text: string, x: number, y: number, defaultColor: string) {
-		let currentX = x;
-		let currentColor = defaultColor;
-		let currentSegment = '';
-
-		for (let i = 0; i < text.length; i++) {
-			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
-				if (currentSegment) {
-					this.chatCtx.font = '8px Tiny5';
-					this.chatCtx.fillStyle = currentColor;
-					this.chatCtx.fillText(currentSegment, currentX, y);
-					currentX += this.chatCtx.measureText(currentSegment).width;
-				}
-				currentColor = <string> this.getColorCode(text[i + 1]);
-				currentSegment = '';
-				i++; // Skip the color code character
-			} else {
-				currentSegment += text[i];
-			}
-		}
-
-		if (currentSegment) {
-			this.chatCtx.font = '8px Tiny5';
-			this.chatCtx.fillStyle = currentColor;
-			this.chatCtx.fillText(currentSegment, currentX, y);
-		}
-	}
-
-	private renderPixelText(text: string, x: number, y: number, color: string) {
+	private renderPixelText(text: string, x: number, y: number, defaultColor: string) {
 		if (!text) return;
-		if (SettingsManager.settings.doPrettyText) {
-			this.renderPrettyText(text, x, y, color);
-		} else {
-			this.renderUglyText(text, x, y, color);
+
+		let currentX = x;
+		let currentColor = defaultColor;
+		let currentSegment = '';
+
+		const renderSegment = (segment: string, color: string) => {
+			if (!segment) return;
+
+			if (SettingsManager.settings.doPrettyText) {
+				// Pretty rendering logic
+				this.offscreenCtx.font = '8px Tiny5';
+				const textMetrics = this.offscreenCtx.measureText(segment);
+				const textWidth = Math.max(Math.ceil(textMetrics.width), 1);
+				const textHeight = 8;
+
+				if (this.offscreenCanvas.width !== textWidth || this.offscreenCanvas.height !== textHeight) {
+					this.offscreenCanvas.width = textWidth;
+					this.offscreenCanvas.height = textHeight;
+				}
+
+				this.offscreenCtx.clearRect(0, 0, textWidth, textHeight);
+				this.offscreenCtx.font = '8px Tiny5';
+				this.offscreenCtx.fillStyle = color;
+				this.offscreenCtx.fillText(segment, 0, textHeight - 1);
+
+				const imageData = this.offscreenCtx.getImageData(0, 0, textWidth, textHeight);
+				const data = imageData.data;
+
+				for (let i = 0; i < data.length; i += 4) {
+					data[i + 3] = data[i + 3] > 170 ? 255 : 0;
+				}
+
+				this.offscreenCtx.putImageData(imageData, 0, 0);
+				this.chatCtx.drawImage(this.offscreenCanvas, currentX, y - textHeight + 1);
+				currentX += textWidth;
+			} else {
+				// Ugly rendering logic
+				this.chatCtx.font = '8px Tiny5';
+				this.chatCtx.fillStyle = color;
+				this.chatCtx.fillText(segment, currentX, y);
+				currentX += this.chatCtx.measureText(segment).width;
+			}
+		};
+
+		for (let i = 0; i < text.length; i++) {
+			// Check for color codes
+			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
+				renderSegment(currentSegment, currentColor);
+				currentSegment = '';
+				currentColor = <string> this.getColorCode(text[i + 1]);
+				i++; // Skip the color code character
+			} // Check for sprite codes
+			else if (text[i] === '^' && i + 1 < text.length && ChatOverlay.SPRITE_CODES[text[i + 1]]) {
+				renderSegment(currentSegment, currentColor);
+				currentSegment = '';
+
+				const spriteName = ChatOverlay.SPRITE_CODES[text[i + 1]];
+				this.spriteManager.renderSprite(
+					this.chatCtx,
+					spriteName,
+					currentX,
+					y - 7, // Adjust y to align with text baseline
+					8, // Width of the sprite
+					8, // Height of the sprite
+				);
+				currentX += 8; // Move cursor forward by sprite width
+				i++; // Skip the sprite code character
+			} // Handle regular characters
+			else {
+				currentSegment += text[i];
+			}
 		}
+
+		renderSegment(currentSegment, currentColor);
 	}
 
 	private renderDebugText() {
