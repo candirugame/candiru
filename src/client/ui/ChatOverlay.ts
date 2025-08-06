@@ -105,6 +105,8 @@ export class ChatOverlay {
 	public static SPRITE_CODES: { [key: string]: string } = {
 		'a': 'redguy_8px',
 		'b': 'yellowguy',
+		'c': 'banana1',
+		'd': 'banana2',
 	};
 
 	public destroy() {

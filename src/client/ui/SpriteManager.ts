@@ -4,8 +4,9 @@ export class SpriteManager {
 		'redguy_6px': { x: 0, y: 0, width: 6, height: 6 },
 		'redguy_8px': { x: 7, y: 0, width: 8, height: 8 },
 		'yellowguy': { x: 16, y: 0, width: 8, height: 8 },
-
-		'redguy': { x: 0, y: 8, width: 58, height: 58 },
+		'redguy': { x: 0, y: 9, width: 58, height: 58 },
+		'banana1': { x: 25, y: 0, width: 8, height: 8 },
+		'banana2': { x: 33, y: 0, width: 8, height: 8 },
 	};
 	constructor() {
 		this.spriteSheet.src = '/spritesheet.png'; //TODO: replace with webp
