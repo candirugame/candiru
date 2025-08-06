@@ -83,7 +83,7 @@ export class HealthIndicator extends IndicatorBase {
 		if (!this.lastHealthChangeWasDamage && currentHealth < maxHealth && this.rotatedAngle % 2 > 1) {
 			targetRGBI = [125, 255, 125, 1.2];
 		} else {
-			targetRGBI = [255, 255, 255, 0.5];
+			targetRGBI = [255, 255, 255, 1];
 		}
 
 		for (let i = 0; i < 4; i++) {
@@ -104,7 +104,7 @@ export class HealthIndicator extends IndicatorBase {
 		const chatOverlay = this.parentRenderer.getChatOverlay();
 		const screenHeight = chatOverlay.chatCanvas.height;
 
-		const healthIndicatorWidth = 12; // native
+		const healthIndicatorWidth = 200; // native
 		const healthIndicatorHeight = healthIndicatorWidth; // 1:1 aspect ratio
 
 		// Position indicator right below the debug text

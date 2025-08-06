@@ -208,9 +208,9 @@ export class ChatOverlay {
 
 		this.renderHitMarkers();
 
-		this.renderChatMessages();
-		this.renderGameText();
-		this.renderEventMessages();
+		//	this.renderChatMessages();
+		//this.renderGameText();
+		//	this.renderEventMessages();
 		this.renderDebugText();
 		if (this.inputHandler.getKey('tab')) {
 			this.renderPlayerList();

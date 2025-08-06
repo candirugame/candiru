@@ -185,12 +185,12 @@ export class GameEngine {
 			const players = this.playerManager.getAllPlayers();
 
 			players.forEach((player) => {
-				if (player.position.y < -150) {
-					player.health = 0;
-					player.velocity = new THREE.Vector3(0, 0, 0);
-					this.chatManager.broadcastChat(`${player.name} fell off :'(`);
-					console.log(`💔 ${player.name}(${player.id}) fell off the map`);
-				}
+				// if (player.position.y < -150) {
+				// 	player.health = 0;
+				// 	player.velocity = new THREE.Vector3(0, 0, 0);
+				// 	this.chatManager.broadcastChat(`${player.name} fell off :'(`);
+				// 	console.log(`💔 ${player.name}(${player.id}) fell off the map`);
+				// }
 
 				if (player.health <= 0) {
 					if (this.gamemode) this.gamemode.onPlayerDeath(player); //gamemode now handles
