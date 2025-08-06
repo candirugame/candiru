@@ -216,7 +216,7 @@ export class ChatOverlay {
 			this.renderPlayerList();
 		}
 		this.renderEvil();
-		this.renderCrosshair();
+		//this.renderCrosshair();
 		this.renderTouchControls();
 
 		// Periodically check if we need to resize
@@ -443,7 +443,7 @@ export class ChatOverlay {
 		ctx.font = '8px Tiny5';
 		ctx.fillStyle = 'teal';
 
-		const linesToRender = [];
+		let linesToRender = [];
 		const framerate = this.renderer.getFramerate();
 
 		if (this.localPlayer.latency >= 999) {
@@ -497,12 +497,12 @@ export class ChatOverlay {
 			for (const msg of this.localPlayer.gameMsgs2) {
 				linesToRender.push(msg);
 			}
-		}
+		} //test
+		linesToRender = []; //clear all text for item rendering in corner
 
 		for (let i = 0; i < linesToRender.length; i++) {
 			this.renderPixelText(linesToRender[i], 2, 7 + 7 * i, 'teal');
 		}
-
 		this.debugTextHeight = 7 * linesToRender.length;
 	}
 

@@ -28,7 +28,7 @@ export class HealthIndicator extends IndicatorBase {
 	}
 
 	public init() {
-		this.loadModel('models/simplified_possum.glb')
+		this.loadModel('models/simplified_banana_1.glb')
 			.then((model) => {
 				this.possumObject = model;
 				this.possumObject.traverse((child: THREE.Object3D) => {
@@ -71,7 +71,8 @@ export class HealthIndicator extends IndicatorBase {
 			Math.PI - (currentHealth * Math.PI) / maxHealth,
 		);
 
-		this.rotatedAngle += (4 * deltaTime) / Math.max(0.001, (1 - scaredLevel) * 3);
+		//	this.rotatedAngle += (deltaTime * 0.1) / Math.max(0.001, (1 - scaredLevel) * 3);
+		this.rotatedAngle = this.localPlayer.lookQuaternion.y;
 		this.rotateAroundWorldAxis(this.targetQuaternion, new THREE.Vector3(0, 1, 0), this.rotatedAngle);
 
 		this.moveTowardsPos(this.possumObject.position, this.targetPosition, 0.8 * deltaTime * 60);
@@ -103,12 +104,12 @@ export class HealthIndicator extends IndicatorBase {
 		const chatOverlay = this.parentRenderer.getChatOverlay();
 		const screenHeight = chatOverlay.chatCanvas.height;
 
-		const healthIndicatorWidth = 60; // native
+		const healthIndicatorWidth = 12; // native
 		const healthIndicatorHeight = healthIndicatorWidth; // 1:1 aspect ratio
 
 		// Position indicator right below the debug text
 		const debugTextHeight = this.parentRenderer.getChatOverlay().getDebugTextHeight();
-		const yPos = screenHeight - healthIndicatorHeight - debugTextHeight - 1;
+		const yPos = screenHeight - healthIndicatorHeight - debugTextHeight;
 
 		this.scissor.set(
 			2 * this.parentRenderer.getScreenPixelsInGamePixel(),
