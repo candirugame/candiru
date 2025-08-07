@@ -37,7 +37,7 @@ export class ChatManager {
 				if (player) {
 					this.playerManager.respawnPlayer(player);
 				}
-				this.broadcastEventMessage(`&c${this.playerManager.getPlayerById(playerId)?.name} ^a himself`);
+				this.broadcastEventMessage(`&c${player.name} ^b ${player.name}`);
 				break;
 			}
 			case 'thumbsup':

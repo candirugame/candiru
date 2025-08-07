@@ -11,9 +11,11 @@ export class SpriteManager {
 		'fish2': { x: 51, y: 0, width: 8, height: 8 },
 		'bottle1': { x: 60, y: 0, width: 8, height: 8 },
 		'bottle2': { x: 68, y: 0, width: 8, height: 8 },
+		'pipe1': { x: 77, y: 0, width: 8, height: 8 },
+		'pipe2': { x: 85, y: 0, width: 8, height: 8 },
 	};
 	constructor() {
-		this.spriteSheet.src = '/spritesheet.png'; //TODO: replace with webp
+		this.spriteSheet.src = '/spritesheet.webp';
 	}
 	public renderSprite(
 		ctx: CanvasRenderingContext2D,

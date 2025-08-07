@@ -111,6 +111,8 @@ export class ChatOverlay {
 		'f': 'fish2',
 		'g': 'bottle1',
 		'h': 'bottle2',
+		'i': 'pipe1',
+		'j': 'pipe2',
 	};
 
 	public destroy() {
@@ -680,19 +682,28 @@ export class ChatOverlay {
 		const ctx = this.chatCtx;
 
 		for (let i = 0; i < text.length; i++) {
+			// Handle color codes
 			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
-				// Measure the current segment before switching color
 				if (currentSegment) {
 					totalWidth += ctx.measureText(currentSegment).width;
 					currentSegment = '';
 				}
-				i++; // Skip the color code character
-			} else {
+				i++; // skip color code
+			} // Handle sprite codes
+			else if (text[i] === '^' && i + 1 < text.length && ChatOverlay.SPRITE_CODES[text[i + 1]]) {
+				if (currentSegment) {
+					totalWidth += ctx.measureText(currentSegment).width;
+					currentSegment = '';
+				}
+				totalWidth += 8; // fallback
+				i++; // skip sprite code
+			} // Normal text
+			else {
 				currentSegment += text[i];
 			}
 		}
 
-		// Measure the last segment
+		// Add any remaining text
 		if (currentSegment) {
 			totalWidth += ctx.measureText(currentSegment).width;
 		}
