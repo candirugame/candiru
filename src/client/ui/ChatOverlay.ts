@@ -109,6 +109,8 @@ export class ChatOverlay {
 		'd': 'banana2',
 		'e': 'fish1',
 		'f': 'fish2',
+		'g': 'bottle1',
+		'h': 'bottle2',
 	};
 
 	public destroy() {
@@ -989,7 +991,7 @@ export class ChatOverlay {
 		}
 		ctx.globalAlpha = 1;
 
-		const headshotIsDeadly = this.sniperOverlayPower > 1 / (1.0 * 5); //0.99 damage, 5x multiplier
+		const headshotIsDeadly = this.sniperOverlayPower > 1 / (1.0 * 7); //0.99 damage, 7x multiplier
 		const bodyShotIsDeadly = this.sniperOverlayPower >= 1;
 		if (headshotIsDeadly) {
 			ctx.fillStyle = 'rgba(255,0,0,0.5)';

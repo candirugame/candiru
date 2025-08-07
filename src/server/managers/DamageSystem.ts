@@ -64,10 +64,10 @@ export class DamageSystem {
 			const killedName = targetPlayer.name;
 
 			let killType = ' killed ';
-			if (localPlayer.inventory[localPlayer.heldItemIndex] === 1) killType = ' ^c^d ';
-			if (localPlayer.inventory[localPlayer.heldItemIndex] === 2) killType = ' ^e^f ';
+			if (localPlayer.inventory[localPlayer.heldItemIndex] === 1) killType = ' ^c^d '; //banana
+			if (localPlayer.inventory[localPlayer.heldItemIndex] === 2) killType = ' ^e^f '; //fish
 			if (localPlayer.inventory[localPlayer.heldItemIndex] === 5) {
-				killType = data.wasHeadshot ? ' ^g^h^a ' : ' ^g^h ';
+				killType = data.wasHeadshot ? ' ^g^h ^b ' : ' ^g^h '; //sniper headshot:not
 			}
 
 			this.chatManager.broadcastEventMessage(`&c${killerName}${killType}${killedName}`);

@@ -9,6 +9,8 @@ export class SpriteManager {
 		'banana2': { x: 33, y: 0, width: 8, height: 8 },
 		'fish1': { x: 43, y: 0, width: 8, height: 8 },
 		'fish2': { x: 51, y: 0, width: 8, height: 8 },
+		'bottle1': { x: 60, y: 0, width: 8, height: 8 },
+		'bottle2': { x: 68, y: 0, width: 8, height: 8 },
 	};
 	constructor() {
 		this.spriteSheet.src = '/spritesheet.png'; //TODO: replace with webp
