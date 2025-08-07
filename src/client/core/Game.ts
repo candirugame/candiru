@@ -83,7 +83,7 @@ export class Game {
 		this.shotHandler.onFrame();
 		this.renderer.onFrame(this.localPlayer);
 		if (this.networking.getServerInfo().mapName) {
-			this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');
+			this.mapLoader.load('/maps/' + 'empty' + '/map.glb');
 		}
 		this.remoteItemRenderer.onFrame();
 		requestAnimationFrame(this.animate.bind(this));
