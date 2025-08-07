@@ -7,8 +7,7 @@
 		"preview": "deno run -A --node-modules-dir npm:vite preview",
 		"serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/",
 		"start": "deno task build && deno run --allow-read --allow-env --allow-net --allow-write main.ts",
-		"startnobuild": "deno run --allow-read --allow-env --allow-net --allow-write main.ts"
-		,
+		"startnobuild": "deno run --allow-read --allow-env --allow-net --allow-write main.ts",
 		"docker": "docker build -t candiru . && docker run --rm -it -p 3000:3000 candiru"
 	},
 	"compilerOptions": {

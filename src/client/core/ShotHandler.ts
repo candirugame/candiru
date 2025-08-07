@@ -260,12 +260,12 @@ export class ShotGroup {
 											damageAfterHeadshot *= 1.5;
 											break;
 										case ShotParticleType.Sniper:
-											damageAfterHeadshot *= 5;
+											damageAfterHeadshot *= 7;
 											break;
 									}
 								}
 
-								networking.applyDamage(playerID, damageAfterHeadshot);
+								networking.applyDamage(playerID, damageAfterHeadshot, headshot);
 
 								// Calculate vector from camera position for consistent hit marker sizing
 								const hitVector = new THREE.Vector3().subVectors(hitPoint, renderer.getCamera().position);

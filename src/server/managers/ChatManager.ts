@@ -37,7 +37,7 @@ export class ChatManager {
 				if (player) {
 					this.playerManager.respawnPlayer(player);
 				}
-				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name} killed himself`);
+				this.broadcastEventMessage(`&c${player.name} ^b ${player.name}`);
 				break;
 			}
 			case 'thumbsup':
@@ -49,6 +49,12 @@ export class ChatManager {
 			case 'octopus':
 				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
 				break;
+			case 'goblin': {
+				let goblin = '';
+				for (let i = 0; i < 50; i++) goblin += '^a';
+				for (let i = 0; i < 50; i++) this.whisperChatMessage(goblin, socket);
+				break;
+			}
 			case 'ping':
 				this.whisperChatMessage(message + ' -> pong!', socket);
 				break;
@@ -58,8 +64,9 @@ export class ChatManager {
 			case 'clear':
 				for (let i = 0; i < 25; i++) {
 					this.whisperChatMessage(' ', socket);
+					this.whisperEventMessage(' ', socket);
 				}
-				this.whisperChatMessage(message + ' -> cleared chat', socket);
+				//this.whisperChatMessage(message + ' -> cleared chat', socket);
 				break;
 			default:
 				this.whisperChatMessage(message + ' -> unknown command', socket);
@@ -88,5 +95,9 @@ export class ChatManager {
 			message,
 		};
 		socket.emit('chatMsg', chatMessage);
+	}
+
+	whisperEventMessage(message: string, socket: CustomSocket) {
+		socket.emit('eventMsg', message);
 	}
 }
