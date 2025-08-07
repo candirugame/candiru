@@ -7,6 +7,8 @@ export class SpriteManager {
 		'redguy': { x: 0, y: 9, width: 58, height: 58 },
 		'banana1': { x: 25, y: 0, width: 8, height: 8 },
 		'banana2': { x: 33, y: 0, width: 8, height: 8 },
+		'fish1': { x: 43, y: 0, width: 8, height: 8 },
+		'fish2': { x: 51, y: 0, width: 8, height: 8 },
 	};
 	constructor() {
 		this.spriteSheet.src = '/spritesheet.png'; //TODO: replace with webp

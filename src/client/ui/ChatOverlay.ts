@@ -107,6 +107,8 @@ export class ChatOverlay {
 		'b': 'yellowguy',
 		'c': 'banana1',
 		'd': 'banana2',
+		'e': 'fish1',
+		'f': 'fish2',
 	};
 
 	public destroy() {
@@ -419,8 +421,8 @@ export class ChatOverlay {
 					spriteName,
 					currentX,
 					y - 7, // Adjust y to align with text baseline
-					8, // Width of the sprite
-					8, // Height of the sprite
+					// 8, // Width of the sprite
+					// 8, // Height of the sprite
 				);
 				currentX += 8; // Move cursor forward by sprite width
 				i++; // Skip the sprite code character

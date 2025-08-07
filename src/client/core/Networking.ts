@@ -450,13 +450,14 @@ export class Networking {
 		this.socket.emit('chatMsg', chatMessage);
 	}
 
-	public applyDamage(id: number, damage: number) {
+	public applyDamage(id: number, damage: number, wasHeadshot: boolean) {
 		if (this.localPlayer.playerSpectating !== -1) return;
 		const player2 = this.remotePlayers.find((player) => player.id === id)!;
 		const damageRequest = {
 			localPlayer: this.localPlayer,
 			targetPlayer: player2,
 			damage: damage,
+			wasHeadshot: wasHeadshot,
 		};
 		this.socket.emit('applyDamage', damageRequest);
 		//	console.log(`Applying damage: ${id} - ${damage}`);

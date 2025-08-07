@@ -265,7 +265,7 @@ export class ShotGroup {
 									}
 								}
 
-								networking.applyDamage(playerID, damageAfterHeadshot);
+								networking.applyDamage(playerID, damageAfterHeadshot, headshot);
 
 								// Calculate vector from camera position for consistent hit marker sizing
 								const hitVector = new THREE.Vector3().subVectors(hitPoint, renderer.getCamera().position);
