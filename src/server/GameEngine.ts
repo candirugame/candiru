@@ -77,7 +77,7 @@ export class GameEngine {
 					const prev = this.lastEmittedPropSnapshot.get(pd.id);
 					const delta: Partial<PropData> & { id: number } = { id: pd.id };
 					if (!prev) {
-						deltas.push(pd);
+						deltas.push(pd as Partial<PropData> & { id: number });
 						this.lastEmittedPropSnapshot.set(pd.id, pd);
 					} else {
 						// iterate over known keys in PropData
@@ -120,7 +120,7 @@ export class GameEngine {
 							const prev = this.lastEmittedPlayerSnapshot.get(pd.id);
 							const delta: Partial<PlayerData> & { id: number } = { id: pd.id };
 							if (!prev) {
-								deltas.push(pd);
+								deltas.push(pd as Partial<PlayerData> & { id: number });
 								this.lastEmittedPlayerSnapshot.set(pd.id, pd);
 							} else {
 								// iterate over known keys in PlayerData
@@ -188,7 +188,7 @@ export class GameEngine {
 				if (player.position.y < -150) {
 					player.health = 0;
 					player.velocity = new THREE.Vector3(0, 0, 0);
-					this.chatManager.broadcastChat(`${player.name} fell off :'(`);
+					this.chatManager.broadcastEventMessage(`${player.name} fell off :'(`);
 					console.log(`💔 ${player.name}(${player.id}) fell off the map`);
 				}
 
@@ -200,7 +200,7 @@ export class GameEngine {
 				if ((player.updateTimestamp || 0) + config.player.disconnectTime < currentTime) {
 					if (this.gamemode) this.gamemode.onPlayerDisconnect(player);
 					console.log(`🟠 ${player.name}(${player.id}) left`);
-					this.chatManager.broadcastChat(`${player.name} left`);
+					this.chatManager.broadcastEventMessage(`${player.name} left`);
 					this.playerManager.removePlayer(player.id);
 				}
 			});

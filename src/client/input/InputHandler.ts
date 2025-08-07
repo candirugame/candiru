@@ -4,6 +4,7 @@ import { Renderer } from '../core/Renderer.ts';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
 import { Game } from '../core/Game.ts';
+import { lerp } from '../../shared/Utils.ts';
 
 export class InputHandler {
 	private readonly gameIndex: number;
@@ -138,9 +139,9 @@ export class InputHandler {
 				if (this.gamepadInputs.rightTrigger > .5) this.shoot = true;
 				const aimAdjust = this.calculateAimAssist();
 				this.gamepadEuler.y -= this.gamepadInputs.rightJoyX * SettingsManager.settings.controllerSense * deltaTime *
-					aimAdjust * 4 / this.renderer.targetZoom;
+					aimAdjust * 4 / lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 				this.gamepadEuler.x -= this.gamepadInputs.rightJoyY * SettingsManager.settings.controllerSense * deltaTime *
-					aimAdjust * 4 / this.renderer.targetZoom;
+					aimAdjust * 4 / lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 				this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
 				this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
 			}
@@ -165,27 +166,27 @@ export class InputHandler {
 			const aimAdjust = this.calculateAimAssist();
 			if (this.getKey('arrowright')) {
 				this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
-					this.renderer.targetZoom;
+					lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 			}
 			if (this.getKey('arrowleft')) {
 				this.gamepadEuler.y += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
-					this.renderer.targetZoom;
+					lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 			}
 			if (this.getKey('arrowup')) {
 				this.gamepadEuler.x += SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
-					this.renderer.targetZoom;
+					lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 			}
 			if (this.getKey('arrowdown')) {
 				this.gamepadEuler.x -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
-					this.renderer.targetZoom;
+					lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 			}
 			if (this.getKey(' ')) this.jump = true;
 		}
 
 		this.gamepadEuler.y -= this.touchLookX * touchSensitivity * SettingsManager.settings.sense /
-			this.renderer.targetZoom;
+			lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 		this.gamepadEuler.x -= this.touchLookY * touchSensitivity * SettingsManager.settings.sense /
-			this.renderer.targetZoom;
+			lerp(1, this.renderer.targetZoom, SettingsManager.settings.zoomSensT);
 		this.gamepadEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.gamepadEuler.x));
 		this.localPlayer.lookQuaternion.setFromEuler(this.gamepadEuler);
 

@@ -101,7 +101,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 				velocity: new THREE.Vector3(0, 0.5, 0),
 				spread: 0.3,
 				lifetime: 15,
-				size: 0.2,
+				size: 0.04,
 				color: new THREE.Color(0x00aa00),
 			});
 			this.lastParticleTimestamp = currentTime;

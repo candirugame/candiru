@@ -94,6 +94,7 @@ export class DataValidator {
 		localPlayer: DataValidator.playerDataSchema,
 		targetPlayer: DataValidator.playerDataSchema,
 		damage: z.number(),
+		wasHeadshot: z.boolean(),
 	}).strict();
 
 	static serverInfoSchema = z.object({

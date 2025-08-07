@@ -307,7 +307,14 @@ export class Renderer {
 				player.id === this.localPlayer.idLastDamagedBy
 			);
 			if (remotePlayer !== undefined) {
-				const diff = new THREE.Vector3().subVectors(this.localPlayer.position, remotePlayer.position);
+				const diff = new THREE.Vector3().subVectors(
+					this.localPlayer.position,
+					new THREE.Vector3(
+						remotePlayer.position.x,
+						remotePlayer.position.y,
+						remotePlayer.position.z,
+					),
+				);
 				this.knockbackVector.copy(diff.normalize().multiplyScalar(0.2));
 			}
 		}
@@ -338,7 +345,7 @@ export class Renderer {
 				: Math.pow(this.localPlayer.inputVelocity.x, 2) + Math.pow(this.localPlayer.inputVelocity.z, 2),
 		);
 
-		if (vel == 0 || this.collisionManager.isPlayerInAir()) {
+		if (vel == 0 || this.collisionManager.isPlayerInAir() || remotePlayer !== undefined) { //TODO: remove remotePlayer check, instead check if remotePlayer is in air. can happen on client OR remotePlayer
 			this.bobCycle = 0;
 		} else {
 			this.bobCycle += this.deltaTime * 4.8 * vel;
@@ -401,6 +408,13 @@ export class Renderer {
 		if (currentZoom !== newZoom) {
 			this.camera.zoom = newZoom;
 			this.camera.updateProjectionMatrix();
+			this.particleSystem.updateCameraZoom(newZoom);
+		}
+
+		if (this.networking.forcedZoomTick()) {
+			this.camera.zoom = 3;
+			this.camera.updateProjectionMatrix();
+			this.particleSystem.updateCameraZoom(3);
 		}
 
 		this.updateFramerate();

@@ -20,15 +20,17 @@ export class ParticleSystem {
 		this.material = new THREE.ShaderMaterial({
 			uniforms: {
 				size: { value: 1.0 },
+				cameraZoom: { value: 1.0 },
 			},
 			vertexShader: `
                 attribute float size;
                 attribute vec3 color;
+                uniform float cameraZoom;
                 varying vec3 vColor;
                 void main() {
                     vColor = color;
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    gl_PointSize = size * (300.0 / -mvPosition.z) * size;
+                    gl_PointSize = size * (300.0 / -mvPosition.z) * cameraZoom;
                     gl_Position = projectionMatrix * mvPosition;
                 }
             `,
@@ -120,6 +122,10 @@ export class ParticleSystem {
 
 		// Recompute the bounding sphere so that frustum culling works correctly
 		this.geometry.computeBoundingSphere();
+	}
+
+	updateCameraZoom(zoom: number) {
+		this.material.uniforms.cameraZoom.value = zoom;
 	}
 
 	destroy() {

@@ -1,6 +1,7 @@
 import { Renderer } from '../core/Renderer.ts';
 import { Networking } from '../core/Networking.ts';
 import { InputHandler } from '../input/InputHandler.ts';
+import { SpriteManager } from './SpriteManager.ts';
 import { CommandManager } from '../core/CommandManager.ts';
 import { SettingsManager } from '../core/SettingsManager.ts';
 import { TouchInputHandler } from '../input/TouchInputHandler.ts';
@@ -21,6 +22,15 @@ interface AnimatedGameMessage {
 	state: 'animatingIn' | 'animatingOut' | 'idle';
 	animationProgress: number; // Ranges from 0 to 1
 	timestamp: number; // Time when the current animation state started
+}
+
+interface AnimatedEventMessage {
+	id: string;
+	message: string;
+	state: 'animatingIn' | 'animatingOut' | 'idle';
+	animationProgress: number;
+	timestamp: number;
+	lifetime: number;
 }
 
 interface LineMessage {
@@ -55,6 +65,7 @@ export class ChatOverlay {
 	private buttonsHeld: number[] = [];
 	private lastRoutineMs = 0;
 	private containerElement: HTMLElement;
+	private spriteManager: SpriteManager;
 
 	private gameIndex: number;
 
@@ -62,11 +73,13 @@ export class ChatOverlay {
 	private offscreenCtx: CanvasRenderingContext2D;
 
 	public gameMessages: string[] = [];
-	private previousGameMessages: string[] = [];
+	private eventMessages: AnimatedEventMessage[] = [];
+	private maxEventMessages = 4;
+	private eventMessageLifetime = 40; // seconds
+	private eventAnimationCharsPerSecond = 50;
 
-	// Removed animatedGameMessages in favor of per-line management
 	private lines: LineMessage[] = [];
-	private animationDuration: number = 1; // Adjusted for smoother animation
+	private animationDuration: number = 0.75;
 
 	// Color code mapping
 	public static COLOR_CODES: { [key: string]: string } = {
@@ -89,12 +102,24 @@ export class ChatOverlay {
 		'g': this.getRainbowColor(),
 	};
 
+	public static SPRITE_CODES: { [key: string]: string } = {
+		'a': 'redguy_8px',
+		'b': 'yellowguy',
+		'c': 'banana1',
+		'd': 'banana2',
+		'e': 'fish1',
+		'f': 'fish2',
+		'g': 'bottle1',
+		'h': 'bottle2',
+		'i': 'pipe1',
+		'j': 'pipe2',
+	};
+
 	public destroy() {
 		this.chatCanvas.remove();
 		this.offscreenCanvas.remove();
 		this.lines = [];
 		this.gameMessages = [];
-		this.previousGameMessages = [];
 	}
 
 	private getColorCode(code: string): string | false {
@@ -114,11 +139,10 @@ export class ChatOverlay {
 		this.containerElement = container;
 		this.gameIndex = gameIndex;
 		this.chatCanvas = document.createElement('canvas');
-		this.chatCtx = this.chatCanvas.getContext('2d') as CanvasRenderingContext2D;
+		this.chatCtx = this.chatCanvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 		this.chatCtx.imageSmoothingEnabled = false;
 
-		this.redguySmall.src = '/redguy_6px.webp';
-		this.redguy.src = '/redguy.webp';
+		this.spriteManager = new SpriteManager();
 
 		this.chatCanvas.width = 400;
 		this.chatCanvas.height = 200;
@@ -149,7 +173,7 @@ export class ChatOverlay {
 		this.chatCanvas.style.touchAction = 'none';
 
 		this.offscreenCanvas = document.createElement('canvas');
-		this.offscreenCtx = this.offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
+		this.offscreenCtx = this.offscreenCanvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 
 		// Initialize lines for per-line message management
 		this.lines = Array(this.maxMessagesOnScreen).fill(null).map(() => ({
@@ -189,6 +213,7 @@ export class ChatOverlay {
 		this.gameMessages = this.localPlayer.gameMsgs;
 		this.detectGameMessagesChanges(now);
 		this.updateAnimatedGameMessages(now);
+		this.updateAnimatedEventMessages(now);
 
 		this.clearOldMessages();
 		this.chatCtx.clearRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
@@ -199,6 +224,7 @@ export class ChatOverlay {
 
 		this.renderChatMessages();
 		this.renderGameText();
+		this.renderEventMessages();
 		this.renderDebugText();
 		if (this.inputHandler.getKey('tab')) {
 			this.renderPlayerList();
@@ -335,95 +361,82 @@ export class ChatOverlay {
 		ctx.globalAlpha = 1;
 	}
 
-	private renderPrettyText(text: string, x: number, y: number, defaultColor: string) {
-		let currentX = x;
-		const segments: { text: string; color: string }[] = [];
-		let currentColor = defaultColor;
-		let currentSegment = '';
-
-		// Parse color codes and split into segments
-		for (let i = 0; i < text.length; i++) {
-			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
-				if (currentSegment) {
-					segments.push({ text: currentSegment, color: currentColor });
-				}
-				currentColor = <string> this.getColorCode(text[i + 1]);
-				currentSegment = '';
-				i++; // Skip the color code character
-			} else {
-				currentSegment += text[i];
-			}
-		}
-
-		if (currentSegment) {
-			segments.push({ text: currentSegment, color: currentColor });
-		}
-
-		// Render each segment
-		for (const segment of segments) {
-			this.offscreenCtx.font = '8px Tiny5';
-			const textMetrics = this.offscreenCtx.measureText(segment.text);
-			const textWidth = Math.max(Math.ceil(textMetrics.width), 1);
-			const textHeight = 8;
-
-			if (this.offscreenCanvas.width !== textWidth || this.offscreenCanvas.height !== textHeight) {
-				this.offscreenCanvas.width = textWidth;
-				this.offscreenCanvas.height = textHeight;
-			}
-
-			this.offscreenCtx.clearRect(0, 0, textWidth, textHeight);
-			this.offscreenCtx.font = '8px Tiny5';
-			this.offscreenCtx.fillStyle = segment.color;
-			this.offscreenCtx.fillText(segment.text, 0, textHeight - 1);
-
-			const imageData = this.offscreenCtx.getImageData(0, 0, textWidth, textHeight);
-			const data = imageData.data;
-
-			for (let i = 0; i < data.length; i += 4) {
-				data[i + 3] = data[i + 3] > 170 ? 255 : 0;
-			}
-
-			this.offscreenCtx.putImageData(imageData, 0, 0);
-			this.chatCtx.drawImage(this.offscreenCanvas, currentX, y - textHeight + 1);
-			currentX += textWidth;
-		}
-	}
-
-	private renderUglyText(text: string, x: number, y: number, defaultColor: string) {
-		let currentX = x;
-		let currentColor = defaultColor;
-		let currentSegment = '';
-
-		for (let i = 0; i < text.length; i++) {
-			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
-				if (currentSegment) {
-					this.chatCtx.font = '8px Tiny5';
-					this.chatCtx.fillStyle = currentColor;
-					this.chatCtx.fillText(currentSegment, currentX, y);
-					currentX += this.chatCtx.measureText(currentSegment).width;
-				}
-				currentColor = <string> this.getColorCode(text[i + 1]);
-				currentSegment = '';
-				i++; // Skip the color code character
-			} else {
-				currentSegment += text[i];
-			}
-		}
-
-		if (currentSegment) {
-			this.chatCtx.font = '8px Tiny5';
-			this.chatCtx.fillStyle = currentColor;
-			this.chatCtx.fillText(currentSegment, currentX, y);
-		}
-	}
-
-	private renderPixelText(text: string, x: number, y: number, color: string) {
+	private renderPixelText(text: string, x: number, y: number, defaultColor: string) {
 		if (!text) return;
-		if (SettingsManager.settings.doPrettyText) {
-			this.renderPrettyText(text, x, y, color);
-		} else {
-			this.renderUglyText(text, x, y, color);
+
+		let currentX = x;
+		let currentColor = defaultColor;
+		let currentSegment = '';
+
+		const renderSegment = (segment: string, color: string) => {
+			if (!segment) return;
+
+			if (SettingsManager.settings.doPrettyText) {
+				// Pretty rendering logic
+				this.offscreenCtx.font = '8px Tiny5';
+				const textMetrics = this.offscreenCtx.measureText(segment);
+				const textWidth = Math.max(Math.ceil(textMetrics.width), 1);
+				const textHeight = 8;
+
+				if (this.offscreenCanvas.width !== textWidth || this.offscreenCanvas.height !== textHeight) {
+					this.offscreenCanvas.width = textWidth;
+					this.offscreenCanvas.height = textHeight;
+				}
+
+				this.offscreenCtx.clearRect(0, 0, textWidth, textHeight);
+				this.offscreenCtx.font = '8px Tiny5';
+				this.offscreenCtx.fillStyle = color;
+				this.offscreenCtx.fillText(segment, 0, textHeight - 1);
+
+				const imageData = this.offscreenCtx.getImageData(0, 0, textWidth, textHeight);
+				const data = imageData.data;
+
+				for (let i = 0; i < data.length; i += 4) {
+					data[i + 3] = data[i + 3] > 170 ? 255 : 0;
+				}
+
+				this.offscreenCtx.putImageData(imageData, 0, 0);
+				this.chatCtx.drawImage(this.offscreenCanvas, currentX, y - textHeight + 1);
+				currentX += textWidth;
+			} else {
+				// Ugly rendering logic
+				this.chatCtx.font = '8px Tiny5';
+				this.chatCtx.fillStyle = color;
+				this.chatCtx.fillText(segment, currentX, y);
+				currentX += this.chatCtx.measureText(segment).width;
+			}
+		};
+
+		for (let i = 0; i < text.length; i++) {
+			// Check for color codes
+			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
+				renderSegment(currentSegment, currentColor);
+				currentSegment = '';
+				currentColor = <string> this.getColorCode(text[i + 1]);
+				i++; // Skip the color code character
+			} // Check for sprite codes
+			else if (text[i] === '^' && i + 1 < text.length && ChatOverlay.SPRITE_CODES[text[i + 1]]) {
+				renderSegment(currentSegment, currentColor);
+				currentSegment = '';
+
+				const spriteName = ChatOverlay.SPRITE_CODES[text[i + 1]];
+				this.spriteManager.renderSprite(
+					this.chatCtx,
+					spriteName,
+					currentX,
+					y - 7, // Adjust y to align with text baseline
+					// 8, // Width of the sprite
+					// 8, // Height of the sprite
+				);
+				currentX += 8; // Move cursor forward by sprite width
+				i++; // Skip the sprite code character
+			} // Handle regular characters
+			else {
+				currentSegment += text[i];
+			}
 		}
+
+		renderSegment(currentSegment, currentColor);
 	}
 
 	private renderDebugText() {
@@ -527,8 +540,6 @@ export class ChatOverlay {
 				}
 			}
 		}
-
-		this.previousGameMessages = [...current];
 	}
 
 	private updateAnimatedGameMessages(now: number) {
@@ -562,6 +573,33 @@ export class ChatOverlay {
 			if (line.currentMessage.state === 'animatingIn' && progress >= 1) {
 				line.currentMessage.state = 'idle';
 				line.currentMessage.animationProgress = 1;
+			}
+		}
+	}
+
+	private updateAnimatedEventMessages(now: number) {
+		for (let i = this.eventMessages.length - 1; i >= 0; i--) {
+			const eventMessage = this.eventMessages[i];
+			const elapsed = now - eventMessage.timestamp;
+
+			// Check for lifetime expiration
+			if (eventMessage.state === 'idle' && elapsed > eventMessage.lifetime) {
+				eventMessage.state = 'animatingOut';
+				eventMessage.timestamp = now; // Reset timestamp for animation
+			}
+
+			const animationDuration = eventMessage.message.length / this.eventAnimationCharsPerSecond;
+			const progress = Math.min((now - eventMessage.timestamp) / animationDuration, 1);
+			eventMessage.animationProgress = progress;
+
+			if (eventMessage.state === 'animatingOut' && progress >= 1) {
+				this.eventMessages.splice(i, 1);
+				continue;
+			}
+
+			if (eventMessage.state === 'animatingIn' && progress >= 1) {
+				eventMessage.state = 'idle';
+				eventMessage.animationProgress = 1;
 			}
 		}
 	}
@@ -611,25 +649,61 @@ export class ChatOverlay {
 		}
 	}
 
+	private renderEventMessages() {
+		const ctx = this.chatCtx;
+		ctx.globalAlpha = SettingsManager.settings.chatOpacity;
+		ctx.font = '8px Tiny5';
+		const startY = 7;
+
+		for (let i = 0; i < this.eventMessages.length; i++) {
+			const eventMessage = this.eventMessages[i];
+			let visibleText = eventMessage.message;
+
+			if (eventMessage.state === 'animatingIn' || eventMessage.state === 'animatingOut') {
+				visibleText = this.getVisibleText(
+					eventMessage.message,
+					eventMessage.state,
+					eventMessage.animationProgress,
+				);
+			}
+
+			const textWidth = this.getRenderedTextWidth(visibleText);
+			const x = this.screenWidth - textWidth - 1;
+			const y = startY + i * 7;
+
+			this.renderPixelText(visibleText, x, y, 'white');
+		}
+		ctx.globalAlpha = 1;
+	}
+
 	private getRenderedTextWidth(text: string): number {
 		let totalWidth = 0;
 		let currentSegment = '';
 		const ctx = this.chatCtx;
 
 		for (let i = 0; i < text.length; i++) {
+			// Handle color codes
 			if (text[i] === '&' && i + 1 < text.length && this.getColorCode(text[i + 1])) {
-				// Measure the current segment before switching color
 				if (currentSegment) {
 					totalWidth += ctx.measureText(currentSegment).width;
 					currentSegment = '';
 				}
-				i++; // Skip the color code character
-			} else {
+				i++; // skip color code
+			} // Handle sprite codes
+			else if (text[i] === '^' && i + 1 < text.length && ChatOverlay.SPRITE_CODES[text[i + 1]]) {
+				if (currentSegment) {
+					totalWidth += ctx.measureText(currentSegment).width;
+					currentSegment = '';
+				}
+				totalWidth += 8; // fallback
+				i++; // skip sprite code
+			} // Normal text
+			else {
 				currentSegment += text[i];
 			}
 		}
 
-		// Measure the last segment
+		// Add any remaining text
 		if (currentSegment) {
 			totalWidth += ctx.measureText(currentSegment).width;
 		}
@@ -876,8 +950,6 @@ export class ChatOverlay {
 
 	public sniperOverlayEnabled: boolean = false;
 	public sniperOverlayPower: number = 0;
-	public redguySmall: HTMLImageElement = new Image();
-	public redguy: HTMLImageElement = new Image();
 
 	public renderSniperOverlay() {
 		if (!this.sniperOverlayEnabled) return;
@@ -930,7 +1002,7 @@ export class ChatOverlay {
 		}
 		ctx.globalAlpha = 1;
 
-		const headshotIsDeadly = this.sniperOverlayPower > 1 / (1.0 * 5); //0.99 damage, 5x multiplier
+		const headshotIsDeadly = this.sniperOverlayPower > 1 / (1.0 * 7); //0.99 damage, 7x multiplier
 		const bodyShotIsDeadly = this.sniperOverlayPower >= 1;
 		if (headshotIsDeadly) {
 			ctx.fillStyle = 'rgba(255,0,0,0.5)';
@@ -945,8 +1017,8 @@ export class ChatOverlay {
 				offsetY = Math.round((Math.random() - 0.5) * 1.02);
 			}
 
-			if (this.redguySmall.complete && this.redguySmall.naturalWidth > 0 && flashOn) {
-				ctx.drawImage(this.redguySmall, centerX + 16 + 8 - 3 + offsetX, circleY + 2 + offsetY, 6, 6);
+			if (flashOn) {
+				this.spriteManager.renderSprite(ctx, 'redguy_6px', centerX + 16 + 8 - 3 + offsetX, circleY + 2 + offsetY);
 			}
 		}
 		const barCount = 16;
@@ -1085,16 +1157,16 @@ export class ChatOverlay {
 
 	private renderEvil() {
 		const ctx = this.chatCtx;
-		if (Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07) {
+		if (
+			Date.now() / 1000 - this.networking.getDamagedTimestamp() < 0.07
+		) {
 			ctx.fillStyle = 'rgba(255,0,0,0.1)';
 			ctx.fillRect(0, 0, this.chatCanvas.width, this.chatCanvas.height);
 
-			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.14) {
+			if (Date.now() / 1000 - this.networking.severelyDamagedTimestamp < 0.07) {
 				ctx.globalAlpha = 0.2;
+				this.spriteManager.renderSprite(ctx, 'redguy', 0, 0, this.chatCanvas.width, this.chatCanvas.height);
 
-				if (this.redguy.complete && this.redguy.naturalWidth > 0) {
-					ctx.drawImage(this.redguy, 0, 0, this.chatCanvas.width, this.chatCanvas.height);
-				}
 				ctx.globalAlpha = 1;
 			}
 		}
@@ -1212,6 +1284,30 @@ export class ChatOverlay {
 			timestamp: Date.now() / 1000,
 		};
 		this.chatMessages.push(chatMessage);
+	}
+
+	public addEventMessage(message: string) {
+		const now = Date.now() / 1000;
+		const eventMessage: AnimatedEventMessage = {
+			id: this.generateUniqueId(),
+			message: message,
+			state: 'animatingIn',
+			animationProgress: 0,
+			timestamp: now,
+			lifetime: this.eventMessageLifetime,
+		};
+
+		this.eventMessages.unshift(eventMessage);
+
+		if (this.eventMessages.length > this.maxEventMessages) {
+			for (let i = this.eventMessages.length - 1; i >= this.maxEventMessages; i--) {
+				const oldMessage = this.eventMessages[i];
+				if (oldMessage.state === 'idle') {
+					oldMessage.state = 'animatingOut';
+					oldMessage.timestamp = now;
+				}
+			}
+		}
 	}
 
 	private clearOldMessages() {

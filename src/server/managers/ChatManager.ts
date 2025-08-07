@@ -7,17 +7,18 @@ export class ChatManager {
 	constructor(private io: CustomServer, private playerManager: PlayerManager) {}
 
 	handleChatMessage(unparsedData: ChatMessage, socket: CustomSocket) {
-		const { data, error } = DataValidator.validateChatMessage(unparsedData);
-		if (error) {
-			console.warn(`Invalid chat message: ${error.message}`);
+		const result = DataValidator.validateChatMessage(unparsedData);
+		if (!result.success) {
+			console.warn(`Invalid chat message: ${result.error.message}`);
 			return;
 		}
+		const data = result.data;
 
 		const isCommand = this.parseCommand(data.message, socket, data.id);
 		if (!isCommand) {
 			if (data.message.startsWith('>')) data.message = '&2' + data.message;
 			console.log(`💬 ${data.name}: ${data.message}`);
-			this.io.emit('chatMsg', data);
+			this.io.emit('chatMsg', { id: data.id, name: data.name, message: data.message });
 		}
 	}
 
@@ -36,7 +37,7 @@ export class ChatManager {
 				if (player) {
 					this.playerManager.respawnPlayer(player);
 				}
-				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name} killed himself`);
+				this.broadcastEventMessage(`&c${player.name} ^b ${player.name}`);
 				break;
 			}
 			case 'thumbsup':
@@ -48,6 +49,12 @@ export class ChatManager {
 			case 'octopus':
 				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
 				break;
+			case 'goblin': {
+				let goblin = '';
+				for (let i = 0; i < 50; i++) goblin += '^a';
+				for (let i = 0; i < 50; i++) this.whisperChatMessage(goblin, socket);
+				break;
+			}
 			case 'ping':
 				this.whisperChatMessage(message + ' -> pong!', socket);
 				break;
@@ -57,8 +64,9 @@ export class ChatManager {
 			case 'clear':
 				for (let i = 0; i < 25; i++) {
 					this.whisperChatMessage(' ', socket);
+					this.whisperEventMessage(' ', socket);
 				}
-				this.whisperChatMessage(message + ' -> cleared chat', socket);
+				//this.whisperChatMessage(message + ' -> cleared chat', socket);
 				break;
 			default:
 				this.whisperChatMessage(message + ' -> unknown command', socket);
@@ -76,6 +84,10 @@ export class ChatManager {
 		this.io.emit('chatMsg', chatMessage);
 	}
 
+	broadcastEventMessage(message: string) {
+		this.io.emit('eventMsg', message);
+	}
+
 	whisperChatMessage(message: string, socket: CustomSocket) {
 		const chatMessage: ChatMessage = {
 			id: -1,
@@ -83,5 +95,9 @@ export class ChatManager {
 			message,
 		};
 		socket.emit('chatMsg', chatMessage);
+	}
+
+	whisperEventMessage(message: string, socket: CustomSocket) {
+		socket.emit('eventMsg', message);
 	}
 }

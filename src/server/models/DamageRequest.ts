@@ -4,4 +4,5 @@ export interface DamageRequest {
 	localPlayer: PlayerData;
 	targetPlayer: PlayerData;
 	damage: number;
+	wasHeadshot: boolean;
 }

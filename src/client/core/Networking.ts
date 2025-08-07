@@ -135,6 +135,14 @@ export class Networking {
 		this.socket.emit('getServerList', callback);
 	}
 
+	private forcedZoomTriggered: boolean = false;
+	public forcedZoomTick(): boolean {
+		if (this.forcedZoomTriggered) {
+			this.forcedZoomTriggered = false;
+			return true;
+		}
+		return false;
+	}
 	// Updates the local player state based on received data (full or partial)
 	private updateLocalPlayerState(data: Partial<PlayerData>) {
 		// Forced position/velocity/look updates
@@ -150,6 +158,7 @@ export class Networking {
 				);
 			}
 			if (data.gravity !== undefined) this.localPlayer.gravity = data.gravity;
+			this.forcedZoomTriggered = true;
 			this.localPlayer.forcedAcknowledged = true;
 		} else if (data.forced === false) {
 			this.localPlayer.forcedAcknowledged = false;
@@ -302,7 +311,13 @@ export class Networking {
 		});
 
 		this.socket.on('chatMsg', (data) => {
-			if (data.id !== this.localPlayer.id) this.chatOverlay.addChatMessage(data);
+			if (data.id !== this.localPlayer.id) {
+				this.chatOverlay.addChatMessage(data);
+			}
+		});
+
+		this.socket.on('eventMsg', (msg) => {
+			this.chatOverlay.addEventMessage(msg);
 		});
 
 		this.socket.on('serverInfo', (data) => {
@@ -431,19 +446,21 @@ export class Networking {
 		}
 		chatMessage.message = '&f' + chatMessage.message;
 		this.chatOverlay.addChatMessage(chatMessage);
+		//this.chatOverlay.addEventMessage(chatMessage.message);
 		this.socket.emit('chatMsg', chatMessage);
 	}
 
-	public applyDamage(id: number, damage: number) {
+	public applyDamage(id: number, damage: number, wasHeadshot: boolean) {
 		if (this.localPlayer.playerSpectating !== -1) return;
 		const player2 = this.remotePlayers.find((player) => player.id === id)!;
 		const damageRequest = {
 			localPlayer: this.localPlayer,
 			targetPlayer: player2,
 			damage: damage,
+			wasHeadshot: wasHeadshot,
 		};
 		this.socket.emit('applyDamage', damageRequest);
-		console.log(`Applying damage: ${id} - ${damage}`);
+		//	console.log(`Applying damage: ${id} - ${damage}`);
 	}
 
 	public applyPropDamage(id: number, damage: number) {

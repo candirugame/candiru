@@ -62,7 +62,17 @@ export class DamageSystem {
 		if (targetPlayer.health <= 0) {
 			const killerName = localPlayer.name;
 			const killedName = targetPlayer.name;
-			//this.chatManager.broadcastChat(`${killerName} &fkilled ${killedName}`);
+
+			let killType = ' ^b^b ';
+			if (localPlayer.inventory[localPlayer.heldItemIndex] === 1) killType = ' ^c^d '; //banana
+			if (localPlayer.inventory[localPlayer.heldItemIndex] === 2) killType = ' ^e^f '; //fish
+			if (localPlayer.inventory[localPlayer.heldItemIndex] === 3) killType = ' ^i^j '; //pipe
+			if (localPlayer.inventory[localPlayer.heldItemIndex] === 5) {
+				killType = data.wasHeadshot ? ' ^g^h ^b ' : ' ^g^h '; //sniper headshot:not
+			}
+
+			this.chatManager.broadcastEventMessage(`&c${killerName}${killType}${killedName}`);
+
 			console.log(`💔 ${killerName} killed ${killedName}`);
 			//this.playerManager.respawnPlayer(targetPlayer);
 			this.gameEngine.periodicCleanup();

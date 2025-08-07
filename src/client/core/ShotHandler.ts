@@ -108,7 +108,7 @@ class Shot {
 					velocity: shotDirection.clone().multiplyScalar(20),
 					spread: 0.05,
 					lifetime: 0.3,
-					size: 0.2,
+					size: 0.04,
 					color: new THREE.Color(25 / 255, 70 / 255, 25 / 255),
 				});
 				break;
@@ -120,7 +120,7 @@ class Shot {
 					velocity: shotDirection.clone().multiplyScalar(14),
 					spread: 5,
 					lifetime: 0.08,
-					size: 0.06,
+					size: 0.0036,
 					color: new THREE.Color(230 / 255, 218 / 255, 140 / 255),
 				});
 				break;
@@ -132,7 +132,7 @@ class Shot {
 					velocity: shotDirection.clone().multiplyScalar(30),
 					spread: 0,
 					lifetime: 0.8,
-					size: 0.1,
+					size: 0.00125,
 					color: new THREE.Color(50 / 255, 100 / 255, 50 / 255),
 				});
 				break;
@@ -260,12 +260,12 @@ export class ShotGroup {
 											damageAfterHeadshot *= 1.5;
 											break;
 										case ShotParticleType.Sniper:
-											damageAfterHeadshot *= 5;
+											damageAfterHeadshot *= 7;
 											break;
 									}
 								}
 
-								networking.applyDamage(playerID, damageAfterHeadshot);
+								networking.applyDamage(playerID, damageAfterHeadshot, headshot);
 
 								// Calculate vector from camera position for consistent hit marker sizing
 								const hitVector = new THREE.Vector3().subVectors(hitPoint, renderer.getCamera().position);
