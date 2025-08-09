@@ -451,7 +451,7 @@ export class ChatOverlay {
 			linesToRender.push('&cdisconnected :(');
 		}
 		linesToRender.push(
-			'candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' +
+			'candiru test ^b ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' +
 				Math.round(this.localPlayer.latency) + 'ms',
 		);
 
