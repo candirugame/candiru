@@ -175,7 +175,7 @@ export class BananaGun extends ItemBase {
 			0,
 			0,
 			Infinity,
-			false,
+			true,
 			ShotParticleType.Pistol,
 			muzzlePos,
 			muzzleDir,
