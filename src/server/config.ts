@@ -5,7 +5,7 @@ const defaults = {
 	SERVER_NAME: 'my-server',
 	SERVER_URL: 'https://example.com',
 	SERVER_DEFAULT_MAP: 'crackhouse_1',
-	SERVER_TICK_RATE: '15',
+	SERVER_TICK_RATE: '24',
 	SERVER_CLEANUP_INTERVAL: '1000',
 	FULL_PLAYER_EMIT_INTERVAL: '5000', //send full player data every 5 seconds
 

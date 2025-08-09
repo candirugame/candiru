@@ -210,7 +210,7 @@ export class Sniper extends ItemBase {
 			0,
 			0,
 			Infinity,
-			false,
+			true,
 			ShotParticleType.Sniper,
 			muzzlePos,
 			muzzleDir,
