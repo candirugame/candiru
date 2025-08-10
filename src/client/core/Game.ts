@@ -74,18 +74,60 @@ export class Game {
 
 	animate() {
 		if (this.stopped) return;
+		// Basic frame profiler when enabled
+		const profilerEnabled = SettingsManager.settings.profilerMode;
+		let t0: number | undefined;
+		const marks: { name: string; dt: number }[] = [];
+		const mark = (name: string) => {
+			if (!profilerEnabled) return;
+			const now = performance.now();
+			if (t0 != null) {
+				marks.push({ name, dt: now - t0 });
+			}
+			t0 = now;
+		};
+		if (profilerEnabled) t0 = performance.now();
 		this.inputHandler.handleInputs();
+		mark('inputs');
 		this.touchInputHandler.onFrame();
+		mark('touch');
 		this.collisionManager.collisionPeriodic(this.localPlayer);
+		mark('collision');
 		this.networking.updatePlayerData();
+		mark('netUpdate');
 		this.chatOverlay.onFrame();
+		mark('chat');
 		this.inventoryManager.onFrame();
+		mark('inventory');
 		this.shotHandler.onFrame();
+		mark('shots');
 		this.renderer.onFrame(this.localPlayer);
+		mark('render');
 		if (this.networking.getServerInfo().mapName) {
 			this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');
 		}
+		mark('mapLoad');
 		this.remoteItemRenderer.onFrame();
+		mark('remoteItems');
+		if (profilerEnabled && marks.length) {
+			// Expose rolling averages via chatOverlay
+			if (!this.chatOverlay.profiler) {
+				this.chatOverlay.profiler = { frame: 0, accum: {}, avg: {} };
+			}
+			const pf = this.chatOverlay.profiler!; // profiler object guaranteed after initialization above
+			pf.frame++;
+			for (const m of marks) {
+				pf.accum[m.name] = (pf.accum[m.name] || 0) + m.dt;
+			}
+			const sampleWindow = 200;
+			if (pf.frame % sampleWindow === 0) {
+				pf.avg = {};
+				for (const k in pf.accum) {
+					pf.avg[k] = pf.accum[k] / sampleWindow;
+				}
+				pf.accum = {};
+			}
+		}
 		requestAnimationFrame(this.animate.bind(this));
 	}
 

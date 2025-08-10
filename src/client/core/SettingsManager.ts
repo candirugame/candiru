@@ -25,6 +25,7 @@ export class SettingsManager {
 			chatMaxLines: 10,
 			doPrettyText: false,
 			developerMode: false,
+			profilerMode: false,
 		};
 	}
 
@@ -46,4 +47,5 @@ interface Settings {
 	chatMaxLines: number;
 	doPrettyText: boolean;
 	developerMode: boolean;
+	profilerMode: boolean; // show frame profiling info
 }

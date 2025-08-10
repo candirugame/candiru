@@ -138,6 +138,21 @@ export class CommandManager {
 				return 'developer mode set to ' + args[1];
 			}),
 		);
+
+		this.commands.push(
+			new Command('profile', (args: string[]): string => {
+				if (args[1] == null) {
+					SettingsManager.settings.profilerMode = !SettingsManager.settings.profilerMode;
+					SettingsManager.write();
+					return 'toggled profiler mode to ' + SettingsManager.settings.profilerMode;
+				}
+				if (args[1] == 'true') SettingsManager.settings.profilerMode = true;
+				else if (args[1] == 'false') SettingsManager.settings.profilerMode = false;
+				else return 'invalid input (true/false)';
+				SettingsManager.write();
+				return 'profiler mode set to ' + args[1];
+			}),
+		);
 	}
 
 	public runCmd(cmd: string): boolean {

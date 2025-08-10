@@ -450,8 +450,12 @@ export class ChatOverlay {
 		if (this.localPlayer.latency >= 999) {
 			linesToRender.push('&cdisconnected :(');
 		}
+		let latencyColor = '';
+		if (this.localPlayer.latency > 60) latencyColor = '&6';
+		if (this.localPlayer.latency > 200) latencyColor = '&c';
+
 		linesToRender.push(
-			'candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' +
+			'candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' + latencyColor +
 				Math.round(this.localPlayer.latency) + 'ms',
 		);
 
@@ -498,6 +502,19 @@ export class ChatOverlay {
 			for (const msg of this.localPlayer.gameMsgs2) {
 				linesToRender.push(msg);
 			}
+		}
+
+		// Append profiler stats if enabled
+		if (SettingsManager.settings.profilerMode && this.profiler?.avg) {
+			const entries = Object.entries(this.profiler.avg) as [string, number][]; // preserve insertion order
+			const total = entries.reduce((s, [, v]) => s + v, 0);
+			linesToRender.push('&e--- profiler (avg ms over 200f) ---');
+			for (const [name, dt] of entries) {
+				linesToRender.push(
+					`${name}: ${dt.toFixed(2)} (${((dt / total) * 100).toFixed(1)}%)`,
+				);
+			}
+			linesToRender.push(`total: ${total.toFixed(2)} ms`);
 		}
 
 		for (let i = 0; i < linesToRender.length; i++) {
@@ -1123,7 +1140,7 @@ export class ChatOverlay {
 			linesToRender.push(playerData[i].name);
 			if (playerData[i].latency > 200) {
 				colorsToRender.push('red');
-			} else if (playerData[i].latency > 50) {
+			} else if (playerData[i].latency > 60) {
 				colorsToRender.push('orange');
 			} else {
 				colorsToRender.push('green');
@@ -1379,4 +1396,13 @@ export class ChatOverlay {
 	public triggerResize() {
 		this.onWindowResize();
 	}
+}
+
+// Extend ChatOverlay with profiler structure (attached dynamically by Game)
+export interface ChatOverlay {
+	profiler?: {
+		frame: number;
+		accum: { [k: string]: number };
+		avg: { [k: string]: number };
+	};
 }
