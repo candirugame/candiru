@@ -101,6 +101,11 @@ import { SettingsManager } from '../../client/core/SettingsManager.ts';
 				</div>
 
 				<div class="setting-item">
+					<label class="mr-2">profiler</label>
+					<input type="checkbox" [(ngModel)]="settings.profilerMode" (change)="saveSettings()">
+				</div>
+
+				<div class="setting-item">
 					<button type="button" (click)="resetSettings()" class="btn-menu">reset all</button>
 				</div>
 

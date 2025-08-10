@@ -500,6 +500,19 @@ export class ChatOverlay {
 			}
 		}
 
+		// Append profiler stats if enabled
+		if (SettingsManager.settings.profilerMode && this.profiler?.avg) {
+			const entries = Object.entries(this.profiler.avg) as [string, number][]; // preserve insertion order
+			const total = entries.reduce((s, [, v]) => s + v, 0);
+			linesToRender.push('&e--- profiler (avg ms over 200f) ---');
+			for (const [name, dt] of entries) {
+				linesToRender.push(
+					`${name}: ${dt.toFixed(2)} (${((dt / total) * 100).toFixed(1)}%)`,
+				);
+			}
+			linesToRender.push(`total: ${total.toFixed(2)} ms`);
+		}
+
 		for (let i = 0; i < linesToRender.length; i++) {
 			this.renderPixelText(linesToRender[i], 2, 7 + 7 * i, 'teal');
 		}
@@ -1379,4 +1392,13 @@ export class ChatOverlay {
 	public triggerResize() {
 		this.onWindowResize();
 	}
+}
+
+// Extend ChatOverlay with profiler structure (attached dynamically by Game)
+export interface ChatOverlay {
+	profiler?: {
+		frame: number;
+		accum: { [k: string]: number };
+		avg: { [k: string]: number };
+	};
 }
