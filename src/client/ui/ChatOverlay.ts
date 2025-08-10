@@ -450,8 +450,12 @@ export class ChatOverlay {
 		if (this.localPlayer.latency >= 999) {
 			linesToRender.push('&cdisconnected :(');
 		}
+		let latencyColor = '';
+		if (this.localPlayer.latency > 60) latencyColor = '&6';
+		if (this.localPlayer.latency > 200) latencyColor = '&c';
+
 		linesToRender.push(
-			'candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' +
+			'candiru ' + this.localPlayer.gameVersion + ' @ ' + Math.round(framerate) + 'fps, ' + latencyColor +
 				Math.round(this.localPlayer.latency) + 'ms',
 		);
 
@@ -1136,7 +1140,7 @@ export class ChatOverlay {
 			linesToRender.push(playerData[i].name);
 			if (playerData[i].latency > 200) {
 				colorsToRender.push('red');
-			} else if (playerData[i].latency > 50) {
+			} else if (playerData[i].latency > 60) {
 				colorsToRender.push('orange');
 			} else {
 				colorsToRender.push('green');
