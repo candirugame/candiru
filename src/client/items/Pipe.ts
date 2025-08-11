@@ -53,10 +53,9 @@ export class Pipe extends ItemBase {
 						}
 					}
 				});
+				this.inventoryMenuObject = this.object.clone();
+				this.inventoryMenuObject.scale.set(0.5, 0.5, 0.5);
 			}
-
-			this.inventoryMenuObject = this.object.clone();
-			this.inventoryMenuObject.scale.set(0.5, 0.5, 0.5);
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.rotation.z = Math.PI / 2;

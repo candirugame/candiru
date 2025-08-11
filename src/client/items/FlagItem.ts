@@ -42,15 +42,15 @@ export class FlagItem extends ItemBase {
 						}
 					}
 				});
+
+				this.inventoryMenuObject = this.object.clone();
+				this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+				this.inventoryMenuObject.rotation.x += Math.PI / 2;
 			}
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.66, 0.66, 0.66);
 			}
-
-			this.inventoryMenuObject = this.object.clone();
-			this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
-			this.inventoryMenuObject.rotation.x += Math.PI / 2;
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.45, 0.45, 0.45);
