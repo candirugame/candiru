@@ -82,46 +82,46 @@ export class ItemManager {
 			// Process each nearby item
 			for (const item of nearbyItems) {
 				let shouldPickup = false;
+				// helper to see if player has itemId
+				const hasItem = (id: number) => player.inventory.some((inv) => inv.itemId === id);
+				const addItem = (id: number, durability: number = 100) => {
+					player.inventory.push({ itemId: id, durability });
+					shouldPickup = true;
+				};
 				switch (item.itemType) {
 					case 0: // Cube
-						player.inventory.push(0);
-						shouldPickup = true;
+						addItem(0, 1); // maybe cosmetic / stackless
 						this.chatManager.broadcastChat(`${player.name} picked up [Object]!`);
 						console.log(`📦 ${player.name} picked up cube!`);
 						break;
 					case 1: // Banana
-						if (!player.inventory.includes(1)) {
-							player.inventory.push(1);
-							shouldPickup = true;
+						if (!hasItem(1)) {
+							addItem(1);
 							console.log(`🍌 ${player.name} picked up banana!`);
 						}
 						break;
 					case 2: // Fish
-						if (!player.inventory.includes(2)) {
-							player.inventory.push(2);
-							shouldPickup = true;
+						if (!hasItem(2)) {
+							addItem(2);
 							console.log(`🐟 ${player.name} picked up fish!`);
 						}
 						break;
 					case 3: // Pipe
-						if (!player.inventory.includes(3)) {
-							player.inventory.push(3);
-							shouldPickup = true;
+						if (!hasItem(3)) {
+							addItem(3);
 							console.log(`⚔️ ${player.name} picked up pipe!`);
 						}
 						break;
 					case 4: // Flag
-						if (!player.inventory.includes(4)) {
-							player.inventory.push(4);
-							shouldPickup = true;
+						if (!hasItem(4)) {
+							addItem(4);
 							console.log(`🚩 ${player.name} picked up the flag!`);
 						}
 						break;
-					case 5: // bottle
-						if (!player.inventory.includes(5)) {
-							player.inventory.push(5);
-							shouldPickup = true;
-							console.log(`🍌 ${player.name} picked up sniper!`);
+					case 5: // bottle / sniper
+						if (!hasItem(5)) {
+							addItem(5);
+							console.log(`🍌 ${player.name} picked up sniper!`); // (emoji reused)
 						}
 						break;
 				}

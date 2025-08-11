@@ -241,8 +241,8 @@ export class RemotePlayerRenderer {
 			}
 
 			const playerId = remotePlayer.id;
-			const heldItemId = remotePlayer.inventory[remotePlayer.heldItemIndex];
-			const weaponProps = heldItemId ? weaponData.get(heldItemId) : undefined;
+			const heldItemObj = remotePlayer.inventory[remotePlayer.heldItemIndex];
+			const weaponProps = heldItemObj ? weaponData.get(heldItemObj.itemId) : undefined;
 
 			const playerObject = this.playersToRender.find((p) => p.id === playerId)?.object;
 			const lookQuat = remotePlayer.lookQuaternion

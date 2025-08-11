@@ -1,6 +1,7 @@
 import type { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
 import { DataValidator } from '../server/DataValidator.ts';
 import * as THREE from 'three';
+import type { InventoryItem } from './Item.ts';
 
 export type PlayerData = z.input<typeof DataValidator.playerDataSchema>;
 
@@ -24,7 +25,7 @@ export class Player {
 	public protection = 1; //server-controlled
 	public forced = false; //server-controlled
 	public forcedAcknowledged = false;
-	public inventory: number[] = []; //server-controlled
+	public inventory: InventoryItem[] = []; //server-controlled
 	public heldItemIndex = 0;
 	public shooting = false;
 	public rightClickHeld = false;

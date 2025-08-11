@@ -145,7 +145,7 @@ export class PlayerManager {
 
 	public dropAllItems(player: Player) {
 		for (let i = 0; i < player.inventory.length; i++) {
-			this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
+			this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i].itemId));
 		}
 		player.inventory = [];
 	}
