@@ -135,7 +135,7 @@ function parseConfig(env: Record<string, string>) {
 			disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),
 			afkKickTime: parseInt(env.PLAYER_AFK_KICK_TIME),
 			maxHealth: parseInt(env.PLAYER_MAX_HEALTH),
-			baseInventory: JSON.parse(env.PLAYER_BASE_INVENTORY) as number[],
+			baseInventory: JSON.parse(env.PLAYER_BASE_INVENTORY) as { itemId: number; durability: number }[],
 		},
 		health: {
 			regenDelay: parseInt(env.HEALTH_REGEN_DELAY),

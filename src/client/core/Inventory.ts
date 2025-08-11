@@ -26,7 +26,7 @@ export class Inventory {
 	private camera: THREE.Camera;
 	private lastInventoryTouchTime: number = 0;
 	private localPlayer: Player;
-	private oldInventory: number[] = [];
+	private oldInventory: { itemId: number; durability: number }[] = [];
 	private lastShootTime: number = 0;
 
 	private oldDownPressed: boolean = false;
@@ -56,16 +56,24 @@ export class Inventory {
 
 	private updateInventoryItems() {
 		const spectatedPlayer = this.networking.getSpectatedPlayer();
-		const currentInventory = spectatedPlayer ? spectatedPlayer.inventory : this.localPlayer.inventory;
+		// Normalize inventory to ensure itemId & durability are present
+		const sourceInventory = spectatedPlayer ? spectatedPlayer.inventory : this.localPlayer.inventory;
+		type Inv = { itemId: number; durability: number } | number;
+		const isObj = (val: Inv): val is { itemId: number; durability: number } =>
+			(typeof val === 'object' && val !== null && 'itemId' in val && 'durability' in val);
+		const currentInventory: { itemId: number; durability: number }[] = (sourceInventory as Inv[]).map((it) =>
+			isObj(it) ? { itemId: it.itemId, durability: it.durability } : { itemId: it, durability: 100 }
+		);
 
-		if (!this.arraysEqual(this.oldInventory, currentInventory)) {
+		if (!this.inventoriesEqual(this.oldInventory, currentInventory)) {
 			for (let i = this.inventoryItems.length - 1; i >= 0; i--) {
 				this.inventoryItems[i].destroy();
 				this.inventoryItems.splice(i, 1);
 			}
 
 			for (let i = 0; i < currentInventory.length; i++) {
-				const num = currentInventory[i];
+				const invItem = currentInventory[i];
+				const num = invItem.itemId;
 				switch (num) {
 					case 1: {
 						const banana = new BananaGun(this.renderer, this.shotHandler, i, ItemType.InventoryItem);
@@ -106,15 +114,15 @@ export class Inventory {
 			}
 		}
 
-		this.oldInventory = currentInventory;
+		this.oldInventory = currentInventory.map((i) => ({ ...i }));
 	}
 
-	public arraysEqual(a: number[], b: number[]) {
+	private inventoriesEqual(a: { itemId: number; durability: number }[], b: { itemId: number; durability: number }[]) {
 		if (a === b) return true;
-		if (a == null || b == null) return false;
-		if (a.length != b.length) return false;
-		for (let i = 0; i < a.length; ++i) {
-			if (a[i] !== b[i]) return false;
+		if (!a || !b) return false;
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (a[i].itemId !== b[i].itemId || a[i].durability !== b[i].durability) return false;
 		}
 		return true;
 	}

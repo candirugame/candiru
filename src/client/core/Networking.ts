@@ -175,7 +175,13 @@ export class Networking {
 
 		// Optional fields: Only update if present in data
 		if (data.inventory !== undefined) {
-			this.localPlayer.inventory = data.inventory;
+			// Normalize incoming inventory items to ensure required properties
+			type Inv = { itemId: number; durability: number } | number;
+			const isObj = (val: Inv): val is { itemId: number; durability: number } =>
+				(typeof val === 'object' && val !== null && 'itemId' in val && 'durability' in val);
+			this.localPlayer.inventory = (data.inventory as Inv[]).map((it) =>
+				isObj(it) ? { itemId: it.itemId, durability: it.durability } : { itemId: it, durability: 100 }
+			);
 		}
 		if (data.gameMsgs !== undefined) {
 			this.localPlayer.gameMsgs = data.gameMsgs;
