@@ -44,6 +44,7 @@ interface ClientToServerEvents {
 	playerData: (player: PlayerData) => void;
 	chatMsg: (message: ChatMessage) => void;
 	applyDamage: (damage: DamageRequest) => void;
+	shotGroupAdded: (data: { heldItemIndex: number; id: number }) => void;
 	applyPropDamage: (damage: PropDamageRequest) => void;
 	latencyTest: () => void;
 	getServerList: (callback: (servers: Peer[]) => void) => void;

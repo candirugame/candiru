@@ -41,6 +41,7 @@ export class ShotHandler {
 			direction,
 			isLocal,
 		);
+		this.networking.shotGroupAdded(); //reduce weapon durability
 		shotGroup.processShots(this.renderer, this.networking);
 	}
 }
