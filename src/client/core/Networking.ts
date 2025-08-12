@@ -177,8 +177,12 @@ export class Networking {
 		if (data.inventory !== undefined) {
 			// Normalize incoming inventory items to ensure required properties
 			type Inv = { itemId: number; durability: number } | number;
-			const isObj = (val: Inv): val is { itemId: number; durability: number } =>
-				(typeof val === 'object' && val !== null && 'itemId' in val && 'durability' in val);
+			const isObj = (
+				val: Inv,
+			): val is {
+				itemId: number;
+				durability: number;
+			} => (typeof val === 'object' && val !== null && 'itemId' in val && 'durability' in val);
 			this.localPlayer.inventory = (data.inventory as Inv[]).map((it) =>
 				isObj(it) ? { itemId: it.itemId, durability: it.durability } : { itemId: it, durability: 100 }
 			);
@@ -467,6 +471,14 @@ export class Networking {
 		};
 		this.socket.emit('applyDamage', damageRequest);
 		//	console.log(`Applying damage: ${id} - ${damage}`);
+	}
+
+	public shotGroupAdded() {
+		this.socket.emit('shotGroupAdded', { id: this.localPlayer.id, heldItemIndex: this.localPlayer.heldItemIndex });
+	}
+
+	public getLocalPlayer() {
+		return this.localPlayer;
 	}
 
 	public applyPropDamage(id: number, damage: number) {

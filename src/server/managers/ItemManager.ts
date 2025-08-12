@@ -84,7 +84,7 @@ export class ItemManager {
 				let shouldPickup = false;
 				// helper to see if player has itemId
 				const hasItem = (id: number) => player.inventory.some((inv) => inv.itemId === id);
-				const addItem = (id: number, durability: number = 100) => {
+				const addItem = (id: number, durability: number = 1) => {
 					player.inventory.push({ itemId: id, durability });
 					shouldPickup = true;
 				};

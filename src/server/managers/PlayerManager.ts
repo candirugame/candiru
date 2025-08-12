@@ -145,7 +145,11 @@ export class PlayerManager {
 
 	public dropAllItems(player: Player) {
 		for (let i = 0; i < player.inventory.length; i++) {
-			this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i].itemId));
+			const position = player.position.clone();
+			position.x += (Math.random() - 0.5) * 0.5;
+			//position.y += (Math.random() - 0.5) * 0.5;
+			position.z += (Math.random() - 0.5) * 0.5;
+			this.itemManager.pushItem(new WorldItem(position, player.inventory[i].itemId));
 		}
 		player.inventory = [];
 	}
@@ -206,5 +210,34 @@ export class PlayerManager {
 		const randomIndex = Math.floor(Math.random() * this.mapData.respawnPoints.length);
 		const respawnPoint = this.mapData.respawnPoints[randomIndex];
 		return { vec: respawnPoint.position, quaternion: respawnPoint.quaternion };
+	}
+
+	public handleShotGroupAdded(playerId: number, heldItemIndex: number) {
+		const playerData = this.players.get(playerId);
+		if (!playerData) return;
+
+		const player = playerData.player;
+		const itemId = player.inventory[heldItemIndex]?.itemId;
+		if (itemId) {
+			switch (itemId) {
+				case 1: // Pistol
+					player.inventory[heldItemIndex].durability -= 0.1;
+					break;
+				case 2: // Shotgun
+					player.inventory[heldItemIndex].durability -= 0.2;
+					break;
+				case 3: // pipe
+					player.inventory[heldItemIndex].durability -= 0.05;
+					break;
+				case 4: // flag
+					break;
+				case 5: // Sniper
+					player.inventory[heldItemIndex].durability -= 0.3;
+					break;
+			}
+			if (player.inventory[heldItemIndex].durability <= 0) {
+				player.inventory.splice(heldItemIndex, 1);
+			}
+		}
 	}
 }

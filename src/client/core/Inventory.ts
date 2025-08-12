@@ -59,13 +59,17 @@ export class Inventory {
 		// Normalize inventory to ensure itemId & durability are present
 		const sourceInventory = spectatedPlayer ? spectatedPlayer.inventory : this.localPlayer.inventory;
 		type Inv = { itemId: number; durability: number } | number;
-		const isObj = (val: Inv): val is { itemId: number; durability: number } =>
-			(typeof val === 'object' && val !== null && 'itemId' in val && 'durability' in val);
+		const isObj = (
+			val: Inv,
+		): val is {
+			itemId: number;
+			durability: number;
+		} => (typeof val === 'object' && val !== null && 'itemId' in val && 'durability' in val);
 		const currentInventory: { itemId: number; durability: number }[] = (sourceInventory as Inv[]).map((it) =>
 			isObj(it) ? { itemId: it.itemId, durability: it.durability } : { itemId: it, durability: 100 }
 		);
 
-		if (!this.inventoriesEqual(this.oldInventory, currentInventory)) {
+		if (!this.inventoriesIdsEqual(this.oldInventory, currentInventory)) {
 			for (let i = this.inventoryItems.length - 1; i >= 0; i--) {
 				this.inventoryItems[i].destroy();
 				this.inventoryItems.splice(i, 1);
@@ -117,15 +121,28 @@ export class Inventory {
 		this.oldInventory = currentInventory.map((i) => ({ ...i }));
 	}
 
-	private inventoriesEqual(a: { itemId: number; durability: number }[], b: { itemId: number; durability: number }[]) {
+	private inventoriesIdsEqual(
+		a: { itemId: number; durability: number }[],
+		b: { itemId: number; durability: number }[],
+	) {
 		if (a === b) return true;
 		if (!a || !b) return false;
 		if (a.length !== b.length) return false;
 		for (let i = 0; i < a.length; i++) {
-			if (a[i].itemId !== b[i].itemId || a[i].durability !== b[i].durability) return false;
+			if (a[i].itemId !== b[i].itemId) return false;
 		}
 		return true;
 	}
+
+	//	private inventoriesFullyEqual(a: { itemId: number; durability: number }[], b: { itemId: number; durability: number }[]) {
+	// 		if (a === b) return true;
+	// 		if (!a || !b) return false;
+	// 		if (a.length !== b.length) return false;
+	// 		for (let i = 0; i < a.length; i++) {
+	// 			if (a[i].itemId !== b[i].itemId || a[i].durability !== b[i].durability) return false;
+	// 		}
+	// 		return true;
+	// 	}
 
 	public onFrame() {
 		this.updateInventoryItems();
