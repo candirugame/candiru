@@ -1,9 +1,12 @@
 import type { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
 import { DataValidator } from '../server/DataValidator.ts';
 import * as THREE from 'three';
-import type { InventoryItem } from './Item.ts';
+import type { InventoryItem } from './InventoryItem.ts';
 
 export type PlayerData = z.input<typeof DataValidator.playerDataSchema>;
+
+// PlayerDelta: top-level partial updates, but inventory (when present) must be full InventoryItem[]
+export type PlayerDelta = Omit<Partial<PlayerData>, 'inventory'> & { inventory?: InventoryItem[] };
 
 export class Player {
 	//server-controlled simply means the server ignores updates from the client, client can sometimes still init these values before joining.
@@ -52,7 +55,10 @@ export class Player {
 
 		return {
 			...this,
-			inventory: [...this.inventory],
+			// Deep-clone inventory items so server-side snapshots don't alias underlying mutable objects.
+			// Without this, in-place durability mutations would also mutate the stored snapshot,
+			// preventing the delta emitter from detecting changes.
+			inventory: this.inventory.map((item) => ({ ...item })),
 			gameMsgs: [...this.gameMsgs],
 			gameMsgs2: [...this.gameMsgs2],
 			position: serializableVec3(this.position),

@@ -238,6 +238,10 @@ export class PlayerManager {
 			if (player.inventory[heldItemIndex].durability <= 0) {
 				player.inventory.splice(heldItemIndex, 1);
 			}
+			// Notify GameEngine that player data changed so a delta is emitted promptly
+			if (this.gameEngine) {
+				this.gameEngine.playerUpdateSinceLastEmit = true;
+			}
 		}
 	}
 }

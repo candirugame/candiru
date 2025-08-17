@@ -75,6 +75,9 @@ export class Renderer {
 
 	private containerElement: HTMLElement;
 
+	// Tracks whether the inventory menu is currently visible (recently interacted with)
+	private inventoryVisible: boolean = false;
+
 	constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.networking = networking;
 		this.localPlayer = localPlayer;
@@ -177,6 +180,15 @@ export class Renderer {
 		this.shotHandler = shotHandler;
 		// Pass it down to RemotePlayerRenderer (we'll add this method next)
 		this.remotePlayerRenderer.setShotHandler(shotHandler);
+	}
+
+	// Inventory visibility API for UI overlays
+	public setInventoryVisible(visible: boolean) {
+		this.inventoryVisible = visible;
+	}
+
+	public isInventoryVisible(): boolean {
+		return this.inventoryVisible;
 	}
 
 	public onFrame(localPlayer: Player) {

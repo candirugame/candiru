@@ -240,11 +240,10 @@ export class Inventory {
 		this.localPlayer.shooting = isShootActive;
 
 		this.cameraY = this.selectedInventoryItem;
-		if (currentTime - this.lastInventoryTouchTime > 2) {
-			this.cameraX = -1;
-		} else {
-			this.cameraX = 0;
-		}
+		const inventoryIsVisible = currentTime - this.lastInventoryTouchTime <= 2;
+		this.cameraX = inventoryIsVisible ? 0 : -1;
+		// Inform renderer so canvas overlays can react
+		this.renderer.setInventoryVisible(inventoryIsVisible);
 
 		this.camera.position.lerp(new THREE.Vector3(this.cameraX, this.selectedInventoryItem, 5), 0.4 * deltaTime * 60);
 

@@ -9,7 +9,7 @@ import { Gamemode } from './gamemodes/Gamemode.ts';
 import { FFAGamemode } from './gamemodes/FFAGamemode.ts';
 import { CustomServer } from '../shared/messages.ts';
 import { Player } from '../shared/Player.ts';
-import type { PlayerData } from '../shared/Player.ts';
+import type { PlayerData, PlayerDelta } from '../shared/Player.ts';
 import * as THREE from 'three';
 import { SoloCTFGamemode } from './gamemodes/SoloCTFGamemode.ts';
 import { BridgeGamemode } from './gamemodes/BridgeGamemode.ts';
@@ -115,12 +115,12 @@ export class GameEngine {
 					} else {
 						// delta emit
 						const currentData = players.map((p) => p.toJSON());
-						const deltas: Array<Partial<PlayerData> & { id: number }> = [];
+						const deltas: Array<PlayerDelta & { id: number }> = [];
 						currentData.forEach((pd) => {
 							const prev = this.lastEmittedPlayerSnapshot.get(pd.id);
-							const delta: Partial<PlayerData> & { id: number } = { id: pd.id };
+							const delta: PlayerDelta & { id: number } = { id: pd.id };
 							if (!prev) {
-								deltas.push(pd as Partial<PlayerData> & { id: number });
+								deltas.push(pd as PlayerDelta & { id: number });
 								this.lastEmittedPlayerSnapshot.set(pd.id, pd);
 							} else {
 								// iterate over known keys in PlayerData

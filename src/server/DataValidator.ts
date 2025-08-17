@@ -37,9 +37,21 @@ export class DataValidator {
 		})
 		.transform(({ x, y, z, w }) => new THREE.Quaternion(x, y, z, w));
 
+	//	itemId: number;
+	// 	durability: number; //item "dies" if this reaches zero. either set to (shotsFired / shotsAvailable) or (creationTimestamp - currentTimestamp) / lifetime
+	// 	creationTimestamp: number;
+	// 	shotsFired: number;
+	//
+	// 	lifetime?: number;
+	// 	shotsAvailable?: number;
+
 	static inventorySchema = z.array(z.object({
 		itemId: z.number(),
 		durability: z.number(),
+		creationTimestamp: z.number(),
+		shotsFired: z.number(),
+		lifetime: z.number().optional(),
+		shotsAvailable: z.number().optional(),
 	}));
 
 	static playerDataSchema = z.object({

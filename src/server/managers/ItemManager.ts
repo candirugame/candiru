@@ -85,7 +85,13 @@ export class ItemManager {
 				// helper to see if player has itemId
 				const hasItem = (id: number) => player.inventory.some((inv) => inv.itemId === id);
 				const addItem = (id: number, durability: number = 1) => {
-					player.inventory.push({ itemId: id, durability });
+					player.inventory.push({
+						shotsFired: 0,
+						itemId: id,
+						durability,
+						creationTimestamp: Date.now() / 1000,
+						lifetime: 30,
+					});
 					shouldPickup = true;
 				};
 				switch (item.itemType) {
