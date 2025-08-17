@@ -178,11 +178,12 @@ export class Inventory {
 			for (let i = 0; i < nums.length; i++) {
 				const numPressed = this.inputHandler.getKey(nums[i]);
 				if (numPressed && !this.oldNumsPressed[i]) {
-					// Only update if selecting different item
+					// Always show inventory on direct number press
+					this.lastInventoryTouchTime = currentTime;
+					// Only change selection if different
 					if (i !== this.selectedInventoryItem) {
 						this.lastSelectedInventoryItem = this.selectedInventoryItem;
 						this.selectedInventoryItem = i;
-						this.lastInventoryTouchTime = currentTime;
 					}
 					break;
 				}
@@ -218,6 +219,8 @@ export class Inventory {
 				this.selectedInventoryItem = this.lastSelectedInventoryItem;
 				this.lastSelectedInventoryItem = temp;
 			}
+			// Ensure inventory is shown on Q press (swap)
+			this.lastInventoryTouchTime = currentTime;
 		}
 
 		if (this.selectedInventoryItem < 0) {
