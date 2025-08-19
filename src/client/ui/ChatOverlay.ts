@@ -78,7 +78,6 @@ export class ChatOverlay {
 	// Animation progress for inventory per-item bars (0..1)
 	private inventoryBarsProgress: number = 0;
 	// Smoothed tracking of inventory camera Y (in ortho units), to match animation
-	private inventoryBarsCameraY: number = 0;
 
 	public gameMessages: string[] = [];
 	private eventMessages: AnimatedEventMessage[] = [];
@@ -1087,15 +1086,15 @@ export class ChatOverlay {
 		let targetOffset = 0;
 		if (this.renderer?.isInventoryVisible?.()) {
 			const inventoryWidthGamePx = 20;
-			const screenPixelsPerGamePx = this.renderer.getScreenPixelsInGamePixel();
-			const inventoryWidthCanvasPx = inventoryWidthGamePx; // 1:1 due to 200px height basis
-			const paddingCanvasPx = 4 / screenPixelsPerGamePx; // 4 screen px -> canvas px
-			targetOffset = Math.ceil(inventoryWidthCanvasPx + paddingCanvasPx);
+			const inventoryWidthCanvasPx = 20; // 1:1 due to 200px height basis
+			targetOffset = Math.ceil(inventoryWidthCanvasPx + 4);
 		}
 
 		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 		//	this.durabilityBarOffset = lerp(this.durabilityBarOffset, targetOffset, 0.2);
-		this.durabilityBarOffset = targetOffset;
+		const camX = this.renderer.getInventoryMenuCamera().position.x;
+
+		this.durabilityBarOffset = camX * 20 + 22;
 
 		const baseBarX = this.chatCanvas.width - barWidth - margin - this.durabilityBarOffset;
 
@@ -1174,12 +1173,10 @@ export class ChatOverlay {
 
 		const target = this.renderer.isInventoryVisible() ? 1 : 0;
 		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-		this.inventoryBarsProgress = lerp(this.inventoryBarsProgress, target, 0.25);
+		this.inventoryBarsProgress = lerp(this.inventoryBarsProgress, target, 0.3);
 		if (this.inventoryBarsProgress < 0.01) return;
 
-		this.inventoryBarsCameraY = this.renderer.getInventoryMenuCamera().position.y + 8.5 / 20;
-
-		const camY = this.inventoryBarsCameraY;
+		const camY = this.renderer.getInventoryMenuCamera().position.y + 8.5 / 20;
 		const unitPx = 20;
 
 		const barInnerMarginX = 3;
