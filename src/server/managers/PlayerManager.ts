@@ -211,6 +211,12 @@ export class PlayerManager {
 			for (let i = player.inventory.length - 1; i >= 0; i--) {
 				const item = player.inventory[i];
 
+				if (item.durability <= 0 && item.reserve > 0) {
+					item.creationTimestamp = currentTime;
+					item.shotsFired = 0;
+					item.reserve -= 1;
+				}
+
 				const itemAge = currentTime - item.creationTimestamp;
 				if (config.items.rotTakesDurability && item.lifetime) {
 					item.durability = 1 - (itemAge / item.lifetime);
@@ -218,8 +224,6 @@ export class PlayerManager {
 				if (config.items.shotsTakeDurability && item.shotsAvailable) {
 					item.durability -= item.shotsFired / item.shotsAvailable;
 				}
-
-				//if (item.durability <= 0) player.inventory.splice(i, 1);
 			}
 		}
 	}

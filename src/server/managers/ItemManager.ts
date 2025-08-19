@@ -85,51 +85,61 @@ export class ItemManager {
 				// helper to see if player has itemId
 				const hasItem = (id: number) => player.inventory.some((inv) => inv.itemId === id);
 				const addItem = (id: number, lifetime?: number, shotsAvailable?: number) => {
-					player.inventory.push({
-						shotsFired: 0,
-						itemId: id,
-						durability: 1,
-						creationTimestamp: Date.now() / 1000,
-						lifetime,
-						shotsAvailable,
-					});
-					shouldPickup = true;
+					if (!hasItem(id)) {
+						player.inventory.push({
+							shotsFired: 0,
+							itemId: id,
+							durability: 1,
+							creationTimestamp: Date.now() / 1000,
+							lifetime,
+							shotsAvailable,
+							reserve: 0, //first item of this type added
+						});
+						shouldPickup = true;
+					} else {
+						// If the item already exists, just increase the reserve count
+						const existingItem = player.inventory.find((inv) => inv.itemId === id);
+						if (existingItem) {
+							existingItem.reserve += 1; // Increase reserve count
+							shouldPickup = true;
+						}
+					}
 				};
 				switch (item.itemType) {
 					case 0: // Cube
-						addItem(0, 1); // maybe cosmetic / stackless
+						addItem(0, 1);
 						this.chatManager.broadcastChat(`${player.name} picked up [Object]!`);
 						console.log(`📦 ${player.name} picked up cube!`);
 						break;
 					case 1: // Banana
-						if (!hasItem(1)) {
-							addItem(1, 45, 100);
-							console.log(`🍌 ${player.name} picked up banana!`);
-						}
+						//	if (!hasItem(1)) {
+						addItem(1, 45, 100); //later added items of this type adopt this lifetime and shotsAvailable since they're the same item object but with reserve iterated upon
+						console.log(`🍌 ${player.name} picked up banana!`);
+						//	}
 						break;
 					case 2: // Fish
-						if (!hasItem(2)) {
-							addItem(2, 45, 100);
-							console.log(`🐟 ${player.name} picked up fish!`);
-						}
+						//	if (!hasItem(2)) {
+						addItem(2, 45, 100);
+						console.log(`🐟 ${player.name} picked up fish!`);
+						//		}
 						break;
 					case 3: // Pipe
-						if (!hasItem(3)) {
-							addItem(3, 45, 200);
-							console.log(`⚔️ ${player.name} picked up pipe!`);
-						}
+						//	if (!hasItem(3)) {
+						addItem(3, 45, 200);
+						console.log(`⚔️ ${player.name} picked up pipe!`);
+						//	}
 						break;
 					case 4: // Flag
-						if (!hasItem(4)) {
-							addItem(4);
-							console.log(`🚩 ${player.name} picked up the flag!`);
-						}
+						//	if (!hasItem(4)) {
+						addItem(4);
+						console.log(`🚩 ${player.name} picked up the flag!`);
+						//		}
 						break;
 					case 5: // bottle / sniper
-						if (!hasItem(5)) {
-							addItem(5, 45, 50);
-							console.log(`🍌 ${player.name} picked up sniper!`);
-						}
+						//		if (!hasItem(5)) {
+						addItem(5, 45, 50);
+						console.log(`🍌 ${player.name} picked up sniper!`);
+						//		}
 						break;
 				}
 

@@ -1063,95 +1063,92 @@ export class ChatOverlay {
 	private renderDurabilityBar() {
 		const player = this.networking.getLocalPlayer();
 		if (!player || !player.inventory || player.inventory.length === 0) return;
-		const idx = Math.max(0, Math.min(player.heldItemIndex ?? 0, player.inventory.length - 1));
-		const item = player.inventory[idx] as { durability?: number } | undefined;
-		if (!item || item.durability === undefined || item.durability === null) return;
 
-		let d = item.durability;
-		if (!Number.isFinite(d)) return;
-		if (d > 1.0001 && d <= 100) d = d / 100; // best-effort normalization
-		d = Math.max(0, Math.min(1, d));
+		const idx = Math.max(
+			0,
+			Math.min(player.heldItemIndex ?? 0, player.inventory.length - 1),
+		);
+		const item = player.inventory[idx];
+		if (!item || item.durability === undefined || item.durability === null) {
+			return;
+		}
+
+		// durability now guaranteed to be in [0,1); reserve is integer count of extra full bars
+		let durability = item.durability;
+		if (!Number.isFinite(durability)) return;
+		durability = Math.min(1, durability);
+		const reserve = Math.max(0, Math.floor(item.reserve ?? 0));
 
 		// Geometry and animated horizontal offset (slide away when inventory is shown)
 		const ctx = this.chatCtx;
 		const margin = 4;
 		const barWidth = 4; // thinner
 
-		// Determine how wide the inventory viewport is in canvas pixels so we can slide past it
 		let targetOffset = 0;
 		if (this.renderer?.isInventoryVisible?.()) {
-			// Renderer sets viewport using real screen pixels; chatCanvas is scaled to 200px height
-			// Convert inventory width (game pixels -> screen pixels -> canvas pixels)
-			// Inventory width in game pixels
 			const inventoryWidthGamePx = 20;
-			// Renderer maps 200 game px height to full screen height, so screenPixelsPerGamePx = screenHeight/200
 			const screenPixelsPerGamePx = this.renderer.getScreenPixelsInGamePixel();
-			// chatCanvas is sized to 200 logical pixels tall, so canvasPixelsPerScreenPx = 200 / screenHeight
-			// Combine to get canvas pixel width of the inventory pane
-			const inventoryWidthCanvasPx = inventoryWidthGamePx; // simplifies to 1:1 since height normalization gives 200
-			// Add the 4px padding the renderer uses before scissor (converted to canvas px)
+			const inventoryWidthCanvasPx = inventoryWidthGamePx; // 1:1 due to 200px height basis
 			const paddingCanvasPx = 4 / screenPixelsPerGamePx; // 4 screen px -> canvas px
 			targetOffset = Math.ceil(inventoryWidthCanvasPx + paddingCanvasPx);
 		}
 
-		// Smoothly approach the target offset for a nice slide animation
 		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-		this.durabilityBarOffset = lerp(this.durabilityBarOffset, targetOffset, 0.2);
+		//	this.durabilityBarOffset = lerp(this.durabilityBarOffset, targetOffset, 0.2);
+		this.durabilityBarOffset = targetOffset;
 
-		const barX = this.chatCanvas.width - barWidth - margin - this.durabilityBarOffset;
-		// Make the bar shorter and vertically centered
-		// ~40% of screen height
+		const baseBarX = this.chatCanvas.width - barWidth - margin - this.durabilityBarOffset;
+
 		const barHeight = Math.max(24, Math.round(this.chatCanvas.height * 0.4));
 		const barTop = Math.floor((this.chatCanvas.height - barHeight) / 2);
 		const barBottom = barTop + barHeight;
-		const filledHeight = Math.round(barHeight * d);
+
+		const grad = ctx.createLinearGradient(0, barTop, 0, barBottom);
+		grad.addColorStop(0, 'hsl(120, 100%, 50%)');
+		grad.addColorStop(1, 'hsl(0, 100%, 50%)');
 
 		ctx.save();
-		// Draw at ~50% opacity overall
 		ctx.globalAlpha = 0.5;
 
-		// Background track
-		ctx.fillStyle = 'rgba(0,0,0,0.35)';
-		ctx.fillRect(barX - 1, barTop - 1, barWidth + 2, barHeight + 2); // subtle shadow/border
-		ctx.fillStyle = 'rgba(20,20,20,0.6)';
-		ctx.fillRect(barX, barTop, barWidth, barHeight);
+		const gap = 2;
+		const maxSegments = 16; // safety cap (unchanged)
+		let totalSegments = reserve + (durability > 0 ? 1 : 0);
+		if (totalSegments === 0) totalSegments = 1; // show empty flashing bar
+		if (totalSegments > maxSegments) totalSegments = maxSegments; // clamp visual
 
-		if (filledHeight <= 0) {
-			//if (Date.now() / 1000 % 0.4 < 0.2) {
-			ctx.fillStyle = `hsla(0,100%,50%,${(Math.sin(Date.now() / 1000 * 8) + 1) * 0.5})`;
-			ctx.fillRect(barX, barBottom - barHeight, barWidth, barHeight);
-			//}
+		for (let s = 0; s < totalSegments; s++) {
+			let segValue: number;
+			if (s < reserve) segValue = 1; // full reserve bar
+			else if (s === reserve && durability > 0) segValue = durability; // partial current bar
+			else segValue = 0; // overflow clipped or empty state
 
-			return; //don't do pretty gradient
+			const barX = baseBarX - s * (barWidth + gap);
+
+			// Background track
+			ctx.fillStyle = 'rgba(0,0,0,0.35)';
+			ctx.fillRect(barX - 1, barTop - 1, barWidth + 2, barHeight + 2);
+			ctx.fillStyle = 'rgba(20,20,20,0.6)';
+			ctx.fillRect(barX, barTop, barWidth, barHeight);
+
+			if (segValue > 0) {
+				const filledHeight = Math.round(barHeight * segValue);
+				ctx.save();
+				ctx.beginPath();
+				ctx.rect(barX, barBottom - filledHeight, barWidth, filledHeight);
+				ctx.clip();
+				ctx.fillStyle = grad;
+				ctx.fillRect(barX, barTop, barWidth, barHeight);
+				ctx.restore();
+			} else if (reserve === 0 && durability <= 0 && s === 0) {
+				// Empty: flashing red
+				const alpha = (Math.sin(Date.now() / 1000 * 8) + 1) * 0.5;
+				ctx.fillStyle = `hsla(0,100%,50%,${alpha})`;
+				ctx.fillRect(barX, barTop, barWidth, barHeight);
+			}
 		}
 
-		// // Gradient from green (top) to red (bottom)
-		// const grad = ctx.createLinearGradient(0, barTop, 0, barBottom);
-		// grad.addColorStop(0, 'hsl(120, 100%, 50%)'); // green at top
-		// grad.addColorStop(1, 'hsl(0, 100%, 50%)'); // red at bottom
-		//
-		// ctx.save();
-		// // Clip to the filled portion (grow from bottom)
-		// ctx.beginPath();
-		// ctx.rect(barX, barBottom - filledHeight, barWidth, filledHeight);
-		// ctx.clip();
-		//
-		// ctx.fillStyle = grad;
-		// ctx.fillRect(barX, barTop, barWidth, barHeight);
-		// ctx.restore();
-		ctx.fillStyle = `hsl(${120 * d}, 100%, 50%)`; // green to red gradient
-		ctx.fillRect(barX, barBottom - filledHeight, barWidth, filledHeight);
-
 		ctx.restore();
-
-		// // Optional tick marks for readability
-		// ctx.fillStyle = 'rgba(0,0,0,0.35)';
-		// for (let i = 1; i < 5; i++) {
-		// 	const y = Math.round(barTop + (barHeight * i) / 5);
-		// 	ctx.fillRect(barX, y, barWidth, 1);
-		// }
 	}
-
 	private renderInventoryDurabilityBars() {
 		if (!this.renderer) return;
 
@@ -1159,105 +1156,101 @@ export class ChatOverlay {
 			this.networking.getLocalPlayer?.();
 		if (!player) return;
 
-		const inventory = (player.inventory as Array<{ durability?: number; itemId?: number }>) ||
-			[];
+		// include reserve field for typing
+		const inventory = (player.inventory as Array<{ durability?: number; reserve?: number; itemId?: number }>) || [];
 		if (inventory.length === 0) return;
 
-		// Inventory viewport (keep positioning the same)
-		const spp = this.renderer.getScreenPixelsInGamePixel(); // screen px per game px
+		const spp = this.renderer.getScreenPixelsInGamePixel();
 		const invWidthGamePx = 20;
 		const invHeightGamePx = invWidthGamePx * 5; // 100
-		const paddingScreenPx = 10; // renderer scissor gap
+		const paddingScreenPx = 10;
 		const paddingCanvasPx = paddingScreenPx / spp;
 
-		const invWidthCanvasPx = invWidthGamePx; // 20
-		const invHeightCanvasPx = invHeightGamePx; // 100
+		const invWidthCanvasPx = invWidthGamePx;
+		const invHeightCanvasPx = invHeightGamePx;
 		const invX = this.chatCanvas.width - invWidthCanvasPx - paddingCanvasPx;
 		const invY = Math.floor((this.chatCanvas.height - invHeightCanvasPx) / 2);
 		const invCenterY = invY + invHeightCanvasPx / 2;
 
-		// Visibility animation (unchanged)
 		const target = this.renderer.isInventoryVisible() ? 1 : 0;
 		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 		this.inventoryBarsProgress = lerp(this.inventoryBarsProgress, target, 0.25);
 		if (this.inventoryBarsProgress < 0.01) return;
 
-		// Match camera smoothing/positioning (unchanged)
 		this.inventoryBarsCameraY = this.renderer.getInventoryMenuCamera().position.y + 8.5 / 20;
 
-		// 1 ortho unit == 20 canvas px
 		const camY = this.inventoryBarsCameraY;
 		const unitPx = 20;
 
-		// Style
 		const barInnerMarginX = 3;
 		const barWidthMax = invWidthCanvasPx - barInnerMarginX * 2;
 		const barHeight = 1;
+		const segmentGap = 1;
 		const bgAlpha = 0.35 * this.inventoryBarsProgress;
 		const fgAlpha = 0.9 * this.inventoryBarsProgress;
 
 		const ctx = this.chatCtx;
 		ctx.save();
 
-		// Clip to inventory viewport (unchanged)
 		ctx.beginPath();
 		ctx.rect(invX, invY, invWidthCanvasPx, invHeightCanvasPx);
 		ctx.clip();
 
-		// Only draw nearby rows (unchanged)
 		const approxCenterIndex = Math.round(camY);
 		const minIdx = Math.max(0, approxCenterIndex - 3);
 		const maxIdx = Math.min(inventory.length - 1, approxCenterIndex + 3);
 
 		const t = Date.now() / 1000;
-		const flash = (Math.sin(t * 8) + 1) * 0.5; // 0..1 like main durability bar
+		const flash = (Math.sin(t * 8) + 1) * 0.5;
 
 		for (let i = minIdx; i <= maxIdx; i++) {
-			let d = Number(inventory[i]?.durability);
-			if (!Number.isFinite(d)) continue;
+			let durability = Number(inventory[i]?.durability);
+			if (!Number.isFinite(durability)) continue;
+			durability = Math.max(0, Math.min(1, durability));
+			const reserve = Math.max(0, Math.floor(inventory[i]?.reserve ?? 0));
 
-			// Normalize legacy 0..100 to 0..1
-			if (d > 1.0001 && d <= 100) d = d / 100;
-			d = Math.max(0, Math.min(1, d));
-
-			// Positioning (unchanged)
-			const offsetUnits = camY - i; // + means lower on screen
+			const offsetUnits = camY - i;
 			const rowCenterY = invCenterY + offsetUnits * unitPx;
-			const barY = Math.round(rowCenterY - barHeight / 2);
+			const baseBarY = Math.round(rowCenterY - barHeight / 2);
 			const barX = Math.round(
 				invX + barInnerMarginX + (1 - this.inventoryBarsProgress) * barWidthMax,
 			);
 
-			// Background track
-			ctx.globalAlpha = bgAlpha;
-			ctx.fillStyle = 'black';
-			ctx.fillRect(barX, barY, barWidthMax, barHeight);
+			let totalSegments = reserve + (durability > 0 ? 1 : 0);
+			if (totalSegments === 0) totalSegments = 1; // show empty indicator
+			// (optional cap could be applied here if desired)
 
-			// Foreground fill
-			const w = Math.round(barWidthMax * d * this.inventoryBarsProgress);
+			for (let s = 0; s < totalSegments; s++) {
+				let segValue: number;
+				if (s < reserve) segValue = 1;
+				else if (s === reserve && durability > 0) segValue = durability;
+				else segValue = 0;
 
-			if (w > 0) {
-				// Same color logic as the main (vertical) durability bar
-				ctx.globalAlpha = fgAlpha;
-				ctx.fillStyle = `hsl(${120 * d}, 100%, 50%)`;
-				ctx.fillRect(barX, barY, w, barHeight);
-			} else {
-				// Empty case:
-				// 1) Minimal 1px solid red indicator so it's not mistaken for "full"
-				// ctx.globalAlpha = Math.max(fgAlpha, 0.6);
-				// ctx.fillStyle = 'hsl(0, 100%, 50%)';
-				// ctx.fillRect(barX, barY, 1, barHeight);
+				const segY = baseBarY + s * (barHeight + segmentGap);
 
-				// 2) Flashing red across the whole track (like the main durability bar)
-				ctx.globalAlpha = this.inventoryBarsProgress * 0.8 * flash;
-				ctx.fillStyle = 'hsl(0, 100%, 50%)';
-				ctx.fillRect(barX, barY, barWidthMax, barHeight);
+				ctx.globalAlpha = bgAlpha;
+				ctx.fillStyle = 'black';
+				ctx.fillRect(barX, segY, barWidthMax, barHeight);
+
+				if (segValue > 0) {
+					const w = Math.round(
+						barWidthMax * segValue * this.inventoryBarsProgress,
+					);
+					ctx.globalAlpha = fgAlpha;
+					ctx.fillStyle = `hsl(${120 * segValue}, 100%, 50%)`;
+					ctx.fillRect(barX, segY, w, barHeight);
+				} else if (reserve === 0 && durability <= 0 && s === 0) {
+					ctx.globalAlpha = Math.max(fgAlpha, 0.6);
+					ctx.fillStyle = 'hsl(0, 100%, 50%)';
+
+					ctx.globalAlpha = this.inventoryBarsProgress * 0.8 * flash;
+					ctx.fillRect(barX, segY, barWidthMax, barHeight);
+				}
 			}
 		}
 
 		ctx.restore();
 	}
-
 	private hitMarkersNow: {
 		hitPoint: THREE.Vector3;
 		shotVector: THREE.Vector3;
