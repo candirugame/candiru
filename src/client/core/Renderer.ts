@@ -191,8 +191,8 @@ export class Renderer {
 		return this.inventoryVisible;
 	}
 
-	public onFrame(localPlayer: Player) {
-		this.deltaTime = this.clock.getDelta();
+	public onFrame(localPlayer: Player, deltaTime: number) {
+		this.deltaTime = deltaTime;
 
 		// Ensure the renderer clears the buffers before the first render
 		this.renderer.autoClear = true;
@@ -496,7 +496,7 @@ export class Renderer {
 	}
 
 	public createScreenshot() {
-		this.onFrame(this.localPlayer);
+		this.onFrame(this.localPlayer, this.deltaTime);
 
 		const width = this.renderer.domElement.width;
 		const height = this.renderer.domElement.height;

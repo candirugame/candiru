@@ -8,6 +8,7 @@ import { TouchInputHandler } from '../input/TouchInputHandler.ts';
 import { Player } from '../../shared/Player.ts';
 import * as THREE from 'three';
 import { Game } from '../core/Game.ts';
+import { lerp } from '../../shared/Utils.ts';
 
 interface ChatMessage {
 	id: number;
@@ -213,9 +214,12 @@ export class ChatOverlay {
 		document.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
-	public onFrame() {
+	deltaTime: number = 0;
+
+	public onFrame(deltaTime: number) {
 		const startTime = Date.now();
 		const now = Date.now() / 1000;
+		this.deltaTime = deltaTime;
 
 		this.gameMessages = this.localPlayer.gameMsgs;
 		this.detectGameMessagesChanges(now);
@@ -1057,6 +1061,8 @@ export class ChatOverlay {
 		}
 	}
 
+	durabilityLerpable: number = 0;
+
 	// Renders a slim vertical durability bar on the right side of the screen
 	// Uses a green (full) to red (empty) gradient similar in style to the sniper charge colors
 	private renderDurabilityBar() {
@@ -1073,25 +1079,21 @@ export class ChatOverlay {
 		}
 
 		// durability now guaranteed to be in [0,1); reserve is integer count of extra full bars
-		let durability = item.durability;
-		if (!Number.isFinite(durability)) return;
-		durability = Math.min(1, durability);
+		let durabilityTarget = item.durability;
+		if (!Number.isFinite(durabilityTarget)) return;
+		// Clamp fractional durability portion
+		durabilityTarget = Math.min(1, Math.max(0, durabilityTarget));
 		const reserve = Math.max(0, Math.floor(item.reserve ?? 0));
+		// Refactor: aggregate reserve into durability so durability encodes total bars (full + fractional)
+		durabilityTarget += reserve;
 
 		// Geometry and animated horizontal offset (slide away when inventory is shown)
 		const ctx = this.chatCtx;
 		const margin = 4;
 		const barWidth = 4; // thinner
 
-		let targetOffset = 0;
-		if (this.renderer?.isInventoryVisible?.()) {
-			const inventoryWidthGamePx = 20;
-			const inventoryWidthCanvasPx = 20; // 1:1 due to 200px height basis
-			targetOffset = Math.ceil(inventoryWidthCanvasPx + 4);
-		}
+		// Removed unused targetOffset/inventory width calculations after refactor
 
-		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-		//	this.durabilityBarOffset = lerp(this.durabilityBarOffset, targetOffset, 0.2);
 		const camX = this.renderer.getInventoryMenuCamera().position.x;
 
 		this.durabilityBarOffset = camX * 20 + 22;
@@ -1109,17 +1111,31 @@ export class ChatOverlay {
 		ctx.save();
 		ctx.globalAlpha = 0.5;
 
+		//do tha lerp
+		this.durabilityLerpable = lerp(this.durabilityLerpable, durabilityTarget, 0.5 * this.deltaTime * 60);
+
 		const gap = 2;
 		const maxSegments = 16; // safety cap (unchanged)
-		let totalSegments = reserve + (durability > 0 ? 1 : 0);
+
+		// Derive segment counts from aggregated durability
+		let fullBars = Math.floor(this.durabilityLerpable);
+		let fractionalPart = this.durabilityLerpable - fullBars; // in [0,1)
+		let totalSegments = fullBars + (fractionalPart > 0 ? 1 : 0);
 		if (totalSegments === 0) totalSegments = 1; // show empty flashing bar
-		if (totalSegments > maxSegments) totalSegments = maxSegments; // clamp visual
+		if (totalSegments > maxSegments) {
+			// If we clip, treat all displayed segments as full (same as previous behavior when reserve overflowed)
+			if (fullBars >= maxSegments) {
+				fullBars = maxSegments;
+				fractionalPart = 0;
+			}
+			totalSegments = maxSegments;
+		}
 
 		for (let s = 0; s < totalSegments; s++) {
 			let segValue: number;
-			if (s < reserve) segValue = 1; // full reserve bar
-			else if (s === reserve && durability > 0) segValue = durability; // partial current bar
-			else segValue = 0; // overflow clipped or empty state
+			if (s < fullBars) segValue = 1; // full bar
+			else if (s === fullBars && fractionalPart > 0) segValue = fractionalPart; // partial final bar
+			else segValue = 0; // clipped / empty
 
 			const barX = baseBarX - s * (barWidth + gap);
 
@@ -1138,7 +1154,8 @@ export class ChatOverlay {
 				ctx.fillStyle = grad;
 				ctx.fillRect(barX, barTop, barWidth, barHeight);
 				ctx.restore();
-			} else if (reserve === 0 && durability <= 0 && s === 0) {
+			}
+			if (durabilityTarget <= 0) {
 				// Empty: flashing red
 				const alpha = (Math.sin(Date.now() / 1000 * 8) + 1) * 0.5;
 				ctx.fillStyle = `hsla(0,100%,50%,${alpha})`;
