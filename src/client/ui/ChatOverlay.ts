@@ -254,91 +254,6 @@ export class ChatOverlay {
 		}
 	}
 
-	// Draw small horizontal durability bars for each item row inside the inventory viewport.
-	// Fades/scales in when the inventory is visible, fades out when hidden.
-	private renderInventoryDurabilityBars() {
-		if (!this.renderer) return;
-		const player = this.networking.getSpectatedPlayer?.() ?? this.networking.getLocalPlayer?.();
-		if (!player) return;
-		const inventory = player.inventory as Array<{ durability?: number; itemId?: number }> | undefined;
-		if (!inventory || inventory.length === 0) return;
-
-		// Determine inventory viewport in canvas pixels to align the overlay
-		const spp = this.renderer.getScreenPixelsInGamePixel(); // screen px per game px in the vertical axis
-		const invWidthGamePx = 20;
-		const invHeightGamePx = invWidthGamePx * 5; // 100
-		const paddingScreenPx = 10; // from renderer scissor
-		const paddingCanvasPx = paddingScreenPx / spp; // convert to canvas px
-
-		const invWidthCanvasPx = invWidthGamePx; // 20
-		const invHeightCanvasPx = invHeightGamePx; // 100
-		const invX = this.chatCanvas.width - invWidthCanvasPx - paddingCanvasPx;
-		const invY = Math.floor((this.chatCanvas.height - invHeightCanvasPx) / 2);
-		const invCenterY = invY + invHeightCanvasPx / 2;
-
-		// Animate visibility
-		const target = this.renderer.isInventoryVisible() ? 1 : 0;
-		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-		this.inventoryBarsProgress = lerp(this.inventoryBarsProgress, target, 0.25);
-		if (this.inventoryBarsProgress < 0.01) return; // effectively hidden
-
-		// Track the actual inventory camera Y so bars follow the same smooth motion.
-		//7 canvas pixels
-		// When (re)appearing, snap to avoid lag during first frames
-		// this.inventoryBarsCameraY = lerp(this.inventoryBarsCameraY, targetCamY, 0.2);
-		this.inventoryBarsCameraY = this.renderer.getInventoryMenuCamera().position.y + (8.5 / 20); //7 canvas pixels
-
-		// The camera centers on the selected row; 1 ortho unit == 20 canvas px (since 5 units -> 100px)
-		const camY = this.inventoryBarsCameraY;
-		const unitPx = 20; // 100px / 5 units
-
-		// Style constants
-		const barInnerMarginX = 3; // left/right margin inside inventory viewport
-		const barWidthMax = invWidthCanvasPx - barInnerMarginX * 2; // max width available
-		const barHeight = 1;
-		const bgAlpha = 0.35 * this.inventoryBarsProgress;
-		const fgAlpha = 0.9 * this.inventoryBarsProgress;
-
-		const ctx = this.chatCtx;
-		ctx.save();
-		ctx.globalAlpha = 1;
-
-		// Clip drawing to inventory viewport to avoid artifacts
-		ctx.beginPath();
-		ctx.rect(invX, invY, invWidthCanvasPx, invHeightCanvasPx);
-		ctx.clip();
-
-		// Draw for items near the viewport (limit to +/- 3 around selected)
-		const approxCenterIndex = Math.round(camY);
-		const minIdx = Math.max(0, approxCenterIndex - 3);
-		const maxIdx = Math.min(inventory.length - 1, approxCenterIndex + 3);
-		for (let i = minIdx; i <= maxIdx; i++) {
-			let d = Number(inventory[i]?.durability);
-			if (!Number.isFinite(d)) continue;
-			if (d > 1.0001 && d <= 100) d = d / 100; // normalize legacy data
-			d = Math.max(0, Math.min(1, d));
-
-			// Row vertical position: center plus offset in units -> pixels
-			// Use cameraY - index so increasing camera Y moves rows down on screen (matching renderer)
-			const offsetUnits = camY - i; // positive means lower on screen
-			const rowCenterY = invCenterY + offsetUnits * unitPx;
-			const barY = Math.round(rowCenterY - barHeight / 2);
-			const barX = Math.round(invX + barInnerMarginX + (1 - this.inventoryBarsProgress) * barWidthMax);
-
-			// Background track
-			ctx.fillStyle = `rgba(0,0,0,${bgAlpha.toFixed(3)})`;
-			ctx.fillRect(barX, barY, barWidthMax, barHeight);
-
-			// Foreground fill: color from green->red and animated width
-			const hue = Math.round(120 * d);
-			ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${fgAlpha.toFixed(3)})`;
-			const w = Math.round(barWidthMax * d * this.inventoryBarsProgress);
-			if (w > 0) ctx.fillRect(barX, barY, w, barHeight);
-		}
-
-		ctx.restore();
-	}
-
 	private onWindowResize() {
 		// Use container dimensions instead of window dimensions for display size
 		this.chatCanvas.style.width = this.containerElement.clientWidth + 'px';
@@ -1152,8 +1067,7 @@ export class ChatOverlay {
 		const item = player.inventory[idx] as { durability?: number } | undefined;
 		if (!item || item.durability === undefined || item.durability === null) return;
 
-		// Normalize durability to 0..1 (older data may be 0..100)
-		let d = Number(item.durability);
+		let d = item.durability;
 		if (!Number.isFinite(d)) return;
 		if (d > 1.0001 && d <= 100) d = d / 100; // best-effort normalization
 		d = Math.max(0, Math.min(1, d));
@@ -1186,8 +1100,8 @@ export class ChatOverlay {
 
 		const barX = this.chatCanvas.width - barWidth - margin - this.durabilityBarOffset;
 		// Make the bar shorter and vertically centered
-		const desiredHeight = Math.max(24, Math.round(this.chatCanvas.height * 0.4)); // ~40% of screen height
-		const barHeight = desiredHeight;
+		// ~40% of screen height
+		const barHeight = Math.max(24, Math.round(this.chatCanvas.height * 0.4));
 		const barTop = Math.floor((this.chatCanvas.height - barHeight) / 2);
 		const barBottom = barTop + barHeight;
 		const filledHeight = Math.round(barHeight * d);
@@ -1202,22 +1116,31 @@ export class ChatOverlay {
 		ctx.fillStyle = 'rgba(20,20,20,0.6)';
 		ctx.fillRect(barX, barTop, barWidth, barHeight);
 
-		if (filledHeight <= 0) return;
+		if (filledHeight <= 0) {
+			//if (Date.now() / 1000 % 0.4 < 0.2) {
+			ctx.fillStyle = `hsla(0,100%,50%,${(Math.sin(Date.now() / 1000 * 8) + 1) * 0.5})`;
+			ctx.fillRect(barX, barBottom - barHeight, barWidth, barHeight);
+			//}
 
-		// Gradient from green (top) to red (bottom)
-		const grad = ctx.createLinearGradient(0, barTop, 0, barBottom);
-		grad.addColorStop(0, 'hsl(120, 100%, 50%)'); // green at top
-		grad.addColorStop(1, 'hsl(0, 100%, 50%)'); // red at bottom
+			return; //don't do pretty gradient
+		}
 
-		ctx.save();
-		// Clip to the filled portion (grow from bottom)
-		ctx.beginPath();
-		ctx.rect(barX, barBottom - filledHeight, barWidth, filledHeight);
-		ctx.clip();
-
-		ctx.fillStyle = grad;
-		ctx.fillRect(barX, barTop, barWidth, barHeight);
-		ctx.restore();
+		// // Gradient from green (top) to red (bottom)
+		// const grad = ctx.createLinearGradient(0, barTop, 0, barBottom);
+		// grad.addColorStop(0, 'hsl(120, 100%, 50%)'); // green at top
+		// grad.addColorStop(1, 'hsl(0, 100%, 50%)'); // red at bottom
+		//
+		// ctx.save();
+		// // Clip to the filled portion (grow from bottom)
+		// ctx.beginPath();
+		// ctx.rect(barX, barBottom - filledHeight, barWidth, filledHeight);
+		// ctx.clip();
+		//
+		// ctx.fillStyle = grad;
+		// ctx.fillRect(barX, barTop, barWidth, barHeight);
+		// ctx.restore();
+		ctx.fillStyle = `hsl(${120 * d}, 100%, 50%)`; // green to red gradient
+		ctx.fillRect(barX, barBottom - filledHeight, barWidth, filledHeight);
 
 		ctx.restore();
 
@@ -1227,6 +1150,112 @@ export class ChatOverlay {
 		// 	const y = Math.round(barTop + (barHeight * i) / 5);
 		// 	ctx.fillRect(barX, y, barWidth, 1);
 		// }
+	}
+
+	private renderInventoryDurabilityBars() {
+		if (!this.renderer) return;
+
+		const player = this.networking.getSpectatedPlayer?.() ??
+			this.networking.getLocalPlayer?.();
+		if (!player) return;
+
+		const inventory = (player.inventory as Array<{ durability?: number; itemId?: number }>) ||
+			[];
+		if (inventory.length === 0) return;
+
+		// Inventory viewport (keep positioning the same)
+		const spp = this.renderer.getScreenPixelsInGamePixel(); // screen px per game px
+		const invWidthGamePx = 20;
+		const invHeightGamePx = invWidthGamePx * 5; // 100
+		const paddingScreenPx = 10; // renderer scissor gap
+		const paddingCanvasPx = paddingScreenPx / spp;
+
+		const invWidthCanvasPx = invWidthGamePx; // 20
+		const invHeightCanvasPx = invHeightGamePx; // 100
+		const invX = this.chatCanvas.width - invWidthCanvasPx - paddingCanvasPx;
+		const invY = Math.floor((this.chatCanvas.height - invHeightCanvasPx) / 2);
+		const invCenterY = invY + invHeightCanvasPx / 2;
+
+		// Visibility animation (unchanged)
+		const target = this.renderer.isInventoryVisible() ? 1 : 0;
+		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+		this.inventoryBarsProgress = lerp(this.inventoryBarsProgress, target, 0.25);
+		if (this.inventoryBarsProgress < 0.01) return;
+
+		// Match camera smoothing/positioning (unchanged)
+		this.inventoryBarsCameraY = this.renderer.getInventoryMenuCamera().position.y + 8.5 / 20;
+
+		// 1 ortho unit == 20 canvas px
+		const camY = this.inventoryBarsCameraY;
+		const unitPx = 20;
+
+		// Style
+		const barInnerMarginX = 3;
+		const barWidthMax = invWidthCanvasPx - barInnerMarginX * 2;
+		const barHeight = 1;
+		const bgAlpha = 0.35 * this.inventoryBarsProgress;
+		const fgAlpha = 0.9 * this.inventoryBarsProgress;
+
+		const ctx = this.chatCtx;
+		ctx.save();
+
+		// Clip to inventory viewport (unchanged)
+		ctx.beginPath();
+		ctx.rect(invX, invY, invWidthCanvasPx, invHeightCanvasPx);
+		ctx.clip();
+
+		// Only draw nearby rows (unchanged)
+		const approxCenterIndex = Math.round(camY);
+		const minIdx = Math.max(0, approxCenterIndex - 3);
+		const maxIdx = Math.min(inventory.length - 1, approxCenterIndex + 3);
+
+		const t = Date.now() / 1000;
+		const flash = (Math.sin(t * 8) + 1) * 0.5; // 0..1 like main durability bar
+
+		for (let i = minIdx; i <= maxIdx; i++) {
+			let d = Number(inventory[i]?.durability);
+			if (!Number.isFinite(d)) continue;
+
+			// Normalize legacy 0..100 to 0..1
+			if (d > 1.0001 && d <= 100) d = d / 100;
+			d = Math.max(0, Math.min(1, d));
+
+			// Positioning (unchanged)
+			const offsetUnits = camY - i; // + means lower on screen
+			const rowCenterY = invCenterY + offsetUnits * unitPx;
+			const barY = Math.round(rowCenterY - barHeight / 2);
+			const barX = Math.round(
+				invX + barInnerMarginX + (1 - this.inventoryBarsProgress) * barWidthMax,
+			);
+
+			// Background track
+			ctx.globalAlpha = bgAlpha;
+			ctx.fillStyle = 'black';
+			ctx.fillRect(barX, barY, barWidthMax, barHeight);
+
+			// Foreground fill
+			const w = Math.round(barWidthMax * d * this.inventoryBarsProgress);
+
+			if (w > 0) {
+				// Same color logic as the main (vertical) durability bar
+				ctx.globalAlpha = fgAlpha;
+				ctx.fillStyle = `hsl(${120 * d}, 100%, 50%)`;
+				ctx.fillRect(barX, barY, w, barHeight);
+			} else {
+				// Empty case:
+				// 1) Minimal 1px solid red indicator so it's not mistaken for "full"
+				// ctx.globalAlpha = Math.max(fgAlpha, 0.6);
+				// ctx.fillStyle = 'hsl(0, 100%, 50%)';
+				// ctx.fillRect(barX, barY, 1, barHeight);
+
+				// 2) Flashing red across the whole track (like the main durability bar)
+				ctx.globalAlpha = this.inventoryBarsProgress * 0.8 * flash;
+				ctx.fillStyle = 'hsl(0, 100%, 50%)';
+				ctx.fillRect(barX, barY, barWidthMax, barHeight);
+			}
+		}
+
+		ctx.restore();
 	}
 
 	private hitMarkersNow: {

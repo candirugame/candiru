@@ -491,6 +491,10 @@ export class Renderer {
 		return direction;
 	}
 
+	public getPlayerInventory() {
+		return this.localPlayer.inventory;
+	}
+
 	public createScreenshot() {
 		this.onFrame(this.localPlayer);
 

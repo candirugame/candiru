@@ -202,6 +202,28 @@ export class PlayerManager {
 		}
 	}
 
+	updateItemDurabilities(currentTime: number) {
+		if (!config.items.shotsTakeDurability && !config.items.rotTakesDurability) return;
+
+		for (const playerData of this.players.values()) {
+			const player = playerData.player;
+
+			for (let i = player.inventory.length - 1; i >= 0; i--) {
+				const item = player.inventory[i];
+
+				const itemAge = currentTime - item.creationTimestamp;
+				if (config.items.rotTakesDurability && item.lifetime) {
+					item.durability = 1 - (itemAge / item.lifetime);
+				}
+				if (config.items.shotsTakeDurability && item.shotsAvailable) {
+					item.durability -= item.shotsFired / item.shotsAvailable;
+				}
+
+				//if (item.durability <= 0) player.inventory.splice(i, 1);
+			}
+		}
+	}
+
 	private getRandomSpawnPoint(): { vec: THREE.Vector3; quaternion: THREE.Quaternion } {
 		if (!this.mapData) {
 			return { vec: new THREE.Vector3(2, 1, 0), quaternion: new THREE.Quaternion(0, 0, 0, 1) };
@@ -213,31 +235,15 @@ export class PlayerManager {
 	}
 
 	public handleShotGroupAdded(playerId: number, heldItemIndex: number) {
+		if (!config.items.shotsTakeDurability) return;
+
 		const playerData = this.players.get(playerId);
 		if (!playerData) return;
 
 		const player = playerData.player;
 		const itemId = player.inventory[heldItemIndex]?.itemId;
 		if (itemId) {
-			switch (itemId) {
-				case 1: // Pistol
-					player.inventory[heldItemIndex].durability -= 0.1;
-					break;
-				case 2: // Shotgun
-					player.inventory[heldItemIndex].durability -= 0.2;
-					break;
-				case 3: // pipe
-					player.inventory[heldItemIndex].durability -= 0.05;
-					break;
-				case 4: // flag
-					break;
-				case 5: // Sniper
-					player.inventory[heldItemIndex].durability -= 0.3;
-					break;
-			}
-			if (player.inventory[heldItemIndex].durability <= 0) {
-				player.inventory.splice(heldItemIndex, 1);
-			}
+			player.inventory[heldItemIndex].shotsFired++;
 			// Notify GameEngine that player data changed so a delta is emitted promptly
 			if (this.gameEngine) {
 				this.gameEngine.playerUpdateSinceLastEmit = true;

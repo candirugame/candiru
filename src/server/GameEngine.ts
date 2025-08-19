@@ -54,6 +54,7 @@ export class GameEngine {
 		try {
 			const currentTime = Date.now() / 1000;
 			this.playerManager.regenerateHealth();
+			this.playerManager.updateItemDurabilities(currentTime);
 			this.itemManager.tick(currentTime);
 			this.propManager.onTick(currentTime);
 			if (this.gamemode) this.gamemode.tick();

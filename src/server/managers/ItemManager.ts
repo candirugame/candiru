@@ -84,13 +84,14 @@ export class ItemManager {
 				let shouldPickup = false;
 				// helper to see if player has itemId
 				const hasItem = (id: number) => player.inventory.some((inv) => inv.itemId === id);
-				const addItem = (id: number, durability: number = 1) => {
+				const addItem = (id: number, lifetime?: number, shotsAvailable?: number) => {
 					player.inventory.push({
 						shotsFired: 0,
 						itemId: id,
-						durability,
+						durability: 1,
 						creationTimestamp: Date.now() / 1000,
-						lifetime: 30,
+						lifetime,
+						shotsAvailable,
 					});
 					shouldPickup = true;
 				};
@@ -102,19 +103,19 @@ export class ItemManager {
 						break;
 					case 1: // Banana
 						if (!hasItem(1)) {
-							addItem(1);
+							addItem(1, 45, 100);
 							console.log(`🍌 ${player.name} picked up banana!`);
 						}
 						break;
 					case 2: // Fish
 						if (!hasItem(2)) {
-							addItem(2);
+							addItem(2, 45, 100);
 							console.log(`🐟 ${player.name} picked up fish!`);
 						}
 						break;
 					case 3: // Pipe
 						if (!hasItem(3)) {
-							addItem(3);
+							addItem(3, 45, 200);
 							console.log(`⚔️ ${player.name} picked up pipe!`);
 						}
 						break;
@@ -126,8 +127,8 @@ export class ItemManager {
 						break;
 					case 5: // bottle / sniper
 						if (!hasItem(5)) {
-							addItem(5);
-							console.log(`🍌 ${player.name} picked up sniper!`); // (emoji reused)
+							addItem(5, 45, 50);
+							console.log(`🍌 ${player.name} picked up sniper!`);
 						}
 						break;
 				}
