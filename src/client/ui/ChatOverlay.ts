@@ -8,6 +8,7 @@ import { TouchInputHandler } from '../input/TouchInputHandler.ts';
 import { Player } from '../../shared/Player.ts';
 import * as THREE from 'three';
 import { Game } from '../core/Game.ts';
+import { lerp } from '../../shared/Utils.ts';
 
 interface ChatMessage {
 	id: number;
@@ -71,6 +72,13 @@ export class ChatOverlay {
 
 	private offscreenCanvas: HTMLCanvasElement;
 	private offscreenCtx: CanvasRenderingContext2D;
+
+	// Smooth animation state for durability bar horizontal offset
+	private durabilityBarOffset: number = 0; // in canvas pixels
+
+	// Animation progress for inventory per-item bars (0..1)
+	private inventoryBarsProgress: number = 0;
+	// Smoothed tracking of inventory camera Y (in ortho units), to match animation
 
 	public gameMessages: string[] = [];
 	private eventMessages: AnimatedEventMessage[] = [];
@@ -206,9 +214,12 @@ export class ChatOverlay {
 		document.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
-	public onFrame() {
+	deltaTime: number = 0;
+
+	public onFrame(deltaTime: number) {
 		const startTime = Date.now();
 		const now = Date.now() / 1000;
+		this.deltaTime = deltaTime;
 
 		this.gameMessages = this.localPlayer.gameMsgs;
 		this.detectGameMessagesChanges(now);
@@ -231,6 +242,8 @@ export class ChatOverlay {
 		}
 		this.renderEvil();
 		this.renderCrosshair();
+		this.renderDurabilityBar();
+		this.renderInventoryDurabilityBars();
 		this.renderTouchControls();
 
 		// Periodically check if we need to resize
@@ -1048,6 +1061,216 @@ export class ChatOverlay {
 		}
 	}
 
+	durabilityLerpable: number = 0;
+
+	// Renders a slim vertical durability bar on the right side of the screen
+	// Uses a green (full) to red (empty) gradient similar in style to the sniper charge colors
+	private renderDurabilityBar() {
+		const player = this.networking.getLocalPlayer();
+		if (!player || !player.inventory || player.inventory.length === 0) return;
+
+		const idx = Math.max(
+			0,
+			Math.min(player.heldItemIndex ?? 0, player.inventory.length - 1),
+		);
+		const item = player.inventory[idx];
+		if (!item || item.durability === undefined || item.durability === null) {
+			return;
+		}
+
+		// durability now guaranteed to be in [0,1); reserve is integer count of extra full bars
+		let durabilityTarget = item.durability;
+		if (!Number.isFinite(durabilityTarget)) return;
+		// Clamp fractional durability portion
+		durabilityTarget = Math.min(1, Math.max(0, durabilityTarget));
+		const reserve = Math.max(0, Math.floor(item.reserve ?? 0));
+		// Refactor: aggregate reserve into durability so durability encodes total bars (full + fractional)
+		durabilityTarget += reserve;
+
+		// Geometry and animated horizontal offset (slide away when inventory is shown)
+		const ctx = this.chatCtx;
+		const margin = 4;
+		const barWidth = 4; // thinner
+
+		// Removed unused targetOffset/inventory width calculations after refactor
+
+		const camX = this.renderer.getInventoryMenuCamera().position.x;
+
+		this.durabilityBarOffset = camX * 20 + 22;
+
+		const baseBarX = this.chatCanvas.width - barWidth - margin - this.durabilityBarOffset;
+
+		const barHeight = Math.max(24, Math.round(this.chatCanvas.height * 0.4));
+		const barTop = Math.floor((this.chatCanvas.height - barHeight) / 2);
+		const barBottom = barTop + barHeight;
+
+		const grad = ctx.createLinearGradient(0, barTop, 0, barBottom);
+		grad.addColorStop(0, 'hsl(120, 100%, 50%)');
+		grad.addColorStop(1, 'hsl(0, 100%, 50%)');
+
+		ctx.save();
+		ctx.globalAlpha = 0.5;
+
+		if (item.durability === 1) {
+			this.durabilityLerpable = lerp(this.durabilityLerpable, 0, 0.5 * this.deltaTime * 60);
+			if (this.durabilityLerpable < 0.05) return;
+		} else {
+			//do tha lerp
+			this.durabilityLerpable = lerp(this.durabilityLerpable, durabilityTarget, 0.5 * this.deltaTime * 60);
+		}
+
+		const gap = 2;
+		const maxSegments = 16; // safety cap (unchanged)
+
+		// Derive segment counts from aggregated durability
+		let fullBars = Math.floor(this.durabilityLerpable);
+		let fractionalPart = this.durabilityLerpable - fullBars; // in [0,1)
+		let totalSegments = fullBars + (fractionalPart > 0 ? 1 : 0);
+		if (totalSegments === 0) totalSegments = 1; // show empty flashing bar
+		if (totalSegments > maxSegments) {
+			// If we clip, treat all displayed segments as full (same as previous behavior when reserve overflowed)
+			if (fullBars >= maxSegments) {
+				fullBars = maxSegments;
+				fractionalPart = 0;
+			}
+			totalSegments = maxSegments;
+		}
+
+		for (let s = 0; s < totalSegments; s++) {
+			let segValue: number;
+			if (s < fullBars) segValue = 1; // full bar
+			else if (s === fullBars && fractionalPart > 0) segValue = fractionalPart; // partial final bar
+			else segValue = 0; // clipped / empty
+
+			const barX = baseBarX - s * (barWidth + gap);
+
+			// Background track
+			ctx.fillStyle = 'rgba(0,0,0,0.35)';
+			ctx.fillRect(barX - 1, barTop - 1, barWidth + 2, barHeight + 2);
+			ctx.fillStyle = 'rgba(20,20,20,0.6)';
+			ctx.fillRect(barX, barTop, barWidth, barHeight);
+
+			if (segValue > 0) {
+				const filledHeight = Math.round(barHeight * segValue);
+				ctx.save();
+				ctx.beginPath();
+				ctx.rect(barX, barBottom - filledHeight, barWidth, filledHeight);
+				ctx.clip();
+				ctx.fillStyle = grad;
+				ctx.fillRect(barX, barTop, barWidth, barHeight);
+				ctx.restore();
+			}
+			if (durabilityTarget <= 0) {
+				// Empty: flashing red
+				const alpha = (Math.sin(Date.now() / 1000 * 8) + 1) * 0.5;
+				ctx.fillStyle = `hsla(0,100%,50%,${alpha})`;
+				ctx.fillRect(barX, barTop, barWidth, barHeight);
+			}
+		}
+
+		ctx.restore();
+	}
+	private renderInventoryDurabilityBars() {
+		if (!this.renderer) return;
+
+		const player = this.networking.getSpectatedPlayer?.() ??
+			this.networking.getLocalPlayer?.();
+		if (!player) return;
+
+		// include reserve field for typing
+		const inventory = (player.inventory as Array<{ durability?: number; reserve?: number; itemId?: number }>) || [];
+		if (inventory.length === 0) return;
+
+		const spp = this.renderer.getScreenPixelsInGamePixel();
+		const invWidthGamePx = 20;
+		const invHeightGamePx = invWidthGamePx * 5; // 100
+		const paddingScreenPx = 10;
+		const paddingCanvasPx = paddingScreenPx / spp;
+
+		const invWidthCanvasPx = invWidthGamePx;
+		const invHeightCanvasPx = invHeightGamePx;
+		const invX = this.chatCanvas.width - invWidthCanvasPx - paddingCanvasPx;
+		const invY = Math.floor((this.chatCanvas.height - invHeightCanvasPx) / 2);
+		const invCenterY = invY + invHeightCanvasPx / 2;
+
+		const target = this.renderer.isInventoryVisible() ? 1 : 0;
+		const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+		this.inventoryBarsProgress = lerp(this.inventoryBarsProgress, target, 0.3);
+		if (this.inventoryBarsProgress < 0.01) return;
+
+		const camY = this.renderer.getInventoryMenuCamera().position.y + 8.5 / 20;
+		const unitPx = 20;
+
+		const barInnerMarginX = 3;
+		const barWidthMax = invWidthCanvasPx - barInnerMarginX * 2;
+		const barHeight = 1;
+		const segmentGap = 1;
+		const bgAlpha = 0.35 * this.inventoryBarsProgress;
+		const fgAlpha = 0.9 * this.inventoryBarsProgress;
+
+		const ctx = this.chatCtx;
+		ctx.save();
+
+		ctx.beginPath();
+		ctx.rect(invX, invY, invWidthCanvasPx, invHeightCanvasPx);
+		ctx.clip();
+
+		const approxCenterIndex = Math.round(camY);
+		const minIdx = Math.max(0, approxCenterIndex - 3);
+		const maxIdx = Math.min(inventory.length - 1, approxCenterIndex + 3);
+
+		const t = Date.now() / 1000;
+		const flash = (Math.sin(t * 8) + 1) * 0.5;
+
+		for (let i = minIdx; i <= maxIdx; i++) {
+			let durability = Number(inventory[i]?.durability);
+			if (!Number.isFinite(durability)) continue;
+			if (durability === 1) continue;
+			durability = Math.max(0, Math.min(1, durability));
+			const reserve = Math.max(0, Math.floor(inventory[i]?.reserve ?? 0));
+
+			const offsetUnits = camY - i;
+			const rowCenterY = invCenterY + offsetUnits * unitPx;
+			const baseBarY = Math.round(rowCenterY - barHeight / 2);
+			const barX = Math.round(
+				invX + barInnerMarginX + (1 - this.inventoryBarsProgress) * barWidthMax,
+			);
+
+			let totalSegments = reserve + (durability > 0 ? 1 : 0);
+			if (totalSegments === 0) totalSegments = 1; // show empty indicator
+			// (optional cap could be applied here if desired)
+
+			for (let s = 0; s < totalSegments; s++) {
+				let segValue: number;
+				if (s < reserve) segValue = 1;
+				else if (s === reserve && durability > 0) segValue = durability;
+				else segValue = 0;
+
+				const segY = baseBarY + s * (barHeight + segmentGap);
+
+				ctx.globalAlpha = bgAlpha;
+				ctx.fillStyle = 'black';
+				ctx.fillRect(barX, segY, barWidthMax, barHeight);
+
+				if (segValue > 0) {
+					const w = Math.round(
+						barWidthMax * segValue * this.inventoryBarsProgress,
+					);
+					ctx.globalAlpha = fgAlpha;
+					ctx.fillStyle = `hsl(${120 * segValue}, 100%, 50%)`;
+					ctx.fillRect(barX, segY, w, barHeight);
+				} else if (reserve === 0 && durability <= 0 && s === 0) {
+					ctx.globalAlpha = Math.max(fgAlpha, 0.6);
+					ctx.fillStyle = 'hsl(0, 100%, 50%)';
+
+					ctx.globalAlpha = this.inventoryBarsProgress * 0.8 * flash;
+					ctx.fillRect(barX, segY, barWidthMax, barHeight);
+				}
+			}
+		}
+
+		ctx.restore();
+	}
 	private hitMarkersNow: {
 		hitPoint: THREE.Vector3;
 		shotVector: THREE.Vector3;

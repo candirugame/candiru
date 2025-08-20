@@ -316,7 +316,7 @@ export class InputHandler {
 	}
 
 	public getShoot() {
-		return this.shoot;
+		return this.shoot && (this.localPlayer.inventory[this.localPlayer.heldItemIndex]?.durability ?? 0) > 0; // only shoot if item has durability
 	}
 
 	public getAim() {

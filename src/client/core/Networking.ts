@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { ChatOverlay } from '../ui/ChatOverlay.ts';
 import { CustomClientSocket } from '../../shared/messages.ts';
 import { Player, PlayerData } from '../../shared/Player.ts';
+import type { InventoryItem } from '../../shared/InventoryItem.ts';
 import { Peer } from '../../server/models/Peer.ts';
 import { PropData } from '../../shared/Prop.ts';
 import { clearCacheAndReload } from './cache.ts';
@@ -44,6 +45,8 @@ interface LastUploadedLocalPlayer {
 	shooting: boolean;
 }
 
+// A precise partial type for player deltas where top-level properties are optional,
+// but inventory (when present) is a fully-typed InventoryItem[]
 export class Networking {
 	private socket: CustomClientSocket;
 	private gameVersion: string = '';
@@ -143,6 +146,23 @@ export class Networking {
 		}
 		return false;
 	}
+
+	// Type guard to validate inventory arrays at runtime
+	private isInventoryArray(val: unknown): val is InventoryItem[] {
+		return Array.isArray(val) && val.every((raw): raw is InventoryItem => {
+			if (raw === null || typeof raw !== 'object') return false;
+			const it = raw as Record<string, unknown>;
+			return (
+				typeof it.itemId === 'number' &&
+				typeof it.durability === 'number' &&
+				typeof it.creationTimestamp === 'number' &&
+				typeof it.shotsFired === 'number' &&
+				(it.lifetime === undefined || typeof it.lifetime === 'number') &&
+				(it.shotsAvailable === undefined || typeof it.shotsAvailable === 'number')
+			);
+		});
+	}
+
 	// Updates the local player state based on received data (full or partial)
 	private updateLocalPlayerState(data: Partial<PlayerData>) {
 		// Forced position/velocity/look updates
@@ -175,7 +195,12 @@ export class Networking {
 
 		// Optional fields: Only update if present in data
 		if (data.inventory !== undefined) {
-			this.localPlayer.inventory = data.inventory;
+			if (this.isInventoryArray(data.inventory)) {
+				this.localPlayer.inventory = data.inventory;
+			} else {
+				// Invalid payload shape; ignore inventory update to preserve type safety
+				console.warn('Ignoring invalid inventory payload');
+			}
 		}
 		if (data.gameMsgs !== undefined) {
 			this.localPlayer.gameMsgs = data.gameMsgs;
@@ -277,33 +302,36 @@ export class Networking {
 			this.processNonLocalPlayerData();
 		});
 
-		this.socket.on('remotePlayerDelta', (deltas: Array<Partial<PlayerData> & { id: number }>) => {
-			let localPlayerDelta: (Partial<PlayerData> & { id: number }) | undefined;
+		this.socket.on(
+			'remotePlayerDelta',
+			(deltas: Array<import('../../shared/Player.ts').PlayerDelta & { id: number }>) => {
+				let localPlayerDelta: (import('../../shared/Player.ts').PlayerDelta & { id: number }) | undefined;
 
-			// Apply deltas to remotePlayers
-			deltas.forEach((delta) => {
-				const idx = this.remotePlayers.findIndex((p) => p.id === delta.id);
-				if (idx !== -1) {
-					this.remotePlayers[idx] = { ...this.remotePlayers[idx], ...delta };
-					if (delta.id === this.localPlayer.id) {
-						localPlayerDelta = delta;
+				// Apply deltas to remotePlayers
+				deltas.forEach((delta) => {
+					const idx = this.remotePlayers.findIndex((p) => p.id === delta.id);
+					if (idx !== -1) {
+						this.remotePlayers[idx] = { ...this.remotePlayers[idx], ...delta };
+						if (delta.id === this.localPlayer.id) {
+							localPlayerDelta = delta;
+						}
+					} else {
+						//	this.remotePlayers.push(delta as PlayerData);
+						if (delta.id === this.localPlayer.id) {
+							localPlayerDelta = delta;
+						}
 					}
-				} else {
-					//	this.remotePlayers.push(delta as PlayerData);
-					if (delta.id === this.localPlayer.id) {
-						localPlayerDelta = delta;
-					}
+				});
+
+				// Update local player with delta
+				if (localPlayerDelta) {
+					this.updateLocalPlayerState(localPlayerDelta);
 				}
-			});
 
-			// Update local player with delta
-			if (localPlayerDelta) {
-				this.updateLocalPlayerState(localPlayerDelta);
-			}
-
-			// Process other players
-			this.processNonLocalPlayerData();
-		});
+				// Process other players
+				this.processNonLocalPlayerData();
+			},
+		);
 
 		this.socket.on('worldItemData', (data) => {
 			this.worldItems = data;
@@ -461,6 +489,14 @@ export class Networking {
 		};
 		this.socket.emit('applyDamage', damageRequest);
 		//	console.log(`Applying damage: ${id} - ${damage}`);
+	}
+
+	public shotGroupAdded() {
+		this.socket.emit('shotGroupAdded', { id: this.localPlayer.id, heldItemIndex: this.localPlayer.heldItemIndex });
+	}
+
+	public getLocalPlayer() {
+		return this.localPlayer;
 	}
 
 	public applyPropDamage(id: number, damage: number) {

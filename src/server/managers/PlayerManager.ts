@@ -145,7 +145,11 @@ export class PlayerManager {
 
 	public dropAllItems(player: Player) {
 		for (let i = 0; i < player.inventory.length; i++) {
-			this.itemManager.pushItem(new WorldItem(player.position, player.inventory[i]));
+			const position = player.position.clone();
+			position.x += (Math.random() - 0.5) * 0.5;
+			//position.y += (Math.random() - 0.5) * 0.5;
+			position.z += (Math.random() - 0.5) * 0.5;
+			this.itemManager.pushItem(new WorldItem(position, player.inventory[i].itemId));
 		}
 		player.inventory = [];
 	}
@@ -198,6 +202,32 @@ export class PlayerManager {
 		}
 	}
 
+	updateItemDurabilities(currentTime: number) {
+		if (!config.items.shotsTakeDurability && !config.items.rotTakesDurability) return;
+
+		for (const playerData of this.players.values()) {
+			const player = playerData.player;
+
+			for (let i = player.inventory.length - 1; i >= 0; i--) {
+				const item = player.inventory[i];
+
+				if (item.durability <= 0 && item.reserve > 0) {
+					item.creationTimestamp = currentTime;
+					item.shotsFired = 0;
+					item.reserve -= 1;
+				}
+
+				const itemAge = currentTime - item.creationTimestamp;
+				if (config.items.rotTakesDurability && item.lifetime) {
+					item.durability = 1 - (itemAge / item.lifetime);
+				}
+				if (config.items.shotsTakeDurability && item.shotsAvailable) {
+					item.durability -= item.shotsFired / item.shotsAvailable;
+				}
+			}
+		}
+	}
+
 	private getRandomSpawnPoint(): { vec: THREE.Vector3; quaternion: THREE.Quaternion } {
 		if (!this.mapData) {
 			return { vec: new THREE.Vector3(2, 1, 0), quaternion: new THREE.Quaternion(0, 0, 0, 1) };
@@ -206,5 +236,22 @@ export class PlayerManager {
 		const randomIndex = Math.floor(Math.random() * this.mapData.respawnPoints.length);
 		const respawnPoint = this.mapData.respawnPoints[randomIndex];
 		return { vec: respawnPoint.position, quaternion: respawnPoint.quaternion };
+	}
+
+	public handleShotGroupAdded(playerId: number, heldItemIndex: number) {
+		if (!config.items.shotsTakeDurability) return;
+
+		const playerData = this.players.get(playerId);
+		if (!playerData) return;
+
+		const player = playerData.player;
+		const itemId = player.inventory[heldItemIndex]?.itemId;
+		if (itemId) {
+			player.inventory[heldItemIndex].shotsFired++;
+			// Notify GameEngine that player data changed so a delta is emitted promptly
+			if (this.gameEngine) {
+				this.gameEngine.playerUpdateSinceLastEmit = true;
+			}
+		}
 	}
 }

@@ -98,6 +98,15 @@ export class GameServer {
 					}
 				});
 
+				socket.on('shotGroupAdded', (data) => {
+					try {
+						console.log('shotGroupAdded event received:', data);
+						this.playerManager.handleShotGroupAdded(data.id, data.heldItemIndex);
+					} catch (err) {
+						console.log(`Error handling damage shotGroupAdded:`, err);
+					}
+				});
+
 				socket.on('applyDamage', (data) => {
 					try {
 						this.damageSystem.handleDamageRequest(data);

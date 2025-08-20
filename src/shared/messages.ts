@@ -4,7 +4,7 @@ import type { ChatMessage } from '../server/models/ChatMessage.ts';
 import type { ServerInfo } from '../server/models/ServerInfo.ts';
 import type { WorldItem } from '../server/models/WorldItem.ts';
 import type { DamageRequest } from '../server/models/DamageRequest.ts';
-import type { PlayerData } from './Player.ts';
+import type { PlayerData, PlayerDelta } from './Player.ts';
 import * as THREE from 'three';
 import { Peer } from '../server/models/Peer.ts';
 import { PropData } from './Prop.ts';
@@ -23,8 +23,8 @@ interface ServerToClientEvents {
 	chatMsg: (message: ChatMessage) => void;
 	eventMsg: (message: string) => void;
 	remotePlayerData: (players: PlayerData[]) => void;
-	// Full or delta updates for player state
-	remotePlayerDelta: (deltas: Array<Partial<PlayerData> & { id: number }>) => void;
+	// Full or delta updates for player state (inventory stays fully typed in deltas)
+	remotePlayerDelta: (deltas: Array<PlayerDelta & { id: number }>) => void;
 	worldItemData: (items: WorldItem[]) => void;
 	latencyTest: () => void;
 	particleEmit: (options: {
@@ -44,6 +44,7 @@ interface ClientToServerEvents {
 	playerData: (player: PlayerData) => void;
 	chatMsg: (message: ChatMessage) => void;
 	applyDamage: (damage: DamageRequest) => void;
+	shotGroupAdded: (data: { heldItemIndex: number; id: number }) => void;
 	applyPropDamage: (damage: PropDamageRequest) => void;
 	latencyTest: () => void;
 	getServerList: (callback: (servers: Peer[]) => void) => void;

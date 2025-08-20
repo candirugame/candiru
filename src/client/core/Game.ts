@@ -11,6 +11,7 @@ import { TouchInputHandler } from '../input/TouchInputHandler.ts';
 import { SettingsManager } from './SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
 import { ShotHandler } from './ShotHandler.ts';
+import * as THREE from 'three';
 
 export class Game {
 	private localPlayer: Player;
@@ -28,6 +29,7 @@ export class Game {
 	private gameIndex: number;
 	public static nextGameIndex: number = 0;
 	public static menuOpen: boolean = false;
+	private clock: THREE.Clock = new THREE.Clock();
 
 	public stopped: boolean = false;
 
@@ -74,6 +76,8 @@ export class Game {
 
 	animate() {
 		if (this.stopped) return;
+		const deltaTime = this.clock.getDelta();
+
 		// Basic frame profiler when enabled
 		const profilerEnabled = SettingsManager.settings.profilerMode;
 		let t0: number | undefined;
@@ -95,13 +99,13 @@ export class Game {
 		mark('collision');
 		this.networking.updatePlayerData();
 		mark('netUpdate');
-		this.chatOverlay.onFrame();
+		this.chatOverlay.onFrame(deltaTime);
 		mark('chat');
 		this.inventoryManager.onFrame();
 		mark('inventory');
 		this.shotHandler.onFrame();
 		mark('shots');
-		this.renderer.onFrame(this.localPlayer);
+		this.renderer.onFrame(this.localPlayer, deltaTime);
 		mark('render');
 		if (this.networking.getServerInfo().mapName) {
 			this.mapLoader.load('/maps/' + this.networking.getServerInfo().mapName + '/map.glb');

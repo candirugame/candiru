@@ -75,6 +75,9 @@ export class Renderer {
 
 	private containerElement: HTMLElement;
 
+	// Tracks whether the inventory menu is currently visible (recently interacted with)
+	private inventoryVisible: boolean = false;
+
 	constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.networking = networking;
 		this.localPlayer = localPlayer;
@@ -179,8 +182,17 @@ export class Renderer {
 		this.remotePlayerRenderer.setShotHandler(shotHandler);
 	}
 
-	public onFrame(localPlayer: Player) {
-		this.deltaTime = this.clock.getDelta();
+	// Inventory visibility API for UI overlays
+	public setInventoryVisible(visible: boolean) {
+		this.inventoryVisible = visible;
+	}
+
+	public isInventoryVisible(): boolean {
+		return this.inventoryVisible;
+	}
+
+	public onFrame(localPlayer: Player, deltaTime: number) {
+		this.deltaTime = deltaTime;
 
 		// Ensure the renderer clears the buffers before the first render
 		this.renderer.autoClear = true;
@@ -479,8 +491,12 @@ export class Renderer {
 		return direction;
 	}
 
+	public getPlayerInventory() {
+		return this.localPlayer.inventory;
+	}
+
 	public createScreenshot() {
-		this.onFrame(this.localPlayer);
+		this.onFrame(this.localPlayer, this.deltaTime);
 
 		const width = this.renderer.domElement.width;
 		const height = this.renderer.domElement.height;
