@@ -93,14 +93,14 @@ export class ItemManager {
 							creationTimestamp: Date.now() / 1000,
 							lifetime,
 							shotsAvailable,
-							reserve: 0, //first item of this type added
+							overflow: 0, //first item of this type added
 						});
 						shouldPickup = true;
 					} else {
 						// If the item already exists, just increase the reserve count
 						const existingItem = player.inventory.find((inv) => inv.itemId === id);
 						if (existingItem) {
-							existingItem.reserve += 1; // Increase reserve count
+							existingItem.overflow += 1; // Increase reserve count
 							shouldPickup = true;
 						}
 					}

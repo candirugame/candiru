@@ -211,10 +211,10 @@ export class PlayerManager {
 			for (let i = player.inventory.length - 1; i >= 0; i--) {
 				const item = player.inventory[i];
 
-				if (item.durability <= 0 && item.reserve > 0) {
+				if (item.durability <= 0 && item.overflow > 0) {
 					item.creationTimestamp = currentTime;
 					item.shotsFired = 0;
-					item.reserve -= 1;
+					item.overflow -= 1;
 				}
 
 				const itemAge = currentTime - item.creationTimestamp;

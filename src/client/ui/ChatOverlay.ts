@@ -1062,6 +1062,7 @@ export class ChatOverlay {
 	}
 
 	durabilityLerpable: number = 0;
+	//lastHeldIndex: number = -1;
 
 	// Renders a slim vertical durability bar on the right side of the screen
 	// Uses a green (full) to red (empty) gradient similar in style to the sniper charge colors
@@ -1078,14 +1079,14 @@ export class ChatOverlay {
 			return;
 		}
 
-		// durability now guaranteed to be in [0,1); reserve is integer count of extra full bars
+		// durability now guaranteed to be in [0,1); overflow is integer count of extra full bars
 		let durabilityTarget = item.durability;
 		if (!Number.isFinite(durabilityTarget)) return;
 		// Clamp fractional durability portion
 		durabilityTarget = Math.min(1, Math.max(0, durabilityTarget));
-		const reserve = Math.max(0, Math.floor(item.reserve ?? 0));
-		// Refactor: aggregate reserve into durability so durability encodes total bars (full + fractional)
-		durabilityTarget += reserve;
+		const overflow = Math.max(0, Math.floor(item.overflow ?? 0));
+		// Refactor: aggregate overflow into durability so durability encodes total bars (full + fractional)
+		durabilityTarget += overflow;
 
 		// Geometry and animated horizontal offset (slide away when inventory is shown)
 		const ctx = this.chatCtx;
@@ -1111,11 +1112,16 @@ export class ChatOverlay {
 		ctx.save();
 		ctx.globalAlpha = 0.5;
 
-		if (item.durability === 1) {
+		// If the item doesn't actually use durability (e.g., flag), smoothly hide the bar.
+		// Otherwise, always lerp toward the aggregated target (overflow + fractional durability).
+		const usesDurability = (item.lifetime !== undefined) || (item.shotsAvailable !== undefined);
+		if (!usesDurability) {
 			this.durabilityLerpable = lerp(this.durabilityLerpable, 0, 0.5 * this.deltaTime * 60);
-			if (this.durabilityLerpable < 0.05) return;
+			if (this.durabilityLerpable < 0.05) {
+				ctx.restore();
+				return;
+			}
 		} else {
-			//do tha lerp
 			this.durabilityLerpable = lerp(this.durabilityLerpable, durabilityTarget, 0.5 * this.deltaTime * 60);
 		}
 
@@ -1128,7 +1134,7 @@ export class ChatOverlay {
 		let totalSegments = fullBars + (fractionalPart > 0 ? 1 : 0);
 		if (totalSegments === 0) totalSegments = 1; // show empty flashing bar
 		if (totalSegments > maxSegments) {
-			// If we clip, treat all displayed segments as full (same as previous behavior when reserve overflowed)
+			// If we clip, treat all displayed segments as full (same as previous behavior when overflow overflowed)
 			if (fullBars >= maxSegments) {
 				fullBars = maxSegments;
 				fractionalPart = 0;
@@ -1177,8 +1183,7 @@ export class ChatOverlay {
 			this.networking.getLocalPlayer?.();
 		if (!player) return;
 
-		// include reserve field for typing
-		const inventory = (player.inventory as Array<{ durability?: number; reserve?: number; itemId?: number }>) || [];
+		const inventory = (player.inventory as Array<{ durability?: number; overflow?: number; itemId?: number }>) || [];
 		if (inventory.length === 0) return;
 
 		const spp = this.renderer.getScreenPixelsInGamePixel();
@@ -1227,7 +1232,7 @@ export class ChatOverlay {
 			if (!Number.isFinite(durability)) continue;
 			if (durability === 1) continue;
 			durability = Math.max(0, Math.min(1, durability));
-			const reserve = Math.max(0, Math.floor(inventory[i]?.reserve ?? 0));
+			const overflow = Math.max(0, Math.floor(inventory[i]?.overflow ?? 0));
 
 			const offsetUnits = camY - i;
 			const rowCenterY = invCenterY + offsetUnits * unitPx;
@@ -1236,14 +1241,14 @@ export class ChatOverlay {
 				invX + barInnerMarginX + (1 - this.inventoryBarsProgress) * barWidthMax,
 			);
 
-			let totalSegments = reserve + (durability > 0 ? 1 : 0);
+			let totalSegments = overflow + (durability > 0 ? 1 : 0);
 			if (totalSegments === 0) totalSegments = 1; // show empty indicator
 			// (optional cap could be applied here if desired)
 
 			for (let s = 0; s < totalSegments; s++) {
 				let segValue: number;
-				if (s < reserve) segValue = 1;
-				else if (s === reserve && durability > 0) segValue = durability;
+				if (s < overflow) segValue = 1;
+				else if (s === overflow && durability > 0) segValue = durability;
 				else segValue = 0;
 
 				const segY = baseBarY + s * (barHeight + segmentGap);
@@ -1259,7 +1264,7 @@ export class ChatOverlay {
 					ctx.globalAlpha = fgAlpha;
 					ctx.fillStyle = `hsl(${120 * segValue}, 100%, 50%)`;
 					ctx.fillRect(barX, segY, w, barHeight);
-				} else if (reserve === 0 && durability <= 0 && s === 0) {
+				} else if (overflow === 0 && durability <= 0 && s === 0) {
 					ctx.globalAlpha = Math.max(fgAlpha, 0.6);
 					ctx.fillStyle = 'hsl(0, 100%, 50%)';
 
