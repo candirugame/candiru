@@ -1062,6 +1062,7 @@ export class ChatOverlay {
 	}
 
 	durabilityLerpable: number = 0;
+	//lastHeldIndex: number = -1;
 
 	// Renders a slim vertical durability bar on the right side of the screen
 	// Uses a green (full) to red (empty) gradient similar in style to the sniper charge colors
@@ -1078,14 +1079,14 @@ export class ChatOverlay {
 			return;
 		}
 
-		// durability now guaranteed to be in [0,1); reserve is integer count of extra full bars
+		// durability now guaranteed to be in [0,1); overflow is integer count of extra full bars
 		let durabilityTarget = item.durability;
 		if (!Number.isFinite(durabilityTarget)) return;
 		// Clamp fractional durability portion
 		durabilityTarget = Math.min(1, Math.max(0, durabilityTarget));
-		const reserve = Math.max(0, Math.floor(item.reserve ?? 0));
-		// Refactor: aggregate reserve into durability so durability encodes total bars (full + fractional)
-		durabilityTarget += reserve;
+		const overflow = Math.max(0, Math.floor(item.overflow ?? 0));
+		// Refactor: aggregate overflow into durability so durability encodes total bars (full + fractional)
+		durabilityTarget += overflow;
 
 		// Geometry and animated horizontal offset (slide away when inventory is shown)
 		const ctx = this.chatCtx;
@@ -1128,7 +1129,7 @@ export class ChatOverlay {
 		let totalSegments = fullBars + (fractionalPart > 0 ? 1 : 0);
 		if (totalSegments === 0) totalSegments = 1; // show empty flashing bar
 		if (totalSegments > maxSegments) {
-			// If we clip, treat all displayed segments as full (same as previous behavior when reserve overflowed)
+			// If we clip, treat all displayed segments as full (same as previous behavior when overflow overflowed)
 			if (fullBars >= maxSegments) {
 				fullBars = maxSegments;
 				fractionalPart = 0;
