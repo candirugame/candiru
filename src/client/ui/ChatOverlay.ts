@@ -1077,6 +1077,7 @@ export class ChatOverlay {
 		if (!item || item.durability === undefined || item.durability === null) {
 			return;
 		}
+		let dontUpdateDurabilityLerpable = false;
 
 		// durability now guaranteed to be in [0,1); reserve is integer count of extra full bars
 		let durabilityTarget = item.durability;
@@ -1111,8 +1112,13 @@ export class ChatOverlay {
 		ctx.save();
 		ctx.globalAlpha = 0.5;
 
-		//do tha lerp
-		this.durabilityLerpable = lerp(this.durabilityLerpable, durabilityTarget, 0.5 * this.deltaTime * 60);
+		if (item.durability === 1) {
+			this.durabilityLerpable = lerp(this.durabilityLerpable, 0, 0.5 * this.deltaTime * 60);
+			if (this.durabilityLerpable < 0.05) return;
+		} else {
+			//do tha lerp
+			this.durabilityLerpable = lerp(this.durabilityLerpable, durabilityTarget, 0.5 * this.deltaTime * 60);
+		}
 
 		const gap = 2;
 		const maxSegments = 16; // safety cap (unchanged)
@@ -1220,6 +1226,7 @@ export class ChatOverlay {
 		for (let i = minIdx; i <= maxIdx; i++) {
 			let durability = Number(inventory[i]?.durability);
 			if (!Number.isFinite(durability)) continue;
+			if (durability === 1) continue;
 			durability = Math.max(0, Math.min(1, durability));
 			const reserve = Math.max(0, Math.floor(inventory[i]?.reserve ?? 0));
 
