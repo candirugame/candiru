@@ -1077,7 +1077,6 @@ export class ChatOverlay {
 		if (!item || item.durability === undefined || item.durability === null) {
 			return;
 		}
-		let dontUpdateDurabilityLerpable = false;
 
 		// durability now guaranteed to be in [0,1); reserve is integer count of extra full bars
 		let durabilityTarget = item.durability;

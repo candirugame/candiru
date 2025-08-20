@@ -112,34 +112,24 @@ export class ItemManager {
 						console.log(`📦 ${player.name} picked up cube!`);
 						break;
 					case 1: // Banana
-						//	if (!hasItem(1)) {
 						addItem(1, 45, 100); //later added items of this type adopt this lifetime and shotsAvailable since they're the same item object but with reserve iterated upon
 						console.log(`🍌 ${player.name} picked up banana!`);
-						//	}
 						break;
 					case 2: // Fish
-						//	if (!hasItem(2)) {
 						addItem(2, 45, 100);
 						console.log(`🐟 ${player.name} picked up fish!`);
-						//		}
 						break;
 					case 3: // Pipe
-						//	if (!hasItem(3)) {
-						addItem(3, 45, 200);
+						addItem(3, 60, 200);
 						console.log(`⚔️ ${player.name} picked up pipe!`);
-						//	}
 						break;
 					case 4: // Flag
-						//	if (!hasItem(4)) {
 						addItem(4);
 						console.log(`🚩 ${player.name} picked up the flag!`);
-						//		}
 						break;
 					case 5: // bottle / sniper
-						//		if (!hasItem(5)) {
-						addItem(5, 45, 50);
+						addItem(5, 60, 50);
 						console.log(`🍌 ${player.name} picked up sniper!`);
-						//		}
 						break;
 				}
 
