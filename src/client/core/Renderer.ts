@@ -583,6 +583,7 @@ export class Renderer {
 
 	public setCollisionManager(collisionManager: CollisionManager) {
 		this.collisionManager = collisionManager;
+		this.collisionManager.setParticleSystem(this.particleSystem);
 	}
 
 	private onWindowResize() {
