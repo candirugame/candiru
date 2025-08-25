@@ -9,6 +9,8 @@ import {
 import { InputHandler } from './InputHandler.ts';
 import { RemotePlayerRenderer } from '../core/RemotePlayerRenderer.ts';
 import { Player } from '../../shared/Player.ts';
+import { ParticleSystem } from '../core/ParticleSystem.ts';
+import { Networking } from '../core/Networking.ts';
 
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -24,6 +26,8 @@ export class CollisionManager {
 	private static dynamicColliders: THREE.Object3D[] = []; // Store collidable prop objects
 
 	private inputHandler: InputHandler;
+	private particleSystem: ParticleSystem; // Optional particle system for effects
+	private networking: Networking; // Networking instance for accessing remote players
 	private static readonly maxAngle: number = Math.cos(45 * Math.PI / 180);
 	private readonly triNormal: THREE.Vector3; // Used for world-space calculations (map) and local for props before conversion
 	private readonly upVector: THREE.Vector3;
@@ -37,8 +41,9 @@ export class CollisionManager {
 	private readonly tempTriNormal: THREE.Vector3;
 	private readonly worldToLocalMatrix: THREE.Matrix4;
 
-	constructor(inputHandler: InputHandler) {
+	constructor(inputHandler: InputHandler, networking: Networking) {
 		this.inputHandler = inputHandler;
+		this.networking = networking;
 		this.clock = new THREE.Clock();
 		this.colliderSphere = new THREE.Sphere(new THREE.Vector3(), .2);
 		this.deltaVec = new THREE.Vector3();
@@ -76,6 +81,132 @@ export class CollisionManager {
 		}
 		for (let i = 0; i < steps; i++) {
 			this.physics(localPlayer, deltaTime);
+		}
+
+		if (this.particleSystem) {
+			// Emit trajectory previews for all remote players instead of the local player
+			const remotes = this.networking.getRemotePlayerData();
+			for (const rp of remotes) {
+				// if (rp.id === localPlayer.id) continue; // only remote players
+				if (!rp.position || !rp.lookQuaternion) continue;
+				const pos = new THREE.Vector3(rp.position.x, rp.position.y, rp.position.z);
+				const quat = new THREE.Quaternion(
+					rp.lookQuaternion.x,
+					rp.lookQuaternion.y,
+					rp.lookQuaternion.z,
+					rp.lookQuaternion.w,
+				);
+				this.trajectoryTest(pos, quat);
+			}
+		}
+	}
+
+	private trajectoryTest(position: THREE.Vector3, quaternion: THREE.Quaternion) {
+		// Gravity downward: -30 units/s^2 along Y
+		const gravityVec = new THREE.Vector3(0, -30, 0);
+
+		// Initial direction from camera, including pitch
+		const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(quaternion).normalize();
+
+		// Initial speed (tweak as needed)
+		const initialSpeed = 20; // units/s
+		const v0 = forward.clone().multiplyScalar(initialSpeed);
+
+		// Sampling settings
+		const steps = 20; // number of points
+		const dt = 0.05; // seconds between points
+
+		const mapMesh = RemotePlayerRenderer.getMap();
+		const raycaster = new THREE.Raycaster();
+		raycaster.firstHitOnly = true;
+
+		let prevPos = position.clone();
+		let collisionShown = false;
+
+		for (let i = 1; i <= steps; i++) {
+			const t = i * dt;
+
+			// s(t) = p0 + v0 * t + 0.5 * g * t^2
+			const pos = position.clone()
+				.addScaledVector(v0, t)
+				.addScaledVector(gravityVec, 0.5 * t * t);
+
+			// Emit trajectory breadcrumb
+			this.particleSystem.emit({
+				position: pos,
+				count: 1,
+				velocity: new THREE.Vector3(),
+				spread: 0,
+				lifetime: 0.15,
+				size: 0.01,
+				color: new THREE.Color(1, 0, 0),
+			});
+
+			// Check collision against map along segment prevPos->pos
+			if (!collisionShown) {
+				const segDir = pos.clone().sub(prevPos);
+				const segLen = segDir.length();
+				if (segLen > 1e-6) {
+					segDir.divideScalar(segLen);
+					raycaster.set(prevPos, segDir);
+					raycaster.near = 0;
+					raycaster.far = segLen;
+					const hits = raycaster.intersectObject(mapMesh, true);
+					if (hits.length > 0) {
+						const hit = hits[0];
+						const hitPoint = hit.point.clone();
+
+						// Derive world-space normal
+						let worldNormal = new THREE.Vector3(0, 1, 0);
+						if (hit.face && hit.face.normal) {
+							const normalMatrix = new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld);
+							worldNormal = hit.face.normal.clone().applyMatrix3(normalMatrix).normalize();
+						} else {
+							// Some raycast impls may include a world-space normal directly
+							type MaybeNormalIntersection = THREE.Intersection & { normal?: THREE.Vector3 };
+							const maybe = hit as MaybeNormalIntersection;
+							if (maybe.normal) {
+								worldNormal = maybe.normal.clone().normalize();
+							}
+						}
+
+						// Show plane for any surface
+						{
+							// Build an oriented plane (small grid) centered slightly above the surface to avoid z-fighting
+							const center = hitPoint.clone().addScaledVector(worldNormal, 0.01);
+							// Construct orthonormal basis (u, v) spanning the plane
+							let u = new THREE.Vector3(0, 1, 0).cross(worldNormal);
+							if (u.lengthSq() < 1e-6) u = new THREE.Vector3(1, 0, 0).cross(worldNormal);
+							u.normalize();
+							const v = worldNormal.clone().cross(u).normalize();
+
+							const halfSize = 0.2; // plane half-extent
+							const grid = 6; // grid resolution per side
+							for (let gx = 0; gx < grid; gx++) {
+								for (let gy = 0; gy < grid; gy++) {
+									const fx = (gx / (grid - 1)) * 2 - 1; // [-1, 1]
+									const fy = (gy / (grid - 1)) * 2 - 1; // [-1, 1]
+									const p = center.clone()
+										.addScaledVector(u, fx * halfSize)
+										.addScaledVector(v, fy * halfSize);
+									this.particleSystem.emit({
+										position: p,
+										count: 1,
+										velocity: new THREE.Vector3(),
+										spread: 0,
+										lifetime: 0.35,
+										size: 0.012,
+										color: new THREE.Color(0, 1, 0),
+									});
+								}
+							}
+							collisionShown = true;
+						}
+					}
+				}
+			}
+
+			prevPos = pos;
 		}
 	}
 
@@ -245,5 +376,9 @@ export class CollisionManager {
 
 	public isPlayerInAir(): boolean {
 		return !this.collided; // Player is in air if no collision occurred in the last physics step
+	}
+
+	public setParticleSystem(particleSystem: ParticleSystem): void {
+		this.particleSystem = particleSystem;
 	}
 }

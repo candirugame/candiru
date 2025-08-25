@@ -53,7 +53,7 @@ export class Game {
 		this.inputHandler = new InputHandler(this.renderer, this.localPlayer, this.gameIndex);
 		this.touchInputHandler = new TouchInputHandler(this.inputHandler, this.chatOverlay);
 		this.renderer.setInputHandler(this.inputHandler);
-		this.collisionManager = new CollisionManager(this.inputHandler);
+		this.collisionManager = new CollisionManager(this.inputHandler, this.networking);
 		this.renderer.setCollisionManager(this.collisionManager);
 		this.inventoryManager = new Inventory(
 			this.shotHandler,
