@@ -1,5 +1,6 @@
 import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
+import { Trajectory } from '../input/Trajectory.ts';
 
 const showInHandDelay = 0.1;
 
@@ -9,6 +10,10 @@ export class ItemBase {
 
 	protected object!: THREE.Object3D;
 	protected itemType: ItemType;
+
+	protected initTrajectory?: Trajectory;
+
+	protected playerIdsTrajectoryHiddenFrom?: number[];
 
 	protected scene: THREE.Scene; // The scene to put the item in
 
@@ -20,11 +25,20 @@ export class ItemBase {
 	protected handPosition: THREE.Vector3 = new THREE.Vector3(0.85, -0.8, 3.2);
 	protected shownInHandTimestamp: number = 0;
 
-	constructor(itemType: ItemType, scene: THREE.Scene, inventoryMenuScene: THREE.Scene, index: number) {
+	constructor(
+		itemType: ItemType,
+		scene: THREE.Scene,
+		inventoryMenuScene: THREE.Scene,
+		index: number,
+		initTrajectory?: Trajectory,
+		playerIdsTrajectoryHiddenFrom?: number[],
+	) {
 		this.itemType = itemType;
 		this.scene = scene;
 		this.inventoryMenuScene = inventoryMenuScene;
 		this.index = index;
+		this.initTrajectory = initTrajectory;
+		this.playerIdsTrajectoryHiddenFrom = playerIdsTrajectoryHiddenFrom;
 
 		this.init();
 	}
