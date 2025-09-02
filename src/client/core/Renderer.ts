@@ -604,6 +604,15 @@ export class Renderer {
 		this.heldItemCamera.updateProjectionMatrix();
 	}
 
+	public throwCurrentItem() {
+		const trajectory = this.collisionManager.createTrajectory(
+			this.localPlayer.position.clone(),
+			this.localPlayer.lookQuaternion.clone(),
+		);
+		console.log(trajectory);
+		this.networking.throwCurrentItem();
+	}
+
 	private static approachNumber(input: number, step: number, approach: number): number {
 		if (input == approach) return approach;
 		let output: number;

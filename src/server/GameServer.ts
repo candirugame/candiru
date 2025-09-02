@@ -123,6 +123,14 @@ export class GameServer {
 					}
 				});
 
+				socket.on('throwItem', (data) => {
+					try {
+						//    this.itemManager.createItem();
+					} catch (err) {
+						console.log(`Error handling item throw:`, err);
+					}
+				});
+
 				socket.on('latencyTest', () => {
 					try {
 						socket.emit('latencyTest');

@@ -7,6 +7,7 @@ import type { InventoryItem } from '../../shared/InventoryItem.ts';
 import { Peer } from '../../server/models/Peer.ts';
 import { PropData } from '../../shared/Prop.ts';
 import { clearCacheAndReload } from './cache.ts';
+import { Trajectory } from '../input/Trajectory.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
@@ -411,6 +412,14 @@ export class Networking {
 			}
 			this.lastLatencyTestGotResponse = false;
 		}
+	}
+
+	public throwCurrentItem(trajectory: Trajectory) {
+		this.socket.emit('throwItem', {
+			trajectory: trajectory,
+			itemID: this.localPlayer.id,
+			heldItemIndex: this.localPlayer.heldItemIndex,
+		});
 	}
 
 	public processWorldItemData() {

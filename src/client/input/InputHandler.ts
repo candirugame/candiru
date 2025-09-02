@@ -5,6 +5,7 @@ import { SettingsManager } from '../core/SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
 import { Game } from '../core/Game.ts';
 import { lerp } from '../../shared/Utils.ts';
+import { Networking } from '../core/Networking.ts';
 
 export class InputHandler {
 	private readonly gameIndex: number;
@@ -276,6 +277,11 @@ export class InputHandler {
 			}
 			if (key === 'p') {
 				this.renderer.createScreenshot();
+			}
+
+			if (key === 'r') {
+				this.renderer.throwCurrentItem();
+				console.log('r pressed');
 			}
 		}
 	}

@@ -24,6 +24,7 @@ export class ItemBase {
 	protected angleAccum: number = 0;
 	protected handPosition: THREE.Vector3 = new THREE.Vector3(0.85, -0.8, 3.2);
 	protected shownInHandTimestamp: number = 0;
+	protected creationTimestamp: number;
 
 	constructor(
 		itemType: ItemType,
@@ -39,6 +40,7 @@ export class ItemBase {
 		this.index = index;
 		this.initTrajectory = initTrajectory;
 		this.playerIdsTrajectoryHiddenFrom = playerIdsTrajectoryHiddenFrom;
+		this.creationTimestamp = Date.now() / 1000;
 
 		this.init();
 	}
@@ -87,11 +89,30 @@ export class ItemBase {
 	protected addedToWorldScene: boolean = false;
 	protected worldPosition: THREE.Vector3 = new THREE.Vector3();
 
+	private trajectoryDuration: number | undefined = undefined; //don't want to derive this for every worldItem every frame
+
 	protected worldOnFrame(deltaTime: number) { // This function is called every frame for world items
 		if (!this.addedToWorldScene) {
 			this.scene.add(this.object);
 			this.addedToWorldScene = true;
 		}
+		if (this.initTrajectory) {
+			if (this.trajectoryDuration === undefined) {
+				this.trajectoryDuration = this.initTrajectory.getDuration();
+				console.log('Trajectory duration calculated:', this.trajectoryDuration);
+			}
+			const timeSinceCreated = Date.now() / 1000 - this.creationTimestamp;
+			//	console.log(timeSinceCreated);
+			// console.log(Date.now() / 1000, this.creationTimestamp);
+			if (timeSinceCreated < this.trajectoryDuration) {
+				this.object.position.copy(this.initTrajectory.sample(timeSinceCreated));
+				console.log('Sampling trajectory at time:', timeSinceCreated, this.object.position);
+				return;
+			} else {
+				this.initTrajectory = undefined; //trajectory is done
+			}
+		}
+
 		this.object.position.copy(this.worldPosition);
 		this.object.position.add(new THREE.Vector3(0, Math.sin(this.timeAccum * 2) * 0.1, 0));
 		this.object.rotation.y += deltaTime * 2;
