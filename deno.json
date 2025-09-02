@@ -8,7 +8,11 @@
 		"serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/",
 		"start": "deno task build && deno run --allow-read --allow-env --allow-net --allow-write main.ts",
 		"startnobuild": "deno run --allow-read --allow-env --allow-net --allow-write main.ts",
-		"docker": "docker build -t candiru . && docker run --rm -it -p 3000:3000 candiru"
+		"docker": "docker build -t candiru . && docker run --rm -it -p 3000:3000 candiru",
+		"lint": "deno lint",
+		"fmt": "deno fmt --check src",
+		"check": "deno check src",
+		"allchecks": "deno task build && deno task lint && deno task fmt && deno task check"
 	},
 	"compilerOptions": {
 		"lib": ["ES2020", "DOM", "DOM.Iterable", "deno.ns"]
