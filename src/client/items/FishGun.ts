@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
 import { ShotHandler, ShotParticleType } from '../core/ShotHandler.ts';
+import { CollisionManager } from '../input/CollisionManager.ts';
 
 const firingDelay = 0.45;
 const firingDelayHeld = 0.45; //longer firing delay when mouse is held down
@@ -18,19 +19,27 @@ const inventoryQuaternionBase = new THREE.Quaternion(0, 0, 0, 1);
 
 export class FishGun extends ItemBase {
 	private shotHandler: ShotHandler;
+	private collisionManager: CollisionManager;
 	private lastInput: HeldItemInput;
 	private lastFired: number;
 	private addedToHandScene: boolean;
 	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType) {
+	constructor(
+		renderer: Renderer,
+		shotHandler: ShotHandler,
+		collisionManager: CollisionManager,
+		index: number,
+		itemType: ItemType,
+	) {
 		if (itemType === ItemType.WorldItem) {
 			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
 		} else {
 			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
 		}
 		this.shotHandler = shotHandler;
+		this.collisionManager = collisionManager;
 		this.lastInput = new HeldItemInput();
 		this.addedToHandScene = false;
 		this.lastFired = 0;
@@ -184,6 +193,10 @@ export class FishGun extends ItemBase {
 			muzzleDir,
 			true,
 		);
+
+		let velocity = muzzleDir.clone().multiplyScalar(-10);
+		velocity.y *= .8;
+		this.collisionManager.applyVelocity(velocity);
 	}
 
 	// Method to set world position when used as WorldItem

@@ -59,6 +59,7 @@ export class Game {
 			this.shotHandler,
 			this.renderer,
 			this.inputHandler,
+			this.collisionManager,
 			this.networking,
 			this.localPlayer,
 		);
