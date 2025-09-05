@@ -26,11 +26,35 @@ export class Pipe extends ItemBase {
 	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, shotHanlder: ShotHandler, index: number, itemType: ItemType, initTrajectory?: Trajectory, playerIdsTrajectoryHiddenFrom?: number[]) {
+	constructor(
+		renderer: Renderer,
+		shotHanlder: ShotHandler,
+		index: number,
+		itemType: ItemType,
+		initTrajectory?: Trajectory,
+		playerIdsTrajectoryHiddenFrom?: number[],
+		localPlayerId?: number,
+	) {
 		if (itemType === ItemType.WorldItem) {
-			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index, initTrajectory, playerIdsTrajectoryHiddenFrom);
+			super(
+				itemType,
+				renderer.getEntityScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		} else {
-			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index, initTrajectory, playerIdsTrajectoryHiddenFrom);
+			super(
+				itemType,
+				renderer.getHeldItemScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		}
 		this.shotHandler = shotHanlder;
 		this.lastInput = new HeldItemInput();

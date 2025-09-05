@@ -49,5 +49,5 @@ interface ClientToServerEvents {
 	applyPropDamage: (damage: PropDamageRequest) => void;
 	latencyTest: () => void;
 	getServerList: (callback: (servers: Peer[]) => void) => void;
-	throwItem: (data: { trajectory: Trajectory; itemID: number; heldItemIndex: number }) => void;
+	throwItem: (data: { trajectory: Trajectory; playerID: number; heldItemIndex: number }) => void;
 }

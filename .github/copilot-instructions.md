@@ -26,6 +26,12 @@ deno task lint
 deno fmt --check src
 ```
 
+to apply formatting, simply run
+
+```bash
+deno fmt src
+```
+
 ### type checking
 
 ```bash

@@ -610,7 +610,7 @@ export class Renderer {
 			this.localPlayer.lookQuaternion.clone(),
 		);
 		console.log(trajectory);
-		this.networking.throwCurrentItem();
+		this.networking.throwCurrentItem(trajectory);
 	}
 
 	private static approachNumber(input: number, step: number, approach: number): number {

@@ -84,22 +84,22 @@ export class CollisionManager {
 			this.physics(localPlayer, deltaTime);
 		}
 
-		if (this.particleSystem) {
-			// Emit trajectory previews for all remote players instead of the local player
-			const remotes = this.networking.getRemotePlayerData();
-			for (const rp of remotes) {
-				// if (rp.id === localPlayer.id) continue; // only remote players
-				if (!rp.position || !rp.lookQuaternion) continue;
-				const pos = new THREE.Vector3(rp.position.x, rp.position.y, rp.position.z);
-				const quat = new THREE.Quaternion(
-					rp.lookQuaternion.x,
-					rp.lookQuaternion.y,
-					rp.lookQuaternion.z,
-					rp.lookQuaternion.w,
-				);
-				this.trajectoryTest(pos, quat);
-			}
-		}
+		// if (this.particleSystem) {
+		// 	// Emit trajectory previews for all remote players instead of the local player
+		// 	const remotes = this.networking.getRemotePlayerData();
+		// 	for (const rp of remotes) {
+		// 		// if (rp.id === localPlayer.id) continue; // only remote players
+		// 		if (!rp.position || !rp.lookQuaternion) continue;
+		// 		const pos = new THREE.Vector3(rp.position.x, rp.position.y, rp.position.z);
+		// 		const quat = new THREE.Quaternion(
+		// 			rp.lookQuaternion.x,
+		// 			rp.lookQuaternion.y,
+		// 			rp.lookQuaternion.z,
+		// 			rp.lookQuaternion.w,
+		// 		);
+		// 		//this.trajectoryTest(pos, quat);
+		// 	}
+		// }
 	}
 
 	public createTrajectory(

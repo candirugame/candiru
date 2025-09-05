@@ -25,11 +25,35 @@ export class FishGun extends ItemBase {
 	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType, initTrajectory?: Trajectory, playerIdsTrajectoryHiddenFrom?: number[]) {
+	constructor(
+		renderer: Renderer,
+		shotHandler: ShotHandler,
+		index: number,
+		itemType: ItemType,
+		initTrajectory?: Trajectory,
+		playerIdsTrajectoryHiddenFrom?: number[],
+		localPlayerId?: number,
+	) {
 		if (itemType === ItemType.WorldItem) {
-			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index, initTrajectory, playerIdsTrajectoryHiddenFrom);
+			super(
+				itemType,
+				renderer.getEntityScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		} else {
-			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index, initTrajectory, playerIdsTrajectoryHiddenFrom);
+			super(
+				itemType,
+				renderer.getHeldItemScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		}
 		this.shotHandler = shotHandler;
 		this.lastInput = new HeldItemInput();

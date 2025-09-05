@@ -14,6 +14,8 @@ import { CustomServer } from '../shared/messages.ts';
 import { PeerManager } from './managers/PeerManager.ts';
 import { PropManager } from './managers/PropManager.ts';
 import { setupDevClientVersion } from './dev.ts';
+import { WorldItem } from './models/WorldItem.ts';
+import { Vector3 } from 'three';
 
 export class GameServer {
 	router: Router;
@@ -123,9 +125,20 @@ export class GameServer {
 					}
 				});
 
-				socket.on('throwItem', (data) => {
+				socket.on('throwItem', (unparsedData) => {
 					try {
+						const { data: parsedThrow, error } = DataValidator.validateThrowItem(unparsedData);
+						if (error) return;
 						//    this.itemManager.createItem();
+						if (!parsedThrow.trajectory || !parsedThrow.trajectory.points) return;
+						const finalPosition: Vector3 = parsedThrow.trajectory.points[parsedThrow.trajectory.points.length - 1];
+						const itemId = this.playerManager.getPlayerById(parsedThrow.playerID)?.inventory[parsedThrow.heldItemIndex]
+							.itemId;
+						if (!finalPosition || !itemId) return;
+
+						this.itemManager.pushItem(
+							new WorldItem(finalPosition, itemId, parsedThrow.trajectory, [parsedThrow.playerID]),
+						);
 					} catch (err) {
 						console.log(`Error handling item throw:`, err);
 					}

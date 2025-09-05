@@ -1,6 +1,7 @@
 import { HeldItemInput } from '../input/HeldItemInput.ts';
 import * as THREE from 'three';
 import { Trajectory } from '../input/Trajectory.ts';
+import { seededRandom } from '../../shared/Utils.ts';
 
 const showInHandDelay = 0.1;
 
@@ -14,6 +15,8 @@ export class ItemBase {
 	protected initTrajectory?: Trajectory;
 
 	protected playerIdsTrajectoryHiddenFrom?: number[];
+
+	protected localPlayerId?: number;
 
 	protected scene: THREE.Scene; // The scene to put the item in
 
@@ -33,6 +36,7 @@ export class ItemBase {
 		index: number,
 		initTrajectory?: Trajectory,
 		playerIdsTrajectoryHiddenFrom?: number[],
+		localPlayerId?: number,
 	) {
 		this.itemType = itemType;
 		this.scene = scene;
@@ -40,6 +44,7 @@ export class ItemBase {
 		this.index = index;
 		this.initTrajectory = initTrajectory;
 		this.playerIdsTrajectoryHiddenFrom = playerIdsTrajectoryHiddenFrom;
+		this.localPlayerId = localPlayerId;
 		this.creationTimestamp = Date.now() / 1000;
 
 		this.init();
@@ -91,6 +96,8 @@ export class ItemBase {
 
 	private trajectoryDuration: number | undefined = undefined; //don't want to derive this for every worldItem every frame
 
+	private trajectorySeed: number | undefined = undefined;
+
 	protected worldOnFrame(deltaTime: number) { // This function is called every frame for world items
 		if (!this.addedToWorldScene) {
 			this.scene.add(this.object);
@@ -99,23 +106,51 @@ export class ItemBase {
 		if (this.initTrajectory) {
 			if (this.trajectoryDuration === undefined) {
 				this.trajectoryDuration = this.initTrajectory.getDuration();
-				console.log('Trajectory duration calculated:', this.trajectoryDuration);
+
+				if (this.initTrajectory.points.length > 0) {
+					this.trajectorySeed = seededRandom(
+						seededRandom(this.initTrajectory.points[0].x) + seededRandom(this.initTrajectory.points[0].y) +
+							seededRandom(this.initTrajectory.points[0].z),
+					);
+				}
+
+				if (this.trajectorySeed) {
+					this.object.rotation.x = seededRandom(this.trajectorySeed) * Math.PI * 2;
+					this.object.rotation.y = seededRandom(this.trajectorySeed + 1) * Math.PI * 2;
+					this.object.rotation.z = seededRandom(this.trajectorySeed + 2) * Math.PI * 2;
+				}
+
+				//console.log('Trajectory duration calculated:', this.trajectoryDuration);
 			}
 			const timeSinceCreated = Date.now() / 1000 - this.creationTimestamp;
 			//	console.log(timeSinceCreated);
 			// console.log(Date.now() / 1000, this.creationTimestamp);
 			if (timeSinceCreated < this.trajectoryDuration) {
 				this.object.position.copy(this.initTrajectory.sample(timeSinceCreated));
-				console.log('Sampling trajectory at time:', timeSinceCreated, this.object.position);
+				this.object.rotation.x += deltaTime * 4;
+				this.object.rotation.y += deltaTime * 4;
+				this.object.rotation.z += deltaTime * 4;
+				//console.log('Sampling trajectory at time:', timeSinceCreated, this.object.position);
 				return;
 			} else {
 				this.initTrajectory = undefined; //trajectory is done
 			}
 		}
 
+		this.object.visible = !(this.initTrajectory && this.playerIdsTrajectoryHiddenFrom?.includes(this.localPlayerId)); //hide if trajectory is active and local player is in the hidden list
+
+		// Idle animation
 		this.object.position.copy(this.worldPosition);
-		this.object.position.add(new THREE.Vector3(0, Math.sin(this.timeAccum * 2) * 0.1, 0));
-		this.object.rotation.y += deltaTime * 2;
+		// this.object.position.add(new THREE.Vector3(0, Math.sin(this.timeAccum * 2) * 0.1, 0));
+		if (this.trajectorySeed) {
+			// this.object.rotation.x = seededRandom(this.trajectorySeed + 3) * Math.PI * 2;
+			// this.object.rotation.y = seededRandom(this.trajectorySeed + 4) * Math.PI * 2;
+			// this.object.rotation.z = seededRandom(this.trajectorySeed + 5) * Math.PI * 2;
+		} else {
+			this.object.rotation.x = 0;
+			this.object.rotation.z = 0;
+			this.object.rotation.y += deltaTime * 2;
+		}
 	}
 
 	setWorldPosition(vector: THREE.Vector3) {
