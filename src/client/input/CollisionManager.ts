@@ -183,15 +183,15 @@ export class CollisionManager {
 
 									// Prop collisions
 									if (angle >= CollisionManager.maxAngle) { // Ground collision
-										localPlayer.position.addScaledVector(this.deltaVec, depth);
+										localPlayer.position.addScaledVector(worldPenetrationVec, depth);
 										this.velocity.y = 0;
 										this.coyoteTime = 0;
 										this.collided = true;
 									} else if (angle <= -.75) { // Ceiling
-										localPlayer.position.addScaledVector(this.deltaVec, depth);
+										localPlayer.position.addScaledVector(worldPenetrationVec, depth);
 										this.velocity.y = 0;
 									} else { // Wall
-										localPlayer.position.addScaledVector(this.deltaVec, depth);
+										localPlayer.position.addScaledVector(worldPenetrationVec, depth);
 									}
 									// Update player's local position for next triangle check in this shapecast
 									this.tempLocalSphere.center.copy(localPlayer.position).applyMatrix4(this.worldToLocalMatrix);
