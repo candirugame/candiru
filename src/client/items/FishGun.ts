@@ -194,7 +194,7 @@ export class FishGun extends ItemBase {
 			true,
 		);
 
-		let velocity = muzzleDir.clone().multiplyScalar(-10);
+		const velocity = muzzleDir.clone().multiplyScalar(-10);
 		velocity.y *= .8;
 		this.collisionManager.applyVelocity(velocity);
 	}
