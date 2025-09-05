@@ -8,6 +8,7 @@ import { Pipe } from '../items/Pipe.ts';
 import { FlagItem } from '../items/FlagItem.ts';
 import { ShotHandler } from './ShotHandler.ts';
 import { Sniper } from '../items/Sniper.ts';
+import { CollisionManager } from '../input/CollisionManager.ts';
 
 // Custom types
 type Vector3Data = {
@@ -31,12 +32,19 @@ export class RemoteItemRenderer {
 	private shotHandler: ShotHandler;
 	private networking: Networking;
 	private renderer: Renderer;
+	private collisionManager: CollisionManager;
 	private itemsToRender: ItemsToRenderEntry[] = [];
 
-	constructor(networking: Networking, renderer: Renderer, shotHandler: ShotHandler) {
+	constructor(
+		networking: Networking,
+		renderer: Renderer,
+		shotHandler: ShotHandler,
+		collisionManager: CollisionManager,
+	) {
 		this.networking = networking;
 		this.renderer = renderer;
 		this.shotHandler = shotHandler;
+		this.collisionManager = collisionManager;
 	}
 
 	public update() {
@@ -93,7 +101,7 @@ export class RemoteItemRenderer {
 			case 1:
 				return new BananaGun(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
 			case 2:
-				return new FishGun(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
+				return new FishGun(this.renderer, this.shotHandler, this.collisionManager, 0, ItemType.WorldItem);
 			case 3:
 				return new Pipe(this.renderer, this.shotHandler, 0, ItemType.WorldItem);
 			case 4:
