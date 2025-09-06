@@ -31,6 +31,7 @@ export class CollisionManager {
 	private jumped: boolean;
 	private collided: boolean;
 	private readonly velocity: THREE.Vector3;
+	private knockbackTime: number; // seconds of reduced damping after explosive impulse
 
 	// Temporary objects for prop collision calculations to avoid re-allocation
 	private readonly tempLocalSphere: THREE.Sphere;
@@ -50,6 +51,7 @@ export class CollisionManager {
 		this.jumped = false;
 		this.collided = false;
 		this.velocity = new THREE.Vector3(0, 0, 0);
+		this.knockbackTime = 0;
 
 		// Initialize temporary objects for prop collisions
 		this.tempLocalSphere = new THREE.Sphere(new THREE.Vector3(), this.colliderSphere.radius);
@@ -84,12 +86,40 @@ export class CollisionManager {
 	private physics(localPlayer: Player, deltaTime: number) {
 		this.prevPosition.copy(localPlayer.position);
 		const jump: boolean = this.inputHandler.jump;
-		if (this.coyoteTime > 0) this.velocity.add(localPlayer.inputVelocity.clone().multiplyScalar(deltaTime * 8));
-		else this.velocity.add(localPlayer.inputVelocity.clone().multiplyScalar(deltaTime * 11));
-		this.velocity.y += -20 * deltaTime;
-		if (Math.abs(this.velocity.x) < .0000001) this.velocity.x = 0;
-		if (Math.abs(this.velocity.z) < .0000001) this.velocity.z = 0;
-		localPlayer.position.add(this.velocity.clone().multiplyScalar(deltaTime));
+		//localPlayer.inputVelocity currently represents desired directional speed vector (x,z) after input handling.
+		//accelerate the player's actual velocity toward that target using different accel for ground vs air.
+		const desired = localPlayer.inputVelocity.clone();
+		desired.y = 0;
+		const onGround = this.collided; // last frame info
+		const maxSpeed = localPlayer.speed;
+		const desiredLen = desired.length();
+		if (desiredLen > 0) desired.multiplyScalar(1 / desiredLen); // normalize
+		//normalize for clean accel blending
+		desired.multiplyScalar(Math.min(desiredLen, maxSpeed));
+
+		// Acceleration constants (units per second^2)
+		const accelGround = 100;
+		const accelAir = 100;
+		const accel = onGround ? accelGround : accelAir;
+
+		// Current horizontal velocity vector
+		const horizVel = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+		// Compute delta toward desired
+		const toDesired = desired.clone().sub(horizVel);
+		const distToDesired = toDesired.length();
+		if (distToDesired > 0) {
+			const step = Math.min(distToDesired, accel * deltaTime);
+			toDesired.multiplyScalar(step / distToDesired);
+			horizVel.add(toDesired);
+			this.velocity.x = horizVel.x;
+			this.velocity.z = horizVel.z;
+		}
+
+		// Apply gravity (magnitude 30)
+		this.velocity.y += -25 * deltaTime;
+
+		// Integrate position (single dt)
+		localPlayer.position.addScaledVector(this.velocity, deltaTime);
 
 		this.collided = false; // Reset collided status for this physics step
 
@@ -208,23 +238,51 @@ export class CollisionManager {
 		} // end if (localPlayer.doPhysics)
 
 		// Coyote time, jump, and velocity calculation logic
-		if (!this.collided) { // If not collided with map OR any prop
-			this.velocity.x *= Math.pow(.95, deltaTime * 120);
-			this.velocity.z *= Math.pow(.95, deltaTime * 120);
+		// Post-collision movement adjustments (friction & jumping)
+		if (!this.collided) { // Airborne
 			this.coyoteTime += deltaTime;
-			if (jump && this.coyoteTime < 12 / 120 && !this.jumped) {
-				this.velocity.y = 5;
+			// Air friction (linear) stronger baseline; reduced during knockback window
+			const airFrictionBase = 10; // units/s^2 equivalent slowing
+			const airFriction = this.knockbackTime > 0 ? airFrictionBase * 0.35 : airFrictionBase; // suppress ~65% during knockback window
+			const hv = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+			const hlen = hv.length();
+			if (hlen > 0) {
+				const dec = airFriction * deltaTime;
+				const newLen = Math.max(0, hlen - dec);
+				hv.multiplyScalar(hlen > 0 ? newLen / hlen : 0);
+				this.velocity.x = hv.x;
+				this.velocity.z = hv.z;
+			}
+			if (jump && this.coyoteTime < 12 / 120 && !this.jumped) { // restored coyote window 12/120
+				this.velocity.y = 5.5; // adjusted jump velocity
 				this.jumped = true;
 			}
-		} else { // Collided with map OR a prop
-			this.velocity.x *= Math.pow(.90, deltaTime * 120);
-			this.velocity.z *= Math.pow(.90, deltaTime * 120);
-			if (jump) { // Allow jump if on ground (map or prop)
-				this.velocity.y = 5;
-				// this.jumped = true; // If you want to allow multiple jumps while holding space on ground
+		} else { // Grounded
+			this.coyoteTime = 0;
+			// Ground friction baseline; reduced during knockback window for initial burst carry
+			const groundFrictionBase = 10;
+			const groundFriction = this.knockbackTime > 0 ? groundFrictionBase * 0.5 : groundFrictionBase; // 50% friction during knockback window
+			const hv = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+			const hlen = hv.length();
+			if (hlen > 0) {
+				const dec = groundFriction * deltaTime;
+				const newLen = Math.max(0, hlen - dec);
+				hv.multiplyScalar(hlen > 0 ? newLen / hlen : 0);
+				this.velocity.x = hv.x;
+				this.velocity.z = hv.z;
+			}
+			if (jump) {
+				this.velocity.y = 5.5;
+				// allow immediate jump chaining only on new presses; jumped flag logic below handles hold behavior
 			} else {
 				this.jumped = false;
 			}
+		}
+
+		// Decrement knockback window using real time
+		if (this.knockbackTime > 0) {
+			this.knockbackTime -= deltaTime;
+			if (this.knockbackTime < 0) this.knockbackTime = 0;
 		}
 
 		if (!(deltaTime == 0)) {
@@ -259,5 +317,10 @@ export class CollisionManager {
 
 	public applyVelocity(vector: THREE.Vector3): void {
 		this.velocity.add(vector);
+	}
+
+	public triggerKnockback(seconds: number) {
+		// Extend current window if new one is longer
+		this.knockbackTime = Math.max(this.knockbackTime, seconds);
 	}
 }

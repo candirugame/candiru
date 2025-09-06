@@ -194,9 +194,58 @@ export class FishGun extends ItemBase {
 			true,
 		);
 
-		const velocity = muzzleDir.clone().multiplyScalar(-10);
-		velocity.y *= .8;
-		this.collisionManager.applyVelocity(velocity);
+		const BASE_KICK = 18; // base horizontal recoil magnitude
+		const DOWN_DEADZONE = 0.2; // how much downward aim before scale starts
+		const VERTICAL_MULT_MIN = 0.35; // fraction of BASE_KICK converted to vertical when barely qualifying
+		const VERTICAL_MULT_MAX = 0.5; // fraction at full downward aim (before ground bonus)
+		const GROUND_VERTICAL_BONUS = 0.3; // +50% if grounded
+		// Duration (seconds) of reduced friction window after recoil.
+		// Previously 320 frames at 120hz ≈ 2.67s.
+		const KNOCKBACK_DURATION_S = 320 / 120; // ~2.67s
+		const MAX_HORIZONTAL_SPEED = 50; // absolute horizontal speed cap
+		const MAX_VERTICAL_IMPULSE = 28; // safety vertical cap (pre physics integration)
+
+		const dir = muzzleDir.clone().normalize();
+
+		// Horizontal recoil only along ground plane opposite aim
+		const horizontalDir = new THREE.Vector3(dir.x, 0, dir.z);
+		const horizontalLen = horizontalDir.length();
+		if (horizontalLen > 0.0001) horizontalDir.multiplyScalar(1 / horizontalLen);
+		else horizontalDir.set(0, 0, 0);
+		const horizontalImpulse = horizontalDir.multiplyScalar(-BASE_KICK); // push backwards relative to aim direction
+
+		// Downward aiming factor (0..1)
+		const downward = Math.max(0, -dir.y - DOWN_DEADZONE);
+		const angleFactor = Math.min(1, downward / (1 - DOWN_DEADZONE));
+
+		// Vertical impulse curve: interpolate between min & max multipliers of BASE_KICK
+		let verticalImpulse = 0;
+		if (angleFactor > 0) {
+			const mult = VERTICAL_MULT_MIN + (VERTICAL_MULT_MAX - VERTICAL_MULT_MIN) * angleFactor; // 0.35..1.15
+			verticalImpulse = BASE_KICK * mult;
+		}
+
+		// Grounded bonus
+		const grounded = !this.collisionManager.isPlayerInAir();
+		if (grounded && verticalImpulse > 0) verticalImpulse *= 1 + GROUND_VERTICAL_BONUS;
+
+		// Clamp vertical impulse safety
+		verticalImpulse = Math.min(verticalImpulse, MAX_VERTICAL_IMPULSE);
+
+		// Compose final impulse vector (no inherited positive Y from horizontal recoil)
+		const impulse = new THREE.Vector3(horizontalImpulse.x, verticalImpulse, horizontalImpulse.z);
+
+		// Clamp resulting horizontal speed if it would exceed limit
+		const projectedHoriz = new THREE.Vector3(impulse.x, 0, impulse.z);
+		const projLen = projectedHoriz.length();
+		if (projLen > MAX_HORIZONTAL_SPEED) {
+			projectedHoriz.multiplyScalar(MAX_HORIZONTAL_SPEED / projLen);
+			impulse.x = projectedHoriz.x;
+			impulse.z = projectedHoriz.z;
+		}
+
+		this.collisionManager.applyVelocity(impulse);
+		this.collisionManager.triggerKnockback(KNOCKBACK_DURATION_S);
 	}
 
 	// Method to set world position when used as WorldItem
