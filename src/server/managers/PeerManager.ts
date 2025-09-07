@@ -245,7 +245,7 @@ export class PeerManager {
 				console.log(
 					`Removing peer ${peer.url} due to exceeding max failed attempts (${config.peer.maxFailedAttempts}).`,
 				);
-				this.removeFromServersFile(peer.url); // Attempt to remove from persisted list
+				//this.removeFromServersFile(peer.url); // Attempt to remove from persisted list
 				// Also remove from queues if present
 				this.updateQueue = this.updateQueue.filter((u) => u !== peer.url);
 				this.shareQueue = this.shareQueue.filter((u) => u !== peer.url);
