@@ -59,6 +59,7 @@ export class Game {
 			this.shotHandler,
 			this.renderer,
 			this.inputHandler,
+			this.collisionManager,
 			this.networking,
 			this.localPlayer,
 		);
@@ -66,7 +67,12 @@ export class Game {
 		this.chatOverlay.setInputHandler(this.inputHandler);
 		this.mapLoader = new MapLoader(this.renderer);
 		this.healthIndicator = new HealthIndicator(this.renderer, this.localPlayer, this.networking);
-		this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer, this.shotHandler);
+		this.remoteItemRenderer = new RemoteItemRenderer(
+			this.networking,
+			this.renderer,
+			this.shotHandler,
+			this.collisionManager,
+		);
 	}
 
 	init() {
