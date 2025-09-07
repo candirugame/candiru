@@ -31,7 +31,8 @@ export class CollisionManager {
 	private jumped: boolean;
 	private collided: boolean;
 	private readonly velocity: THREE.Vector3;
-	private knockbackTime: number; // seconds of reduced damping after explosive impulse
+	private knockbackTime: number; // remaining seconds of reduced damping after explosive impulse
+	private knockbackDuration: number; // total seconds for current knockback window (used for interpolation)
 
 	// Temporary objects for prop collision calculations to avoid re-allocation
 	private readonly tempLocalSphere: THREE.Sphere;
@@ -52,6 +53,7 @@ export class CollisionManager {
 		this.collided = false;
 		this.velocity = new THREE.Vector3(0, 0, 0);
 		this.knockbackTime = 0;
+		this.knockbackDuration = 0;
 
 		// Initialize temporary objects for prop collisions
 		this.tempLocalSphere = new THREE.Sphere(new THREE.Vector3(), this.colliderSphere.radius);
@@ -241,9 +243,17 @@ export class CollisionManager {
 		// Post-collision movement adjustments (friction & jumping)
 		if (!this.collided) { // Airborne
 			this.coyoteTime += deltaTime;
-			// Air friction (linear) stronger baseline; reduced during knockback window
+			// Air friction baseline; interpolate suppression over knockback window so it lasts full duration
 			const airFrictionBase = 10; // units/s^2 equivalent slowing
-			const airFriction = this.knockbackTime > 0 ? airFrictionBase * 0.35 : airFrictionBase; // suppress ~65% during knockback window
+			let airFriction = airFrictionBase;
+			if (this.knockbackTime > 0 && this.knockbackDuration > 0) {
+				// progress (0 at start, 1 at end)
+				const kProgress = 1 - (this.knockbackTime / this.knockbackDuration);
+				// Start heavily suppressed (35% of normal), ease back to 100% by end
+				const startScale = 0.35;
+				const scale = startScale + (1 - startScale) * kProgress;
+				airFriction = airFrictionBase * scale;
+			}
 			const hv = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
 			const hlen = hv.length();
 			if (hlen > 0) {
@@ -259,9 +269,16 @@ export class CollisionManager {
 			}
 		} else { // Grounded
 			this.coyoteTime = 0;
-			// Ground friction baseline; reduced during knockback window for initial burst carry
+			// Ground friction; interpolate suppression over knockback window
 			const groundFrictionBase = 10;
-			const groundFriction = this.knockbackTime > 0 ? groundFrictionBase * 0.5 : groundFrictionBase; // 50% friction during knockback window
+			let groundFriction = groundFrictionBase;
+			if (this.knockbackTime > 0 && this.knockbackDuration > 0) {
+				const kProgress = 1 - (this.knockbackTime / this.knockbackDuration);
+				// Start at 50% friction, returning to 100%
+				const startScale = 0.5;
+				const scale = startScale + (1 - startScale) * kProgress;
+				groundFriction = groundFrictionBase * scale;
+			}
 			const hv = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
 			const hlen = hv.length();
 			if (hlen > 0) {
@@ -273,7 +290,6 @@ export class CollisionManager {
 			}
 			if (jump) {
 				this.velocity.y = 5.5;
-				// allow immediate jump chaining only on new presses; jumped flag logic below handles hold behavior
 			} else {
 				this.jumped = false;
 			}
@@ -282,7 +298,10 @@ export class CollisionManager {
 		// Decrement knockback window using real time
 		if (this.knockbackTime > 0) {
 			this.knockbackTime -= deltaTime;
-			if (this.knockbackTime < 0) this.knockbackTime = 0;
+			if (this.knockbackTime <= 0) {
+				this.knockbackTime = 0;
+				this.knockbackDuration = 0; // reset so future progress calcs don't divide by old duration
+			}
 		}
 
 		if (!(deltaTime == 0)) {
@@ -320,7 +339,12 @@ export class CollisionManager {
 	}
 
 	public triggerKnockback(seconds: number) {
-		// Extend current window if new one is longer
-		this.knockbackTime = Math.max(this.knockbackTime, seconds);
+		// Extend current window if new one is longer; preserve longest total duration for interpolation
+		if (seconds > this.knockbackTime) {
+			this.knockbackTime = seconds;
+		}
+		if (seconds > this.knockbackDuration) {
+			this.knockbackDuration = seconds;
+		}
 	}
 }

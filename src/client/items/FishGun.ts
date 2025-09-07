@@ -201,7 +201,7 @@ export class FishGun extends ItemBase {
 		const GROUND_VERTICAL_BONUS = 0.3; // +50% if grounded
 		// Duration (seconds) of reduced friction window after recoil.
 		// Previously 320 frames at 120hz ≈ 2.67s.
-		const KNOCKBACK_DURATION_S = 320 / 120; // ~2.67s
+		const KNOCKBACK_DURATION_S = 0.1; // ~2.67s
 		const MAX_HORIZONTAL_SPEED = 50; // absolute horizontal speed cap
 		const MAX_VERTICAL_IMPULSE = 28; // safety vertical cap (pre physics integration)
 
