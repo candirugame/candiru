@@ -3,6 +3,6 @@ export function lerp(start: number, end: number, t: number): number {
 }
 
 export function seededRandom(seed) {
-	let x = Math.sin(seed++) * 100000;
+	const x = Math.sin(seed++) * 100000;
 	return x - Math.floor(x);
 }

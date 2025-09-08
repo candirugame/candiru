@@ -13,6 +13,14 @@ interface WorldItem {
 	vector: { x: number; y: number; z: number };
 	id: number;
 	itemType: number;
+	// Optional initial trajectory data serialized from server WorldItem.initTrajectory
+	initTrajectory?: {
+		points: { x: number; y: number; z: number }[];
+		dt: number;
+		hits: { point: { x: number; y: number; z: number }; normal: { x: number; y: number; z: number }; index: number }[];
+	};
+	// List of player IDs that should not see the trajectory phase of this item
+	playerIdsTrajectoryHiddenFrom?: number[];
 }
 
 export interface ServerInfo {

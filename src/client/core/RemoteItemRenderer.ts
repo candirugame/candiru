@@ -34,6 +34,7 @@ type WorldItemData = {
 	itemType: number;
 	vector: Vector3Data;
 	initTrajectory?: TrajectoryData;
+	playerIdsTrajectoryHiddenFrom?: number[];
 };
 
 type ItemsToRenderEntry = {
@@ -76,8 +77,14 @@ export class RemoteItemRenderer {
 				);
 			} else {
 				// Create new item
-				const decodedTrajectory = worldItemData.initTrajectory ? this.decodeTrajectory(worldItemData.initTrajectory) : undefined;
-				const item = this.createItemByType(worldItemData.itemType, decodedTrajectory);
+				const decodedTrajectory = worldItemData.initTrajectory
+					? this.decodeTrajectory(worldItemData.initTrajectory)
+					: undefined;
+				const item = this.createItemByType(
+					worldItemData.itemType,
+					decodedTrajectory,
+					worldItemData.playerIdsTrajectoryHiddenFrom,
+				);
 				if (item) {
 					item.setWorldPosition(
 						new THREE.Vector3(
@@ -94,29 +101,69 @@ export class RemoteItemRenderer {
 		// Remove items that are no longer in the newWorldItemsData
 		this.itemsToRender = this.itemsToRender.filter((item) => {
 			const existsInNewData = newWorldItemsData.some((worldItemData) => worldItemData.id === item.id);
-			if (!existsInNewData) {
-				// Remove item from scene
-				item.item.destroy();
-			}
-			return existsInNewData;
+			const createdOnClient = item.id > 1000000000; // Assuming server IDs are below this threshold
+			const createdRecently = item.item.getTrajectoryDuration() &&
+				(Date.now() / 1000 - item.item.getCreationTimestamp() < item.item.getTrajectoryDuration() + 0.1);
+
+			const shouldKeep = existsInNewData || (createdOnClient && createdRecently);
+			if (!shouldKeep) item.item.destroy();
+
+			return shouldKeep;
 		});
 	}
 
-	private createItemByType(itemType: number, trajectory: Trajectory | undefined): ItemBase | null {
+	//when playerIdsTrajectoryHiddenFrom = [-1], only show the trajectory then remove the item
+	private createItemByType(
+		itemType: number,
+		trajectory: Trajectory | undefined,
+		playerIdsTrajectoryHiddenFrom?: number[],
+	): ItemBase | null {
 		const localPlayerId = this.networking.getLocalPlayer ? this.networking.getLocalPlayer().id : undefined;
 		// Create item based on itemType
 
 		switch (itemType) {
 			case 1:
-				return new BananaGun(this.renderer, this.shotHandler, 0, ItemType.WorldItem, trajectory, [], localPlayerId);
+				return new BananaGun(
+					this.renderer,
+					this.shotHandler,
+					0,
+					ItemType.WorldItem,
+					trajectory,
+					playerIdsTrajectoryHiddenFrom,
+					localPlayerId,
+				);
 			case 2:
-				return new FishGun(this.renderer, this.shotHandler, 0, ItemType.WorldItem, trajectory, [], localPlayerId);
+				return new FishGun(
+					this.renderer,
+					this.shotHandler,
+					0,
+					ItemType.WorldItem,
+					trajectory,
+					playerIdsTrajectoryHiddenFrom,
+					localPlayerId,
+				);
 			case 3:
-				return new Pipe(this.renderer, this.shotHandler, 0, ItemType.WorldItem, trajectory, [], localPlayerId);
+				return new Pipe(
+					this.renderer,
+					this.shotHandler,
+					0,
+					ItemType.WorldItem,
+					trajectory,
+					playerIdsTrajectoryHiddenFrom,
+					localPlayerId,
+				);
 			case 4:
 				return new FlagItem(this.renderer, 0, ItemType.WorldItem, localPlayerId);
 			case 5:
-				return new Sniper(this.renderer, this.shotHandler, 0, ItemType.WorldItem, trajectory, [], localPlayerId);
+				return new Sniper(
+					this.renderer,
+					this.shotHandler,
+					0,
+					ItemType.WorldItem,
+					trajectory,
+					playerIdsTrajectoryHiddenFrom,
+					localPlayerId,
+				);
 			default:
 				// Return a generic item
 				console.log('Unknown item type:', itemType);
@@ -126,15 +173,15 @@ export class RemoteItemRenderer {
 					this.renderer.getInventoryMenuScene(),
 					0,
 					trajectory,
-					[],
+					playerIdsTrajectoryHiddenFrom,
 					localPlayerId,
 				);
 		}
 	}
 
 	private decodeTrajectory(data: TrajectoryData): Trajectory {
-		const points = data.points.map(p => new THREE.Vector3(p.x, p.y, p.z));
-		const hits = data.hits.map(h => ({
+		const points = data.points.map((p) => new THREE.Vector3(p.x, p.y, p.z));
+		const hits = data.hits.map((h) => ({
 			point: new THREE.Vector3(h.point.x, h.point.y, h.point.z),
 			normal: new THREE.Vector3(h.normal.x, h.normal.y, h.normal.z),
 			index: h.index,
@@ -144,9 +191,32 @@ export class RemoteItemRenderer {
 
 	public onFrame() {
 		this.update();
+		// Process any locally thrown items queued by Renderer this frame
+		// Access pending thrown items via Renderer public API (if available)
+		let pending: { itemType: number; trajectory: Trajectory }[] = [];
+
+		pending = (this.renderer as Renderer & {
+			getAndClearPendingThrownItems: () => { itemType: number; trajectory: Trajectory }[];
+		}).getAndClearPendingThrownItems();
+
+		if (pending.length > 0) {
+			pending.forEach((entry) => {
+				// create a temporary ID using timestamp + random to avoid collisions until server authoritative data arrives
+				const tempId = Date.now() + Math.floor(1000000000 + Math.random() * 100000);
+				const item = this.createItemByType(entry.itemType, entry.trajectory, undefined);
+				if (item) {
+					// Position item at first trajectory point if available
+					if (entry.trajectory.points.length > 0) {
+						item.setWorldPosition(entry.trajectory.points[entry.trajectory.points.length - 1].clone());
+					}
+					this.itemsToRender.push({ id: tempId, item });
+				}
+			});
+		}
 		this.itemsToRender.forEach((itemEntry) => {
 			itemEntry.item.onFrame(undefined, undefined); // Passing null for input and selectedIndex
 		});
+		//check each item to see if its trajectory is finished and playerIdsTrajectoryHiddenFrom = [-1], then remove the item
 	}
 
 	public destroy() {

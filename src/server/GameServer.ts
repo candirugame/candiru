@@ -128,8 +128,10 @@ export class GameServer {
 				socket.on('throwItem', (unparsedData) => {
 					try {
 						const { data: parsedThrow, error } = DataValidator.validateThrowItem(unparsedData);
-						if (error) return;
-						//    this.itemManager.createItem();
+						if (error) {
+							console.log('Invalid throwItem data received:', error);
+							return;
+						}
 						if (!parsedThrow.trajectory || !parsedThrow.trajectory.points) return;
 						const finalPosition: Vector3 = parsedThrow.trajectory.points[parsedThrow.trajectory.points.length - 1];
 						const itemId = this.playerManager.getPlayerById(parsedThrow.playerID)?.inventory[parsedThrow.heldItemIndex]
@@ -139,6 +141,7 @@ export class GameServer {
 						this.itemManager.pushItem(
 							new WorldItem(finalPosition, itemId, parsedThrow.trajectory, [parsedThrow.playerID]),
 						);
+						this.playerManager.throwItem(parsedThrow.playerID, parsedThrow.heldItemIndex);
 					} catch (err) {
 						console.log(`Error handling item throw:`, err);
 					}

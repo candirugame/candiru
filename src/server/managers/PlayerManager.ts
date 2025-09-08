@@ -228,6 +228,16 @@ export class PlayerManager {
 		}
 	}
 
+	public throwItem(playerId: number, heldItemIndex: number) {
+		const player = this.getPlayerById(playerId);
+		if (!player) return;
+		const item = player.inventory[heldItemIndex];
+		if (!item.itemId) return;
+
+		if (item.overflow > 0) item.overflow--;
+		else player.inventory.splice(heldItemIndex, 1);
+	}
+
 	private getRandomSpawnPoint(): { vec: THREE.Vector3; quaternion: THREE.Quaternion } {
 		if (!this.mapData) {
 			return { vec: new THREE.Vector3(2, 1, 0), quaternion: new THREE.Quaternion(0, 0, 0, 1) };

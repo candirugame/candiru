@@ -605,12 +605,38 @@ export class Renderer {
 	}
 
 	public throwCurrentItem() {
+		if (this.localPlayer.inventory.length == 0) return;
 		const trajectory = this.collisionManager.createTrajectory(
 			this.localPlayer.position.clone(),
 			this.localPlayer.lookQuaternion.clone(),
 		);
 		console.log(trajectory);
+		// Emit to server so other clients receive the thrown item
 		this.networking.throwCurrentItem(trajectory);
+		// Add to local pending list so RemoteItemRenderer can create an immediate world item
+		// Create the list if it does not yet exist (lazy init for backward compatibility)
+		if (!this.pendingThrownItems) this.pendingThrownItems = [];
+		const heldIndex = this.localPlayer.heldItemIndex;
+		const invItem = this.localPlayer.inventory[heldIndex];
+		if (invItem) {
+			this.pendingThrownItems.push({
+				itemType: invItem.itemId, // itemId maps to itemType used by renderer
+				trajectory: trajectory,
+			});
+		}
+	}
+
+	// Pending thrown items waiting to be instantiated locally (processed by RemoteItemRenderer)
+	private pendingThrownItems: { itemType: number; trajectory: import('../input/Trajectory.ts').Trajectory }[] = [];
+
+	public getAndClearPendingThrownItems(): {
+		itemType: number;
+		trajectory: import('../input/Trajectory.ts').Trajectory;
+	}[] {
+		if (this.pendingThrownItems.length === 0) return [];
+		const copy = [...this.pendingThrownItems];
+		this.pendingThrownItems.length = 0;
+		return copy;
 	}
 
 	private static approachNumber(input: number, step: number, approach: number): number {

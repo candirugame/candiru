@@ -50,6 +50,10 @@ export class ItemBase {
 		this.init();
 	}
 
+	public getCreationTimestamp(): number {
+		return this.creationTimestamp;
+	}
+
 	protected init() {
 		// Init should be responsible for creating object and inventoryMenuObject
 		// For this class, we'll just create a simple cube
@@ -90,6 +94,10 @@ export class ItemBase {
 		}
 	}
 
+	public getTrajectoryDuration() {
+		return this.trajectoryDuration;
+	}
+
 	/** -- World Items -- */
 	protected addedToWorldScene: boolean = false;
 	protected worldPosition: THREE.Vector3 = new THREE.Vector3();
@@ -103,6 +111,8 @@ export class ItemBase {
 			this.scene.add(this.object);
 			this.addedToWorldScene = true;
 		}
+
+		this.object.visible = !(this.initTrajectory && this.playerIdsTrajectoryHiddenFrom?.includes(this.localPlayerId)); //hide if trajectory is active and local player is in the hidden list
 		if (this.initTrajectory) {
 			if (this.trajectoryDuration === undefined) {
 				this.trajectoryDuration = this.initTrajectory.getDuration();
@@ -136,8 +146,6 @@ export class ItemBase {
 				this.initTrajectory = undefined; //trajectory is done
 			}
 		}
-
-		this.object.visible = !(this.initTrajectory && this.playerIdsTrajectoryHiddenFrom?.includes(this.localPlayerId)); //hide if trajectory is active and local player is in the hidden list
 
 		// Idle animation
 		this.object.position.copy(this.worldPosition);
