@@ -626,6 +626,10 @@ export class Renderer {
 		}
 	}
 
+	public getLatency(): number {
+		return this.localPlayer.latency;
+	}
+
 	// Pending thrown items waiting to be instantiated locally (processed by RemoteItemRenderer)
 	private pendingThrownItems: { itemType: number; trajectory: import('../input/Trajectory.ts').Trajectory }[] = [];
 

@@ -103,7 +103,8 @@ export class RemoteItemRenderer {
 			const existsInNewData = newWorldItemsData.some((worldItemData) => worldItemData.id === item.id);
 			const createdOnClient = item.id > 1000000000; // Assuming server IDs are below this threshold
 			const createdRecently = item.item.getTrajectoryDuration() &&
-				(Date.now() / 1000 - item.item.getCreationTimestamp() < item.item.getTrajectoryDuration() + 0.1);
+				(Date.now() / 1000 - item.item.getCreationTimestamp() <
+					item.item.getTrajectoryDuration() + this.renderer.getLatency() / 1000 * 1.2 + 0.15);
 
 			const shouldKeep = existsInNewData || (createdOnClient && createdRecently);
 			if (!shouldKeep) item.item.destroy();
