@@ -422,7 +422,7 @@ export class Networking {
 		}
 	}
 
-	public throwCurrentItem(trajectory: Trajectory) {
+	public broadcastThrownItem(trajectory: Trajectory) {
 		this.socket.emit('throwItem', {
 			trajectory: trajectory,
 			playerID: this.localPlayer.id,

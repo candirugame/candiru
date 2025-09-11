@@ -612,17 +612,24 @@ export class Renderer {
 		);
 		console.log(trajectory);
 		// Emit to server so other clients receive the thrown item
-		this.networking.throwCurrentItem(trajectory);
-		// Add to local pending list so RemoteItemRenderer can create an immediate world item
-		// Create the list if it does not yet exist (lazy init for backward compatibility)
+		this.networking.broadcastThrownItem(trajectory);
+
 		if (!this.pendingThrownItems) this.pendingThrownItems = [];
 		const heldIndex = this.localPlayer.heldItemIndex;
 		const invItem = this.localPlayer.inventory[heldIndex];
 		if (invItem) {
+			// add to local item list picked up by remote item renderer on next frame
 			this.pendingThrownItems.push({
 				itemType: invItem.itemId, // itemId maps to itemType used by renderer
 				trajectory: trajectory,
 			});
+
+			//decrement item or overflow locally, will become synced on next remotePlayer update
+			if (invItem.overflow > 0) {
+				invItem.overflow--;
+			} else {
+				this.localPlayer.inventory.splice(heldIndex, 1);
+			}
 		}
 	}
 
