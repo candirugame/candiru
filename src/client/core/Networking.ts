@@ -202,8 +202,11 @@ export class Networking {
 			this.localPlayer.health = data.health;
 		}
 
-		// Optional fields: Only update if present in data
-		if (data.inventory !== undefined) {
+		// Optional fields: Only update if present in data and a throw hasn't occurred within last 0.15s
+		if (
+			data.inventory !== undefined &&
+			Date.now() / 1000 - (this.lastThrownItemTimestamp || 0) > this.localPlayer.latency / 1000 * 1.2 + 0.15
+		) {
 			if (this.isInventoryArray(data.inventory)) {
 				this.localPlayer.inventory = data.inventory;
 			} else {
@@ -422,12 +425,15 @@ export class Networking {
 		}
 	}
 
+	private lastThrownItemTimestamp: number;
+
 	public broadcastThrownItem(trajectory: Trajectory) {
 		this.socket.emit('throwItem', {
 			trajectory: trajectory,
 			playerID: this.localPlayer.id,
 			heldItemIndex: this.localPlayer.heldItemIndex,
 		});
+		this.lastThrownItemTimestamp = Date.now() / 1000;
 	}
 
 	public processWorldItemData() {
