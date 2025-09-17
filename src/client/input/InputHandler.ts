@@ -107,7 +107,7 @@ export class InputHandler {
 
 	public handleInputs() {
 		const deltaTime: number = this.clock.getDelta();
-		const deltaTimeAcceleration = this.localPlayer.acceleration * deltaTime;
+		const acceleration = this.localPlayer.acceleration;
 
 		let dist = 1;
 		let speedMultiplier: number = 1;
@@ -124,10 +124,10 @@ export class InputHandler {
 				this.updateGamepadInputArray(this.gamepad);
 				this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
 				if (Math.abs(this.gamepadInputs.leftJoyX) >= .1) {
-					this.inputX += deltaTimeAcceleration * this.gamepadInputs.leftJoyX;
+					this.inputX += acceleration * this.gamepadInputs.leftJoyX;
 				}
 				if (Math.abs(this.gamepadInputs.leftJoyY) >= .1) {
-					this.inputZ += deltaTimeAcceleration * this.gamepadInputs.leftJoyY;
+					this.inputZ += acceleration * this.gamepadInputs.leftJoyY;
 				}
 				const vectorLength = Math.sqrt(
 					(this.gamepadInputs.leftJoyX * this.gamepadInputs.leftJoyX) +
@@ -151,18 +151,18 @@ export class InputHandler {
 		if (Math.hypot(this.touchJoyY, this.touchJoyX) > 0.1) {
 			const touchVectorLength = Math.hypot(this.touchJoyX, this.touchJoyY);
 			speedMultiplier = Math.min(Math.max(touchVectorLength, 0), 1);
-			this.inputX += deltaTimeAcceleration * this.touchJoyX;
-			this.inputZ += deltaTimeAcceleration * this.touchJoyY;
+			this.inputX += acceleration * this.touchJoyX;
+			this.inputZ += acceleration * this.touchJoyY;
 		}
 
 		const touchSensitivity = 0.03; // Adjust sensitivity as needed
 		this.gamepadEuler.setFromQuaternion(this.localPlayer.lookQuaternion);
 
 		if (!this.localPlayer.chatActive && !this.nameSettingActive) {
-			if (this.getKey('w')) this.inputZ -= deltaTimeAcceleration;
-			if (this.getKey('s')) this.inputZ += deltaTimeAcceleration;
-			if (this.getKey('a')) this.inputX -= deltaTimeAcceleration;
-			if (this.getKey('d')) this.inputX += deltaTimeAcceleration;
+			if (this.getKey('w')) this.inputZ -= acceleration;
+			if (this.getKey('s')) this.inputZ += acceleration;
+			if (this.getKey('a')) this.inputX -= acceleration;
+			if (this.getKey('d')) this.inputX += acceleration;
 			const aimAdjust = this.calculateAimAssist();
 			if (this.getKey('arrowright')) {
 				this.gamepadEuler.y -= SettingsManager.settings.controllerSense * deltaTime * aimAdjust * 4 /
@@ -192,23 +192,20 @@ export class InputHandler {
 
 		switch (this.inputZ - oldInputZ) {
 			case 0:
-				this.inputZ = InputHandler.approachZero(this.inputZ, deltaTimeAcceleration);
+				this.inputZ = InputHandler.approachZero(this.inputZ, acceleration);
 		}
 
 		switch (this.inputX - oldInputX) {
 			case 0:
-				this.inputX = InputHandler.approachZero(this.inputX, deltaTimeAcceleration);
+				this.inputX = InputHandler.approachZero(this.inputX, acceleration);
 		}
 
 		if (this.localPlayer.health <= 0) dist = 0; //don't allow movement when health = 0
-
-		this.prevInputVelocity.copy(this.localPlayer.inputVelocity);
 
 		this.localPlayer.inputVelocity.z = dist * this.inputZ;
 		this.localPlayer.inputVelocity.x = dist * this.inputX;
 		this.localPlayer.inputVelocity.y = 0;
 		this.localPlayer.inputVelocity.clampLength(0, this.localPlayer.speed * speedMultiplier);
-		this.localPlayer.inputVelocity.y = this.prevInputVelocity.y;
 		this.inputZ = this.localPlayer.inputVelocity.z;
 		this.inputX = this.localPlayer.inputVelocity.x;
 

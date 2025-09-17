@@ -30,6 +30,7 @@ export class CollisionManager {
 	private coyoteTime: number;
 	private jumped: boolean;
 	private collided: boolean;
+	private readonly velocity: THREE.Vector3;
 
 	// Temporary objects for prop collision calculations to avoid re-allocation
 	private readonly tempLocalSphere: THREE.Sphere;
@@ -48,6 +49,7 @@ export class CollisionManager {
 		this.coyoteTime = 0;
 		this.jumped = false;
 		this.collided = false;
+		this.velocity = new THREE.Vector3(0, 0, 0);
 
 		// Initialize temporary objects for prop collisions
 		this.tempLocalSphere = new THREE.Sphere(new THREE.Vector3(), this.colliderSphere.radius);
@@ -82,12 +84,12 @@ export class CollisionManager {
 	private physics(localPlayer: Player, deltaTime: number) {
 		this.prevPosition.copy(localPlayer.position);
 		const jump: boolean = this.inputHandler.jump;
-
-		if (localPlayer.doPhysics) localPlayer.gravity += deltaTime * -30;
-		localPlayer.inputVelocity.y += localPlayer.gravity;
-		// Note: This averaging of inputVelocity.y might be specific smoothing; kept as is.
-		localPlayer.inputVelocity.y = (localPlayer.inputVelocity.y + this.inputHandler.prevInputVelocity.y) * .25;
-		localPlayer.position.add(localPlayer.inputVelocity.clone().multiplyScalar(deltaTime));
+		if (this.coyoteTime > 0) this.velocity.add(localPlayer.inputVelocity.clone().multiplyScalar(deltaTime * 8));
+		else this.velocity.add(localPlayer.inputVelocity.clone().multiplyScalar(deltaTime * 11));
+		this.velocity.y += -20 * deltaTime;
+		if (Math.abs(this.velocity.x) < .0000001) this.velocity.x = 0;
+		if (Math.abs(this.velocity.z) < .0000001) this.velocity.z = 0;
+		localPlayer.position.add(this.velocity.clone().multiplyScalar(deltaTime));
 
 		this.collided = false; // Reset collided status for this physics step
 
@@ -116,11 +118,13 @@ export class CollisionManager {
 
 							if (angle >= CollisionManager.maxAngle) { // Ground collision
 								localPlayer.position.addScaledVector(this.deltaVec, depth);
-								localPlayer.inputVelocity.y = 0;
-								localPlayer.gravity = 0;
+								this.velocity.y = 0;
 								this.coyoteTime = 0;
 								this.collided = true;
-							} else { // Wall/ceiling collision
+							} else if (angle <= -.75) { // Ceiling
+								localPlayer.position.addScaledVector(this.deltaVec, depth);
+								this.velocity.y = 0;
+							} else { // Wall
 								localPlayer.position.addScaledVector(this.deltaVec, depth);
 							}
 							// Update colliderSphere center for subsequent checks within this shapecast
@@ -177,15 +181,17 @@ export class CollisionManager {
 
 									const angle = worldTriNormal.dot(this.upVector);
 
-									if (angle >= CollisionManager.maxAngle) { // Ground-like collision with prop
+									// Prop collisions
+									if (angle >= CollisionManager.maxAngle) { // Ground collision
 										localPlayer.position.addScaledVector(worldPenetrationVec, depth);
-										localPlayer.inputVelocity.y = 0;
-										localPlayer.gravity = 0;
+										this.velocity.y = 0;
 										this.coyoteTime = 0;
 										this.collided = true;
-									} else { // Wall/ceiling-like collision with prop
+									} else if (angle <= -.75) { // Ceiling
 										localPlayer.position.addScaledVector(worldPenetrationVec, depth);
-										// Optionally, add sliding logic here for walls
+										this.velocity.y = 0;
+									} else { // Wall
+										localPlayer.position.addScaledVector(worldPenetrationVec, depth);
 									}
 									// Update player's local position for next triangle check in this shapecast
 									this.tempLocalSphere.center.copy(localPlayer.position).applyMatrix4(this.worldToLocalMatrix);
@@ -203,14 +209,18 @@ export class CollisionManager {
 
 		// Coyote time, jump, and velocity calculation logic
 		if (!this.collided) { // If not collided with map OR any prop
+			this.velocity.x *= Math.pow(.95, deltaTime * 120);
+			this.velocity.z *= Math.pow(.95, deltaTime * 120);
 			this.coyoteTime += deltaTime;
-			if (jump && this.coyoteTime < 6 / 60 && !this.jumped) {
-				localPlayer.gravity = 8;
+			if (jump && this.coyoteTime < 12 / 120 && !this.jumped) {
+				this.velocity.y = 5;
 				this.jumped = true;
 			}
 		} else { // Collided with map OR a prop
+			this.velocity.x *= Math.pow(.90, deltaTime * 120);
+			this.velocity.z *= Math.pow(.90, deltaTime * 120);
 			if (jump) { // Allow jump if on ground (map or prop)
-				localPlayer.gravity = 8;
+				this.velocity.y = 5;
 				// this.jumped = true; // If you want to allow multiple jumps while holding space on ground
 			} else {
 				this.jumped = false;
@@ -245,5 +255,9 @@ export class CollisionManager {
 
 	public isPlayerInAir(): boolean {
 		return !this.collided; // Player is in air if no collision occurred in the last physics step
+	}
+
+	public applyVelocity(vector: THREE.Vector3): void {
+		this.velocity.add(vector);
 	}
 }
