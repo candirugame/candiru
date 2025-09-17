@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Renderer } from './Renderer.ts';
+import { Renderer } from './Renderer';
 import { InputHandler } from '../input/InputHandler.ts';
 import { BananaGun } from '../items/BananaGun.ts';
 import { HeldItemInput } from '../input/HeldItemInput.ts';
