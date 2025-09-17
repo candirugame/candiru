@@ -66,6 +66,10 @@ export class ChatManager {
 						}
 						//this.whisperChatMessage(message + ' -> cleared chat', socket);
 					},
+					playercount: () => {
+						const players = this.playerManager.getAllPlayers();
+						this.whisperChatMessage(message + ` -> ${players.length} players online`, socket);
+					}
 				};
 
 				if (command && commandHandlers[command]) {

@@ -1540,6 +1540,7 @@ export class ChatOverlay {
 			this.localPlayer.chatMsg = '';
 			this.localPlayer.chatActive = false;
 			this.nameSettingActive = false;
+			
 		}
 
 		if ((this.localPlayer.chatActive) && e.key.length === 1 && this.localPlayer.chatMsg.length < 300) {
