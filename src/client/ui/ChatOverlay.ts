@@ -277,7 +277,7 @@ export class ChatOverlay {
 		this.renderGameText();
 		this.renderEventMessages();
 		this.renderDebugText();
-		if (this.inputHandler.getKey('tab')) {
+		if (this.inputHandler.getKey('tab') && !this.localPlayer.chatActive && !this.localPlayer.chatMsg.startsWith('/')) {
 			this.renderPlayerList();
 		}
 		this.renderEvil();
