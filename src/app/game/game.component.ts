@@ -12,6 +12,10 @@ export class GameComponent {
 	@Output()
 	pointerLockChange = new EventEmitter<boolean>();
 	private game?: Game;
+	// Expose the ChatOverlay instance for menu logic (a concoction from chatgpt that works somehow)
+	get chatOverlay(): import('../../client/ui/ChatOverlay').ChatOverlay | undefined {
+		return this.game ? (this.game as any).chatOverlay : undefined;
+	}
 	private initialized = false;
 
 	// Expose the Networking instance

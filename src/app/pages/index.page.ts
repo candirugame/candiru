@@ -10,6 +10,8 @@ import {
 import { GameComponent } from '../game/game.component.ts';
 import { MenuComponent } from '../ui/menu.component.ts';
 import { CommonModule } from '@angular/common';
+import { Player } from 'src/shared/Player';
+import { ChatOverlay } from 'src/client/ui/ChatOverlay.js';
 
 @Component({
 	selector: 'app-home',
@@ -100,10 +102,9 @@ export default class HomeComponent implements AfterViewInit {
 	gameCount = 1;
 	games: GameComponent[] = [];
 	activeGameIndex = 0;
-
 	@ViewChildren('gameContainers')
 	gameContainers!: QueryList<ElementRef>;
-
+	
 	constructor(private cdr: ChangeDetectorRef) {}
 
 	ngAfterViewInit() {
@@ -172,19 +173,32 @@ export default class HomeComponent implements AfterViewInit {
 			this.showMenu = true;
 			document.exitPointerLock();
 		}
+		if (event.key === '/' || event.key === 't') {
+			document.exitPointerLock();
+		}
+		if (event.key === 'Enter') {
+			document.body.requestPointerLock();
+		}
 
 		// WASD locks pointer if menu is visible
 		if (['w', 'a', 's', 'd'].includes(event.key.toLowerCase()) && this.showMenu) {
 			this.showMenu = false;
 			document.body.requestPointerLock();
+
 		}
 	}
 
 	// Update pointer lock handler
 	onPointerLockChange(isLocked: boolean) {
-		this.showMenu = !isLocked;
-		if (!isLocked) {
-			document.exitPointerLock();
+		// Assume you have a reference to the ChatOverlay instance for the active game
+		// For example, if you store it as this.chatOverlay or this.games[this.activeGameIndex]?.chatOverlay
+		const chatOverlay = this.games[this.activeGameIndex]?.chatOverlay;
+		const chatActive = chatOverlay?.localPlayer?.chatActive;
+		if (!chatActive) {
+			this.showMenu = !isLocked;
+			if (!isLocked) {
+				document.exitPointerLock();
+			}
 		}
 	}
 

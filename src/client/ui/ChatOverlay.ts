@@ -1536,6 +1536,7 @@ export class ChatOverlay {
 			this.nameSettingActive = false;
 		}
 
+		// tbh I don't think this does anything but i don't fully know what I'm doing so don't take my word for it -davidpopesc
 		if (e.key === 'Escape' || e.key === 'Enter') {
 			this.localPlayer.chatMsg = '';
 			this.localPlayer.chatActive = false;
