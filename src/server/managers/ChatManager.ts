@@ -28,55 +28,55 @@ export class ChatManager {
 		const args = message.slice(1).split(' ');
 		const command = args.shift()?.toLowerCase();
 
-				const commandHandlers: Record<string, () => void> = {
-					help: () => {
-						this.whisperChatMessage(message + ` -> nah i'm good`, socket);
-					},
-					kill: () => {
-						const player = this.playerManager.getPlayerById(playerId);
-						if (player) {
-							this.playerManager.respawnPlayer(player);
-						}
-						this.broadcastEventMessage(`&c${player?.name} ^b ${player?.name}`);
-					},
-					thumbsup: () => {
-						this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👍`);
-					},
-					thumbsdown: () => {
-						this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👎`);
-					},
-					octopus: () => {
-						this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
-					},
-					goblin: () => {
-						let goblin = '';
-						for (let i = 0; i < 50; i++) goblin += '^a';
-						for (let i = 0; i < 50; i++) this.whisperChatMessage(goblin, socket);
-					},
-					ping: () => {
-						this.whisperChatMessage(message + ' -> pong!', socket);
-					},
-					version: () => {
-						this.whisperChatMessage(message + ` -> candiru ${DataValidator.getServerVersion()}`, socket);
-					},
-					clear: () => {
-						for (let i = 0; i < 25; i++) {
-							this.whisperChatMessage(' ', socket);
-							this.whisperEventMessage(' ', socket);
-						}
-						//this.whisperChatMessage(message + ' -> cleared chat', socket);
-					},
-					playercount: () => {
-						const players = this.playerManager.getAllPlayers();
-						this.whisperChatMessage(message + ` -> ${players.length} players online`, socket);
-					}
-				};
-
-				if (command && commandHandlers[command]) {
-					commandHandlers[command]();
-				} else {
-					this.whisperChatMessage(message + ' -> unknown command', socket);
+		const commandHandlers: Record<string, () => void> = {
+			help: () => {
+				this.whisperChatMessage(message + ` -> nah i'm good`, socket);
+			},
+			kill: () => {
+				const player = this.playerManager.getPlayerById(playerId);
+				if (player) {
+					this.playerManager.respawnPlayer(player);
 				}
+				this.broadcastEventMessage(`&c${player?.name} ^b ${player?.name}`);
+			},
+			thumbsup: () => {
+				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👍`);
+			},
+			thumbsdown: () => {
+				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👎`);
+			},
+			octopus: () => {
+				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
+			},
+			goblin: () => {
+				let goblin = '';
+				for (let i = 0; i < 50; i++) goblin += '^a';
+				for (let i = 0; i < 50; i++) this.whisperChatMessage(goblin, socket);
+			},
+			ping: () => {
+				this.whisperChatMessage(message + ' -> pong!', socket);
+			},
+			version: () => {
+				this.whisperChatMessage(message + ` -> candiru ${DataValidator.getServerVersion()}`, socket);
+			},
+			clear: () => {
+				for (let i = 0; i < 25; i++) {
+					this.whisperChatMessage(' ', socket);
+					this.whisperEventMessage(' ', socket);
+				}
+				//this.whisperChatMessage(message + ' -> cleared chat', socket);
+			},
+			playercount: () => {
+				const players = this.playerManager.getAllPlayers();
+				this.whisperChatMessage(message + ` -> ${players.length} players online`, socket);
+			},
+		};
+
+		if (command && commandHandlers[command]) {
+			commandHandlers[command]();
+		} else {
+			this.whisperChatMessage(message + ' -> unknown command', socket);
+		}
 
 		return true;
 	}

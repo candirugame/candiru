@@ -1,6 +1,7 @@
 // Utility for command autocomplete and filtering
 export function getMatchingCommands(commandManager: any, input: string): string[] {
-	const allCommands: string[] = commandManager['commands']?.map((c: { getCmdName: () => string }) => c.getCmdName()) || [];
+	const allCommands: string[] = commandManager['commands']?.map((c: { getCmdName: () => string }) => c.getCmdName()) ||
+		[];
 	if (!input || input === '/') {
 		return allCommands.sort();
 	}

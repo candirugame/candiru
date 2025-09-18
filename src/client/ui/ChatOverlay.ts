@@ -48,13 +48,15 @@ export class ChatOverlay {
 	// Show a popup with all or filtered commands above the chat line
 	private showCommandListPopup(filter: string) {
 		// Get all command names from CommandManager
-		const allCommands: string[] = this.commandManager['commands'].map((c: { getCmdName: () => string }) => c.getCmdName());
+		const allCommands: string[] = this.commandManager['commands'].map((c: { getCmdName: () => string }) =>
+			c.getCmdName()
+		);
 		let matches: string[];
 		if (!filter || filter === '/') {
 			matches = allCommands.sort();
 		} else {
 			const prefix = filter.slice(1).toLowerCase();
-			matches = allCommands.filter(cmd => cmd.startsWith(prefix)).sort();
+			matches = allCommands.filter((cmd) => cmd.startsWith(prefix)).sort();
 		}
 		if (!matches.length) return;
 		// Remove any existing popup
@@ -74,7 +76,7 @@ export class ChatOverlay {
 		popup.style.fontFamily = 'monospace';
 		popup.style.fontSize = '15px';
 		popup.style.zIndex = '9999';
-		popup.innerHTML = matches.map(cmd => `<span style='margin:0 8px;'>/${cmd}</span>`).join(' ');
+		popup.innerHTML = matches.map((cmd) => `<span style='margin:0 8px;'>/${cmd}</span>`).join(' ');
 		document.body.appendChild(popup);
 		// Remove popup after 2.5s
 		if (this.commandPopupTimeout) clearTimeout(this.commandPopupTimeout);
@@ -1506,7 +1508,6 @@ export class ChatOverlay {
 	}
 
 	private onKeyDown(e: KeyboardEvent) {
-
 		// TAB AUTOCOMPLETE: Show command popup for / or /partial
 		if (e.key === 'Tab' && this.localPlayer.chatActive && this.localPlayer.chatMsg.startsWith('/')) {
 			e.preventDefault();
@@ -1541,7 +1542,6 @@ export class ChatOverlay {
 			this.localPlayer.chatMsg = '';
 			this.localPlayer.chatActive = false;
 			this.nameSettingActive = false;
-			
 		}
 
 		if ((this.localPlayer.chatActive) && e.key.length === 1 && this.localPlayer.chatMsg.length < 300) {

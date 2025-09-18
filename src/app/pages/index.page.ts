@@ -104,7 +104,7 @@ export default class HomeComponent implements AfterViewInit {
 	activeGameIndex = 0;
 	@ViewChildren('gameContainers')
 	gameContainers!: QueryList<ElementRef>;
-	
+
 	constructor(private cdr: ChangeDetectorRef) {}
 
 	ngAfterViewInit() {
@@ -184,7 +184,6 @@ export default class HomeComponent implements AfterViewInit {
 		if (['w', 'a', 's', 'd'].includes(event.key.toLowerCase()) && this.showMenu) {
 			this.showMenu = false;
 			document.body.requestPointerLock();
-
 		}
 	}
 
