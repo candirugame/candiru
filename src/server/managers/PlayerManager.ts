@@ -219,11 +219,12 @@ export class PlayerManager {
 
 				const itemAge = currentTime - item.creationTimestamp;
 				if (config.items.rotTakesDurability && item.lifetime) {
-					item.durability = 1 - (itemAge / item.lifetime);
+					item.durability = 1 - (itemAge / item.lifetime) + (item.durabilityOffset ?? 0);
 				}
 				if (config.items.shotsTakeDurability && item.shotsAvailable) {
 					item.durability -= item.shotsFired / item.shotsAvailable;
 				}
+				// item.durability += item.durabilityOffset ?? 0;
 			}
 		}
 	}

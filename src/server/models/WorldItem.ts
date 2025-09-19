@@ -10,6 +10,7 @@ export class WorldItem {
 		public itemType: number,
 		public initTrajectory?: Trajectory,
 		public playerIdsTrajectoryHiddenFrom?: number[],
+		public durabilityOffset?: number,
 	) {
 		this.id = Math.floor(Math.random() * 100000) + 1;
 		this.creationTimestamp = Date.now() / 1000;

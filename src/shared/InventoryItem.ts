@@ -7,4 +7,5 @@ export interface InventoryItem {
 
 	lifetime?: number;
 	shotsAvailable?: number;
+	durabilityOffset?: number; // item can be created pre-damaged without shifting creationTime or shotsFired
 }

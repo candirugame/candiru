@@ -134,12 +134,15 @@ export class GameServer {
 						}
 						if (!parsedThrow.trajectory || !parsedThrow.trajectory.points) return;
 						const finalPosition: Vector3 = parsedThrow.trajectory.points[parsedThrow.trajectory.points.length - 1];
-						const itemId = this.playerManager.getPlayerById(parsedThrow.playerID)?.inventory[parsedThrow.heldItemIndex]
-							.itemId;
+						const item = this.playerManager.getPlayerById(parsedThrow.playerID)?.inventory[parsedThrow.heldItemIndex];
+						const itemId = item?.itemId;
+
 						if (!finalPosition || !itemId) return;
+						const durabilityOffset = item?.overflow > 0 ? 0 : item?.durability - 1 || 0;
+						console.log('durabilityOffset: ' + durabilityOffset);
 
 						this.itemManager.pushItem(
-							new WorldItem(finalPosition, itemId, parsedThrow.trajectory, [parsedThrow.playerID]),
+							new WorldItem(finalPosition, itemId, parsedThrow.trajectory, [parsedThrow.playerID], durabilityOffset),
 						);
 						this.playerManager.throwItem(parsedThrow.playerID, parsedThrow.heldItemIndex);
 					} catch (err) {
