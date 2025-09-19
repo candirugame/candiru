@@ -610,7 +610,7 @@ export class Renderer {
 			this.localPlayer.position.clone(),
 			this.localPlayer.lookQuaternion.clone(),
 		);
-		console.log(trajectory);
+		//		console.log(trajectory);
 		// Emit to server so other clients receive the thrown item
 		this.networking.broadcastThrownItem(trajectory);
 

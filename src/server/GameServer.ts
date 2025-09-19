@@ -102,7 +102,7 @@ export class GameServer {
 
 				socket.on('shotGroupAdded', (data) => {
 					try {
-						console.log('shotGroupAdded event received:', data);
+						//	console.log('shotGroupAdded event received:', data);
 						this.playerManager.handleShotGroupAdded(data.id, data.heldItemIndex);
 					} catch (err) {
 						console.log(`Error handling damage shotGroupAdded:`, err);
@@ -139,7 +139,6 @@ export class GameServer {
 
 						if (!finalPosition || !itemId) return;
 						const durabilityOffset = item?.overflow > 0 ? 0 : item?.durability - 1 || 0;
-						console.log('durabilityOffset: ' + durabilityOffset);
 
 						this.itemManager.pushItem(
 							new WorldItem(finalPosition, itemId, parsedThrow.trajectory, [parsedThrow.playerID], durabilityOffset),

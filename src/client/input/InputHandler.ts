@@ -280,7 +280,6 @@ export class InputHandler {
 
 			if (key === 'r') {
 				this.renderer.throwCurrentItem();
-				console.log('r pressed');
 			}
 		}
 	}
