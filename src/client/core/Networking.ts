@@ -7,11 +7,20 @@ import type { InventoryItem } from '../../shared/InventoryItem.ts';
 import { Peer } from '../../server/models/Peer.ts';
 import { PropData } from '../../shared/Prop.ts';
 import { clearCacheAndReload } from './cache.ts';
+import { Trajectory } from '../input/Trajectory.ts';
 
 interface WorldItem {
 	vector: { x: number; y: number; z: number };
 	id: number;
 	itemType: number;
+	// Optional initial trajectory data serialized from server WorldItem.initTrajectory
+	initTrajectory?: {
+		points: { x: number; y: number; z: number }[];
+		dt: number;
+		hits: { point: { x: number; y: number; z: number }; normal: { x: number; y: number; z: number }; index: number }[];
+	};
+	// List of player IDs that should not see the trajectory phase of this item
+	playerIdsTrajectoryHiddenFrom?: number[];
 }
 
 export interface ServerInfo {
@@ -193,8 +202,11 @@ export class Networking {
 			this.localPlayer.health = data.health;
 		}
 
-		// Optional fields: Only update if present in data
-		if (data.inventory !== undefined) {
+		// Optional fields: Only update if present in data and a throw hasn't occurred within last 0.15s
+		if (
+			data.inventory !== undefined &&
+			Date.now() / 1000 - (this.lastThrownItemTimestamp || 0) > this.localPlayer.latency / 1000 * 1.2 + 0.15
+		) {
 			if (this.isInventoryArray(data.inventory)) {
 				this.localPlayer.inventory = data.inventory;
 			} else {
@@ -411,6 +423,17 @@ export class Networking {
 			}
 			this.lastLatencyTestGotResponse = false;
 		}
+	}
+
+	private lastThrownItemTimestamp: number;
+
+	public broadcastThrownItem(trajectory: Trajectory) {
+		this.socket.emit('throwItem', {
+			trajectory: trajectory,
+			playerID: this.localPlayer.id,
+			heldItemIndex: this.localPlayer.heldItemIndex,
+		});
+		this.lastThrownItemTimestamp = Date.now() / 1000;
 	}
 
 	public processWorldItemData() {

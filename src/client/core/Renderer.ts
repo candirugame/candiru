@@ -583,6 +583,7 @@ export class Renderer {
 
 	public setCollisionManager(collisionManager: CollisionManager) {
 		this.collisionManager = collisionManager;
+		this.collisionManager.setParticleSystem(this.particleSystem);
 	}
 
 	private onWindowResize() {
@@ -601,6 +602,52 @@ export class Renderer {
 		this.screenPixelsInGamePixel = containerHeight / 200;
 		this.heldItemCamera.aspect = containerWidth / containerHeight;
 		this.heldItemCamera.updateProjectionMatrix();
+	}
+
+	public throwCurrentItem() {
+		if (this.localPlayer.inventory.length == 0) return;
+		const trajectory = this.collisionManager.createTrajectory(
+			this.localPlayer.position.clone(),
+			this.localPlayer.lookQuaternion.clone(),
+		);
+		//		console.log(trajectory);
+		// Emit to server so other clients receive the thrown item
+		this.networking.broadcastThrownItem(trajectory);
+
+		if (!this.pendingThrownItems) this.pendingThrownItems = [];
+		const heldIndex = this.localPlayer.heldItemIndex;
+		const invItem = this.localPlayer.inventory[heldIndex];
+		if (invItem) {
+			// add to local item list picked up by remote item renderer on next frame
+			this.pendingThrownItems.push({
+				itemType: invItem.itemId, // itemId maps to itemType used by renderer
+				trajectory: trajectory,
+			});
+
+			//decrement item or overflow locally, will become synced on next remotePlayer update
+			if (invItem.overflow > 0) {
+				invItem.overflow--;
+			} else {
+				this.localPlayer.inventory.splice(heldIndex, 1);
+			}
+		}
+	}
+
+	public getLatency(): number {
+		return this.localPlayer.latency;
+	}
+
+	// Pending thrown items waiting to be instantiated locally (processed by RemoteItemRenderer)
+	private pendingThrownItems: { itemType: number; trajectory: import('../input/Trajectory.ts').Trajectory }[] = [];
+
+	public getAndClearPendingThrownItems(): {
+		itemType: number;
+		trajectory: import('../input/Trajectory.ts').Trajectory;
+	}[] {
+		if (this.pendingThrownItems.length === 0) return [];
+		const copy = [...this.pendingThrownItems];
+		this.pendingThrownItems.length = 0;
+		return copy;
 	}
 
 	private static approachNumber(input: number, step: number, approach: number): number {

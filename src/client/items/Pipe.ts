@@ -1,5 +1,6 @@
 import { ItemBase, ItemType } from './ItemBase.ts';
 import { HeldItemInput } from '../input/HeldItemInput.ts';
+import { Trajectory } from '../input/Trajectory.ts';
 
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
@@ -25,11 +26,35 @@ export class Pipe extends ItemBase {
 	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, shotHanlder: ShotHandler, index: number, itemType: ItemType) {
+	constructor(
+		renderer: Renderer,
+		shotHanlder: ShotHandler,
+		index: number,
+		itemType: ItemType,
+		initTrajectory?: Trajectory,
+		playerIdsTrajectoryHiddenFrom?: number[],
+		localPlayerId?: number,
+	) {
 		if (itemType === ItemType.WorldItem) {
-			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
+			super(
+				itemType,
+				renderer.getEntityScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		} else {
-			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
+			super(
+				itemType,
+				renderer.getHeldItemScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		}
 		this.shotHandler = shotHanlder;
 		this.lastInput = new HeldItemInput();

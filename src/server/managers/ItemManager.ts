@@ -93,14 +93,19 @@ export class ItemManager {
 							creationTimestamp: Date.now() / 1000,
 							lifetime,
 							shotsAvailable,
-							overflow: 0, //first item of this type added
+							overflow: 0, //first item of this type added,
+							durabilityOffset: item.durabilityOffset || 0,
 						});
 						shouldPickup = true;
 					} else {
 						// If the item already exists, just increase the reserve count
 						const existingItem = player.inventory.find((inv) => inv.itemId === id);
 						if (existingItem) {
-							existingItem.overflow += 1; // Increase reserve count
+							existingItem.durabilityOffset += item.durabilityOffset + 1 || 1;
+							if (existingItem.durabilityOffset + existingItem.durability > 1) {
+								existingItem.durabilityOffset -= 1;
+								existingItem.overflow += 1;
+							}
 							shouldPickup = true;
 						}
 					}

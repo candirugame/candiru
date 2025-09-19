@@ -219,13 +219,24 @@ export class PlayerManager {
 
 				const itemAge = currentTime - item.creationTimestamp;
 				if (config.items.rotTakesDurability && item.lifetime) {
-					item.durability = 1 - (itemAge / item.lifetime);
+					item.durability = 1 - (itemAge / item.lifetime) + (item.durabilityOffset ?? 0);
 				}
 				if (config.items.shotsTakeDurability && item.shotsAvailable) {
 					item.durability -= item.shotsFired / item.shotsAvailable;
 				}
+				// item.durability += item.durabilityOffset ?? 0;
 			}
 		}
+	}
+
+	public throwItem(playerId: number, heldItemIndex: number) {
+		const player = this.getPlayerById(playerId);
+		if (!player) return;
+		const item = player.inventory[heldItemIndex];
+		if (!item.itemId) return;
+
+		if (item.overflow > 0) item.overflow--;
+		else player.inventory.splice(heldItemIndex, 1);
 	}
 
 	private getRandomSpawnPoint(): { vec: THREE.Vector3; quaternion: THREE.Quaternion } {

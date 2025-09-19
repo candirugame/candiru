@@ -14,6 +14,8 @@ import { CustomServer } from '../shared/messages.ts';
 import { PeerManager } from './managers/PeerManager.ts';
 import { PropManager } from './managers/PropManager.ts';
 import { setupDevClientVersion } from './dev.ts';
+import { WorldItem } from './models/WorldItem.ts';
+import { Vector3 } from 'three';
 
 export class GameServer {
 	router: Router;
@@ -100,7 +102,7 @@ export class GameServer {
 
 				socket.on('shotGroupAdded', (data) => {
 					try {
-						console.log('shotGroupAdded event received:', data);
+						//	console.log('shotGroupAdded event received:', data);
 						this.playerManager.handleShotGroupAdded(data.id, data.heldItemIndex);
 					} catch (err) {
 						console.log(`Error handling damage shotGroupAdded:`, err);
@@ -120,6 +122,30 @@ export class GameServer {
 						this.propManager.handleDamageRequest(data);
 					} catch (err) {
 						console.log(`Error handling PROP damage request:`, err);
+					}
+				});
+
+				socket.on('throwItem', (unparsedData) => {
+					try {
+						const { data: parsedThrow, error } = DataValidator.validateThrowItem(unparsedData);
+						if (error) {
+							console.log('Invalid throwItem data received:', error);
+							return;
+						}
+						if (!parsedThrow.trajectory || !parsedThrow.trajectory.points) return;
+						const finalPosition: Vector3 = parsedThrow.trajectory.points[parsedThrow.trajectory.points.length - 1];
+						const item = this.playerManager.getPlayerById(parsedThrow.playerID)?.inventory[parsedThrow.heldItemIndex];
+						const itemId = item?.itemId;
+
+						if (!finalPosition || !itemId) return;
+						const durabilityOffset = item?.overflow > 0 ? 0 : item?.durability - 1 || 0;
+
+						this.itemManager.pushItem(
+							new WorldItem(finalPosition, itemId, parsedThrow.trajectory, [parsedThrow.playerID], durabilityOffset),
+						);
+						this.playerManager.throwItem(parsedThrow.playerID, parsedThrow.heldItemIndex);
+					} catch (err) {
+						console.log(`Error handling item throw:`, err);
 					}
 				});
 

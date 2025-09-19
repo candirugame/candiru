@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { Peer } from '../server/models/Peer.ts';
 import { PropData } from './Prop.ts';
 import { PropDamageRequest } from '../server/models/PropDamageRequest.ts';
+import { Trajectory } from '../client/input/Trajectory.ts';
 
 export type CustomServer = Server<ClientToServerEvents, ServerToClientEvents>;
 export type CustomSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -48,4 +49,5 @@ interface ClientToServerEvents {
 	applyPropDamage: (damage: PropDamageRequest) => void;
 	latencyTest: () => void;
 	getServerList: (callback: (servers: Peer[]) => void) => void;
+	throwItem: (data: { trajectory: Trajectory; playerID: number; heldItemIndex: number }) => void;
 }

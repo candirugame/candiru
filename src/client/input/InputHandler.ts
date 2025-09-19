@@ -277,6 +277,10 @@ export class InputHandler {
 			if (key === 'p') {
 				this.renderer.createScreenshot();
 			}
+
+			if (key === 'r') {
+				this.renderer.throwCurrentItem();
+			}
 		}
 	}
 
