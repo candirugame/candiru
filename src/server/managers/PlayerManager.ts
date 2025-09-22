@@ -215,6 +215,7 @@ export class PlayerManager {
 					item.creationTimestamp = currentTime;
 					item.shotsFired = 0;
 					item.overflow -= 1;
+					item.durabilityOffset = 0;
 				}
 
 				const itemAge = currentTime - item.creationTimestamp;
