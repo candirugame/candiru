@@ -1150,7 +1150,7 @@ export class ChatOverlay {
 
 			const barX = baseBarX - s * (barWidth + gap);
 
-			if (segValue > 0.01) {
+			if (segValue > 0.01 || s === 0) {
 				// Background track
 				ctx.fillStyle = 'rgba(0,0,0,0.35)';
 				ctx.fillRect(barX - 1, barTop - 1, barWidth + 2, barHeight + 2);
