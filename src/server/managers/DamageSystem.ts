@@ -64,10 +64,11 @@ export class DamageSystem {
 			const killedName = targetPlayer.name;
 
 			let killType = ' ^b^b ';
-			if (localPlayer.inventory[localPlayer.heldItemIndex] === 1) killType = ' ^c^d '; //banana
-			if (localPlayer.inventory[localPlayer.heldItemIndex] === 2) killType = ' ^e^f '; //fish
-			if (localPlayer.inventory[localPlayer.heldItemIndex] === 3) killType = ' ^i^j '; //pipe
-			if (localPlayer.inventory[localPlayer.heldItemIndex] === 5) {
+			const heldItem = localPlayer.inventory[localPlayer.heldItemIndex];
+			if (heldItem && heldItem.itemId === 1) killType = ' ^c^d '; //banana
+			if (heldItem && heldItem.itemId === 2) killType = ' ^e^f '; //fish
+			if (heldItem && heldItem.itemId === 3) killType = ' ^i^j '; //pipe
+			if (heldItem && heldItem.itemId === 5) {
 				killType = data.wasHeadshot ? ' ^g^h ^b ' : ' ^g^h '; //sniper headshot:not
 			}
 

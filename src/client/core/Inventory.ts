@@ -26,7 +26,7 @@ export class Inventory {
 	private camera: THREE.Camera;
 	private lastInventoryTouchTime: number = 0;
 	private localPlayer: Player;
-	private oldInventory: number[] = [];
+	private oldInventory: { itemId: number; durability: number }[] = [];
 	private lastShootTime: number = 0;
 
 	private oldDownPressed: boolean = false;
@@ -56,16 +56,28 @@ export class Inventory {
 
 	private updateInventoryItems() {
 		const spectatedPlayer = this.networking.getSpectatedPlayer();
-		const currentInventory = spectatedPlayer ? spectatedPlayer.inventory : this.localPlayer.inventory;
+		// Normalize inventory to ensure itemId & durability are present
+		const sourceInventory = spectatedPlayer ? spectatedPlayer.inventory : this.localPlayer.inventory;
+		type Inv = { itemId: number; durability: number } | number;
+		const isObj = (
+			val: Inv,
+		): val is {
+			itemId: number;
+			durability: number;
+		} => (typeof val === 'object' && val !== null && 'itemId' in val && 'durability' in val);
+		const currentInventory: { itemId: number; durability: number }[] = (sourceInventory as Inv[]).map((it) =>
+			isObj(it) ? { itemId: it.itemId, durability: it.durability } : { itemId: it, durability: 100 }
+		);
 
-		if (!this.arraysEqual(this.oldInventory, currentInventory)) {
+		if (!this.inventoriesIdsEqual(this.oldInventory, currentInventory)) {
 			for (let i = this.inventoryItems.length - 1; i >= 0; i--) {
 				this.inventoryItems[i].destroy();
 				this.inventoryItems.splice(i, 1);
 			}
 
 			for (let i = 0; i < currentInventory.length; i++) {
-				const num = currentInventory[i];
+				const invItem = currentInventory[i];
+				const num = invItem.itemId;
 				switch (num) {
 					case 1: {
 						const banana = new BananaGun(this.renderer, this.shotHandler, i, ItemType.InventoryItem);
@@ -106,18 +118,31 @@ export class Inventory {
 			}
 		}
 
-		this.oldInventory = currentInventory;
+		this.oldInventory = currentInventory.map((i) => ({ ...i }));
 	}
 
-	public arraysEqual(a: number[], b: number[]) {
+	private inventoriesIdsEqual(
+		a: { itemId: number; durability: number }[],
+		b: { itemId: number; durability: number }[],
+	) {
 		if (a === b) return true;
-		if (a == null || b == null) return false;
-		if (a.length != b.length) return false;
-		for (let i = 0; i < a.length; ++i) {
-			if (a[i] !== b[i]) return false;
+		if (!a || !b) return false;
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (a[i].itemId !== b[i].itemId) return false;
 		}
 		return true;
 	}
+
+	//	private inventoriesFullyEqual(a: { itemId: number; durability: number }[], b: { itemId: number; durability: number }[]) {
+	// 		if (a === b) return true;
+	// 		if (!a || !b) return false;
+	// 		if (a.length !== b.length) return false;
+	// 		for (let i = 0; i < a.length; i++) {
+	// 			if (a[i].itemId !== b[i].itemId || a[i].durability !== b[i].durability) return false;
+	// 		}
+	// 		return true;
+	// 	}
 
 	public onFrame() {
 		this.updateInventoryItems();
@@ -153,11 +178,12 @@ export class Inventory {
 			for (let i = 0; i < nums.length; i++) {
 				const numPressed = this.inputHandler.getKey(nums[i]);
 				if (numPressed && !this.oldNumsPressed[i]) {
-					// Only update if selecting different item
+					// Always show inventory on direct number press
+					this.lastInventoryTouchTime = currentTime;
+					// Only change selection if different
 					if (i !== this.selectedInventoryItem) {
 						this.lastSelectedInventoryItem = this.selectedInventoryItem;
 						this.selectedInventoryItem = i;
-						this.lastInventoryTouchTime = currentTime;
 					}
 					break;
 				}
@@ -193,6 +219,8 @@ export class Inventory {
 				this.selectedInventoryItem = this.lastSelectedInventoryItem;
 				this.lastSelectedInventoryItem = temp;
 			}
+			// Ensure inventory is shown on Q press (swap)
+			this.lastInventoryTouchTime = currentTime;
 		}
 
 		if (this.selectedInventoryItem < 0) {
@@ -215,11 +243,10 @@ export class Inventory {
 		this.localPlayer.shooting = isShootActive;
 
 		this.cameraY = this.selectedInventoryItem;
-		if (currentTime - this.lastInventoryTouchTime > 2) {
-			this.cameraX = -1;
-		} else {
-			this.cameraX = 0;
-		}
+		const inventoryIsVisible = currentTime - this.lastInventoryTouchTime <= 2;
+		this.cameraX = inventoryIsVisible ? 0 : -1;
+		// Inform renderer so canvas overlays can react
+		this.renderer.setInventoryVisible(inventoryIsVisible);
 
 		this.camera.position.lerp(new THREE.Vector3(this.cameraX, this.selectedInventoryItem, 5), 0.4 * deltaTime * 60);
 

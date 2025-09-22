@@ -283,7 +283,7 @@ export class KingOfTheHillGamemode extends FFAGamemode {
 		super.onItemPickup(player);
 
 		// Check if the picked up item is the flag
-		if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+		if (player.inventory.some((item) => item.itemId === this.FLAG_ITEM_TYPE)) {
 			// Reset the player's flag-related data
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
 			if (extras) {
@@ -305,7 +305,7 @@ export class KingOfTheHillGamemode extends FFAGamemode {
 		// Check in players' inventories
 		const players = this.gameEngine.playerManager.getAllPlayers();
 		for (const player of players) {
-			if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+			if (player.inventory.some((item) => item.itemId === this.FLAG_ITEM_TYPE)) {
 				return true;
 			}
 		}
@@ -462,7 +462,7 @@ export class KingOfTheHillGamemode extends FFAGamemode {
 			}
 
 			// Remove flag from player's inventory if they have it
-			const flagIndex = player.inventory.indexOf(this.FLAG_ITEM_TYPE);
+			const flagIndex = player.inventory.findIndex((item) => item.itemId === this.FLAG_ITEM_TYPE);
 			if (flagIndex !== -1) {
 				player.inventory.splice(flagIndex, 1);
 			}

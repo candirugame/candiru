@@ -138,7 +138,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 					maxPoints = extras.points;
 					leader = player;
 				}
-				if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+				if (player.inventory.some((item) => item.itemId === this.FLAG_ITEM_TYPE)) {
 					flagHolder = player;
 				}
 			}
@@ -154,7 +154,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 
 			// Only update gameMsgs if player is not spectating
 			if (player.playerSpectating === -1) {
-				if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+				if (player.inventory.some((item) => item.itemId === this.FLAG_ITEM_TYPE)) {
 					player.gameMsgs = [
 						'&ayou have the flag',
 						`&a${personalSeconds} seconds. &4DON'T DIE.`,
@@ -217,7 +217,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 		super.onItemPickup(player);
 
 		// Check if the picked up item is the flag
-		if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+		if (player.inventory.some((item) => item.itemId === this.FLAG_ITEM_TYPE)) {
 			// Reset the player's flag-related data
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
 			if (extras) {
@@ -239,7 +239,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 		// Check in players' inventories
 		const players = this.gameEngine.playerManager.getAllPlayers();
 		for (const player of players) {
-			if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+			if (player.inventory.some((item) => item.itemId === this.FLAG_ITEM_TYPE)) {
 				return true;
 			}
 		}
@@ -277,7 +277,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 	 */
 	private getFlagHolder(players: Player[]): Player | null {
 		for (const player of players) {
-			if (player.inventory.includes(this.FLAG_ITEM_TYPE)) {
+			if (player.inventory.some((item) => item.itemId === this.FLAG_ITEM_TYPE)) {
 				return player;
 			}
 		}
@@ -388,7 +388,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 			}
 
 			// Remove flag from player's inventory if they have it
-			const flagIndex = player.inventory.indexOf(this.FLAG_ITEM_TYPE);
+			const flagIndex = player.inventory.findIndex((item) => item.itemId === this.FLAG_ITEM_TYPE);
 			if (flagIndex !== -1) {
 				player.inventory.splice(flagIndex, 1);
 			}

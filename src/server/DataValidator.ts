@@ -5,6 +5,7 @@ import { DamageRequest } from './models/DamageRequest.ts';
 import { Player, PlayerData } from '../shared/Player.ts';
 import { ServerInfo } from './models/ServerInfo.ts';
 import { Prop } from '../shared/Prop.ts';
+import { Trajectory, TrajectoryHit } from '../client/input/Trajectory.ts';
 
 export class DataValidator {
 	private static SERVER_VERSION = '';
@@ -37,6 +38,23 @@ export class DataValidator {
 		})
 		.transform(({ x, y, z, w }) => new THREE.Quaternion(x, y, z, w));
 
+	//	itemId: number;
+	// 	durability: number; //item "dies" if this reaches zero. either set to (shotsFired / shotsAvailable) or (creationTimestamp - currentTimestamp) / lifetime
+	// 	creationTimestamp: number;
+	// 	shotsFired: number;
+	//
+	// 	lifetime?: number;
+	// 	shotsAvailable?: number;
+
+	static inventorySchema = z.array(z.object({
+		itemId: z.number(),
+		durability: z.number(),
+		creationTimestamp: z.number(),
+		shotsFired: z.number(),
+		lifetime: z.number().optional(),
+		shotsAvailable: z.number().optional(),
+	}));
+
 	static playerDataSchema = z.object({
 		id: z.number(),
 		speed: z.number(),
@@ -59,7 +77,7 @@ export class DataValidator {
 		forcedAcknowledged: z.boolean(),
 		updateTimestamp: z.number().optional(),
 		lastDamageTime: z.number().optional(),
-		inventory: z.array(z.number()),
+		inventory: this.inventorySchema,
 		heldItemIndex: z.number(),
 		shooting: z.boolean(),
 		rightClickHeld: z.boolean(),
@@ -71,6 +89,28 @@ export class DataValidator {
 		doPhysics: z.boolean(),
 		thirdPerson: z.number().optional().default(0),
 	}).strict().transform((data) => Player.fromObject(data as Player));
+
+	static trajectoryHitSchema = z.object({
+		point: this.vector3Schema,
+		normal: this.vector3Schema,
+		index: z.number(),
+	}).strict().transform((data) => data as TrajectoryHit);
+
+	static trajectorySchema = z.object({
+		points: z.array(this.vector3Schema).min(2).max(100),
+		dt: z.number().min(0.01).max(1),
+		hits: z.array(this.trajectoryHitSchema),
+	}).strict().transform(({ points, dt, hits }) => new Trajectory(points, dt, hits));
+
+	static throwItemSchema = z.object({
+		trajectory: this.trajectorySchema,
+		playerID: z.number(),
+		heldItemIndex: z.number(),
+	}).strict();
+
+	static validateThrowItem(data: unknown) {
+		return this.throwItemSchema.safeParse(data);
+	}
 
 	static propDataSchema = z.object({ //used for message types
 		url: z.string(),

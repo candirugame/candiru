@@ -1,5 +1,6 @@
 import { ItemBase, ItemType } from './ItemBase.ts';
 import { HeldItemInput } from '../input/HeldItemInput.ts';
+import { Trajectory } from '../input/Trajectory.ts';
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.ts';
 import { AssetManager } from '../core/AssetManager.ts';
@@ -23,11 +24,35 @@ export class BananaGun extends ItemBase {
 	private renderer: Renderer;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, shotHandler: ShotHandler, index: number, itemType: ItemType) {
+	constructor(
+		renderer: Renderer,
+		shotHandler: ShotHandler,
+		index: number,
+		itemType: ItemType,
+		initTrajectory?: Trajectory,
+		playerIdsTrajectoryHiddenFrom?: number[],
+		localPlayerId?: number,
+	) {
 		if (itemType === ItemType.WorldItem) {
-			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
+			super(
+				itemType,
+				renderer.getEntityScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		} else {
-			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
+			super(
+				itemType,
+				renderer.getHeldItemScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				initTrajectory,
+				playerIdsTrajectoryHiddenFrom,
+				localPlayerId,
+			);
 		}
 		this.shotHandler = shotHandler;
 		this.lastInput = new HeldItemInput();
@@ -51,10 +76,9 @@ export class BananaGun extends ItemBase {
 						}
 					}
 				});
+				this.inventoryMenuObject = this.object.clone();
+				this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
 			}
-
-			this.inventoryMenuObject = this.object.clone();
-			this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.45, 0.45, 0.45);

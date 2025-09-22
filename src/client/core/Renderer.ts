@@ -75,6 +75,9 @@ export class Renderer {
 
 	private containerElement: HTMLElement;
 
+	// Tracks whether the inventory menu is currently visible (recently interacted with)
+	private inventoryVisible: boolean = false;
+
 	constructor(container: HTMLElement, networking: Networking, localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.networking = networking;
 		this.localPlayer = localPlayer;
@@ -179,8 +182,17 @@ export class Renderer {
 		this.remotePlayerRenderer.setShotHandler(shotHandler);
 	}
 
-	public onFrame(localPlayer: Player) {
-		this.deltaTime = this.clock.getDelta();
+	// Inventory visibility API for UI overlays
+	public setInventoryVisible(visible: boolean) {
+		this.inventoryVisible = visible;
+	}
+
+	public isInventoryVisible(): boolean {
+		return this.inventoryVisible;
+	}
+
+	public onFrame(localPlayer: Player, deltaTime: number) {
+		this.deltaTime = deltaTime;
 
 		// Ensure the renderer clears the buffers before the first render
 		this.renderer.autoClear = true;
@@ -479,8 +491,12 @@ export class Renderer {
 		return direction;
 	}
 
+	public getPlayerInventory() {
+		return this.localPlayer.inventory;
+	}
+
 	public createScreenshot() {
-		this.onFrame(this.localPlayer);
+		this.onFrame(this.localPlayer, this.deltaTime);
 
 		const width = this.renderer.domElement.width;
 		const height = this.renderer.domElement.height;
@@ -567,6 +583,7 @@ export class Renderer {
 
 	public setCollisionManager(collisionManager: CollisionManager) {
 		this.collisionManager = collisionManager;
+		this.collisionManager.setParticleSystem(this.particleSystem);
 	}
 
 	private onWindowResize() {
@@ -585,6 +602,52 @@ export class Renderer {
 		this.screenPixelsInGamePixel = containerHeight / 200;
 		this.heldItemCamera.aspect = containerWidth / containerHeight;
 		this.heldItemCamera.updateProjectionMatrix();
+	}
+
+	public throwCurrentItem() {
+		if (this.localPlayer.inventory.length == 0) return;
+		const trajectory = this.collisionManager.createTrajectory(
+			this.localPlayer.position.clone(),
+			this.localPlayer.lookQuaternion.clone(),
+		);
+		//		console.log(trajectory);
+		// Emit to server so other clients receive the thrown item
+		this.networking.broadcastThrownItem(trajectory);
+
+		if (!this.pendingThrownItems) this.pendingThrownItems = [];
+		const heldIndex = this.localPlayer.heldItemIndex;
+		const invItem = this.localPlayer.inventory[heldIndex];
+		if (invItem) {
+			// add to local item list picked up by remote item renderer on next frame
+			this.pendingThrownItems.push({
+				itemType: invItem.itemId, // itemId maps to itemType used by renderer
+				trajectory: trajectory,
+			});
+
+			//decrement item or overflow locally, will become synced on next remotePlayer update
+			if (invItem.overflow > 0) {
+				invItem.overflow--;
+			} else {
+				this.localPlayer.inventory.splice(heldIndex, 1);
+			}
+		}
+	}
+
+	public getLatency(): number {
+		return this.localPlayer.latency;
+	}
+
+	// Pending thrown items waiting to be instantiated locally (processed by RemoteItemRenderer)
+	private pendingThrownItems: { itemType: number; trajectory: import('../input/Trajectory.ts').Trajectory }[] = [];
+
+	public getAndClearPendingThrownItems(): {
+		itemType: number;
+		trajectory: import('../input/Trajectory.ts').Trajectory;
+	}[] {
+		if (this.pendingThrownItems.length === 0) return [];
+		const copy = [...this.pendingThrownItems];
+		this.pendingThrownItems.length = 0;
+		return copy;
 	}
 
 	private static approachNumber(input: number, step: number, approach: number): number {

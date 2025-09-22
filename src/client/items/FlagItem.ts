@@ -17,11 +17,27 @@ export class FlagItem extends ItemBase {
 	private addedToHandScene: boolean;
 
 	// deno-lint-ignore constructor-super
-	constructor(renderer: Renderer, index: number, itemType: ItemType) {
+	constructor(renderer: Renderer, index: number, itemType: ItemType, localPlayerId?: number) {
 		if (itemType === ItemType.WorldItem) {
-			super(itemType, renderer.getEntityScene(), renderer.getInventoryMenuScene(), index);
+			super(
+				itemType,
+				renderer.getEntityScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				undefined,
+				undefined,
+				localPlayerId,
+			);
 		} else {
-			super(itemType, renderer.getHeldItemScene(), renderer.getInventoryMenuScene(), index);
+			super(
+				itemType,
+				renderer.getHeldItemScene(),
+				renderer.getInventoryMenuScene(),
+				index,
+				undefined,
+				undefined,
+				localPlayerId,
+			);
 		}
 		this.renderer = renderer;
 		this.addedToHandScene = false;
@@ -42,15 +58,15 @@ export class FlagItem extends ItemBase {
 						}
 					}
 				});
+
+				this.inventoryMenuObject = this.object.clone();
+				this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
+				this.inventoryMenuObject.rotation.x += Math.PI / 2;
 			}
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.66, 0.66, 0.66);
 			}
-
-			this.inventoryMenuObject = this.object.clone();
-			this.inventoryMenuObject.scale.set(0.8, 0.8, 0.8);
-			this.inventoryMenuObject.rotation.x += Math.PI / 2;
 
 			if (this.itemType === ItemType.WorldItem) {
 				this.object.scale.set(0.45, 0.45, 0.45);

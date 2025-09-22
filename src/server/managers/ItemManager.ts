@@ -82,47 +82,59 @@ export class ItemManager {
 			// Process each nearby item
 			for (const item of nearbyItems) {
 				let shouldPickup = false;
+				// helper to see if player has itemId
+				const hasItem = (id: number) => player.inventory.some((inv) => inv.itemId === id);
+				const addItem = (id: number, lifetime?: number, shotsAvailable?: number) => {
+					if (!hasItem(id)) {
+						player.inventory.push({
+							shotsFired: 0,
+							itemId: id,
+							durability: 1,
+							creationTimestamp: Date.now() / 1000,
+							lifetime,
+							shotsAvailable,
+							overflow: 0, //first item of this type added,
+							durabilityOffset: item.durabilityOffset || 0,
+						});
+						shouldPickup = true;
+					} else {
+						// If the item already exists, just increase the reserve count
+						const existingItem = player.inventory.find((inv) => inv.itemId === id);
+						if (existingItem) {
+							existingItem.durabilityOffset += item.durabilityOffset + 1 || 1;
+							if (existingItem.durabilityOffset + existingItem.durability > 1) {
+								existingItem.durabilityOffset -= 1;
+								existingItem.overflow += 1;
+							}
+							shouldPickup = true;
+						}
+					}
+				};
 				switch (item.itemType) {
 					case 0: // Cube
-						player.inventory.push(0);
-						shouldPickup = true;
+						addItem(0, 1);
 						this.chatManager.broadcastChat(`${player.name} picked up [Object]!`);
 						console.log(`📦 ${player.name} picked up cube!`);
 						break;
 					case 1: // Banana
-						if (!player.inventory.includes(1)) {
-							player.inventory.push(1);
-							shouldPickup = true;
-							console.log(`🍌 ${player.name} picked up banana!`);
-						}
+						addItem(1, 45, 100); //later added items of this type adopt this lifetime and shotsAvailable since they're the same item object but with reserve iterated upon
+						console.log(`🍌 ${player.name} picked up banana!`);
 						break;
 					case 2: // Fish
-						if (!player.inventory.includes(2)) {
-							player.inventory.push(2);
-							shouldPickup = true;
-							console.log(`🐟 ${player.name} picked up fish!`);
-						}
+						addItem(2, 45, 100);
+						console.log(`🐟 ${player.name} picked up fish!`);
 						break;
 					case 3: // Pipe
-						if (!player.inventory.includes(3)) {
-							player.inventory.push(3);
-							shouldPickup = true;
-							console.log(`⚔️ ${player.name} picked up pipe!`);
-						}
+						addItem(3, 60, 200);
+						console.log(`⚔️ ${player.name} picked up pipe!`);
 						break;
 					case 4: // Flag
-						if (!player.inventory.includes(4)) {
-							player.inventory.push(4);
-							shouldPickup = true;
-							console.log(`🚩 ${player.name} picked up the flag!`);
-						}
+						addItem(4);
+						console.log(`🚩 ${player.name} picked up the flag!`);
 						break;
-					case 5: // bottle
-						if (!player.inventory.includes(5)) {
-							player.inventory.push(5);
-							shouldPickup = true;
-							console.log(`🍌 ${player.name} picked up sniper!`);
-						}
+					case 5: // bottle / sniper
+						addItem(5, 60, 50);
+						console.log(`🍌 ${player.name} picked up sniper!`);
 						break;
 				}
 
