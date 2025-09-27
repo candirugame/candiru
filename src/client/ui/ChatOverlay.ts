@@ -1,14 +1,14 @@
-import { Renderer } from '../core/Renderer.ts';
-import { Networking } from '../core/Networking.ts';
-import { InputHandler } from '../input/InputHandler.ts';
-import { SpriteManager } from './SpriteManager.ts';
-import { CommandManager } from '../core/CommandManager.ts';
-import { SettingsManager } from '../core/SettingsManager.ts';
-import { TouchInputHandler } from '../input/TouchInputHandler.ts';
-import { Player } from '../../shared/Player.ts';
+import { Renderer } from '../core/Renderer';
+import { Networking } from '../core/Networking';
+import { InputHandler } from '../input/InputHandler';
+import { SpriteManager } from './SpriteManager';
+import { CommandManager } from '../core/CommandManager';
+import { SettingsManager } from '../core/SettingsManager';
+import { TouchInputHandler } from '../input/TouchInputHandler';
+import { Player } from '../../shared/Player';
 import * as THREE from 'three';
-import { Game } from '../core/Game.ts';
-import { lerp } from '../../shared/Utils.ts';
+import { Game } from '../core/Game';
+import { lerp } from '../../shared/Utils';
 
 interface ChatMessage {
 	id: number;
@@ -42,6 +42,48 @@ interface LineMessage {
 const hitMarkerLifetime = 0.3;
 
 export class ChatOverlay {
+	// --- Command Autocomplete Popup State ---
+	private commandPopupTimeout: any = null;
+
+	// Show a popup with all or filtered commands above the chat line
+	private showCommandListPopup(filter: string) {
+		// Get all command names from CommandManager
+		const allCommands: string[] = this.commandManager['commands'].map((c: { getCmdName: () => string }) =>
+			c.getCmdName()
+		);
+		let matches: string[];
+		if (!filter || filter === '/') {
+			matches = allCommands.sort();
+		} else {
+			const prefix = filter.slice(1).toLowerCase();
+			matches = allCommands.filter((cmd) => cmd.startsWith(prefix)).sort();
+		}
+		if (!matches.length) return;
+		// Remove any existing popup
+		const existing = document.getElementById('command-list-popup');
+		if (existing) existing.remove();
+		// Create popup element
+		const popup = document.createElement('div');
+		popup.id = 'command-list-popup';
+		popup.style.position = 'absolute';
+		popup.style.bottom = '48px';
+		popup.style.left = '50%';
+		popup.style.transform = 'translateX(-50%)';
+		popup.style.background = 'rgba(0,0,0,0.85)';
+		popup.style.color = '#fff';
+		popup.style.padding = '6px 16px';
+		popup.style.borderRadius = '8px';
+		popup.style.fontFamily = 'monospace';
+		popup.style.fontSize = '15px';
+		popup.style.zIndex = '9999';
+		popup.innerHTML = matches.map((cmd) => `<span style='margin:0 8px;'>/${cmd}</span>`).join(' ');
+		document.body.appendChild(popup);
+		// Remove popup after 2.5s
+		if (this.commandPopupTimeout) clearTimeout(this.commandPopupTimeout);
+		this.commandPopupTimeout = setTimeout(() => {
+			if (popup.parentNode) popup.parentNode.removeChild(popup);
+		}, 2500);
+	}
 	public chatCanvas: HTMLCanvasElement;
 	private chatCtx: CanvasRenderingContext2D;
 	private chatMessages: ChatMessage[]; // Typed as ChatMessage[]
@@ -237,7 +279,7 @@ export class ChatOverlay {
 		this.renderGameText();
 		this.renderEventMessages();
 		this.renderDebugText();
-		if (this.inputHandler.getKey('tab')) {
+		if (this.inputHandler.getKey('tab') && !this.localPlayer.chatActive && !this.localPlayer.chatMsg.startsWith('/')) {
 			this.renderPlayerList();
 		}
 		this.renderEvil();
@@ -1466,6 +1508,12 @@ export class ChatOverlay {
 	}
 
 	private onKeyDown(e: KeyboardEvent) {
+		// TAB AUTOCOMPLETE: Show command popup for / or /partial
+		if (e.key === 'Tab' && this.localPlayer.chatActive && this.localPlayer.chatMsg.startsWith('/')) {
+			e.preventDefault();
+			this.showCommandListPopup(this.localPlayer.chatMsg);
+			return;
+		}
 		if (this.gameIndex !== Game.nextGameIndex - 1) return;
 
 		if (e.key === 'Backspace' && (this.localPlayer.chatActive || this.nameSettingActive)) {
@@ -1489,6 +1537,7 @@ export class ChatOverlay {
 			this.nameSettingActive = false;
 		}
 
+		// tbh I don't think this does anything but i don't fully know what I'm doing so don't take my word for it -davidpopesc
 		if (e.key === 'Escape' || e.key === 'Enter') {
 			this.localPlayer.chatMsg = '';
 			this.localPlayer.chatActive = false;

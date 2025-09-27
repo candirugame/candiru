@@ -28,48 +28,54 @@ export class ChatManager {
 		const args = message.slice(1).split(' ');
 		const command = args.shift()?.toLowerCase();
 
-		switch (command) {
-			case 'help':
+		const commandHandlers: Record<string, () => void> = {
+			help: () => {
 				this.whisperChatMessage(message + ` -> nah i'm good`, socket);
-				break;
-			case 'kill': {
+			},
+			kill: () => {
 				const player = this.playerManager.getPlayerById(playerId);
 				if (player) {
 					this.playerManager.respawnPlayer(player);
 				}
-				this.broadcastEventMessage(`&c${player.name} ^b ${player.name}`);
-				break;
-			}
-			case 'thumbsup':
+				this.broadcastEventMessage(`&c${player?.name} ^b ${player?.name}`);
+			},
+			thumbsup: () => {
 				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👍`);
-				break;
-			case 'thumbsdown':
+			},
+			thumbsdown: () => {
 				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 👎`);
-				break;
-			case 'octopus':
+			},
+			octopus: () => {
 				this.broadcastChat(`${this.playerManager.getPlayerById(playerId)?.name}: 🐙`);
-				break;
-			case 'goblin': {
+			},
+			goblin: () => {
 				let goblin = '';
 				for (let i = 0; i < 50; i++) goblin += '^a';
 				for (let i = 0; i < 50; i++) this.whisperChatMessage(goblin, socket);
-				break;
-			}
-			case 'ping':
+			},
+			ping: () => {
 				this.whisperChatMessage(message + ' -> pong!', socket);
-				break;
-			case 'version':
+			},
+			version: () => {
 				this.whisperChatMessage(message + ` -> candiru ${DataValidator.getServerVersion()}`, socket);
-				break;
-			case 'clear':
+			},
+			clear: () => {
 				for (let i = 0; i < 25; i++) {
 					this.whisperChatMessage(' ', socket);
 					this.whisperEventMessage(' ', socket);
 				}
 				//this.whisperChatMessage(message + ' -> cleared chat', socket);
-				break;
-			default:
-				this.whisperChatMessage(message + ' -> unknown command', socket);
+			},
+			playercount: () => {
+				const players = this.playerManager.getAllPlayers();
+				this.whisperChatMessage(message + ` -> ${players.length} players online`, socket);
+			},
+		};
+
+		if (command && commandHandlers[command]) {
+			commandHandlers[command]();
+		} else {
+			this.whisperChatMessage(message + ' -> unknown command', socket);
 		}
 
 		return true;
