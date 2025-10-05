@@ -45,6 +45,11 @@ export class CollisionManager {
         private collided: boolean;
         private readonly frameVelocity: THREE.Vector3;
         private readonly positionDelta: THREE.Vector3;
+        private readonly knockbackVelocity: THREE.Vector3;
+        private readonly tempImpulse: THREE.Vector3;
+
+        private static readonly KNOCKBACK_AIR_DAMPING = 2.5;
+        private static readonly KNOCKBACK_GROUND_DAMPING = 10;
 
         // Temporary objects for prop collision calculations to avoid re-allocation
         private readonly tempLocalSphere: THREE.Sphere;
@@ -67,6 +72,8 @@ export class CollisionManager {
                 this.collided = false;
                 this.frameVelocity = new THREE.Vector3();
                 this.positionDelta = new THREE.Vector3();
+                this.knockbackVelocity = new THREE.Vector3();
+                this.tempImpulse = new THREE.Vector3();
 
                 // Initialize temporary objects for prop collisions
                 this.tempLocalSphere = new THREE.Sphere(new THREE.Vector3(), this.colliderSphere.radius);
@@ -292,6 +299,9 @@ export class CollisionManager {
                 localPlayer.gravity,
                 localPlayer.inputVelocity.z,
                 );
+                this.frameVelocity.x += this.knockbackVelocity.x;
+                this.frameVelocity.y += this.knockbackVelocity.y;
+                this.frameVelocity.z += this.knockbackVelocity.z;
                 localPlayer.inputVelocity.y = localPlayer.gravity;
                 localPlayer.position.addScaledVector(this.frameVelocity, deltaTime);
 
@@ -323,12 +333,14 @@ export class CollisionManager {
                                                         const angle: number = this.triNormal.dot(this.upVector);
 
                                                         localPlayer.position.addScaledVector(this.deltaVec, -penetration);
+                                                        this.removeKnockbackIntoSurface(this.deltaVec);
 
                                                         if (angle >= CollisionManager.maxAngle) { // Ground collision
                                                                 localPlayer.inputVelocity.y = 0;
                                                                 localPlayer.gravity = 0;
                                                                 this.coyoteTime = 0;
                                                                 this.collided = true;
+                                                                this.knockbackVelocity.y = 0;
                                                         }
 
                                                         // Update colliderSphere center for subsequent checks within this shapecast
@@ -371,12 +383,14 @@ export class CollisionManager {
                                                         this.tempTriNormal.transformDirection(mesh.matrixWorld).normalize();
 
                                                         localPlayer.position.addScaledVector(this.worldPenetrationVec, -penetration);
+                                                        this.removeKnockbackIntoSurface(this.worldPenetrationVec);
 
                                                         if (this.tempTriNormal.dot(this.upVector) >= CollisionManager.maxAngle) {
                                                                 localPlayer.inputVelocity.y = 0;
                                                                 localPlayer.gravity = 0;
                                                                 this.coyoteTime = 0;
                                                                 this.collided = true;
+                                                                this.knockbackVelocity.y = 0;
                                                         }
 
                                                         this.tempLocalSphere.center
@@ -413,9 +427,27 @@ export class CollisionManager {
                         this.jumped = false;
                 }
 
+                const damping = Math.exp(-deltaTime * (this.collided
+                        ? CollisionManager.KNOCKBACK_GROUND_DAMPING
+                        : CollisionManager.KNOCKBACK_AIR_DAMPING));
+                this.knockbackVelocity.multiplyScalar(damping);
+                if (this.knockbackVelocity.lengthSq() < 1e-6) {
+                        this.knockbackVelocity.set(0, 0, 0);
+                }
+
                 if (deltaTime !== 0) {
                         this.positionDelta.copy(localPlayer.position).sub(this.prevPosition).divideScalar(deltaTime);
                         localPlayer.velocity.copy(this.positionDelta);
+                }
+        }
+
+        private removeKnockbackIntoSurface(surfaceNormal: THREE.Vector3) {
+                const normal = this.tempImpulse.copy(surfaceNormal);
+                if (normal.lengthSq() === 0) return;
+                normal.normalize();
+                const intoSurface = this.knockbackVelocity.dot(normal);
+                if (intoSurface > 0) {
+                        this.knockbackVelocity.addScaledVector(normal, -intoSurface);
                 }
         }
 
@@ -446,5 +478,13 @@ export class CollisionManager {
 
         public setParticleSystem(particleSystem: ParticleSystem): void {
                 this.particleSystem = particleSystem;
+        }
+
+        public applyExternalImpulse(localPlayer: Player, impulse: THREE.Vector3): void {
+                const horizontalImpulse = this.tempImpulse.copy(impulse);
+                horizontalImpulse.y = 0;
+                this.knockbackVelocity.add(horizontalImpulse);
+                localPlayer.gravity += impulse.y;
+                localPlayer.inputVelocity.y = localPlayer.gravity;
         }
 }

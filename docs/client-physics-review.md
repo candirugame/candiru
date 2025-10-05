@@ -19,6 +19,7 @@ The `CollisionManager` encapsulates local-player physics, collision resolution a
 - Corrected penetration resolution by pushing the player out along the proper direction for both static and dynamic colliders.
 - Cached dynamic collider meshes when `updateDynamicColliders` runs, avoiding costly scene graph traversals every frame and ensuring stale references are dropped when the list is refreshed.
 - Guarded optional systems (`particleSystem`) before emission and reused temporary vectors when computing per-frame velocities to avoid needless allocations.
+- Converted the remote fish shotgun knockback into an external impulse feed so the revised physics loop now imparts the expected shove and lift when the client takes fish damage.
 
 ## Remaining Risks
 1. **Ground snapping vs. sliding**  

@@ -52,12 +52,15 @@ export class Game {
 		this.chatOverlay.setRenderer(this.renderer);
 		this.inputHandler = new InputHandler(this.renderer, this.localPlayer, this.gameIndex);
 		this.touchInputHandler = new TouchInputHandler(this.inputHandler, this.chatOverlay);
-		this.renderer.setInputHandler(this.inputHandler);
-		this.collisionManager = new CollisionManager(this.inputHandler, this.networking);
-		this.renderer.setCollisionManager(this.collisionManager);
-		this.inventoryManager = new Inventory(
-			this.shotHandler,
-			this.renderer,
+                this.renderer.setInputHandler(this.inputHandler);
+                this.collisionManager = new CollisionManager(this.inputHandler, this.networking);
+                this.renderer.setCollisionManager(this.collisionManager);
+                this.networking.setKnockbackHandler((impulse) => {
+                        this.collisionManager.applyExternalImpulse(this.localPlayer, impulse);
+                });
+                this.inventoryManager = new Inventory(
+                        this.shotHandler,
+                        this.renderer,
 			this.inputHandler,
 			this.networking,
 			this.localPlayer,

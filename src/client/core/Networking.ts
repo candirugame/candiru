@@ -44,15 +44,19 @@ export interface ServerInfo {
 }
 
 interface LastUploadedLocalPlayer {
-	position: THREE.Vector3;
-	lookQuaternion: THREE.Quaternion;
-	chatMsg: string;
-	velocity: THREE.Vector3;
-	name: string;
-	heldItemIndex: number;
-	rightClickHeld: boolean;
-	shooting: boolean;
+        position: THREE.Vector3;
+        lookQuaternion: THREE.Quaternion;
+        chatMsg: string;
+        velocity: THREE.Vector3;
+        name: string;
+        heldItemIndex: number;
+        rightClickHeld: boolean;
+        shooting: boolean;
 }
+
+const FISH_ITEM_ID = 2;
+const FISH_KNOCKBACK_HORIZONTAL = 8;
+const FISH_KNOCKBACK_VERTICAL = 3.5;
 
 // A precise partial type for player deltas where top-level properties are optional,
 // but inventory (when present) is a fully-typed InventoryItem[]
@@ -73,17 +77,18 @@ export class Networking {
 	private chatOverlay: ChatOverlay;
 	private damagedTimestamp: number = 0;
 	public severelyDamagedTimestamp: number = 0;
-	private serverInfo: ServerInfo;
-	private lastRealUpdateTime: number = 0;
-	public particleQueue: {
-		position: THREE.Vector3;
-		count: number;
-		velocity: THREE.Vector3;
-		spread: number;
-		lifetime: number;
-		size: number;
-		color: THREE.Color;
-	}[] = [];
+        private serverInfo: ServerInfo;
+        private lastRealUpdateTime: number = 0;
+        public particleQueue: {
+                position: THREE.Vector3;
+                count: number;
+                velocity: THREE.Vector3;
+                spread: number;
+                lifetime: number;
+                size: number;
+                color: THREE.Color;
+        }[] = [];
+        private knockbackHandler?: (impulse: THREE.Vector3) => void;
 
 	constructor(localPlayer: Player, chatOverlay: ChatOverlay) {
 		this.localPlayer = localPlayer;
@@ -148,17 +153,21 @@ export class Networking {
 	}
 
 	private forcedZoomTriggered: boolean = false;
-	public forcedZoomTick(): boolean {
-		if (this.forcedZoomTriggered) {
-			this.forcedZoomTriggered = false;
-			return true;
-		}
-		return false;
-	}
+        public forcedZoomTick(): boolean {
+                if (this.forcedZoomTriggered) {
+                        this.forcedZoomTriggered = false;
+                        return true;
+                }
+                return false;
+        }
 
-	// Type guard to validate inventory arrays at runtime
-	private isInventoryArray(val: unknown): val is InventoryItem[] {
-		return Array.isArray(val) && val.every((raw): raw is InventoryItem => {
+        public setKnockbackHandler(handler: (impulse: THREE.Vector3) => void) {
+                this.knockbackHandler = handler;
+        }
+
+        // Type guard to validate inventory arrays at runtime
+        private isInventoryArray(val: unknown): val is InventoryItem[] {
+                return Array.isArray(val) && val.every((raw): raw is InventoryItem => {
 			if (raw === null || typeof raw !== 'object') return false;
 			const it = raw as Record<string, unknown>;
 			return (
@@ -173,10 +182,12 @@ export class Networking {
 	}
 
 	// Updates the local player state based on received data (full or partial)
-	private updateLocalPlayerState(data: Partial<PlayerData>) {
-		// Forced position/velocity/look updates
-		if (data.forced) {
-			if (data.position) this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
+        private updateLocalPlayerState(data: Partial<PlayerData>) {
+                const previousHealth = this.localPlayer.health;
+                const previousDamager = this.localPlayer.idLastDamagedBy;
+                // Forced position/velocity/look updates
+                if (data.forced) {
+                        if (data.position) this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
 			if (data.velocity) this.localPlayer.velocity.set(data.velocity.x, data.velocity.y, data.velocity.z);
 			if (data.lookQuaternion) {
 				this.localPlayer.lookQuaternion.set(
@@ -235,15 +246,57 @@ export class Networking {
 		if (data.playerSpectating !== undefined) {
 			this.localPlayer.playerSpectating = data.playerSpectating;
 		}
-		if (data.doPhysics !== undefined) {
-			this.localPlayer.doPhysics = data.doPhysics;
-		}
-	}
+                if (data.doPhysics !== undefined) {
+                        this.localPlayer.doPhysics = data.doPhysics;
+                }
 
-	// Processes non-local player data (chat messages, server status)
-	private processNonLocalPlayerData() {
-		this.messagesBeingTyped = [];
-		let isLocalPlayerInList = false;
+                if (data.health !== undefined && data.health < previousHealth) {
+                        const attackerId = data.idLastDamagedBy ?? this.localPlayer.idLastDamagedBy ?? previousDamager;
+                        this.maybeApplyFishKnockback(attackerId);
+                }
+        }
+
+        private maybeApplyFishKnockback(attackerId: number | undefined) {
+                if (!this.knockbackHandler) return;
+                if (attackerId === undefined || attackerId === null || attackerId < 0) return;
+                const attacker = this.remotePlayers.find((p) => p.id === attackerId);
+                if (!attacker) return;
+
+                const inventory = attacker.inventory;
+                if (!inventory || inventory.length === 0) return;
+                const heldItem = inventory[attacker.heldItemIndex ?? 0];
+                if (!heldItem || heldItem.itemId !== FISH_ITEM_ID) return;
+
+                const look = attacker.lookQuaternion;
+                const position = attacker.position;
+                if (!look || !position) return;
+
+                const lookQuaternion = new THREE.Quaternion(look.x, look.y, look.z, look.w);
+                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(lookQuaternion);
+                if (!Number.isFinite(forward.x) || !Number.isFinite(forward.y) || !Number.isFinite(forward.z)) {
+                        return;
+                }
+                if (forward.lengthSq() < 1e-6) {
+                        forward.set(
+                                this.localPlayer.position.x - position.x,
+                                this.localPlayer.position.y - position.y,
+                                this.localPlayer.position.z - position.z,
+                        );
+                        if (forward.lengthSq() < 1e-6) {
+                                return;
+                        }
+                }
+
+                forward.normalize();
+                const impulse = forward.clone().multiplyScalar(FISH_KNOCKBACK_HORIZONTAL);
+                impulse.y = Math.max(impulse.y, 0) + FISH_KNOCKBACK_VERTICAL;
+                this.knockbackHandler(impulse);
+        }
+
+        // Processes non-local player data (chat messages, server status)
+        private processNonLocalPlayerData() {
+                this.messagesBeingTyped = [];
+                let isLocalPlayerInList = false;
 
 		for (const remotePlayer of this.remotePlayers) {
 			if (remotePlayer.id === this.localPlayer.id) {
