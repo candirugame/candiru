@@ -207,6 +207,14 @@ export class Networking {
 			this.localPlayer.health = data.health;
 		}
 
+		if (data.healthIndicatorColor !== undefined) {
+			this.localPlayer.healthIndicatorColor = [
+				data.healthIndicatorColor[0],
+				data.healthIndicatorColor[1],
+				data.healthIndicatorColor[2],
+			] as [number, number, number];
+		}
+
 		// Optional fields: Only update if present in data and a throw hasn't occurred within last 0.15s
 		if (
 			data.inventory !== undefined &&

@@ -1,12 +1,20 @@
 import { FFAGamemode } from './FFAGamemode.ts';
 import { Player } from '../../shared/Player.ts';
 import config from '../config.ts';
+import * as THREE from 'three';
 
 type RoundState = 'waiting' | 'in_progress' | 'post_round';
 
 export class TeamDeathmatchGamemode extends FFAGamemode {
 	private readonly TEAM_COLORS: [string, string] = ['&c', '&9'];
-	private readonly TEAM_NAMES: [string, string] = ['Red', 'Blue'];
+	private readonly TEAM_NAMES: [string, string] = ['red', 'blue'];
+	private readonly TEAM_HEALTH_INDICATOR_BASE_COLORS: [
+		[number, number, number],
+		[number, number, number],
+	] = [
+		[220, 40, 40],
+		[40, 90, 220],
+	];
 	private readonly POST_ROUND_DELAY_SECONDS = 5;
 	private teamScores: [number, number] = [0, 0];
 	private state: RoundState = 'waiting';
@@ -16,7 +24,7 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 
 	override init(): void {
 		super.init();
-		console.log('🔫 Team Deathmatch Gamemode initialized');
+		console.log('🔫 team Deathmatch gamemode initialized');
 	}
 
 	override tick(): void {
@@ -48,7 +56,12 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 
 	override onPlayerDeath(player: Player): void {
 		const killer = this.findValidKiller(player);
-		super.onPlayerDeath(player);
+		super.onPlayerDeath(player, true);
+		const playerExtras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+		if (playerExtras && playerExtras.team == 1) {
+			this.gameEngine.playerManager.doDeathParticles(player, new THREE.Color(0, 0, 1));
+		} else this.gameEngine.playerManager.doDeathParticles(player, new THREE.Color(1, 0, 0));
+
 		if (!killer || this.state !== 'in_progress') return;
 
 		const killerExtras = this.gameEngine.playerManager.getPlayerExtrasById(killer.id);
@@ -75,9 +88,9 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		const counts = this.getTeamCounts();
 		const targetTeam = counts[0] <= counts[1] ? 0 : 1;
 		extras.team = targetTeam;
-		if (this.ensurePlayerNameHasTeamColor(player, targetTeam)) {
-			this.gameEngine.playerUpdateSinceLastEmit = true;
-		}
+		const nameUpdated = this.ensurePlayerNameHasTeamColor(player, targetTeam);
+		const colorUpdated = this.ensureHealthIndicatorColor(player, targetTeam);
+		if (nameUpdated || colorUpdated) this.gameEngine.playerUpdateSinceLastEmit = true;
 	}
 
 	private ensurePlayerNameHasTeamColor(player: Player, team: number): boolean {
@@ -105,11 +118,36 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 			if (extras.team !== 0 && extras.team !== 1) {
 				this.assignTeam(player);
 				didUpdate = true;
-			} else if (this.ensurePlayerNameHasTeamColor(player, extras.team)) {
-				didUpdate = true;
+			} else {
+				if (this.ensurePlayerNameHasTeamColor(player, extras.team)) didUpdate = true;
+				if (this.ensureHealthIndicatorColor(player, extras.team)) didUpdate = true;
 			}
 		}
 		if (didUpdate) this.gameEngine.playerUpdateSinceLastEmit = true;
+	}
+
+	private ensureHealthIndicatorColor(player: Player, team: number): boolean {
+		if (team !== 0 && team !== 1) return false;
+		const desiredColor = this.mixWithWhite(this.TEAM_HEALTH_INDICATOR_BASE_COLORS[team], 0.35);
+		const current = player.healthIndicatorColor;
+		if (
+			current[0] === desiredColor[0] &&
+			current[1] === desiredColor[1] &&
+			current[2] === desiredColor[2]
+		) {
+			return false;
+		}
+		player.healthIndicatorColor = desiredColor;
+		return true;
+	}
+
+	private mixWithWhite(color: [number, number, number], whiteRatio: number): [number, number, number] {
+		const ratio = Math.min(Math.max(whiteRatio, 0), 1);
+		const blended: [number, number, number] = [0, 0, 0];
+		for (let i = 0; i < 3; i++) {
+			blended[i] = Math.round(color[i] * (1 - ratio) + 255 * ratio);
+		}
+		return blended;
 	}
 
 	private getTeamCounts(): [number, number] {
@@ -152,7 +190,7 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		this.roundResultMessage = null;
 		this.postRoundResetTimestamp = null;
 		this.roundEndTimestamp = Date.now() / 1000 + config.game.pointsToWin;
-		this.gameEngine.chatManager.broadcastEventMessage('&bTeam Deathmatch starting!');
+		this.gameEngine.chatManager.broadcastEventMessage('&bteam Deathmatch starting!');
 		this.updateGameMessages();
 	}
 
@@ -175,8 +213,8 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 
 		const leader = this.getLeadingTeam();
 		if (leader === null) {
-			this.roundResultMessage = '&eRound ended in a draw!';
-			this.gameEngine.chatManager.broadcastEventMessage('&eTeam Deathmatch round ended in a draw!');
+			this.roundResultMessage = '&eround ended in a draw!';
+			this.gameEngine.chatManager.broadcastEventMessage('&eteam Deathmatch round ended in a draw!');
 		} else {
 			const winnerName = this.TEAM_NAMES[leader];
 			const winnerColor = this.TEAM_COLORS[leader];
@@ -218,7 +256,7 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 	private formatScoreboardLine(): string {
 		const [redScore, blueScore] = this.teamScores;
 		const leader = this.getLeadingTeam();
-		let leaderText = '&7Tied';
+		let leaderText = '&7tied';
 		if (leader === 0) leaderText = `${this.TEAM_COLORS[0]}${this.TEAM_NAMES[0]} &7leading`;
 		if (leader === 1) leaderText = `${this.TEAM_COLORS[1]}${this.TEAM_NAMES[1]} &7leading`;
 		return `${this.TEAM_COLORS[0]}${this.TEAM_NAMES[0]} &f${redScore} &7vs ${this.TEAM_COLORS[1]}${
@@ -236,7 +274,7 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		let headerMessage: string;
 
 		if (this.state === 'in_progress') {
-			headerMessage = `&eTeam Deathmatch: ${countdown}s remaining`;
+			headerMessage = `&eteam deathmatch: ${countdown}s remaining`;
 		} else if (this.state === 'post_round' && this.roundResultMessage) {
 			headerMessage = `${this.roundResultMessage} &7Next round soon...`;
 		} else if (!this.hasEnoughPlayersToStart()) {
@@ -244,7 +282,7 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 			const total = red + blue;
 			headerMessage = `&ewaiting for enough players to start (${total}/${config.game.minPlayersToStart})`;
 		} else {
-			headerMessage = '&ePreparing next round...';
+			headerMessage = '&epreparing next round...';
 		}
 
 		let didChange = false;

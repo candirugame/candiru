@@ -25,6 +25,7 @@ export class Player {
 	public chatMsg = '';
 	public latency = 1000;
 	public health = 100; //server-controlled
+	public healthIndicatorColor: [number, number, number] = [255, 255, 255]; //server-controlled default indicator color
 	public protection = 1; //server-controlled
 	public forced = false; //server-controlled
 	public forcedAcknowledged = false;
@@ -45,6 +46,13 @@ export class Player {
 	static fromObject(data: Player): Player {
 		const instance = new Player();
 		Object.assign(instance, data);
+		if (Array.isArray(data.healthIndicatorColor) && data.healthIndicatorColor.length === 3) {
+			instance.healthIndicatorColor = [
+				data.healthIndicatorColor[0],
+				data.healthIndicatorColor[1],
+				data.healthIndicatorColor[2],
+			] as [number, number, number];
+		}
 		return instance;
 	}
 
@@ -55,6 +63,7 @@ export class Player {
 
 		return {
 			...this,
+			healthIndicatorColor: [...this.healthIndicatorColor],
 			// Deep-clone inventory items so server-side snapshots don't alias underlying mutable objects.
 			// Without this, in-place durability mutations would also mutate the stored snapshot,
 			// preventing the delta emitter from detecting changes.

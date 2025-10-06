@@ -59,7 +59,7 @@ export class FFAGamemode extends Gamemode {
 	onPlayerDisconnect(_player: Player): void {
 	}
 
-	onPlayerDeath(player: Player): void {
+	onPlayerDeath(player: Player, noDeathParticles?: boolean): void {
 		const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
 		if (extras) {
 			extras.deaths++;
@@ -72,7 +72,7 @@ export class FFAGamemode extends Gamemode {
 		) {
 			const killer = this.gameEngine.playerManager.getPlayerById(player.idLastDamagedBy);
 			if (killer) {
-				this.gameEngine.playerManager.doDeathParticles(player);
+				if (!noDeathParticles) this.gameEngine.playerManager.doDeathParticles(player);
 
 				// Redirect spectators of the dead player to the killer
 				for (const otherPlayer of this.gameEngine.playerManager.getAllPlayers()) {
