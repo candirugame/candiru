@@ -176,7 +176,11 @@ export class Networking {
 	private updateLocalPlayerState(data: Partial<PlayerData>) {
 		// Forced position/velocity/look updates
 		if (data.forced) {
-			if (data.position) this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
+			let funnyZoomFlag = false;
+			if (data.position) {
+				this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
+				funnyZoomFlag = true;
+			}
 			if (data.velocity) this.localPlayer.velocity.set(data.velocity.x, data.velocity.y, data.velocity.z);
 			if (data.lookQuaternion) {
 				this.localPlayer.lookQuaternion.set(
@@ -186,8 +190,9 @@ export class Networking {
 					data.lookQuaternion.w,
 				);
 			}
+			if (data.name) this.localPlayer.name = data.name;
 			if (data.gravity !== undefined) this.localPlayer.gravity = data.gravity;
-			this.forcedZoomTriggered = true;
+			if (funnyZoomFlag) this.forcedZoomTriggered = true;
 			this.localPlayer.forcedAcknowledged = true;
 		} else if (data.forced === false) {
 			this.localPlayer.forcedAcknowledged = false;

@@ -648,8 +648,8 @@ export class ChatOverlay {
 			// Check if we should skip animation
 			const shouldSkipAnimation = line.currentMessage.state === 'animatingOut' &&
 				line.pendingMessage !== null &&
-				line.currentMessage.message.includes('seconds') &&
-				line.pendingMessage.includes('seconds');
+				(line.currentMessage.message.includes('seconds') || line.currentMessage.message.includes('s remain')) &&
+				(line.pendingMessage.includes('seconds') || line.pendingMessage.includes('s remain'));
 
 			if (shouldSkipAnimation && line.pendingMessage) {
 				// Directly update to the pending message

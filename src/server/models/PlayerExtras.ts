@@ -5,4 +5,5 @@ export class PlayerExtras {
 	killStreak: number = 0;
 	points: number = 0;
 	lastPointIncrementTime: number = 0;
+	team: number = -1;
 }

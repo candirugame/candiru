@@ -1,0 +1,264 @@
+import { FFAGamemode } from './FFAGamemode.ts';
+import { Player } from '../../shared/Player.ts';
+import config from '../config.ts';
+
+type RoundState = 'waiting' | 'in_progress' | 'post_round';
+
+export class TeamDeathmatchGamemode extends FFAGamemode {
+	private readonly TEAM_COLORS: [string, string] = ['&c', '&9'];
+	private readonly TEAM_NAMES: [string, string] = ['Red', 'Blue'];
+	private readonly POST_ROUND_DELAY_SECONDS = 5;
+	private teamScores: [number, number] = [0, 0];
+	private state: RoundState = 'waiting';
+	private roundEndTimestamp: number | null = null;
+	private postRoundResetTimestamp: number | null = null;
+	private roundResultMessage: string | null = null;
+
+	override init(): void {
+		super.init();
+		console.log('🔫 Team Deathmatch Gamemode initialized');
+	}
+
+	override tick(): void {
+		super.tick();
+		this.checkRoundTimers();
+	}
+
+	override onPeriodicCleanup(): void {
+		super.onPeriodicCleanup();
+		this.ensureTeamsAssigned();
+		this.updateRosterState();
+		this.updateGameMessages();
+	}
+
+	override onPlayerConnect(player: Player): void {
+		super.onPlayerConnect(player);
+		this.assignTeam(player);
+		this.updateRosterState();
+		this.updateGameMessages();
+	}
+
+	override onPlayerDisconnect(player: Player): void {
+		super.onPlayerDisconnect(player);
+		const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+		if (extras) extras.team = -1;
+		this.updateRosterState();
+		this.updateGameMessages();
+	}
+
+	override onPlayerDeath(player: Player): void {
+		const killer = this.findValidKiller(player);
+		super.onPlayerDeath(player);
+		if (!killer || this.state !== 'in_progress') return;
+
+		const killerExtras = this.gameEngine.playerManager.getPlayerExtrasById(killer.id);
+		const victimExtras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+		if (!killerExtras || !victimExtras) return;
+		if (killerExtras.team === victimExtras.team) return;
+		if (killerExtras.team !== 0 && killerExtras.team !== 1) return;
+
+		this.teamScores[killerExtras.team] += 1;
+		this.gameEngine.playerUpdateSinceLastEmit = true;
+		this.updateGameMessages();
+	}
+
+	private findValidKiller(victim: Player): Player | null {
+		if (!victim.lastDamageTime || victim.idLastDamagedBy == null || victim.idLastDamagedBy < 0) return null;
+		if (Date.now() / 1000 - victim.lastDamageTime > 5) return null;
+		return this.gameEngine.playerManager.getPlayerById(victim.idLastDamagedBy) ?? null;
+	}
+
+	private assignTeam(player: Player): void {
+		const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+		if (!extras) return;
+
+		const counts = this.getTeamCounts();
+		const targetTeam = counts[0] <= counts[1] ? 0 : 1;
+		extras.team = targetTeam;
+		if (this.ensurePlayerNameHasTeamColor(player, targetTeam)) {
+			this.gameEngine.playerUpdateSinceLastEmit = true;
+		}
+	}
+
+	private ensurePlayerNameHasTeamColor(player: Player, team: number): boolean {
+		const teamColor = this.TEAM_COLORS[team];
+		if (player.name.startsWith(teamColor)) return false;
+
+		for (const color of this.TEAM_COLORS) {
+			if (color !== teamColor && player.name.startsWith(color)) {
+				player.name = player.name.slice(color.length);
+				break;
+			}
+		}
+
+		player.name = teamColor + player.name;
+		player.forced = true;
+		return true;
+	}
+
+	private ensureTeamsAssigned(): void {
+		let didUpdate = false;
+		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
+			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+			if (!extras) continue;
+
+			if (extras.team !== 0 && extras.team !== 1) {
+				this.assignTeam(player);
+				didUpdate = true;
+			} else if (this.ensurePlayerNameHasTeamColor(player, extras.team)) {
+				didUpdate = true;
+			}
+		}
+		if (didUpdate) this.gameEngine.playerUpdateSinceLastEmit = true;
+	}
+
+	private getTeamCounts(): [number, number] {
+		let red = 0;
+		let blue = 0;
+		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
+			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+			if (!extras) continue;
+			if (extras.team === 0) red++;
+			if (extras.team === 1) blue++;
+		}
+		return [red, blue];
+	}
+
+	private hasEnoughPlayersToStart(): boolean {
+		const [red, blue] = this.getTeamCounts();
+		const total = red + blue;
+		return total >= config.game.minPlayersToStart && red > 0 && blue > 0;
+	}
+
+	private updateRosterState(): void {
+		if (this.state === 'in_progress' && !this.hasEnoughPlayersToStart()) {
+			this.endRound('insufficient');
+			return;
+		}
+
+		if (this.state === 'waiting') {
+			this.tryStartRound();
+		}
+	}
+
+	private tryStartRound(): void {
+		if (!this.hasEnoughPlayersToStart()) return;
+		this.startRound();
+	}
+
+	private startRound(): void {
+		this.teamScores = [0, 0];
+		this.state = 'in_progress';
+		this.roundResultMessage = null;
+		this.postRoundResetTimestamp = null;
+		this.roundEndTimestamp = Date.now() / 1000 + config.game.pointsToWin;
+		this.gameEngine.chatManager.broadcastEventMessage('&bTeam Deathmatch starting!');
+		this.updateGameMessages();
+	}
+
+	private endRound(reason: 'completed' | 'insufficient'): void {
+		if (this.state !== 'in_progress') return;
+
+		if (reason === 'insufficient') {
+			this.state = 'waiting';
+			this.roundEndTimestamp = null;
+			this.postRoundResetTimestamp = null;
+			this.teamScores = [0, 0];
+			this.roundResultMessage = null;
+			this.updateGameMessages();
+			return;
+		}
+
+		this.state = 'post_round';
+		this.roundEndTimestamp = null;
+		this.postRoundResetTimestamp = Date.now() / 1000 + this.POST_ROUND_DELAY_SECONDS;
+
+		const leader = this.getLeadingTeam();
+		if (leader === null) {
+			this.roundResultMessage = '&eRound ended in a draw!';
+			this.gameEngine.chatManager.broadcastEventMessage('&eTeam Deathmatch round ended in a draw!');
+		} else {
+			const winnerName = this.TEAM_NAMES[leader];
+			const winnerColor = this.TEAM_COLORS[leader];
+			this.roundResultMessage = `${winnerColor}${winnerName} &fwins the round!`;
+			this.gameEngine.chatManager.broadcastEventMessage(
+				`${winnerColor}${winnerName} &7team wins the round!`,
+			);
+		}
+
+		this.updateGameMessages();
+	}
+
+	private checkRoundTimers(): void {
+		const now = Date.now() / 1000;
+		if (this.state === 'in_progress' && this.roundEndTimestamp && now >= this.roundEndTimestamp) {
+			this.endRound('completed');
+		}
+
+		if (this.state === 'post_round' && this.postRoundResetTimestamp && now >= this.postRoundResetTimestamp) {
+			this.resetForNextRound();
+		}
+	}
+
+	private resetForNextRound(): void {
+		this.teamScores = [0, 0];
+		this.state = 'waiting';
+		this.roundEndTimestamp = null;
+		this.postRoundResetTimestamp = null;
+		this.roundResultMessage = null;
+		this.updateGameMessages();
+		this.updateRosterState();
+	}
+
+	private getLeadingTeam(): 0 | 1 | null {
+		if (this.teamScores[0] === this.teamScores[1]) return null;
+		return this.teamScores[0] > this.teamScores[1] ? 0 : 1;
+	}
+
+	private formatScoreboardLine(): string {
+		const [redScore, blueScore] = this.teamScores;
+		const leader = this.getLeadingTeam();
+		let leaderText = '&7Tied';
+		if (leader === 0) leaderText = `${this.TEAM_COLORS[0]}${this.TEAM_NAMES[0]} &7leading`;
+		if (leader === 1) leaderText = `${this.TEAM_COLORS[1]}${this.TEAM_NAMES[1]} &7leading`;
+		return `${this.TEAM_COLORS[0]}${this.TEAM_NAMES[0]} &f${redScore} &7vs ${this.TEAM_COLORS[1]}${
+			this.TEAM_NAMES[1]
+		} &f${blueScore} &7(${leaderText})`;
+	}
+
+	private updateGameMessages(): void {
+		const players = this.gameEngine.playerManager.getAllPlayers();
+		if (players.length === 0) return;
+
+		const now = Date.now() / 1000;
+		const countdown = this.roundEndTimestamp ? Math.max(0, Math.ceil(this.roundEndTimestamp - now)) : 0;
+		const scoreboardLine = this.formatScoreboardLine();
+		let headerMessage: string;
+
+		if (this.state === 'in_progress') {
+			headerMessage = `&eTeam Deathmatch: ${countdown}s remaining`;
+		} else if (this.state === 'post_round' && this.roundResultMessage) {
+			headerMessage = `${this.roundResultMessage} &7Next round soon...`;
+		} else if (!this.hasEnoughPlayersToStart()) {
+			const [red, blue] = this.getTeamCounts();
+			const total = red + blue;
+			headerMessage = `&ewaiting for enough players to start (${total}/${config.game.minPlayersToStart})`;
+		} else {
+			headerMessage = '&ePreparing next round...';
+		}
+
+		let didChange = false;
+		for (const player of players) {
+			if (player.gameMsgs[0] !== headerMessage) {
+				this.gameEngine.setGameMessage(player, headerMessage, 0);
+				didChange = true;
+			}
+			if (player.gameMsgs[1] !== scoreboardLine) {
+				this.gameEngine.setGameMessage(player, scoreboardLine, 1);
+				didChange = true;
+			}
+		}
+
+		if (didChange) this.gameEngine.playerUpdateSinceLastEmit = true;
+	}
+}
