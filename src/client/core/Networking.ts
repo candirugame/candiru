@@ -176,7 +176,11 @@ export class Networking {
 	private updateLocalPlayerState(data: Partial<PlayerData>) {
 		// Forced position/velocity/look updates
 		if (data.forced) {
-			if (data.position) this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
+			let funnyZoomFlag = false;
+			if (data.position) {
+				this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
+				funnyZoomFlag = true;
+			}
 			if (data.velocity) this.localPlayer.velocity.set(data.velocity.x, data.velocity.y, data.velocity.z);
 			if (data.lookQuaternion) {
 				this.localPlayer.lookQuaternion.set(
@@ -186,8 +190,9 @@ export class Networking {
 					data.lookQuaternion.w,
 				);
 			}
+			if (data.name) this.localPlayer.name = data.name;
 			if (data.gravity !== undefined) this.localPlayer.gravity = data.gravity;
-			this.forcedZoomTriggered = true;
+			if (funnyZoomFlag) this.forcedZoomTriggered = true;
 			this.localPlayer.forcedAcknowledged = true;
 		} else if (data.forced === false) {
 			this.localPlayer.forcedAcknowledged = false;
@@ -200,6 +205,14 @@ export class Networking {
 				if (this.localPlayer.health - data.health > 80) this.severelyDamagedTimestamp = Date.now() / 1000;
 			}
 			this.localPlayer.health = data.health;
+		}
+
+		if (data.healthIndicatorColor !== undefined) {
+			this.localPlayer.healthIndicatorColor = [
+				data.healthIndicatorColor[0],
+				data.healthIndicatorColor[1],
+				data.healthIndicatorColor[2],
+			] as [number, number, number];
 		}
 
 		// Optional fields: Only update if present in data and a throw hasn't occurred within last 0.15s

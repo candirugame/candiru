@@ -59,7 +59,7 @@ export class FFAGamemode extends Gamemode {
 	onPlayerDisconnect(_player: Player): void {
 	}
 
-	onPlayerDeath(player: Player): void {
+	onPlayerDeath(player: Player, noDeathParticles?: boolean): void {
 		const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
 		if (extras) {
 			extras.deaths++;
@@ -72,7 +72,7 @@ export class FFAGamemode extends Gamemode {
 		) {
 			const killer = this.gameEngine.playerManager.getPlayerById(player.idLastDamagedBy);
 			if (killer) {
-				this.gameEngine.playerManager.doDeathParticles(player);
+				if (!noDeathParticles) this.gameEngine.playerManager.doDeathParticles(player);
 
 				// Redirect spectators of the dead player to the killer
 				for (const otherPlayer of this.gameEngine.playerManager.getAllPlayers()) {
@@ -129,5 +129,39 @@ export class FFAGamemode extends Gamemode {
 	}
 
 	onItemPickup(_player: Player): void {
+	}
+
+	resetGame(): void {
+	}
+
+	/**
+	 * Resets all players after a win: respawns them and clears their inventories.
+	 */
+	protected resetAfterWin(): void {
+		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
+			// Respawn the player
+			this.gameEngine.playerManager.respawnPlayer(player);
+
+			// Clear the player's inventory
+			player.inventory = [];
+
+			// Remove spectate status
+			player.playerSpectating = -1;
+
+			//make player do physics again
+			player.doPhysics = true;
+
+			// Clear direction indicators
+			player.directionIndicatorVector = undefined;
+
+			// Clear game messages
+			this.gameEngine.setGameMessage(player, '', 0);
+			this.gameEngine.setGameMessage(player, '', 1);
+
+			this.gameEngine.playerManager.respawnPlayer(player);
+		}
+
+		// Reset the game state
+		this.resetGame();
 	}
 }

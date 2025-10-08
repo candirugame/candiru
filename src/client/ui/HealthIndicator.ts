@@ -27,6 +27,15 @@ export class HealthIndicator extends IndicatorBase {
 		return spectatedPlayer ? spectatedPlayer.health : this.localPlayer.health;
 	}
 
+	private getDefaultIndicatorColor(): [number, number, number] {
+		const spectatedPlayer = this.networking.getSpectatedPlayer();
+		const source = spectatedPlayer?.healthIndicatorColor ?? this.localPlayer.healthIndicatorColor;
+		if (Array.isArray(source) && source.length === 3) {
+			return [source[0], source[1], source[2]] as [number, number, number];
+		}
+		return [255, 255, 255] as [number, number, number];
+	}
+
 	public init() {
 		this.loadModel('models/simplified_possum.glb')
 			.then((model) => {
@@ -82,7 +91,9 @@ export class HealthIndicator extends IndicatorBase {
 		if (!this.lastHealthChangeWasDamage && currentHealth < maxHealth && this.rotatedAngle % 2 > 1) {
 			targetRGBI = [125, 255, 125, 1.2];
 		} else {
-			targetRGBI = [255, 255, 255, 0.5];
+			const [r, g, b] = this.getDefaultIndicatorColor();
+			if (r === 255 && g === 255 && b === 255) targetRGBI = [r, g, b, 0.5];
+			else targetRGBI = [r, g, b, 1.2];
 		}
 
 		for (let i = 0; i < 4; i++) {

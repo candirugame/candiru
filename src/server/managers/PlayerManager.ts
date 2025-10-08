@@ -58,6 +58,7 @@ export class PlayerManager {
 			player.speed = existingPlayerData.player.speed;
 			player.acceleration = existingPlayerData.player.acceleration;
 			player.health = existingPlayerData.player.health;
+			player.healthIndicatorColor = [...existingPlayerData.player.healthIndicatorColor] as [number, number, number];
 			player.protection = existingPlayerData.player.protection;
 			player.inventory = existingPlayerData.player.inventory;
 			player.lastDamageTime = existingPlayerData.player.lastDamageTime;
@@ -102,6 +103,7 @@ export class PlayerManager {
 			player.directionIndicatorVector = undefined;
 			player.doPhysics = true;
 			player.forced = true;
+			player.healthIndicatorColor = [255, 255, 255];
 
 			player.updateTimestamp = Date.now() / 1000;
 
@@ -154,7 +156,7 @@ export class PlayerManager {
 		player.inventory = [];
 	}
 
-	doDeathParticles(player: Player) {
+	doDeathParticles(player: Player, color?: THREE.Color) {
 		this.gameEngine.emitParticleData({
 			position: player.position.clone(),
 			count: 128,
@@ -162,7 +164,7 @@ export class PlayerManager {
 			spread: 6,
 			lifetime: 15,
 			size: 0.01,
-			color: new THREE.Color(1, 0, 0),
+			color: color ?? new THREE.Color(1, 0, 0),
 		});
 	}
 

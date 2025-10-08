@@ -79,6 +79,7 @@ export class RemotePlayerRenderer {
 
 	private lastFiredTime: { [id: number]: number };
 	private wasShooting: { [id: number]: boolean };
+	private lastAppliedHealthColor: { [id: number]: string };
 
 	private networking: Networking;
 	private localPlayer: Player;
@@ -142,6 +143,7 @@ export class RemotePlayerRenderer {
 
 		this.lastFiredTime = {};
 		this.wasShooting = {};
+		this.lastAppliedHealthColor = {};
 	}
 
 	public setShotHandler(shotHandler: ShotHandler) {
@@ -197,6 +199,11 @@ export class RemotePlayerRenderer {
 			const existingPlayer = this.playersToRender.find((player) => player.id === remotePlayer.id);
 			if (existingPlayer) {
 				this.updatePlayerPosition(existingPlayer.object, existingPlayer.sphere, playerDataWithQuaternion);
+				this.applyHealthIndicatorColor(
+					existingPlayer.object,
+					this.normalizeHealthIndicatorColor(remotePlayer.healthIndicatorColor),
+					remotePlayer.id,
+				);
 			} else {
 				this.addNewPlayer(playerDataWithQuaternion);
 				this.lastFiredTime[remotePlayer.id] = 0;
@@ -226,6 +233,7 @@ export class RemotePlayerRenderer {
 				delete this.lastRunningYOffset[player.id];
 				delete this.lastFiredTime[player.id];
 				delete this.wasShooting[player.id];
+				delete this.lastAppliedHealthColor[player.id];
 			}
 			return shouldKeep;
 		});
@@ -424,6 +432,7 @@ export class RemotePlayerRenderer {
 
 	private addNewPlayer(remotePlayerData: PlayerData): void {
 		const object = this.possumMesh!.clone();
+		this.ensureUniqueMaterials(object);
 		const sphere = this.sphere.clone();
 
 		const nameLabel = this.createTextSprite(remotePlayerData.name.toString());
@@ -441,6 +450,11 @@ export class RemotePlayerRenderer {
 		this.entityScene.add(newPlayer.object);
 		this.sphereScene.add(newPlayer.sphere);
 		this.entityScene.add(newPlayer.nameLabel);
+		this.applyHealthIndicatorColor(
+			newPlayer.object,
+			this.normalizeHealthIndicatorColor(remotePlayerData.healthIndicatorColor),
+			remotePlayerData.id,
+		);
 
 		this.groundTruthPositions[remotePlayerData.id] = new THREE.Vector3(
 			remotePlayerData.position.x,
@@ -449,6 +463,51 @@ export class RemotePlayerRenderer {
 		);
 		this.lastFiredTime[remotePlayerData.id] = 0;
 		this.wasShooting[remotePlayerData.id] = false;
+	}
+
+	private ensureUniqueMaterials(object: THREE.Object3D): void {
+		object.traverse((child) => {
+			const mesh = child as THREE.Mesh;
+			if (!mesh || !mesh.isMesh) return;
+			if (Array.isArray(mesh.material)) {
+				mesh.material = mesh.material.map((material: THREE.Material) => material.clone());
+			} else if (mesh.material) {
+				mesh.material = mesh.material.clone();
+			}
+		});
+	}
+
+	private normalizeHealthIndicatorColor(
+		color: PlayerData['healthIndicatorColor'],
+	): [number, number, number] {
+		const [r = 255, g = 255, b = 255] = color;
+		return [r, g, b];
+	}
+
+	private applyHealthIndicatorColor(
+		object: THREE.Object3D,
+		color: [number, number, number],
+		playerId: number,
+	): void {
+		const key = `${color[0]}_${color[1]}_${color[2]}`;
+		if (this.lastAppliedHealthColor[playerId] === key) return;
+
+		const r = THREE.MathUtils.clamp(color[0] / 255, 0, 1);
+		const g = THREE.MathUtils.clamp(color[1] / 255, 0, 1);
+		const b = THREE.MathUtils.clamp(color[2] / 255, 0, 1);
+
+		object.traverse((child) => {
+			const mesh = child as THREE.Mesh;
+			if (!mesh || !mesh.isMesh) return;
+			const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+			for (const material of materials) {
+				if (material && 'color' in material && material.color instanceof THREE.Color) {
+					material.color.setRGB(r, g, b);
+				}
+			}
+		});
+
+		this.lastAppliedHealthColor[playerId] = key;
 	}
 
 	private removeInactivePlayers(remotePlayerData: PlayerData[]): void {
@@ -465,6 +524,7 @@ export class RemotePlayerRenderer {
 				delete this.lastRunningYOffset[player.id];
 				delete this.lastFiredTime[player.id];
 				delete this.wasShooting[player.id];
+				delete this.lastAppliedHealthColor[player.id];
 			}
 			return isActive;
 		});

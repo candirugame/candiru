@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { SoloCTFGamemode } from './gamemodes/SoloCTFGamemode.ts';
 import { BridgeGamemode } from './gamemodes/BridgeGamemode.ts';
 import { KingOfTheHillGamemode } from './gamemodes/KingOfTheHillGamemode.ts';
+import { TeamDeathmatchGamemode } from './gamemodes/TeamDeathmatchGamemode.ts';
 import { PropManager } from './managers/PropManager.ts';
 import { PropData } from '../shared/Prop.ts';
 
@@ -282,6 +283,9 @@ export class GameEngine {
 					break;
 				case 'ctf':
 					this.gamemode = new SoloCTFGamemode(this);
+					break;
+				case 'tdm':
+					this.gamemode = new TeamDeathmatchGamemode(this);
 					break;
 				case 'koth':
 					this.gamemode = new KingOfTheHillGamemode(this);
