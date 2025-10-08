@@ -201,7 +201,7 @@ export class RemotePlayerRenderer {
 				this.updatePlayerPosition(existingPlayer.object, existingPlayer.sphere, playerDataWithQuaternion);
 				this.applyHealthIndicatorColor(
 					existingPlayer.object,
-					remotePlayer.healthIndicatorColor,
+					this.normalizeHealthIndicatorColor(remotePlayer.healthIndicatorColor),
 					remotePlayer.id,
 				);
 			} else {
@@ -450,7 +450,11 @@ export class RemotePlayerRenderer {
 		this.entityScene.add(newPlayer.object);
 		this.sphereScene.add(newPlayer.sphere);
 		this.entityScene.add(newPlayer.nameLabel);
-		this.applyHealthIndicatorColor(newPlayer.object, remotePlayerData.healthIndicatorColor, remotePlayerData.id);
+		this.applyHealthIndicatorColor(
+			newPlayer.object,
+			this.normalizeHealthIndicatorColor(remotePlayerData.healthIndicatorColor),
+			remotePlayerData.id,
+		);
 
 		this.groundTruthPositions[remotePlayerData.id] = new THREE.Vector3(
 			remotePlayerData.position.x,
@@ -471,6 +475,13 @@ export class RemotePlayerRenderer {
 				mesh.material = mesh.material.clone();
 			}
 		});
+	}
+
+	private normalizeHealthIndicatorColor(
+		color: PlayerData['healthIndicatorColor'],
+	): [number, number, number] {
+		const [r = 255, g = 255, b = 255] = color;
+		return [r, g, b];
 	}
 
 	private applyHealthIndicatorColor(
