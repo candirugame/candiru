@@ -15,7 +15,6 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		[220, 40, 40],
 		[40, 90, 220],
 	];
-	private readonly POST_ROUND_DELAY_SECONDS = 5;
 	private teamScores: [number, number] = [0, 0];
 	private state: RoundState = 'waiting';
 	private roundEndTimestamp: number | null = null;
@@ -209,16 +208,16 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 
 		this.state = 'post_round';
 		this.roundEndTimestamp = null;
-		this.postRoundResetTimestamp = Date.now() / 1000 + this.POST_ROUND_DELAY_SECONDS;
+		this.postRoundResetTimestamp = Date.now() / 1000 + config.game.respawnDelay;
 
 		const leader = this.getLeadingTeam();
 		if (leader === null) {
-			this.roundResultMessage = '&eround ended in a draw!';
-			this.gameEngine.chatManager.broadcastEventMessage('&eteam Deathmatch round ended in a draw!');
+			this.roundResultMessage = '&eround ended in a draw';
+			this.gameEngine.chatManager.broadcastEventMessage('&eteam deathmatch round ended in a draw');
 		} else {
 			const winnerName = this.TEAM_NAMES[leader];
 			const winnerColor = this.TEAM_COLORS[leader];
-			this.roundResultMessage = `${winnerColor}${winnerName} &fwins the round!`;
+			this.roundResultMessage = `${winnerName} wins the round`;
 			this.gameEngine.chatManager.broadcastEventMessage(
 				`${winnerColor}${winnerName} &7team wins the round!`,
 			);
@@ -244,6 +243,7 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		this.roundEndTimestamp = null;
 		this.postRoundResetTimestamp = null;
 		this.roundResultMessage = null;
+		this.resetAfterWin();
 		this.updateGameMessages();
 		this.updateRosterState();
 	}
@@ -253,50 +253,62 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		return this.teamScores[0] > this.teamScores[1] ? 0 : 1;
 	}
 
-	private formatScoreboardLine(): string {
-		const [redScore, blueScore] = this.teamScores;
-		const leader = this.getLeadingTeam();
-		let leaderText = '&7tied';
-		if (leader === 0) leaderText = `${this.TEAM_COLORS[0]}${this.TEAM_NAMES[0]} &7leading`;
-		if (leader === 1) leaderText = `${this.TEAM_COLORS[1]}${this.TEAM_NAMES[1]} &7leading`;
-		return `${this.TEAM_COLORS[0]}${this.TEAM_NAMES[0]} &f${redScore} &7vs ${this.TEAM_COLORS[1]}${
-			this.TEAM_NAMES[1]
-		} &f${blueScore} &7(${leaderText})`;
-	}
-
 	private updateGameMessages(): void {
 		const players = this.gameEngine.playerManager.getAllPlayers();
 		if (players.length === 0) return;
 
 		const now = Date.now() / 1000;
 		const countdown = this.roundEndTimestamp ? Math.max(0, Math.ceil(this.roundEndTimestamp - now)) : 0;
-		const scoreboardLine = this.formatScoreboardLine();
-		let headerMessage: string;
 
-		if (this.state === 'in_progress') {
-			headerMessage = `&eteam deathmatch: ${countdown}s remaining`;
-		} else if (this.state === 'post_round' && this.roundResultMessage) {
-			headerMessage = `${this.roundResultMessage} &7Next round soon...`;
-		} else if (!this.hasEnoughPlayersToStart()) {
-			const [red, blue] = this.getTeamCounts();
-			const total = red + blue;
-			headerMessage = `&ewaiting for enough players to start (${total}/${config.game.minPlayersToStart})`;
-		} else {
-			headerMessage = '&epreparing next round...';
-		}
+		const [redScore, blueScore] = this.teamScores;
+		const leadingTeam = this.getLeadingTeam();
+		const scoreboardLine = `${this.TEAM_COLORS[0]}${this.TEAM_NAMES[0]} &f${redScore} &7vs ${this.TEAM_COLORS[1]}${
+			this.TEAM_NAMES[1]
+		} &f${blueScore}`;
+		let headerMessage: string;
 
 		let didChange = false;
 		for (const player of players) {
-			if (player.gameMsgs[0] !== headerMessage) {
-				this.gameEngine.setGameMessage(player, headerMessage, 0);
-				didChange = true;
+			if (player.playerSpectating !== -1) continue; // don't show to spectators
+
+			const playerTeam = this.getPlayerTeam(player);
+			let color = '&7';
+			let winningText = ['tied', 'tied'];
+			if (leadingTeam == playerTeam) {
+				color = '&a';
+				winningText = ['winning', 'won'];
+			} else if (leadingTeam !== null && playerTeam !== -1) {
+				color = '&c';
+				winningText = ['losing', 'lost'];
 			}
-			if (player.gameMsgs[1] !== scoreboardLine) {
-				this.gameEngine.setGameMessage(player, scoreboardLine, 1);
-				didChange = true;
+
+			if (this.state === 'in_progress') {
+				//headerMessage = `&eteam deathmatch: ${countdown}s remaining`;
+				headerMessage = scoreboardLine;
+			} else if (this.state === 'post_round' && this.roundResultMessage) {
+				headerMessage = `${color}${this.roundResultMessage}`;
+			} else if (!this.hasEnoughPlayersToStart()) {
+				const [red, blue] = this.getTeamCounts();
+				const total = red + blue;
+				headerMessage = `&6waiting for enough players to start (${total}/${config.game.minPlayersToStart})`;
+			} else {
+				headerMessage = '&esomething broke.';
 			}
+
+			this.gameEngine.setGameMessage(player, headerMessage, 0);
+			//&7 - gray, &a - green, &c - red
+			let secondLine = `${color}${countdown}s remain. (you're ${winningText[0]})`;
+			if (this.state !== 'in_progress') secondLine = '';
+			if (this.state == 'post_round') secondLine = `${color}your team ${winningText[1]}.`;
+			this.gameEngine.setGameMessage(player, secondLine, 1);
+			didChange = true;
 		}
 
 		if (didChange) this.gameEngine.playerUpdateSinceLastEmit = true;
+	}
+
+	private getPlayerTeam(player: Player) {
+		const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+		return extras ? extras.team : -1;
 	}
 }

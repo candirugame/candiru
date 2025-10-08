@@ -420,7 +420,7 @@ export class KingOfTheHillGamemode extends FFAGamemode {
 	/**
 	 * Resets all players after a win: respawns them and clears their inventories.
 	 */
-	private resetAfterWin(): void {
+	resetAfterWin(): void {
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
 			// Respawn the player
 			this.gameEngine.playerManager.respawnPlayer(player);
@@ -449,7 +449,7 @@ export class KingOfTheHillGamemode extends FFAGamemode {
 	/**
 	 * Resets the game by clearing points, removing the flag, and respawning it.
 	 */
-	private resetGame(): void {
+	resetGame(): void {
 		console.log('🔄 Resetting Solo CTF game...');
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
