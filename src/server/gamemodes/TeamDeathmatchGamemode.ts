@@ -54,6 +54,8 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 	}
 
 	override onPlayerDeath(player: Player): void {
+		if (this.state === 'post_round') return; //ignore deaths during post-round
+
 		const killer = this.findValidKiller(player);
 		super.onPlayerDeath(player, true);
 		const playerExtras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
@@ -214,6 +216,16 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		if (leader === null) {
 			this.roundResultMessage = '&eround ended in a draw';
 			this.gameEngine.chatManager.broadcastEventMessage('&eteam deathmatch round ended in a draw');
+
+			for (const player of this.gameEngine.playerManager.getAllPlayers()) { //explode everyone
+				const playerExtras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+				const color = playerExtras && playerExtras.team == 1 ? new THREE.Color(0, 0, 1) : new THREE.Color(1, 0, 0);
+				this.gameEngine.playerManager.doDeathParticles(player, color);
+				player.health = -50;
+				player.playerSpectating = -2; //not a player ID, just watch yourself die
+				player.inventory = []; //lose your items
+				player.forced = true;
+			}
 		} else {
 			const winnerName = this.TEAM_NAMES[leader];
 			const winnerColor = this.TEAM_COLORS[leader];
@@ -221,6 +233,25 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 			this.gameEngine.chatManager.broadcastEventMessage(
 				`${winnerColor}${winnerName} &7team wins the round!`,
 			);
+
+			for (const player of this.gameEngine.playerManager.getAllPlayers()) { //explode losers
+				const playerExtras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
+				const playerWon = playerExtras && playerExtras.team === leader;
+				if (playerWon) {
+					this.gameEngine.serverInfo.skyColor = '#FFFFFF';
+					// Schedule to unset the win announcement flag after the respawn delay and reset the game
+					player.doPhysics = false;
+					player.gravity = 4;
+					player.forced = true;
+				} else {
+					const color = playerExtras && playerExtras.team == 1 ? new THREE.Color(0, 0, 1) : new THREE.Color(1, 0, 0);
+					this.gameEngine.playerManager.doDeathParticles(player, color);
+					player.health = -50;
+					player.playerSpectating = -2; //not a player ID, just watch yourself die
+					player.inventory = []; //lose your items
+					player.forced = true;
+				}
+			}
 		}
 
 		this.updateGameMessages();
@@ -246,6 +277,10 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		this.resetAfterWin();
 		this.updateGameMessages();
 		this.updateRosterState();
+		this.gameEngine.serverInfo.skyColor = '#000000';
+		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
+			player.thirdPerson = 0;
+		}
 	}
 
 	private getLeadingTeam(): 0 | 1 | null {
@@ -269,7 +304,7 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 
 		let didChange = false;
 		for (const player of players) {
-			if (player.playerSpectating !== -1) continue; // don't show to spectators
+			if (player.playerSpectating !== -1 && player.playerSpectating !== -2) continue; // don't show to spectators
 
 			const playerTeam = this.getPlayerTeam(player);
 			let color = '&7';
