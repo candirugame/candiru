@@ -19,7 +19,6 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 	private state: RoundState = 'waiting';
 	private roundEndTimestamp: number | null = null;
 	private postRoundResetTimestamp: number | null = null;
-	private roundResultMessage: string | null = null;
 
 	override init(): void {
 		super.init();
@@ -188,7 +187,6 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 	private startRound(): void {
 		this.teamScores = [0, 0];
 		this.state = 'in_progress';
-		this.roundResultMessage = null;
 		this.postRoundResetTimestamp = null;
 		this.roundEndTimestamp = Date.now() / 1000 + config.game.pointsToWin;
 		this.gameEngine.chatManager.broadcastEventMessage('&bteam Deathmatch starting!');
@@ -203,7 +201,6 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 			this.roundEndTimestamp = null;
 			this.postRoundResetTimestamp = null;
 			this.teamScores = [0, 0];
-			this.roundResultMessage = null;
 			this.updateGameMessages();
 			return;
 		}
@@ -214,7 +211,6 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 
 		const leader = this.getLeadingTeam();
 		if (leader === null) {
-			this.roundResultMessage = '&eround ended in a draw';
 			this.gameEngine.chatManager.broadcastEventMessage('&eteam deathmatch round ended in a draw');
 
 			for (const player of this.gameEngine.playerManager.getAllPlayers()) { //explode everyone
@@ -229,7 +225,6 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		} else {
 			const winnerName = this.TEAM_NAMES[leader];
 			const winnerColor = this.TEAM_COLORS[leader];
-			this.roundResultMessage = `${winnerName} wins the round`;
 			this.gameEngine.chatManager.broadcastEventMessage(
 				`${winnerColor}${winnerName} &7team wins the round!`,
 			);
@@ -273,7 +268,6 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 		this.state = 'waiting';
 		this.roundEndTimestamp = null;
 		this.postRoundResetTimestamp = null;
-		this.roundResultMessage = null;
 		this.resetAfterWin();
 		this.updateGameMessages();
 		this.updateRosterState();
@@ -317,11 +311,15 @@ export class TeamDeathmatchGamemode extends FFAGamemode {
 				winningText = ['losing', 'lost'];
 			}
 
+			const roundResultMessage = leadingTeam !== null
+				? `${this.TEAM_COLORS[leadingTeam]}${this.TEAM_NAMES[leadingTeam]}${color} wins the round`
+				: '&eround ended in a draw';
+
 			if (this.state === 'in_progress') {
 				//headerMessage = `&eteam deathmatch: ${countdown}s remaining`;
 				headerMessage = scoreboardLine;
-			} else if (this.state === 'post_round' && this.roundResultMessage) {
-				headerMessage = `${color}${this.roundResultMessage}`;
+			} else if (this.state === 'post_round' && roundResultMessage) {
+				headerMessage = roundResultMessage;
 			} else if (!this.hasEnoughPlayersToStart()) {
 				const [red, blue] = this.getTeamCounts();
 				const total = red + blue;
