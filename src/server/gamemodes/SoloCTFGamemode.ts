@@ -344,38 +344,9 @@ export class SoloCTFGamemode extends FFAGamemode {
 	}
 
 	/**
-	 * Resets all players after a win: respawns them and clears their inventories.
-	 */
-	private resetAfterWin(): void {
-		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
-			// Respawn the player
-			this.gameEngine.playerManager.respawnPlayer(player);
-
-			// Clear the player's inventory
-			player.inventory = [];
-
-			// Remove spectate status
-			player.playerSpectating = -1;
-
-			//make player do physics again
-			player.doPhysics = true;
-
-			// Clear direction indicators
-			player.directionIndicatorVector = undefined;
-
-			// Clear game messages
-			this.gameEngine.setGameMessage(player, '', 0);
-			this.gameEngine.setGameMessage(player, '', 1);
-		}
-
-		// Reset the game state
-		this.resetGame();
-	}
-
-	/**
 	 * Resets the game by clearing points, removing the flag, and respawning it.
 	 */
-	private resetGame(): void {
+	resetGame(): void {
 		console.log('🔄 Resetting Solo CTF game...');
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);
@@ -404,7 +375,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 			this.gameEngine.setGameMessage(player, '', 1);
 
 			// Optionally, respawn the player to ensure they are back in the game
-			this.gameEngine.playerManager.respawnPlayer(player);
+			//	this.gameEngine.playerManager.respawnPlayer(player);
 		}
 
 		// Remove flag from the world if it exists

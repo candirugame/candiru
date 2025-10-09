@@ -20,9 +20,10 @@ interface ChatMessage {
 interface AnimatedGameMessage {
 	id: string; // Unique identifier
 	message: string;
-	state: 'animatingIn' | 'animatingOut' | 'idle';
+	state: 'animatingIn' | 'animatingOut' | 'idle' | 'sliding';
 	animationProgress: number; // Ranges from 0 to 1
 	timestamp: number; // Time when the current animation state started
+	slideAnimation: NumberSlideAnimation | null;
 }
 
 interface AnimatedEventMessage {
@@ -32,6 +33,36 @@ interface AnimatedEventMessage {
 	animationProgress: number;
 	timestamp: number;
 	lifetime: number;
+}
+
+interface NumberSequence {
+	start: number;
+	end: number;
+	value: string;
+}
+
+interface NumberSlideSegment {
+	fromValue: string;
+	toValue: string;
+	fromStart: number;
+	fromEnd: number;
+	toStart: number;
+	toEnd: number;
+	oldWidth: number;
+	newWidth: number;
+	targetWidth: number;
+	slideDirection: 1 | -1;
+}
+
+interface NumberSlideAnimation {
+	fromMessage: string;
+	toMessage: string;
+	startTime: number;
+	duration: number;
+	progress: number;
+	segments: NumberSlideSegment[];
+	segmentLookup: Map<number, NumberSlideSegment>;
+	maxTextWidth: number;
 }
 
 interface LineMessage {
@@ -72,6 +103,7 @@ export class ChatOverlay {
 
 	private offscreenCanvas: HTMLCanvasElement;
 	private offscreenCtx: CanvasRenderingContext2D;
+	private digitGlyphCache: Map<string, HTMLCanvasElement> = new Map();
 
 	// Smooth animation state for durability bar horizontal offset
 	private durabilityBarOffset: number = 0; // in canvas pixels
@@ -88,6 +120,7 @@ export class ChatOverlay {
 
 	private lines: LineMessage[] = [];
 	private animationDuration: number = 0.75;
+	private numberSlideDuration: number = 0.05;
 
 	// Color code mapping
 	public static COLOR_CODES: { [key: string]: string } = {
@@ -128,6 +161,191 @@ export class ChatOverlay {
 		this.offscreenCanvas.remove();
 		this.lines = [];
 		this.gameMessages = [];
+	}
+
+	private createNumberSlideAnimation(
+		oldMessage: string,
+		newMessage: string,
+		startTime: number,
+	): NumberSlideAnimation | null {
+		const oldSequences = this.extractNumberSequences(oldMessage);
+		const newSequences = this.extractNumberSequences(newMessage);
+
+		if (oldSequences.length === 0 || oldSequences.length !== newSequences.length) {
+			return null;
+		}
+
+		const oldTemplate = this.buildNumericTemplate(oldMessage, oldSequences);
+		const newTemplate = this.buildNumericTemplate(newMessage, newSequences);
+
+		if (oldTemplate !== newTemplate) {
+			return null;
+		}
+
+		const segments: NumberSlideSegment[] = [];
+		const segmentLookup = new Map<number, NumberSlideSegment>();
+
+		this.chatCtx.font = '8px Tiny5';
+
+		for (let i = 0; i < oldSequences.length; i++) {
+			const oldSeq = oldSequences[i];
+			const newSeq = newSequences[i];
+
+			const oldValue = oldSeq.value;
+			const newValue = newSeq.value;
+
+			if (oldValue === newValue) {
+				continue;
+			}
+
+			if (oldValue.length === newValue.length) {
+				let segmentsAdded = false;
+
+				for (let digitIndex = 0; digitIndex < oldValue.length; digitIndex++) {
+					const oldDigit = oldValue[digitIndex];
+					const newDigit = newValue[digitIndex];
+
+					if (oldDigit === newDigit) continue;
+
+					const fromStart = oldSeq.start + digitIndex;
+					const toStart = newSeq.start + digitIndex;
+
+					const oldWidth = this.chatCtx.measureText(oldDigit).width;
+					const newWidth = this.chatCtx.measureText(newDigit).width;
+					const targetWidth = Math.max(oldWidth, newWidth);
+
+					const segment: NumberSlideSegment = {
+						fromValue: oldDigit,
+						toValue: newDigit,
+						fromStart,
+						fromEnd: fromStart + 1,
+						toStart,
+						toEnd: toStart + 1,
+						oldWidth,
+						newWidth,
+						targetWidth,
+						slideDirection: this.determineSlideDirection(oldDigit, newDigit),
+					};
+
+					segments.push(segment);
+					segmentLookup.set(segment.toStart, segment);
+					segmentsAdded = true;
+				}
+
+				if (segmentsAdded) {
+					continue;
+				}
+			}
+
+			const oldWidth = this.chatCtx.measureText(oldValue).width;
+			const newWidth = this.chatCtx.measureText(newValue).width;
+			const targetWidth = Math.max(oldWidth, newWidth);
+
+			const segment: NumberSlideSegment = {
+				fromValue: oldValue,
+				toValue: newValue,
+				fromStart: oldSeq.start,
+				fromEnd: oldSeq.end,
+				toStart: newSeq.start,
+				toEnd: newSeq.end,
+				oldWidth,
+				newWidth,
+				targetWidth,
+				slideDirection: this.determineSlideDirection(oldValue, newValue),
+			};
+
+			segments.push(segment);
+			segmentLookup.set(segment.toStart, segment);
+		}
+
+		if (!segments.length) {
+			return null;
+		}
+
+		const maxTextWidth = Math.max(
+			this.getRenderedTextWidth(oldMessage),
+			this.getRenderedTextWidth(newMessage),
+		);
+
+		return {
+			fromMessage: oldMessage,
+			toMessage: newMessage,
+			startTime,
+			duration: this.numberSlideDuration,
+			progress: 0,
+			segments,
+			segmentLookup,
+			maxTextWidth,
+		};
+	}
+
+	private extractNumberSequences(message: string): NumberSequence[] {
+		const sequences: NumberSequence[] = [];
+		let i = 0;
+
+		while (i < message.length) {
+			const char = message[i];
+
+			if ((char === '&' || char === '^') && i + 1 < message.length) {
+				i += 2;
+				continue;
+			}
+
+			if (char >= '0' && char <= '9') {
+				const start = i;
+				let end = i + 1;
+
+				while (end < message.length) {
+					const nextChar = message[end];
+					if (nextChar >= '0' && nextChar <= '9') {
+						end++;
+					} else {
+						break;
+					}
+				}
+
+				sequences.push({
+					start,
+					end,
+					value: message.slice(start, end),
+				});
+
+				i = end;
+				continue;
+			}
+
+			i++;
+		}
+
+		return sequences;
+	}
+
+	private buildNumericTemplate(message: string, sequences: NumberSequence[]): string {
+		if (!sequences.length) return message;
+
+		let result = '';
+		let lastIndex = 0;
+
+		for (const seq of sequences) {
+			result += message.slice(lastIndex, seq.start);
+			result += '{#}';
+			lastIndex = seq.end;
+		}
+
+		result += message.slice(lastIndex);
+
+		return result;
+	}
+
+	private determineSlideDirection(oldValue: string, newValue: string): 1 | -1 {
+		const oldNum = Number.parseInt(oldValue, 10);
+		const newNum = Number.parseInt(newValue, 10);
+
+		if (!Number.isNaN(oldNum) && !Number.isNaN(newNum)) {
+			return newNum < oldNum ? 1 : -1;
+		}
+
+		return -1;
 	}
 
 	private getColorCode(code: string): string | false {
@@ -374,12 +592,19 @@ export class ChatOverlay {
 		ctx.globalAlpha = 1;
 	}
 
-	private renderPixelText(text: string, x: number, y: number, defaultColor: string) {
+	private renderPixelText(
+		text: string,
+		x: number,
+		y: number,
+		defaultColor: string,
+		slideAnimation?: NumberSlideAnimation | null,
+	) {
 		if (!text) return;
 
 		let currentX = x;
 		let currentColor = defaultColor;
 		let currentSegment = '';
+		const slideSegments = slideAnimation?.segmentLookup ?? null;
 
 		const renderSegment = (segment: string, color: string) => {
 			if (!segment) return;
@@ -443,6 +668,14 @@ export class ChatOverlay {
 				);
 				currentX += 8; // Move cursor forward by sprite width
 				i++; // Skip the sprite code character
+			} else if (slideSegments && slideSegments.has(i)) {
+				renderSegment(currentSegment, currentColor);
+				currentSegment = '';
+
+				const segment = slideSegments.get(i)!;
+				const width = this.renderSlideSegment(segment, currentX, y, currentColor, slideAnimation!);
+				currentX += width;
+				i = segment.toEnd - 1;
 			} // Handle regular characters
 			else {
 				currentSegment += text[i];
@@ -450,6 +683,118 @@ export class ChatOverlay {
 		}
 
 		renderSegment(currentSegment, currentColor);
+	}
+
+	private renderSlideSegment(
+		segment: NumberSlideSegment,
+		x: number,
+		y: number,
+		color: string,
+		slideAnimation: NumberSlideAnimation,
+	): number {
+		const oldGlyph = this.getDigitGlyphCanvas(segment.fromValue, color);
+		const newGlyph = this.getDigitGlyphCanvas(segment.toValue, color);
+
+		const glyphHeight = oldGlyph.height || 8;
+		const targetWidth = Math.max(segment.targetWidth, oldGlyph.width, newGlyph.width);
+		const topY = y - glyphHeight + 1;
+
+		const oldOffsetX = x + (targetWidth - oldGlyph.width) / 2;
+		const newOffsetX = x + (targetWidth - newGlyph.width) / 2;
+
+		const progress = Math.min(Math.max(slideAnimation.progress, 0), 1);
+		const eased = this.easeOut(progress);
+		const slideOffset = eased * glyphHeight * segment.slideDirection;
+
+		const oldY = Math.round(topY + slideOffset);
+		const newY = Math.round(topY + (eased - 1) * glyphHeight * segment.slideDirection);
+
+		this.chatCtx.save();
+		this.chatCtx.beginPath();
+		this.chatCtx.rect(x, topY, targetWidth, glyphHeight);
+		this.chatCtx.clip();
+
+		this.chatCtx.globalAlpha = 1 - eased * 0.3;
+		this.chatCtx.drawImage(
+			oldGlyph,
+			0,
+			0,
+			oldGlyph.width,
+			glyphHeight,
+			oldOffsetX,
+			oldY,
+			oldGlyph.width,
+			glyphHeight,
+		);
+
+		this.chatCtx.globalAlpha = 0.7 + eased * 0.3;
+		this.chatCtx.drawImage(
+			newGlyph,
+			0,
+			0,
+			newGlyph.width,
+			glyphHeight,
+			newOffsetX,
+			newY,
+			newGlyph.width,
+			glyphHeight,
+		);
+
+		this.chatCtx.restore();
+
+		return targetWidth;
+	}
+
+	private getDigitGlyphCanvas(text: string, color: string): HTMLCanvasElement {
+		const isDynamicColor = color.startsWith('hsl(');
+		const key = isDynamicColor ? `${text}|dynamic` : `${text}|${color}`;
+
+		if (!isDynamicColor) {
+			const cached = this.digitGlyphCache.get(key);
+			if (cached) {
+				return cached;
+			}
+		}
+
+		let canvas = this.digitGlyphCache.get(key);
+
+		if (!canvas) {
+			canvas = document.createElement('canvas');
+			this.digitGlyphCache.set(key, canvas);
+		}
+
+		let ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+		ctx.font = '8px Tiny5';
+		const metrics = ctx.measureText(text);
+		const width = Math.max(Math.ceil(metrics.width), 1);
+		const height = 8;
+
+		if (canvas.width !== width || canvas.height !== height) {
+			canvas.width = width;
+			canvas.height = height;
+			ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+		} else {
+			ctx.clearRect(0, 0, width, height);
+		}
+
+		ctx.font = '8px Tiny5';
+		ctx.fillStyle = color;
+		ctx.fillText(text, 0, height - 1);
+
+		const imageData = ctx.getImageData(0, 0, width, height);
+		const data = imageData.data;
+
+		for (let i = 0; i < data.length; i += 4) {
+			data[i + 3] = data[i + 3] > 170 ? 255 : 0;
+		}
+
+		ctx.putImageData(imageData, 0, 0);
+
+		if (!isDynamicColor) {
+			this.digitGlyphCache.set(key, canvas);
+		}
+
+		return canvas;
 	}
 
 	private renderDebugText() {
@@ -555,15 +900,42 @@ export class ChatOverlay {
 						state: 'animatingIn',
 						animationProgress: 0,
 						timestamp: now,
+						slideAnimation: null,
 					};
 				}
 				continue;
 			}
 
 			if (currentMessage !== line.currentMessage.message) {
-				if (line.currentMessage.state === 'idle') {
+				const sourceMessage = line.currentMessage.slideAnimation
+					? line.currentMessage.slideAnimation.toMessage
+					: line.currentMessage.message;
+
+				const slideAnimation = this.createNumberSlideAnimation(sourceMessage, currentMessage, now);
+
+				if (slideAnimation) {
+					if (line.currentMessage.state === 'idle' || line.currentMessage.state === 'sliding') {
+						line.currentMessage.message = currentMessage;
+						line.currentMessage.state = 'sliding';
+						line.currentMessage.timestamp = now;
+						line.currentMessage.animationProgress = 0;
+						line.currentMessage.slideAnimation = slideAnimation;
+						line.pendingMessage = null;
+						continue;
+					}
+
+					// Defer numeric updates until active fade animations complete.
+					line.pendingMessage = currentMessage;
+					line.currentMessage.slideAnimation = null;
+					continue;
+				}
+
+				line.currentMessage.slideAnimation = null;
+
+				if (line.currentMessage.state === 'idle' || line.currentMessage.state === 'sliding') {
 					line.currentMessage.state = 'animatingOut';
 					line.currentMessage.timestamp = now;
+					line.currentMessage.animationProgress = 0;
 					line.pendingMessage = currentMessage;
 				} else {
 					line.pendingMessage = currentMessage;
@@ -576,6 +948,27 @@ export class ChatOverlay {
 		for (let i = 0; i < this.maxMessagesOnScreen; i++) {
 			const line = this.lines[i];
 			if (!line || !line.currentMessage) continue; // Early return if null
+
+			if (line.currentMessage.state === 'sliding') {
+				const slide = line.currentMessage.slideAnimation;
+				if (!slide) {
+					line.currentMessage.state = 'idle';
+					continue;
+				}
+
+				const slideElapsed = now - slide.startTime;
+				const slideProgress = Math.min(slideElapsed / slide.duration, 1);
+
+				slide.progress = slideProgress;
+
+				if (slideProgress >= 1) {
+					line.currentMessage.state = 'idle';
+					line.currentMessage.slideAnimation = null;
+					line.currentMessage.animationProgress = 1;
+				}
+
+				continue;
+			}
 
 			const elapsed = now - line.currentMessage.timestamp;
 			let progress = Math.min(elapsed / this.animationDuration, 1);
@@ -592,6 +985,7 @@ export class ChatOverlay {
 						state: 'animatingIn',
 						animationProgress: 0,
 						timestamp: now,
+						slideAnimation: null,
 					};
 					line.pendingMessage = null;
 				} else {
@@ -643,26 +1037,19 @@ export class ChatOverlay {
 			const line = this.lines[i];
 			if (!line || !line.currentMessage) continue;
 
+			if (line.currentMessage.state === 'sliding' && line.currentMessage.slideAnimation) {
+				const slide = line.currentMessage.slideAnimation;
+				const textWidth = slide.maxTextWidth;
+				const x = Math.floor((this.screenWidth - textWidth) / 2);
+				const y = Math.floor(centerY + (i * 10));
+
+				this.renderPixelText(line.currentMessage.message, x, y, 'white', slide);
+				continue;
+			}
+
 			let visibleText = line.currentMessage.message;
 
-			// Check if we should skip animation
-			const shouldSkipAnimation = line.currentMessage.state === 'animatingOut' &&
-				line.pendingMessage !== null &&
-				line.currentMessage.message.includes('seconds') &&
-				line.pendingMessage.includes('seconds');
-
-			if (shouldSkipAnimation && line.pendingMessage) {
-				// Directly update to the pending message
-				line.currentMessage = {
-					id: this.generateUniqueId(),
-					message: line.pendingMessage,
-					state: 'idle',
-					animationProgress: 1,
-					timestamp: Date.now() / 1000,
-				};
-				line.pendingMessage = null;
-				visibleText = line.currentMessage.message;
-			} else if (line.currentMessage.state === 'animatingIn' || line.currentMessage.state === 'animatingOut') {
+			if (line.currentMessage.state === 'animatingIn' || line.currentMessage.state === 'animatingOut') {
 				visibleText = this.getVisibleText(
 					line.currentMessage.message,
 					line.currentMessage.state,

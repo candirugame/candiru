@@ -72,6 +72,9 @@ export class DataValidator {
 		chatMsg: z.string().max(300),
 		latency: z.number(),
 		health: z.number(),
+		healthIndicatorColor: z
+			.tuple([z.number().min(0).max(255), z.number().min(0).max(255), z.number().min(0).max(255)])
+			.default([255, 255, 255]),
 		protection: z.number(),
 		forced: z.boolean(),
 		forcedAcknowledged: z.boolean(),

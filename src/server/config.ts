@@ -34,6 +34,7 @@ const defaults = {
 	RESPAWN_DELAY: '10',
 	POINTS_TO_WIN: '100',
 	POINTS_TO_EVENT: '30',
+	MIN_PLAYERS_TO_START: '2',
 
 	// Health settings
 	HEALTH_REGEN_DELAY: '6',
@@ -134,6 +135,7 @@ function parseConfig(env: Record<string, string>) {
 			respawnDelay: parseInt(env.RESPAWN_DELAY),
 			pointsToWin: parseInt(env.POINTS_TO_WIN),
 			pointsToEvent: parseInt(env.POINTS_TO_EVENT),
+			minPlayersToStart: parseInt(env.MIN_PLAYERS_TO_START),
 		},
 		player: {
 			disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),
