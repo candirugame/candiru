@@ -914,12 +914,19 @@ export class ChatOverlay {
 				const slideAnimation = this.createNumberSlideAnimation(sourceMessage, currentMessage, now);
 
 				if (slideAnimation) {
-					line.currentMessage.message = currentMessage;
-					line.currentMessage.state = 'sliding';
-					line.currentMessage.timestamp = now;
-					line.currentMessage.animationProgress = 0;
-					line.currentMessage.slideAnimation = slideAnimation;
-					line.pendingMessage = null;
+					if (line.currentMessage.state === 'idle' || line.currentMessage.state === 'sliding') {
+						line.currentMessage.message = currentMessage;
+						line.currentMessage.state = 'sliding';
+						line.currentMessage.timestamp = now;
+						line.currentMessage.animationProgress = 0;
+						line.currentMessage.slideAnimation = slideAnimation;
+						line.pendingMessage = null;
+						continue;
+					}
+
+					// Defer numeric updates until active fade animations complete.
+					line.pendingMessage = currentMessage;
+					line.currentMessage.slideAnimation = null;
 					continue;
 				}
 
