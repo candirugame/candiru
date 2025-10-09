@@ -227,6 +227,7 @@ export class PlayerManager {
 				if (config.items.shotsTakeDurability && item.shotsAvailable) {
 					item.durability -= item.shotsFired / item.shotsAvailable;
 				}
+				item.durability = Math.min(Math.max(item.durability, 0), 1);
 				// item.durability += item.durabilityOffset ?? 0;
 			}
 		}
