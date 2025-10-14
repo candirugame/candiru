@@ -14,7 +14,7 @@ Live versions:
 Run the project with either Deno 2 or Docker.
 
 - Deno 2: https://deno.com/
-- Dockerfile: https://github.com/candirugame/candiru/blob/dev/Dockerfile
+- Dockerfile: [candiru/Dockerfile](Dockerfile)
 
 ## Running with Deno 2
 
