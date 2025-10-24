@@ -101,9 +101,12 @@ export class ItemManager {
 						// If the item already exists, just increase the reserve count
 						const existingItem = player.inventory.find((inv) => inv.itemId === id);
 						if (existingItem) {
-							existingItem.durabilityOffset += item.durabilityOffset + 1 || 1;
-							if (existingItem.durabilityOffset + existingItem.durability > 1) {
-								existingItem.durabilityOffset -= 1;
+							const incomingOffset = (item.durabilityOffset ?? 0) + 1;
+							const currentOffset = existingItem.durabilityOffset ?? 0;
+							const updatedOffset = currentOffset + incomingOffset;
+							existingItem.durabilityOffset = updatedOffset;
+							if (updatedOffset + existingItem.durability > 1) {
+								existingItem.durabilityOffset = updatedOffset - 1;
 								existingItem.overflow += 1;
 							}
 							shouldPickup = true;

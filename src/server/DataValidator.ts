@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
+import { z } from 'zod';
 import { ChatMessage } from './models/ChatMessage.ts';
 import { DamageRequest } from './models/DamageRequest.ts';
 import { Player, PlayerData } from '../shared/Player.ts';
@@ -119,6 +119,7 @@ export class DataValidator {
 		url: z.string(),
 		position: this.vector3Schema,
 		velocity: this.vector3Schema,
+		angularVelocity: this.vector3Schema,
 		quaternion: this.quaternionSchema,
 		scale: this.vector3Schema,
 		id: z.number(),

@@ -34,9 +34,11 @@ export class ChatManager {
 				break;
 			case 'kill': {
 				const player = this.playerManager.getPlayerById(playerId);
-				if (player) {
-					this.playerManager.respawnPlayer(player);
+				if (!player) {
+					this.whisperEventMessage('&cUnable to find you to respawn.', socket);
+					break;
 				}
+				this.playerManager.respawnPlayer(player);
 				this.broadcastEventMessage(`&c${player.name} ^b ${player.name}`);
 				break;
 			}

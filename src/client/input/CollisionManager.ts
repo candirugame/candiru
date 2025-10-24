@@ -27,7 +27,7 @@ export class CollisionManager {
 	private static dynamicColliders: THREE.Object3D[] = []; // Store collidable prop objects
 
 	private inputHandler: InputHandler;
-	private particleSystem: ParticleSystem; // Optional particle system for effects
+	private particleSystem?: ParticleSystem; // Optional particle system for effects
 	private networking: Networking; // Networking instance for accessing remote players
 	private static readonly maxAngle: number = Math.cos(45 * Math.PI / 180);
 	private readonly triNormal: THREE.Vector3; // Used for world-space calculations (map) and local for props before conversion
@@ -195,7 +195,7 @@ export class CollisionManager {
 
 		// Emit trajectory breadcrumbs
 		for (const p of traj.points) {
-			this.particleSystem.emit({
+			this.particleSystem?.emit({
 				position: p,
 				count: 1,
 				velocity: new THREE.Vector3(),
@@ -228,7 +228,7 @@ export class CollisionManager {
 					const p = center.clone()
 						.addScaledVector(u, fx * halfSize)
 						.addScaledVector(v, fy * halfSize);
-					this.particleSystem.emit({
+					this.particleSystem?.emit({
 						position: p,
 						count: 1,
 						velocity: new THREE.Vector3(),
