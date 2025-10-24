@@ -438,7 +438,7 @@ export class Networking {
 		}
 	}
 
-	private lastThrownItemTimestamp: number;
+	private lastThrownItemTimestamp: number = 0;
 
 	public broadcastThrownItem(trajectory: Trajectory) {
 		this.socket.emit('throwItem', {

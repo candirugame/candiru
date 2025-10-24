@@ -10,6 +10,7 @@ export class Prop {
 	public velocity = new THREE.Vector3(0, 0, 0);
 	public quaternion = new THREE.Quaternion();
 	public scale = new THREE.Vector3(1, 1, 1);
+	public angularVelocity = new THREE.Vector3(0, 0, 0);
 	public id = Math.floor(Math.random() * 1000000000); //unique id
 	public name = '';
 	public doPhysics: boolean = true;
@@ -38,6 +39,7 @@ export class Prop {
 			...this,
 			position: serializableVec3(this.position),
 			velocity: serializableVec3(this.velocity),
+			angularVelocity: serializableVec3(this.angularVelocity),
 			quaternion: serializableQuaternion(this.quaternion),
 			scale: serializableVec3(this.scale),
 		};

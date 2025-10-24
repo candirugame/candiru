@@ -1,6 +1,7 @@
 import { Prop, PropData } from '../../shared/Prop.ts';
 import * as THREE from 'three';
 import { PropDamageRequest } from '../models/PropDamageRequest.ts';
+import { PhysicsEngine } from '../physics/PhysicsEngine.ts';
 
 export class PropManager {
 	private props: Map<number, Prop> = new Map();
@@ -8,25 +9,29 @@ export class PropManager {
 
 	//	public testProp!: Prop;
 
-	constructor() {
+	constructor(private physics: PhysicsEngine) {
 		// this.testProp = this.addProp('models/hexagon.glb', new THREE.Vector3(0, 0.5, 0));
 		// this.addProp('models/hexagon.glb', new THREE.Vector3(0, 10, 0));
 	}
 
-	public onTick(_deltaTime: number) {
-		// this.testProp.position.x = Math.sin(Date.now() / 1000) * 3;
-		// this.testProp.velocity.x = Math.cos(Date.now() / 1000) * 3;
+	public onTick(deltaTime: number) {
+		this.physics.step(deltaTime);
 	}
 
-	public addProp(
+	public async addProp(
 		url: string,
 		position: THREE.Vector3,
 		quaternion: THREE.Quaternion = new THREE.Quaternion(),
 		scale: THREE.Vector3 = new THREE.Vector3(1, 1, 1),
-	): Prop {
+	): Promise<Prop> {
 		const prop = new Prop(url, position, quaternion, scale);
 		this.props.set(prop.id, prop);
 		this.hasUpdates = true;
+		try {
+			await this.physics.registerProp(prop);
+		} catch (error) {
+			console.error(`⚠️ [Server] Failed to register physics for prop ${prop.id}:`, error);
+		}
 		console.log(`📦 [Server] Prop added: ID ${prop.id}, URL ${url}`);
 		return prop;
 	}
@@ -47,6 +52,7 @@ export class PropManager {
 	public removeProp(id: number): boolean {
 		const success = this.props.delete(id);
 		if (success) {
+			this.physics.removeProp(id);
 			this.hasUpdates = true;
 			console.log(`🗑️ [Server] Prop removed: ID ${id}`);
 		}
@@ -59,6 +65,10 @@ export class PropManager {
 
 	public getAllPropsData(): PropData[] {
 		return Array.from(this.props.values()).map((prop) => prop.toJSON());
+	}
+
+	public getPropCount(): number {
+		return this.props.size;
 	}
 
 	public clearUpdatesFlag(): void {

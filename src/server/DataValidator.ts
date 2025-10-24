@@ -119,6 +119,7 @@ export class DataValidator {
 		url: z.string(),
 		position: this.vector3Schema,
 		velocity: this.vector3Schema,
+		angularVelocity: this.vector3Schema,
 		quaternion: this.quaternionSchema,
 		scale: this.vector3Schema,
 		id: z.number(),

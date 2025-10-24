@@ -112,7 +112,10 @@ export class ItemBase {
 			this.addedToWorldScene = true;
 		}
 
-		this.object.visible = !(this.initTrajectory && this.playerIdsTrajectoryHiddenFrom?.includes(this.localPlayerId)); //hide if trajectory is active and local player is in the hidden list
+		const hideForLocalPlayer = this.initTrajectory &&
+			this.localPlayerId !== undefined &&
+			this.playerIdsTrajectoryHiddenFrom?.includes(this.localPlayerId);
+		this.object.visible = !hideForLocalPlayer; // hide if trajectory active and local player should not see it
 		if (this.initTrajectory) {
 			if (this.trajectoryDuration === undefined) {
 				this.trajectoryDuration = this.initTrajectory.getDuration();

@@ -16,6 +16,7 @@ import { PropManager } from './managers/PropManager.ts';
 import { setupDevClientVersion } from './dev.ts';
 import { WorldItem } from './models/WorldItem.ts';
 import { Vector3 } from 'three';
+import { PhysicsEngine } from './physics/PhysicsEngine.ts';
 
 export class GameServer {
 	router: Router;
@@ -48,7 +49,8 @@ export class GameServer {
 		this.chatManager = new ChatManager(this.io, this.playerManager);
 		this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
-		this.propManager = new PropManager();
+		const physicsEngine = await PhysicsEngine.create(this.mapData.name);
+		this.propManager = new PropManager(physicsEngine);
 
 		this.playerManager.setItemManager(this.itemManager);
 

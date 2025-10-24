@@ -140,3 +140,4 @@ dist
 
 servers.txt
 candiru
+*.mjs
