@@ -1,5 +1,5 @@
-import { crypto } from 'https://deno.land/std@0.207.0/crypto/mod.ts';
-import { walk } from 'https://deno.land/std@0.207.0/fs/walk.ts';
+import { crypto } from 'std/crypto';
+import { walk } from 'std/fs/walk';
 
 async function getDirectoryHash(path: string): Promise<string> {
 	const filePaths: string[] = [];

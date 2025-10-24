@@ -1,7 +1,7 @@
 import { Application, Router, send } from '@oak/oak';
-import { Server } from 'https://deno.land/x/socket_io@0.2.0/mod.ts';
+import { Server } from 'socket_io';
+import { serve } from 'std/http/server';
 import config from './config.ts';
-import { serve } from 'https://deno.land/std@0.150.0/http/server.ts';
 
 import { GameEngine } from './GameEngine.ts';
 import { PlayerManager } from './managers/PlayerManager.ts';

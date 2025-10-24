@@ -1,13 +1,13 @@
-import RAPIER from 'npm:@dimforge/rapier3d-compat';
-import { NodeIO } from 'npm:@gltf-transform/core';
+import RAPIER from '@dimforge/rapier3d-compat';
+import { NodeIO } from '@gltf-transform/core';
 import {
 	EXTTextureWebP,
 	KHRDracoMeshCompression,
 	KHRMaterialsSpecular,
 	KHRTextureTransform,
-} from 'npm:@gltf-transform/extensions';
-import type { Mesh, Node } from 'npm:@gltf-transform/core';
-import { mat4, quat, vec3 } from 'npm:gl-matrix';
+} from '@gltf-transform/extensions';
+import type { Mesh, Node } from '@gltf-transform/core';
+import { mat4, quat, vec3 } from 'gl-matrix';
 import { fromFileUrl } from '@std/path/from-file-url';
 import type { Prop } from '../../shared/Prop.ts';
 
@@ -45,7 +45,7 @@ export class PhysicsEngine {
 	static async create(mapName: string): Promise<PhysicsEngine> {
 		await RAPIER.init();
 		const world = new RAPIER.World(DEFAULT_GRAVITY);
-		const { default: draco3d } = await import('npm:draco3dgltf@1.5.6');
+		const { default: draco3d } = await import('draco3dgltf');
 		const decoderModule = await draco3d.createDecoderModule();
 		const io = new NodeIO()
 			.registerExtensions([

@@ -1,4 +1,4 @@
-import type { z } from 'https://deno.land/x/zod@v3.23.8/mod.ts';
+import type { z } from 'zod';
 import { DataValidator } from '../server/DataValidator.ts';
 import * as THREE from 'three';
 

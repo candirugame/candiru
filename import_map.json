@@ -1,8 +1,20 @@
 {
 	"imports": {
+		"@dimforge/rapier3d-compat": "npm:@dimforge/rapier3d-compat@0.16.2",
+		"@gltf-transform/core": "npm:@gltf-transform/core@4.1.3",
+		"@gltf-transform/extensions": "npm:@gltf-transform/extensions@4.1.3",
 		"@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.0",
 		"@oak/oak": "jsr:@oak/oak@^17.1.3",
 		"@std/http": "jsr:@std/http@^1.0.10",
-		"vite": "npm:vite@^5.4.8"
+		"@std/path": "jsr:@std/path@^1.0.6",
+		"@std/path/from-file-url": "jsr:@std/path@^1.0.6/from-file-url",
+		"draco3dgltf": "npm:draco3dgltf@1.5.6",
+		"gl-matrix": "npm:gl-matrix@3.4.4",
+		"socket_io": "https://deno.land/x/socket_io@0.2.0/mod.ts",
+		"std/crypto": "https://deno.land/std@0.207.0/crypto/mod.ts",
+		"std/http/server": "https://deno.land/std@0.150.0/http/server.ts",
+		"std/fs/walk": "https://deno.land/std@0.207.0/fs/walk.ts",
+		"vite": "npm:vite@^5.4.8",
+		"zod": "https://deno.land/x/zod@v3.23.8/mod.ts"
 	}
 }
