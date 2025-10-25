@@ -16,7 +16,11 @@ type PropInitOptions = {
 
 const PROP_SHOT_BASE_IMPULSE = 0;
 const PROP_SHOT_DAMAGE_MULTIPLIER = 0.1;
-const PROP_SHOT_VERTICAL_BOOST = 0;
+const PROP_SHOT_VERTICAL_BOOST = 0.03;
+
+const PROP_PLAYER_REPEL_RADIUS = 0.75;
+const PROP_PLAYER_REPEL_STRENGTH = 0.2;
+const PROP_PLAYER_REPEL_VERTICAL_BIAS = 0;
 
 export class PropManager {
 	private props: Map<number, Prop> = new Map();
@@ -30,6 +34,7 @@ export class PropManager {
 	}
 
 	public onTick(deltaTime: number) {
+		this.applyPlayerRepulsion();
 		this.physics.step(deltaTime);
 	}
 
@@ -148,5 +153,37 @@ export class PropManager {
 			return new THREE.Vector3(0, 0, -1);
 		}
 		return forward.normalize();
+	}
+
+	private applyPlayerRepulsion(): void {
+		const players = this.playerManager.getAllPlayers();
+		if (!players.length) return;
+
+		const impulseAccumulator = new THREE.Vector3();
+		const directionBuffer = new THREE.Vector3();
+
+		for (const prop of this.props.values()) {
+			if (!prop.doPhysics) continue;
+
+			let hasImpulse = false;
+			impulseAccumulator.set(0, 0, 0);
+
+			for (const player of players) {
+				directionBuffer.copy(prop.position).sub(player.position);
+				const distance = directionBuffer.length();
+				if (distance === 0 || distance > PROP_PLAYER_REPEL_RADIUS) continue;
+
+				const falloff = 1 - distance / PROP_PLAYER_REPEL_RADIUS;
+				directionBuffer.normalize();
+				impulseAccumulator.addScaledVector(directionBuffer, PROP_PLAYER_REPEL_STRENGTH * falloff);
+				impulseAccumulator.y += PROP_PLAYER_REPEL_VERTICAL_BIAS * falloff;
+				hasImpulse = true;
+			}
+
+			if (hasImpulse && impulseAccumulator.lengthSq() > 0) {
+				this.physics.applyImpulse(prop.id, impulseAccumulator);
+				this.hasUpdates = true;
+			}
+		}
 	}
 }
