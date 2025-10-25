@@ -51,6 +51,7 @@ export class GameServer {
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
 		const physicsEngine = await PhysicsEngine.create(this.mapData.name);
 		this.propManager = new PropManager(physicsEngine);
+		await this.propManager.loadInitialProps(this.mapData.props);
 
 		this.playerManager.setItemManager(this.itemManager);
 

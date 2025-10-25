@@ -2,6 +2,16 @@ import { Prop, PropData } from '../../shared/Prop.ts';
 import * as THREE from 'three';
 import { PropDamageRequest } from '../models/PropDamageRequest.ts';
 import { PhysicsEngine } from '../physics/PhysicsEngine.ts';
+import type { PropSpawn } from '../models/MapData.ts';
+
+type PropInitOptions = {
+	name?: string;
+	doPhysics?: boolean;
+	playersCollide?: boolean;
+	health?: number;
+	velocity?: THREE.Vector3;
+	angularVelocity?: THREE.Vector3;
+};
 
 export class PropManager {
 	private props: Map<number, Prop> = new Map();
@@ -23,8 +33,16 @@ export class PropManager {
 		position: THREE.Vector3,
 		quaternion: THREE.Quaternion = new THREE.Quaternion(),
 		scale: THREE.Vector3 = new THREE.Vector3(1, 1, 1),
+		options: PropInitOptions = {},
 	): Promise<Prop> {
 		const prop = new Prop(url, position, quaternion, scale);
+		if (options.name !== undefined) prop.name = options.name;
+		if (options.doPhysics !== undefined) prop.doPhysics = options.doPhysics;
+		if (options.playersCollide !== undefined) prop.playersCollide = options.playersCollide;
+		if (options.health !== undefined) prop.health = options.health;
+		if (options.velocity) prop.velocity.copy(options.velocity);
+		if (options.angularVelocity) prop.angularVelocity.copy(options.angularVelocity);
+
 		this.props.set(prop.id, prop);
 		this.hasUpdates = true;
 		try {
@@ -73,5 +91,28 @@ export class PropManager {
 
 	public clearUpdatesFlag(): void {
 		this.hasUpdates = false;
+	}
+
+	public async loadInitialProps(spawns: PropSpawn[]): Promise<void> {
+		if (!spawns.length) return;
+		await Promise.all(
+			spawns.map(async (spawn) => {
+				const options: PropInitOptions = {
+					name: spawn.name,
+					doPhysics: spawn.doPhysics,
+					playersCollide: spawn.playersCollide,
+					health: spawn.health,
+					velocity: spawn.velocity?.clone(),
+					angularVelocity: spawn.angularVelocity?.clone(),
+				};
+				await this.addProp(
+					spawn.url,
+					spawn.position.clone(),
+					spawn.quaternion.clone(),
+					spawn.scale.clone(),
+					options,
+				);
+			}),
+		);
 	}
 }

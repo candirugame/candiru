@@ -227,5 +227,15 @@
 			"position": { "x": -4.71, "y": 3.24, "z": 10.22 },
 			"itemId": 1
 		}
-	]
+	],
+  "props": [
+    {
+      "url": "/models/simplified_possum.glb",
+      "position": { "x": 9, "y": 5, "z": -5 },
+      "scale": { "x": 1, "y": 1, "z": 1 },
+      "name": "big guy",
+      "doPhysics": true,
+      "playersCollide": true
+    }
+  ]
 }

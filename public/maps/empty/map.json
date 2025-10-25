@@ -11,5 +11,15 @@
 			"position": { "x": 0, "y": 5, "z": 0 },
 			"itemId": 1
 		}
+	],
+	"props": [
+		{
+			"url": "/models/hexagon.glb",
+          "position": { "x": 0, "y": 1.5, "z": 0 },
+          "scale": { "x": 5, "y": 5, "z": 5 },
+			"name": "Showcase Hexagon",
+			"doPhysics": false,
+			"playersCollide": false
+		}
 	]
 }
