@@ -234,6 +234,23 @@
       "position": { "x": 9, "y": 5, "z": -5 },
       "scale": { "x": 1, "y": 1, "z": 1 },
       "name": "big guy",
+      "health": 100000,
+      "doPhysics": true,
+      "playersCollide": true
+    },    {
+      "url": "/models/simplified_possum.glb",
+      "position": { "x": 9, "y": 4, "z": -5 },
+      "scale": { "x": 1, "y": 1, "z": 1 },
+      "name": "big guy",
+      "health": 100000,
+      "doPhysics": true,
+      "playersCollide": true
+    },    {
+      "url": "/models/simplified_possum.glb",
+      "position": { "x": 9, "y": 6, "z": -5 },
+      "scale": { "x": 1, "y": 1, "z": 1 },
+      "name": "big guy",
+      "health": 100000,
       "doPhysics": true,
       "playersCollide": true
     }
