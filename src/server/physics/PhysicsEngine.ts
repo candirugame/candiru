@@ -11,6 +11,12 @@ import { mat4, quat, vec3 } from 'gl-matrix';
 import { fromFileUrl } from '@std/path/from-file-url';
 import type { Prop } from '../../shared/Prop.ts';
 
+interface Vector3Like {
+	x: number;
+	y: number;
+	z: number;
+}
+
 interface MeshData {
 	vertices: Float32Array;
 	indices?: Uint32Array;
@@ -96,6 +102,14 @@ export class PhysicsEngine {
 
 		// Ensure the prop reflects the authoritative body state immediately.
 		this.syncPropFromBody(prop, rigidBody);
+	}
+
+	applyImpulse(propId: number, impulse: Vector3Like): void {
+		const entry = this.props.get(propId);
+		if (!entry) return;
+		const body = this.world.getRigidBody(entry.bodyHandle);
+		if (!body) return;
+		body.applyImpulse({ x: impulse.x, y: impulse.y, z: impulse.z }, true);
 	}
 
 	removeProp(propId: number): void {
