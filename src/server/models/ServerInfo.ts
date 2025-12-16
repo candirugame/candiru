@@ -18,6 +18,7 @@ export class ServerInfo {
 	public memUsageHeapTotal: number = 0;
 	public memUsageExternal: number = 0;
 	public idleKickTime: number;
+	public durabilityEnabled: boolean;
 
 	constructor() {
 		this.name = config.server.name;
@@ -28,6 +29,7 @@ export class ServerInfo {
 		this.playerMaxHealth = config.player.maxHealth;
 		this.url = config.server.url;
 		this.idleKickTime = config.player.afkKickTime;
+		this.durabilityEnabled = config.items.shotsTakeDurability || config.items.rotTakesDurability;
 	}
 	toJSON() {
 		return {
