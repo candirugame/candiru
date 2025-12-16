@@ -94,12 +94,17 @@ async function updateEnvFile(defaults: Record<string, string>) {
 		}
 	}
 
-	// Write the final effective configuration back to .env (optional but can be helpful for debugging)
-	const envContent = Object.entries(filteredFinalEnv)
-		.map(([key, value]) => `${key}=${value}`)
-		.join('\n');
-
-	await Deno.writeTextFile(envPath, envContent);
+	// Write the final effective configuration back to .env (optional, for local debugging only)
+	// Skip in production/containers where filesystem may be read-only
+	try {
+		const envContent = Object.entries(filteredFinalEnv)
+			.map(([key, value]) => `${key}=${value}`)
+			.join('\n');
+		await Deno.writeTextFile(envPath, envContent);
+	} catch {
+		console.log('Failed to write .env file');
+		// Silently ignore write failures (expected in containerized environments)
+	}
 	return filteredFinalEnv; // Return the final, merged config
 }
 
