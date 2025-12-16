@@ -25,6 +25,7 @@ export class CollisionManager {
 	public static mapLoaded: boolean = false;
 	private static staticMapBvh?: MeshBVH; // Store the BVH for the static map
 	private static dynamicColliders: THREE.Object3D[] = []; // Store collidable prop objects
+	private physicsStarted: boolean = false; // Track if physics has started after map load
 
 	private inputHandler: InputHandler;
 	private particleSystem?: ParticleSystem; // Optional particle system for effects
@@ -71,6 +72,12 @@ export class CollisionManager {
 		// If no static map BVH and no dynamic colliders, nothing to collide with
 		if (!CollisionManager.staticMapBvh && CollisionManager.dynamicColliders.length === 0) {
 			return;
+		}
+
+		// Reset clock on first physics frame after map loads to avoid huge deltaTime
+		if (!this.physicsStarted) {
+			this.clock.getDelta(); // Discard accumulated time
+			this.physicsStarted = true;
 		}
 
 		let deltaTime: number = this.clock.getDelta();
