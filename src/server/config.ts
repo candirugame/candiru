@@ -45,7 +45,7 @@ const defaults = {
 	ITEM_RESPAWN_TIME: '5',
 	ITEM_DESPAWN_TIME: '300', //5 minutes, set to 0 to disable
 	ITEM_SHOTS_DO_DURABILITY: 'false',
-	ITEM_ROT_TAKES_DURABILITY: 'true',
+	ITEM_ROT_TAKES_DURABILITY: 'false',
 
 	//platform-specific settings
 	DOKPLOY_DEPLOY_URL: '',

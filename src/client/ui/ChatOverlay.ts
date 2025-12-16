@@ -1499,10 +1499,11 @@ export class ChatOverlay {
 		ctx.save();
 		ctx.globalAlpha = 0.5;
 
-		// If the item doesn't actually use durability (e.g., flag), smoothly hide the bar.
+		// If the item doesn't actually use durability (e.g., flag) or durability is disabled server-side, hide the bar.
 		// Otherwise, always lerp toward the aggregated target (overflow + fractional durability).
 		const usesDurability = (item.lifetime !== undefined) || (item.shotsAvailable !== undefined);
-		if (!usesDurability) {
+		const durabilityEnabled = this.networking.getServerInfo().durabilityEnabled;
+		if (!usesDurability || !durabilityEnabled) {
 			this.durabilityLerpable = lerp(this.durabilityLerpable, 0, 0.5 * this.deltaTime * 60);
 			if (this.durabilityLerpable < 0.05) {
 				ctx.restore();
