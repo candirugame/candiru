@@ -99,6 +99,11 @@ export class ChatOverlay {
 	private containerElement: HTMLElement;
 	private spriteManager: SpriteManager;
 
+	private tabSuggestions: string[] = [];
+	private tabSelectedIndex: number = 0;
+	private tabScrollOffset: number = 0;
+	private tabOriginalInput: string = '';
+
 	private gameIndex: number;
 
 	private offscreenCanvas: HTMLCanvasElement;
@@ -545,6 +550,8 @@ export class ChatOverlay {
 		if (this.localPlayer.chatActive) {
 			if (this.localPlayer.chatMsg.startsWith('>')) {
 				linesToRender.push('&2' + usermsg + cursor);
+			} else if (this.isValidCommand(this.localPlayer.chatMsg)) {
+				linesToRender.push('&a' + usermsg + cursor);
 			} else {
 				linesToRender.push(usermsg + cursor);
 			}
@@ -589,7 +596,53 @@ export class ChatOverlay {
 			}
 			ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
 		}
+
 		ctx.globalAlpha = 1;
+		this.renderCommandSuggestions(ctx); //deliberately run at full alpha for readability of overlay
+	}
+
+	private renderCommandSuggestions(ctx: CanvasRenderingContext2D) {
+		if (!this.localPlayer.chatActive || !this.localPlayer.chatMsg.startsWith('/')) return;
+
+		if (this.isValidCommand(this.localPlayer.chatMsg)) return;
+
+		const suggestions = this.tabSuggestions.length > 0
+			? this.tabSuggestions
+			: this.commandManager.getSuggestions(this.localPlayer.chatMsg);
+		if (suggestions.length === 0) return;
+
+		const maxVisible = Math.min(suggestions.length, 8);
+		const lineHeight = 9;
+		const padding = 2;
+		const baseY = 200 - 20 - 8 - lineHeight * maxVisible - padding;
+
+		ctx.font = '8px Tiny5';
+		let maxWidth = 0;
+		for (let i = 0; i < maxVisible; i++) {
+			const idx = i + this.tabScrollOffset;
+			if (idx >= suggestions.length) break;
+			const w = ctx.measureText(suggestions[idx]).width;
+			if (w > maxWidth) maxWidth = w;
+		}
+
+		ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(0.85, SettingsManager.settings.chatOpacity)})`;
+		ctx.fillRect(2, baseY - padding, maxWidth + padding * 2 + 2, lineHeight * maxVisible + padding * 2);
+
+		for (let i = 0; i < maxVisible; i++) {
+			const idx = i + this.tabScrollOffset;
+			if (idx >= suggestions.length) break;
+			const suggestion = suggestions[idx];
+			const y = baseY + lineHeight * i + 7;
+
+			const isSelected = this.tabSelectedIndex === idx;
+
+			if (isSelected) {
+				ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+				ctx.fillRect(2, baseY + lineHeight * i, maxWidth + padding * 2 + 2, lineHeight);
+			}
+
+			this.renderPixelText(suggestion, 4, y, '#aaaaaa');
+		}
 	}
 
 	private renderPixelText(
@@ -1858,6 +1911,22 @@ export class ChatOverlay {
 
 		if (e.key === 'Backspace' && (this.localPlayer.chatActive || this.nameSettingActive)) {
 			this.localPlayer.chatMsg = this.localPlayer.chatMsg.slice(0, -1);
+			this.resetTabCompletion();
+			return;
+		}
+
+		if (e.key === 'Tab' && this.localPlayer.chatActive && this.localPlayer.chatMsg.startsWith('/')) {
+			e.preventDefault();
+			this.applyTabCompletion();
+			return;
+		}
+
+		if (
+			(e.key === 'ArrowUp' || e.key === 'ArrowDown') && this.localPlayer.chatActive &&
+			this.localPlayer.chatMsg.startsWith('/')
+		) {
+			e.preventDefault();
+			this.cycleTabSuggestion(e.key === 'ArrowUp');
 			return;
 		}
 
@@ -1875,16 +1944,19 @@ export class ChatOverlay {
 			this.localPlayer.chatMsg = '';
 			this.localPlayer.chatActive = false;
 			this.nameSettingActive = false;
+			this.resetTabCompletion();
 		}
 
 		if (e.key === 'Escape' || e.key === 'Enter') {
 			this.localPlayer.chatMsg = '';
 			this.localPlayer.chatActive = false;
 			this.nameSettingActive = false;
+			this.resetTabCompletion();
 		}
 
 		if ((this.localPlayer.chatActive) && e.key.length === 1 && this.localPlayer.chatMsg.length < 300) {
 			this.localPlayer.chatMsg += e.key;
+			this.resetTabCompletion();
 		}
 
 		if ((this.nameSettingActive) && e.key.length === 1 && this.localPlayer.chatMsg.length < 42) {
@@ -1907,6 +1979,76 @@ export class ChatOverlay {
 		if (e.key.toLowerCase() === 'n' && !this.localPlayer.chatActive && !Game.menuOpen) {
 			this.nameSettingActive = true;
 		}
+	}
+
+	private updateTabSuggestions() {
+		const input = this.localPlayer.chatMsg;
+		this.tabSuggestions = this.commandManager.getSuggestions(input);
+		this.tabSelectedIndex = 0;
+		this.tabOriginalInput = input;
+	}
+
+	private cycleTabSuggestion(up: boolean) {
+		if (this.tabSuggestions.length === 0) {
+			this.updateTabSuggestions();
+		}
+		if (this.tabSuggestions.length === 0) return;
+
+		const maxVisible = 8;
+
+		if (up) {
+			this.tabSelectedIndex--;
+			if (this.tabSelectedIndex < 0) {
+				this.tabSelectedIndex = this.tabSuggestions.length - 1;
+				this.tabScrollOffset = Math.max(0, this.tabSuggestions.length - maxVisible);
+			} else if (this.tabSelectedIndex < this.tabScrollOffset) {
+				this.tabScrollOffset = this.tabSelectedIndex;
+			}
+		} else {
+			this.tabSelectedIndex++;
+			if (this.tabSelectedIndex >= this.tabSuggestions.length) {
+				this.tabSelectedIndex = 0;
+				this.tabScrollOffset = 0;
+			} else if (this.tabSelectedIndex >= this.tabScrollOffset + maxVisible) {
+				this.tabScrollOffset = this.tabSelectedIndex - maxVisible + 1;
+			}
+		}
+	}
+
+	private applyTabCompletion() {
+		if (this.tabSuggestions.length === 0) {
+			this.updateTabSuggestions();
+		}
+		if (this.tabSuggestions.length === 0) return;
+
+		this.localPlayer.chatMsg = this.tabSuggestions[this.tabSelectedIndex];
+		this.resetTabCompletion();
+	}
+
+	private resetTabCompletion() {
+		this.tabSuggestions = [];
+		this.tabSelectedIndex = 0;
+		this.tabScrollOffset = 0;
+		this.tabOriginalInput = '';
+	}
+
+	private isValidCommand(input: string): boolean {
+		if (!input.startsWith('/')) return false;
+		const cmd = input.slice(1).split(' ')[0].toLowerCase();
+		if (cmd === '') return false;
+		const allCommands = [
+			...this.commandManager.getCommandNames(),
+			'help',
+			'kill',
+			'thumbsup',
+			'thumbsdown',
+			'octopus',
+			'goblin',
+			'ping',
+			'version',
+			'clear',
+		];
+		return allCommands.includes(cmd);
 	}
 
 	public addChatMessage(msg: { id: number; name: string; message: string }) {
