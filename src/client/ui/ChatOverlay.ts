@@ -597,8 +597,8 @@ export class ChatOverlay {
 			ctx.fillRect(2, 200 - 20 - 7, width + 1, 9);
 		}
 
-		this.renderCommandSuggestions(ctx);
 		ctx.globalAlpha = 1;
+		this.renderCommandSuggestions(ctx); //deliberately run at full alpha for readability of overlay
 	}
 
 	private renderCommandSuggestions(ctx: CanvasRenderingContext2D) {
@@ -625,7 +625,7 @@ export class ChatOverlay {
 			if (w > maxWidth) maxWidth = w;
 		}
 
-		ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+		ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(0.85, SettingsManager.settings.chatOpacity)})`;
 		ctx.fillRect(2, baseY - padding, maxWidth + padding * 2 + 2, lineHeight * maxVisible + padding * 2);
 
 		for (let i = 0; i < maxVisible; i++) {
