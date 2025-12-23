@@ -25,9 +25,10 @@ export class CollisionManager {
 	public static mapLoaded: boolean = false;
 	private static staticMapBvh?: MeshBVH; // Store the BVH for the static map
 	private static dynamicColliders: THREE.Object3D[] = []; // Store collidable prop objects
+	private physicsStarted: boolean = false; // Track if physics has started after map load
 
 	private inputHandler: InputHandler;
-	private particleSystem: ParticleSystem; // Optional particle system for effects
+	private particleSystem?: ParticleSystem; // Optional particle system for effects
 	private networking: Networking; // Networking instance for accessing remote players
 	private static readonly maxAngle: number = Math.cos(45 * Math.PI / 180);
 	private readonly triNormal: THREE.Vector3; // Used for world-space calculations (map) and local for props before conversion
@@ -71,6 +72,12 @@ export class CollisionManager {
 		// If no static map BVH and no dynamic colliders, nothing to collide with
 		if (!CollisionManager.staticMapBvh && CollisionManager.dynamicColliders.length === 0) {
 			return;
+		}
+
+		// Reset clock on first physics frame after map loads to avoid huge deltaTime
+		if (!this.physicsStarted) {
+			this.clock.getDelta(); // Discard accumulated time
+			this.physicsStarted = true;
 		}
 
 		let deltaTime: number = this.clock.getDelta();
@@ -195,7 +202,7 @@ export class CollisionManager {
 
 		// Emit trajectory breadcrumbs
 		for (const p of traj.points) {
-			this.particleSystem.emit({
+			this.particleSystem?.emit({
 				position: p,
 				count: 1,
 				velocity: new THREE.Vector3(),
@@ -228,7 +235,7 @@ export class CollisionManager {
 					const p = center.clone()
 						.addScaledVector(u, fx * halfSize)
 						.addScaledVector(v, fy * halfSize);
-					this.particleSystem.emit({
+					this.particleSystem?.emit({
 						position: p,
 						count: 1,
 						velocity: new THREE.Vector3(),

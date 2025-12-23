@@ -34,6 +34,7 @@ export class GameEngine {
 	private tickProfileTime: number = 0;
 	private cleanupProfileSamples: number = 0;
 	private cleanupProfileTime: number = 0;
+	private lastServerTickTime: number = Date.now() / 1000;
 
 	constructor(
 		public playerManager: PlayerManager,
@@ -54,10 +55,13 @@ export class GameEngine {
 	private serverTick() {
 		try {
 			const currentTime = Date.now() / 1000;
+			const deltaTime = Math.max(0, currentTime - this.lastServerTickTime);
+			this.lastServerTickTime = currentTime;
+
 			this.playerManager.regenerateHealth();
 			this.playerManager.updateItemDurabilities(currentTime);
 			this.itemManager.tick(currentTime);
-			this.propManager.onTick(currentTime);
+			this.propManager.onTick(deltaTime);
 			if (this.gamemode) this.gamemode.tick();
 			const doFullEmit =
 				currentTime - this.lastFullPlayerEmitTimestamp > (config.server.fullPlayerEmitInterval / 1000) ||

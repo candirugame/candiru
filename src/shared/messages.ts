@@ -1,4 +1,4 @@
-import type { Server, Socket } from 'https://deno.land/x/socket_io@0.2.0/mod.ts';
+import type { Server, Socket } from 'socket_io';
 import type { Socket as ClientSocket } from 'socket.io-client';
 import type { ChatMessage } from '../server/models/ChatMessage.ts';
 import type { ServerInfo } from '../server/models/ServerInfo.ts';

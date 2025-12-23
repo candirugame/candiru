@@ -76,7 +76,7 @@ export class Game {
 
 	animate() {
 		if (this.stopped) return;
-		const deltaTime = this.clock.getDelta();
+		const deltaTime = Math.min(this.clock.getDelta(), 1 / 5);
 
 		// Basic frame profiler when enabled
 		const profilerEnabled = SettingsManager.settings.profilerMode;

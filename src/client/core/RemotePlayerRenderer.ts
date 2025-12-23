@@ -480,7 +480,7 @@ export class RemotePlayerRenderer {
 	private normalizeHealthIndicatorColor(
 		color: PlayerData['healthIndicatorColor'],
 	): [number, number, number] {
-		const [r = 255, g = 255, b = 255] = color;
+		const [r, g, b] = color ?? [255, 255, 255];
 		return [r, g, b];
 	}
 

@@ -346,7 +346,7 @@ export class SoloCTFGamemode extends FFAGamemode {
 	/**
 	 * Resets the game by clearing points, removing the flag, and respawning it.
 	 */
-	resetGame(): void {
+	public override resetGame(): void {
 		console.log('🔄 Resetting Solo CTF game...');
 		for (const player of this.gameEngine.playerManager.getAllPlayers()) {
 			const extras = this.gameEngine.playerManager.getPlayerExtrasById(player.id);

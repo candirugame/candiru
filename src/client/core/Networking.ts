@@ -41,6 +41,7 @@ export interface ServerInfo {
 	memUsageHeapTotal: number;
 	memUsageExternal: number;
 	idleKickTime: number;
+	durabilityEnabled: boolean;
 }
 
 interface LastUploadedLocalPlayer {
@@ -116,6 +117,7 @@ export class Networking {
 			memUsageHeapTotal: 0,
 			memUsageExternal: 0,
 			idleKickTime: 60,
+			durabilityEnabled: false,
 		};
 
 		this.setupSocketListeners();
@@ -438,7 +440,7 @@ export class Networking {
 		}
 	}
 
-	private lastThrownItemTimestamp: number;
+	private lastThrownItemTimestamp: number = 0;
 
 	public broadcastThrownItem(trajectory: Trajectory) {
 		this.socket.emit('throwItem', {

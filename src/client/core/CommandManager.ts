@@ -175,6 +175,31 @@ export class CommandManager {
 		}
 		return match;
 	}
+
+	public getCommandNames(): string[] {
+		return this.commands.map((cmd) => cmd.getCmdName());
+	}
+
+	public getSuggestions(input: string): string[] {
+		if (!input.startsWith('/')) return [];
+
+		const query = input.slice(1).toLowerCase().trim();
+		const parts = query.split(' ');
+
+		if (parts.length > 1) return [];
+
+		const clientCommands = this.commands.map((cmd) => cmd.getCmdName());
+		const serverCommands = ['help', 'kill', 'thumbsup', 'thumbsdown', 'octopus', 'goblin', 'ping', 'version', 'clear'];
+		const allCommands = [...new Set([...clientCommands, ...serverCommands])].sort();
+
+		if (query === '') {
+			return allCommands.map((cmd) => '/' + cmd);
+		}
+
+		return allCommands
+			.filter((cmd) => cmd.startsWith(query))
+			.map((cmd) => '/' + cmd);
+	}
 }
 
 class Command {

@@ -45,7 +45,7 @@ const defaults = {
 	ITEM_RESPAWN_TIME: '5',
 	ITEM_DESPAWN_TIME: '300', //5 minutes, set to 0 to disable
 	ITEM_SHOTS_DO_DURABILITY: 'false',
-	ITEM_ROT_TAKES_DURABILITY: 'true',
+	ITEM_ROT_TAKES_DURABILITY: 'false',
 
 	//platform-specific settings
 	DOKPLOY_DEPLOY_URL: '',
@@ -94,65 +94,82 @@ async function updateEnvFile(defaults: Record<string, string>) {
 		}
 	}
 
-	// Write the final effective configuration back to .env (optional but can be helpful for debugging)
-	const envContent = Object.entries(filteredFinalEnv)
-		.map(([key, value]) => `${key}=${value}`)
-		.join('\n');
-
-	await Deno.writeTextFile(envPath, envContent);
+	// Write the final effective configuration back to .env (optional, for local debugging only)
+	// Skip in production/containers where filesystem may be read-only
+	try {
+		const envContent = Object.entries(filteredFinalEnv)
+			.map(([key, value]) => `${key}=${value}`)
+			.join('\n');
+		await Deno.writeTextFile(envPath, envContent);
+	} catch {
+		console.log('Failed to write .env file');
+		// Silently ignore write failures (expected in containerized environments)
+	}
 	return filteredFinalEnv; // Return the final, merged config
 }
 
 // Parse specific types from string values
+const numberOr = (value: string | undefined, fallback: number): number => {
+	const parsed = Number.parseInt(value ?? '', 10);
+	return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const boolOr = (value: string | undefined, fallback: string): boolean => {
+	return (value ?? fallback).toLowerCase() === 'true';
+};
+
 function parseConfig(env: Record<string, string>) {
 	return {
 		server: {
-			port: parseInt(env.PORT),
-			hostname: env.SERVER_HOSTNAME,
+			port: numberOr(env.PORT, parseInt(defaults.PORT, 10)),
+			hostname: env.SERVER_HOSTNAME || defaults.SERVER_HOSTNAME,
 			name: env.SERVER_NAME,
 			url: env.DOKPLOY_DEPLOY_URL ? 'https://' + env.DOKPLOY_DEPLOY_URL : env.SERVER_URL,
 			defaultMap: env.SERVER_DEFAULT_MAP,
-			tickRate: parseInt(env.SERVER_TICK_RATE),
-			cleanupInterval: parseInt(env.SERVER_CLEANUP_INTERVAL),
-			fullPlayerEmitInterval: parseInt(env.FULL_PLAYER_EMIT_INTERVAL),
+			tickRate: numberOr(env.SERVER_TICK_RATE, parseInt(defaults.SERVER_TICK_RATE, 10)),
+			cleanupInterval: numberOr(env.SERVER_CLEANUP_INTERVAL, parseInt(defaults.SERVER_CLEANUP_INTERVAL, 10)),
+			fullPlayerEmitInterval: numberOr(env.FULL_PLAYER_EMIT_INTERVAL, parseInt(defaults.FULL_PLAYER_EMIT_INTERVAL, 10)),
 		},
 		peer: {
-			updateInterval: parseInt(env.PEER_UPDATE_TICK_INTERVAL),
-			shareInterval: parseInt(env.PEER_SHARE_INTERVAL),
-			maxFailedAttempts: parseInt(env.PEER_MAX_FAILED_ATTEMPTS),
-			staleThreshold: parseInt(env.PEER_STALE_THRESHOLD),
-			maxServers: parseInt(env.PEER_MAX_SERVERS),
-			healthcheckRetries: parseInt(env.PEER_HEALTHCHECK_RETRIES),
-			healthcheckInterval: parseInt(env.PEER_HEALTHCHECK_INTERVAL),
-			urlFailureForgetTime: parseInt(env.PEER_URL_FAILURE_FORGET_TIME),
+			updateInterval: numberOr(env.PEER_UPDATE_TICK_INTERVAL, parseInt(defaults.PEER_UPDATE_TICK_INTERVAL, 10)),
+			shareInterval: numberOr(env.PEER_SHARE_INTERVAL, parseInt(defaults.PEER_SHARE_INTERVAL, 10)),
+			maxFailedAttempts: numberOr(env.PEER_MAX_FAILED_ATTEMPTS, parseInt(defaults.PEER_MAX_FAILED_ATTEMPTS, 10)),
+			staleThreshold: numberOr(env.PEER_STALE_THRESHOLD, parseInt(defaults.PEER_STALE_THRESHOLD, 10)),
+			maxServers: numberOr(env.PEER_MAX_SERVERS, parseInt(defaults.PEER_MAX_SERVERS, 10)),
+			healthcheckRetries: numberOr(env.PEER_HEALTHCHECK_RETRIES, parseInt(defaults.PEER_HEALTHCHECK_RETRIES, 10)),
+			healthcheckInterval: numberOr(env.PEER_HEALTHCHECK_INTERVAL, parseInt(defaults.PEER_HEALTHCHECK_INTERVAL, 10)),
+			urlFailureForgetTime: numberOr(
+				env.PEER_URL_FAILURE_FORGET_TIME,
+				parseInt(defaults.PEER_URL_FAILURE_FORGET_TIME, 10),
+			),
 			verifiedDomains: env.PEER_VERIFIED_DOMAINS
 				? env.PEER_VERIFIED_DOMAINS.split(',').map((domain) => domain.trim())
 				: [],
 		},
 		game: {
 			mode: env.GAME_MODE,
-			maxPlayers: parseInt(env.GAME_MAX_PLAYERS),
-			respawnDelay: parseInt(env.RESPAWN_DELAY),
-			pointsToWin: parseInt(env.POINTS_TO_WIN),
-			pointsToEvent: parseInt(env.POINTS_TO_EVENT),
-			minPlayersToStart: parseInt(env.MIN_PLAYERS_TO_START),
+			maxPlayers: numberOr(env.GAME_MAX_PLAYERS, parseInt(defaults.GAME_MAX_PLAYERS, 10)),
+			respawnDelay: numberOr(env.RESPAWN_DELAY, parseInt(defaults.RESPAWN_DELAY, 10)),
+			pointsToWin: numberOr(env.POINTS_TO_WIN, parseInt(defaults.POINTS_TO_WIN, 10)),
+			pointsToEvent: numberOr(env.POINTS_TO_EVENT, parseInt(defaults.POINTS_TO_EVENT, 10)),
+			minPlayersToStart: numberOr(env.MIN_PLAYERS_TO_START, parseInt(defaults.MIN_PLAYERS_TO_START, 10)),
 		},
 		player: {
-			disconnectTime: parseInt(env.PLAYER_DISCONNECT_TIME),
-			afkKickTime: parseInt(env.PLAYER_AFK_KICK_TIME),
-			maxHealth: parseInt(env.PLAYER_MAX_HEALTH),
-			baseInventory: JSON.parse(env.PLAYER_BASE_INVENTORY) as InventoryItem[],
+			disconnectTime: numberOr(env.PLAYER_DISCONNECT_TIME, parseInt(defaults.PLAYER_DISCONNECT_TIME, 10)),
+			afkKickTime: numberOr(env.PLAYER_AFK_KICK_TIME, parseInt(defaults.PLAYER_AFK_KICK_TIME, 10)),
+			maxHealth: numberOr(env.PLAYER_MAX_HEALTH, parseInt(defaults.PLAYER_MAX_HEALTH, 10)),
+			baseInventory: JSON.parse(env.PLAYER_BASE_INVENTORY ?? defaults.PLAYER_BASE_INVENTORY) as InventoryItem[],
 		},
 		health: {
-			regenDelay: parseInt(env.HEALTH_REGEN_DELAY),
-			regenRate: parseInt(env.HEALTH_REGEN_RATE),
+			regenDelay: numberOr(env.HEALTH_REGEN_DELAY, parseInt(defaults.HEALTH_REGEN_DELAY, 10)),
+			regenRate: numberOr(env.HEALTH_REGEN_RATE, parseInt(defaults.HEALTH_REGEN_RATE, 10)),
 		},
 		items: {
-			maxItemsInWorld: parseInt(env.MAX_ITEMS_IN_WORLD),
-			respawnTime: parseInt(env.ITEM_RESPAWN_TIME),
-			despawnTime: parseInt(env.ITEM_DESPAWN_TIME),
-			shotsTakeDurability: (env.ITEM_SHOTS_DO_DURABILITY.toLowerCase() === 'true'),
-			rotTakesDurability: (env.ITEM_ROT_TAKES_DURABILITY.toLowerCase() === 'true'),
+			maxItemsInWorld: numberOr(env.MAX_ITEMS_IN_WORLD, parseInt(defaults.MAX_ITEMS_IN_WORLD, 10)),
+			respawnTime: numberOr(env.ITEM_RESPAWN_TIME, parseInt(defaults.ITEM_RESPAWN_TIME, 10)),
+			despawnTime: numberOr(env.ITEM_DESPAWN_TIME, parseInt(defaults.ITEM_DESPAWN_TIME, 10)),
+			shotsTakeDurability: boolOr(env.ITEM_SHOTS_DO_DURABILITY, defaults.ITEM_SHOTS_DO_DURABILITY),
+			rotTakesDurability: boolOr(env.ITEM_ROT_TAKES_DURABILITY, defaults.ITEM_ROT_TAKES_DURABILITY),
 		},
 		dev: {
 			appendClientHashToVersion: env.APPEND_CLIENT_HASH_TO_VERSION === 'true',

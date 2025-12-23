@@ -1,7 +1,7 @@
 import { Application, Router, send } from '@oak/oak';
-import { Server } from 'https://deno.land/x/socket_io@0.2.0/mod.ts';
+import { Server } from 'socket_io';
+import { serve } from 'std/http/server';
 import config from './config.ts';
-import { serve } from 'https://deno.land/std@0.150.0/http/server.ts';
 
 import { GameEngine } from './GameEngine.ts';
 import { PlayerManager } from './managers/PlayerManager.ts';
@@ -16,6 +16,7 @@ import { PropManager } from './managers/PropManager.ts';
 import { setupDevClientVersion } from './dev.ts';
 import { WorldItem } from './models/WorldItem.ts';
 import { Vector3 } from 'three';
+import { PhysicsEngine } from './physics/PhysicsEngine.ts';
 
 export class GameServer {
 	router: Router;
@@ -48,7 +49,9 @@ export class GameServer {
 		this.chatManager = new ChatManager(this.io, this.playerManager);
 		this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
-		this.propManager = new PropManager();
+		const physicsEngine = await PhysicsEngine.create(this.mapData.name);
+		this.propManager = new PropManager(physicsEngine, this.playerManager);
+		await this.propManager.loadInitialProps(this.mapData.props);
 
 		this.playerManager.setItemManager(this.itemManager);
 
