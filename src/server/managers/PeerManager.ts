@@ -89,8 +89,8 @@ export class PeerManager {
 		} catch (error) {
 			if (error instanceof Deno.errors.NotFound) {
 				console.log(`${this.serversFilePath} not found. Creating with default.`);
+				const defaultUrl = 'https://candiru.xyz'; // Example default
 				try {
-					const defaultUrl = 'https://candiru.xyz'; // Example default
 					await Deno.writeTextFile(this.serversFilePath, `${defaultUrl}\n`);
 					if (defaultUrl !== config.server.url) {
 						this.updateQueue = [defaultUrl];
@@ -99,7 +99,13 @@ export class PeerManager {
 					}
 				} catch (writeError) {
 					console.error(`Failed to create ${this.serversFilePath}:`, writeError);
-					this.updateQueue = []; // Start with empty queue if file creation fails
+					// Still use the default URL even if file write fails
+					if (defaultUrl !== config.server.url) {
+						this.updateQueue = [defaultUrl];
+						console.log(`Using in-memory default peer: ${defaultUrl}`);
+					} else {
+						this.updateQueue = [];
+					}
 				}
 			} else {
 				console.error(`Failed to read ${this.serversFilePath}:`, error);
