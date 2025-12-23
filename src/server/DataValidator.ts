@@ -159,7 +159,7 @@ export class DataValidator {
 		memUsageHeapTotal: z.number(),
 		memUsageExternal: z.number(),
 		idleKickTime: z.number(),
-	}).strict().transform((data) => Object.assign(new ServerInfo(), data));
+	}).passthrough().transform((data) => Object.assign(new ServerInfo(), data));
 
 	static validatePlayerData(data: PlayerData) {
 		return DataValidator.playerDataSchema.safeParse(data);
