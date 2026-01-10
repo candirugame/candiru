@@ -12,6 +12,7 @@ import { DirectionIndicator } from '../ui/DirectionIndicator.ts';
 import { ParticleSystem } from './ParticleSystem.ts';
 import { ShotHandler } from './ShotHandler.ts';
 import { PropRenderer } from './PropRenderer.ts';
+import type { PropData } from '../../shared/Prop.ts';
 import { Quaternion } from 'three';
 
 export class Renderer {
@@ -575,6 +576,15 @@ export class Renderer {
 
 	public getEntityScene(): THREE.Scene {
 		return this.remotePlayerRenderer.getEntityScene();
+	}
+
+	/**
+	 * Raycasts from the camera center and returns the prop data if looking at a prop.
+	 */
+	public getPropInCrosshair(maxDistance: number = Infinity): PropData | null {
+		const origin = this.getMuzzlePosition();
+		const direction = this.getMuzzleDirection();
+		return this.propRenderer.getPropInCrosshair(origin, direction, maxDistance);
 	}
 
 	public setInputHandler(inputHandler: InputHandler) {

@@ -908,6 +908,35 @@ export class ChatOverlay {
 					this.networking.getServerInfo().memUsageExternal.toFixed(2),
 			);
 			linesToRender.push('propCount: ' + this.networking.getPropData().length);
+
+			// Show info about the prop being looked at
+			const lookedAtProp = this.renderer.getPropInCrosshair(100);
+			if (lookedAtProp) {
+				linesToRender.push('&e--- looked at prop ---');
+				linesToRender.push(`id: ${lookedAtProp.id}, name: ${lookedAtProp.name || '(none)'}`);
+				linesToRender.push(
+					`pos: ${lookedAtProp.position.x.toFixed(2)}, ${lookedAtProp.position.y.toFixed(2)}, ${
+						lookedAtProp.position.z.toFixed(2)
+					}`,
+				);
+				linesToRender.push(
+					`quat: ${lookedAtProp.quaternion.x.toFixed(2)}, ${lookedAtProp.quaternion.y.toFixed(2)}, ${
+						lookedAtProp.quaternion.z.toFixed(2)
+					}, ${lookedAtProp.quaternion.w.toFixed(2)}`,
+				);
+				linesToRender.push(
+					`scale: ${lookedAtProp.scale.x.toFixed(2)}, ${lookedAtProp.scale.y.toFixed(2)}, ${
+						lookedAtProp.scale.z.toFixed(2)
+					}`,
+				);
+				linesToRender.push(
+					`doPhysics: ${lookedAtProp.doPhysics}, playersCollide: ${lookedAtProp.playersCollide}`,
+				);
+				const propHealth = (lookedAtProp as { health?: number }).health;
+				if (propHealth !== undefined) {
+					linesToRender.push(`health: ${propHealth}`);
+				}
+			}
 		}
 		if (this.localPlayer.gameMsgs2) {
 			for (const msg of this.localPlayer.gameMsgs2) {

@@ -423,4 +423,39 @@ export class PropRenderer {
 
 		return result;
 	}
+
+	/**
+	 * Gets the prop data for a given prop ID.
+	 */
+	public getPropDataById(propId: number): PropData | undefined {
+		const entry = this.propsToRender.get(propId);
+		return entry?.serverData;
+	}
+
+	/**
+	 * Raycasts from origin in direction and returns the first hit prop's data if any.
+	 */
+	public getPropInCrosshair(
+		origin: THREE.Vector3,
+		direction: THREE.Vector3,
+		maxDistance: number = Infinity,
+	): PropData | null {
+		const raycaster = new THREE.Raycaster(origin, direction.clone().normalize(), 0, maxDistance);
+		const propObjects = this.getPropObjects();
+		const intersects = raycaster.intersectObjects(propObjects, true);
+
+		for (const intersection of intersects) {
+			let rootObject: THREE.Object3D | null = intersection.object;
+			while (rootObject && rootObject.parent && !rootObject.userData.propId) {
+				rootObject = rootObject.parent;
+			}
+
+			if (rootObject && rootObject.userData.propId !== undefined) {
+				const propId = rootObject.userData.propId as number;
+				return this.getPropDataById(propId) ?? null;
+			}
+		}
+
+		return null;
+	}
 }
