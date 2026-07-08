@@ -40,7 +40,7 @@ RUN --mount=type=cache,target=/tmp/deno-cache bash -c "set -euo pipefail \
   && /bin/deno task cache \
   && mkdir -p /deno-dir \
   && rm -rf /deno-dir/* \
-  && cp -a /tmp/deno-cache/. /deno-dir"
+  && tar --exclude='*-wal' --exclude='*-shm' -C /tmp/deno-cache -cf - . | tar -C /deno-dir -xf -"
 
 # Final runtime stage
 FROM debian:bookworm-slim
