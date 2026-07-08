@@ -186,23 +186,9 @@ export class GameServer {
 			}
 		});
 
-		this.router.get('/(.*)', async (context) => {
-			try {
-				await send(context, context.params[0], {
-					root: `${import.meta.dirname}/../../dist`,
-					index: 'index.html',
-				});
-			} catch {
-				try {
-					await send(context, 'index.html', {
-						root: `${import.meta.dirname}/../../dist`,
-					});
-				} catch (err) {
-					console.error('Error serving files:', err);
-					context.response.status = 500;
-					context.response.body = 'Internal Server Error';
-				}
-			}
+		this.router.get('/api/servers', (context) => {
+			context.response.type = 'application/json';
+			context.response.body = this.peerManager.peers;
 		});
 
 		this.router.get('/api/healthcheck', (context) => {
@@ -225,6 +211,25 @@ export class GameServer {
 			}
 		});
 
+		this.router.get('/(.*)', async (context) => {
+			try {
+				await send(context, context.params[0], {
+					root: `${import.meta.dirname}/../../dist`,
+					index: 'index.html',
+				});
+			} catch {
+				try {
+					await send(context, 'index.html', {
+						root: `${import.meta.dirname}/../../dist`,
+					});
+				} catch (err) {
+					console.error('Error serving files:', err);
+					context.response.status = 500;
+					context.response.body = 'Internal Server Error';
+				}
+			}
+		});
+
 		this.app.use(this.router.routes());
 		this.app.use(this.router.allowedMethods());
 	}
@@ -243,6 +248,9 @@ export class GameServer {
 			await serve(handler, {
 				port: config.server.port,
 				hostname: config.server.hostname,
+				onListen: () => {
+					this.peerManager.start();
+				},
 			});
 		} catch (error) {
 			console.error('Failed to start server:', error);

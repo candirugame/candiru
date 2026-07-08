@@ -10,18 +10,32 @@ const HEADER_HEALTH_SECRET = 'X-Health-Secret';
 const HEADER_CONTENT_TYPE = 'Content-Type';
 const CONTENT_TYPE_JSON = 'application/json';
 
+interface PeerManagerOptions {
+	serversFilePath?: string;
+}
+
 export class PeerManager {
 	peers: Peer[] = [];
 	private updateQueue: string[] = [];
 	private shareQueue: string[] = [];
+	private failedUrlAttempts: Map<string, number> = new Map();
+	private failedUrlRetryAfter: Map<string, number> = new Map();
 	healthSecret: string;
 	private serversFilePath = './servers.txt';
 	private isOperational = false; // Flag to indicate if the manager is running
 	private updateTimer: number | undefined = undefined; // Timer ID for setTimeout
+	private startPromise: Promise<void> | undefined = undefined;
 
-	constructor() {
+	constructor(options: PeerManagerOptions = {}) {
 		this.healthSecret = crypto.randomUUID();
-		this.initialize();
+		this.serversFilePath = options.serversFilePath ?? this.serversFilePath;
+	}
+
+	public start() {
+		if (!this.startPromise) {
+			this.startPromise = this.initialize();
+		}
+		return this.startPromise;
 	}
 
 	private async initialize() {
@@ -54,9 +68,11 @@ export class PeerManager {
 					headers: { [HEADER_HEALTH_SECRET]: this.healthSecret },
 				});
 				if (response.ok) {
+					await response.body?.cancel();
 					console.log('Initial healthcheck successful.');
 					return true; // Health check passed
 				} else {
+					await response.body?.cancel();
 					console.log(
 						`Healthcheck attempt ${i + 1} failed with status: ${response.status}`,
 					);
@@ -82,8 +98,8 @@ export class PeerManager {
 			const content = await Deno.readTextFile(this.serversFilePath);
 			const urls = content
 				.split('\n')
-				.map((url) => url.trim())
-				.filter((url) => url && url !== config.server.url); // Filter empty lines and self
+				.map((url) => this.normalizeUrl(url))
+				.filter((url): url is string => Boolean(url) && url !== this.selfUrl); // Filter empty lines and self
 			this.updateQueue = [...new Set(urls)]; // Ensure uniqueness
 			console.log(`Loaded ${this.updateQueue.length} initial peers from ${this.serversFilePath}`);
 		} catch (error) {
@@ -92,7 +108,7 @@ export class PeerManager {
 				const defaultUrl = 'https://candiru.xyz'; // Example default
 				try {
 					await Deno.writeTextFile(this.serversFilePath, `${defaultUrl}\n`);
-					if (defaultUrl !== config.server.url) {
+					if (defaultUrl !== this.selfUrl) {
 						this.updateQueue = [defaultUrl];
 					} else {
 						this.updateQueue = [];
@@ -100,7 +116,7 @@ export class PeerManager {
 				} catch (writeError) {
 					console.error(`Failed to create ${this.serversFilePath}:`, writeError);
 					// Still use the default URL even if file write fails
-					if (defaultUrl !== config.server.url) {
+					if (defaultUrl !== this.selfUrl) {
 						this.updateQueue = [defaultUrl];
 						console.log(`Using in-memory default peer: ${defaultUrl}`);
 					} else {
@@ -159,12 +175,19 @@ export class PeerManager {
 		if (!url) return; // Queue is empty
 
 		try {
+			const retryAfter = this.failedUrlRetryAfter.get(url);
+			if (retryAfter && Date.now() / 1000 < retryAfter) {
+				this.updateQueue.push(url);
+				return;
+			}
+
 			const peer = this.peers.find((p) => p.url === url);
 			const needsUpdate = !peer || (Date.now() / 1000 - peer.lastUpdate) > config.peer.staleThreshold;
 
 			if (needsUpdate) {
 				const response = await fetch(`${url}${API_GET_INFO}`);
 				if (!response.ok) {
+					await response.body?.cancel();
 					throw new Error(`Failed to fetch info from ${url}, status: ${response.status}`);
 				}
 				const data = await response.json();
@@ -181,6 +204,8 @@ export class PeerManager {
 					existingPeer.updateServerInfo(result.data);
 					// Reset failure count for the *peer* on success
 					existingPeer.failedAttempts = 0;
+					this.failedUrlAttempts.delete(url);
+					this.failedUrlRetryAfter.delete(url);
 				} else {
 					console.log(`Invalid data received from ${url}:`, result.error.issues);
 					this.handleFailedUpdate(url); // Treat invalid data as a failure
@@ -298,8 +323,20 @@ export class PeerManager {
 			// Removal of the peer happens in checkStalePeers based on this count.
 		} else {
 			// Failure occurred for a URL not currently in the active peers list.
-			// No separate tracking (urlFailureCounts removed). It might be retried if still in updateQueue.
-			console.log(`Update failed for URL ${url} (not an active peer).`);
+			const failedAttempts = (this.failedUrlAttempts.get(url) ?? 0) + 1;
+			this.failedUrlAttempts.set(url, failedAttempts);
+			this.failedUrlRetryAfter.set(url, Date.now() / 1000 + this.retryDelay(failedAttempts));
+
+			if (!this.updateQueue.includes(url)) {
+				this.updateQueue.push(url);
+				console.log(
+					`Update failed for URL ${url} (not an active peer). Retrying later, attempt ${failedAttempts}.`,
+				);
+			} else {
+				console.log(
+					`Update failed for URL ${url} (not an active peer). Attempt ${failedAttempts}.`,
+				);
+			}
 		}
 	}
 
@@ -309,7 +346,8 @@ export class PeerManager {
 	 * @param url The URL to add.
 	 */
 	private async addToServersFile(url: string) {
-		if (url === config.server.url) return; // Don't add self
+		const normalizedUrl = this.normalizeUrl(url);
+		if (!normalizedUrl || normalizedUrl === this.selfUrl) return; // Don't add self
 
 		try {
 			let content = '';
@@ -324,11 +362,11 @@ export class PeerManager {
 
 			const urls = content
 				.split('\n')
-				.map((u) => u.trim())
-				.filter((u) => u); // Get existing, trimmed, non-empty URLs
+				.map((u) => this.normalizeUrl(u))
+				.filter((u): u is string => Boolean(u)); // Get existing, trimmed, non-empty URLs
 
-			if (!urls.includes(url)) {
-				urls.push(url); // Add the new URL
+			if (!urls.includes(normalizedUrl)) {
+				urls.push(normalizedUrl); // Add the new URL
 
 				// Ensure the list doesn't exceed the maximum size
 				while (urls.length > config.peer.maxServers) {
@@ -340,11 +378,11 @@ export class PeerManager {
 				// Only write if content has actually changed
 				if (newContent !== content + (content.endsWith('\n') ? '' : '\n')) {
 					await Deno.writeTextFile(this.serversFilePath, newContent);
-					console.log(`Added ${url} to ${this.serversFilePath}`);
+					console.log(`Added ${normalizedUrl} to ${this.serversFilePath}`);
 				}
 			}
 		} catch (error) {
-			console.log(`Failed to add ${url} to ${this.serversFilePath}:`, error);
+			console.log(`Failed to add ${normalizedUrl} to ${this.serversFilePath}:`, error);
 		}
 	}
 
@@ -396,14 +434,13 @@ export class PeerManager {
 		console.log(`Received ${urls.length} server URLs.`);
 		let addedToQueue = 0;
 		urls.forEach((url) => {
-			// Basic validation
-			if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+			const trimmedUrl = this.normalizeUrl(url);
+			if (!trimmedUrl) {
 				console.log(`Received invalid URL format: ${url}`);
 				return;
 			}
 
-			const trimmedUrl = url.trim();
-			if (trimmedUrl === config.server.url) return; // Ignore self
+			if (trimmedUrl === this.selfUrl) return; // Ignore self
 
 			// Check if it's already known (in peers list or update queue)
 			const isKnown = this.peers.some((p) => p.url === trimmedUrl) ||
@@ -418,6 +455,30 @@ export class PeerManager {
 		if (addedToQueue > 0) {
 			console.log(`Added ${addedToQueue} new unique URLs to the update queue.`);
 		}
+	}
+
+	private normalizeUrl(rawUrl: string) {
+		if (!rawUrl || typeof rawUrl !== 'string') return undefined;
+
+		try {
+			const url = new URL(rawUrl.trim());
+			if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+			url.hash = '';
+			url.search = '';
+			url.pathname = url.pathname.replace(/\/+$/, '');
+			return url.toString().replace(/\/$/, '');
+		} catch {
+			return undefined;
+		}
+	}
+
+	private get selfUrl() {
+		return this.normalizeUrl(config.server.url);
+	}
+
+	private retryDelay(failedAttempts: number) {
+		const baseDelay = Math.max(config.peer.updateInterval, Math.min(config.peer.staleThreshold, 30));
+		return Math.min(baseDelay * failedAttempts, 60);
 	}
 
 	/**
