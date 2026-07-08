@@ -83,6 +83,7 @@ export class PlayerManager {
 			player.inventory = [...config.player.baseInventory];
 			const spawnPoint = this.getRandomSpawnPoint();
 			player.position = spawnPoint.vec;
+			this.resetMovementForSpawn(player);
 			player.health = config.player.maxHealth;
 			player.gameMsgs = [];
 			player.gameMsgs2 = [];
@@ -174,6 +175,7 @@ export class PlayerManager {
 
 		const spawnPoint = this.getRandomSpawnPoint();
 		player.position = spawnPoint.vec;
+		this.resetMovementForSpawn(player);
 		player.lookQuaternion = new THREE.Quaternion(
 			spawnPoint.quaternion.x,
 			spawnPoint.quaternion.y,
@@ -181,8 +183,6 @@ export class PlayerManager {
 			spawnPoint.quaternion.w,
 		);
 		player.health = config.player.maxHealth;
-		player.gravity = 0;
-		player.velocity = new THREE.Vector3(0, 0, 0);
 		player.forced = true;
 
 		const updatedPlayerData: PlayerWithExtras = {
@@ -251,6 +251,12 @@ export class PlayerManager {
 		const randomIndex = Math.floor(Math.random() * this.mapData.respawnPoints.length);
 		const respawnPoint = this.mapData.respawnPoints[randomIndex];
 		return { vec: respawnPoint.position, quaternion: respawnPoint.quaternion };
+	}
+
+	private resetMovementForSpawn(player: Player): void {
+		player.gravity = 0;
+		player.velocity = new THREE.Vector3(0, 0, 0);
+		player.inputVelocity = new THREE.Vector3(0, 0, 0);
 	}
 
 	public handleShotGroupAdded(playerId: number, heldItemIndex: number) {

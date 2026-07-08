@@ -181,6 +181,7 @@ export class Networking {
 			let funnyZoomFlag = false;
 			if (data.position) {
 				this.localPlayer.position.set(data.position.x, data.position.y, data.position.z);
+				this.localPlayer.inputVelocity.set(0, 0, 0);
 				funnyZoomFlag = true;
 			}
 			if (data.velocity) this.localPlayer.velocity.set(data.velocity.x, data.velocity.y, data.velocity.z);
