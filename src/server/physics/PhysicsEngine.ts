@@ -48,7 +48,7 @@ export class PhysicsEngine {
 		this.io = io;
 	}
 
-	static async create(mapName: string): Promise<PhysicsEngine> {
+	static async create(mapName: string, staticPropExclusions: string[] = []): Promise<PhysicsEngine> {
 		await RAPIER.init();
 		const world = new RAPIER.World(DEFAULT_GRAVITY);
 		const { default: draco3d } = await import('draco3dgltf');
@@ -64,7 +64,7 @@ export class PhysicsEngine {
 				'draco3d.decoder': decoderModule,
 			});
 		const engine = new PhysicsEngine(world, io);
-		await engine.loadStaticMap(mapName);
+		await engine.loadStaticMap(mapName, staticPropExclusions);
 		return engine;
 	}
 
@@ -137,9 +137,9 @@ export class PhysicsEngine {
 		this.syncAllProps();
 	}
 
-	private async loadStaticMap(mapName: string): Promise<void> {
+	private async loadStaticMap(mapName: string, staticPropExclusions: string[]): Promise<void> {
 		const meshKey = this.normalizeMeshKey(`maps/${mapName}/map.glb`);
-		const meshData = await this.getMeshData(meshKey);
+		const meshData = await this.getMeshData(meshKey, staticPropExclusions);
 		const indices = meshData.indices ?? this.buildSequentialIndices(meshData.vertices.length / 3);
 		const colliderDesc = RAPIER.ColliderDesc.trimesh(meshData.vertices, indices);
 		colliderDesc.setFriction(0.9);
@@ -209,8 +209,10 @@ export class PhysicsEngine {
 		return RAPIER.ColliderDesc.ball(Math.max(radius, 0.1));
 	}
 
-	private async getMeshData(meshKey: string): Promise<MeshData> {
-		const cached = this.meshCache.get(meshKey);
+	private async getMeshData(meshKey: string, excludedNodeNames: string[] = []): Promise<MeshData> {
+		const exclusionKey = excludedNodeNames.length ? `?exclude=${[...excludedNodeNames].sort().join('|')}` : '';
+		const cacheKey = `${meshKey}${exclusionKey}`;
+		const cached = this.meshCache.get(cacheKey);
 		if (cached) return cached;
 
 		const absolutePath = this.resolveDistPath(meshKey);
@@ -222,11 +224,19 @@ export class PhysicsEngine {
 		const indices: number[] = [];
 		let hasIndices = false;
 
+		const excludedNodes = new Set(excludedNodeNames);
 		for (const scene of scenes) {
 			for (const child of scene.listChildren()) {
-				this.collectMeshData(child, mat4.create(), vertices, indices, () => {
-					hasIndices = true;
-				});
+				this.collectMeshData(
+					child,
+					mat4.create(),
+					vertices,
+					indices,
+					() => {
+						hasIndices = true;
+					},
+					excludedNodes,
+				);
 			}
 		}
 
@@ -234,7 +244,7 @@ export class PhysicsEngine {
 			vertices: new Float32Array(vertices),
 			indices: hasIndices ? new Uint32Array(indices) : undefined,
 		};
-		this.meshCache.set(meshKey, meshData);
+		this.meshCache.set(cacheKey, meshData);
 		return meshData;
 	}
 
@@ -244,7 +254,11 @@ export class PhysicsEngine {
 		vertexAccumulator: number[],
 		indexAccumulator: number[],
 		setHasIndices: () => void,
+		excludedNodeNames: Set<string>,
 	): void {
+		const nodeName = node.getName();
+		if (nodeName && excludedNodeNames.has(nodeName)) return;
+
 		const worldMatrix = mat4.create();
 		mat4.multiply(worldMatrix, parentMatrix, this.getNodeMatrix(node));
 
@@ -254,7 +268,7 @@ export class PhysicsEngine {
 		}
 
 		for (const child of node.listChildren()) {
-			this.collectMeshData(child, worldMatrix, vertexAccumulator, indexAccumulator, setHasIndices);
+			this.collectMeshData(child, worldMatrix, vertexAccumulator, indexAccumulator, setHasIndices, excludedNodeNames);
 		}
 	}
 

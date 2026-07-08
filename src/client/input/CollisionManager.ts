@@ -394,7 +394,8 @@ export class CollisionManager {
 
 	public static staticGeometry(group: THREE.Group) {
 		console.time('Building static geometry BVH');
-		const staticGenerator = new StaticGeometryGenerator(group);
+		const collisionGroup = CollisionManager.cloneVisibleSubtree(group);
+		const staticGenerator = new StaticGeometryGenerator(collisionGroup);
 		staticGenerator.attributes = ['position']; // Only need position for BVH
 		const combinedGeom = staticGenerator.generate();
 
@@ -411,6 +412,15 @@ export class CollisionManager {
 
 		this.mapLoaded = true;
 		console.timeEnd('Building static geometry BVH');
+	}
+
+	private static cloneVisibleSubtree<T extends THREE.Object3D>(source: T): T {
+		const clone = source.clone(false) as T;
+		for (const child of source.children) {
+			if (!child.visible) continue;
+			clone.add(CollisionManager.cloneVisibleSubtree(child));
+		}
+		return clone;
 	}
 
 	public isPlayerInAir(): boolean {

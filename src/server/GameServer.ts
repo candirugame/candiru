@@ -49,7 +49,7 @@ export class GameServer {
 		this.chatManager = new ChatManager(this.io, this.playerManager);
 		this.itemManager = new ItemManager(this.mapData, this.playerManager, this.chatManager);
 		this.damageSystem = new DamageSystem(this.playerManager, this.chatManager);
-		const physicsEngine = await PhysicsEngine.create(this.mapData.name);
+		const physicsEngine = await PhysicsEngine.create(this.mapData.name, this.mapData.staticPropExclusions);
 		this.propManager = new PropManager(physicsEngine, this.playerManager);
 		await this.propManager.loadInitialProps(this.mapData.props);
 

@@ -32,6 +32,7 @@ export class InputHandler {
 	private touchLookY: number = 0;
 	private inventoryIterationTouched: boolean = false;
 	private touchButtons: number[] = [];
+	private mappingModeEnabled: boolean = false;
 
 	constructor(renderer: Renderer, localPlayer: Player, gameIndex: number) {
 		this.renderer = renderer;
@@ -241,6 +242,14 @@ export class InputHandler {
 		return this.keys[key];
 	}
 
+	public setMappingModeEnabled(enabled: boolean): void {
+		this.mappingModeEnabled = enabled;
+		if (enabled) {
+			this.leftMouseDown = false;
+			this.rightMouseDown = false;
+		}
+	}
+
 	public setTouchJoyInput(x: number, y: number) {
 		this.touchJoyX = x;
 		this.touchJoyY = y;
@@ -268,7 +277,7 @@ export class InputHandler {
 		const key = event.key.toLowerCase();
 		this.keys[key] = true;
 
-		if (!this.localPlayer.chatActive && !this.nameSettingActive) {
+		if (!this.localPlayer.chatActive && !this.nameSettingActive && !this.mappingModeEnabled) {
 			if (key === 'c') {
 				this.leftMouseDown = true;
 			} else if (key === 'z') {
@@ -290,7 +299,7 @@ export class InputHandler {
 		const key = event.key.toLowerCase();
 		this.keys[key] = false;
 
-		if (!this.localPlayer.chatActive && !this.nameSettingActive) {
+		if (!this.localPlayer.chatActive && !this.nameSettingActive && !this.mappingModeEnabled) {
 			if (key === 'c') {
 				this.leftMouseDown = false;
 			} else if (key === 'z') {
@@ -301,6 +310,7 @@ export class InputHandler {
 
 	private onMouseDown(event: MouseEvent) {
 		if (this.gameIndex !== Game.nextGameIndex - 1) return;
+		if (this.mappingModeEnabled) return;
 
 		if (event.button === 0 && !Game.menuOpen) {
 			this.leftMouseDown = true;
@@ -320,11 +330,12 @@ export class InputHandler {
 	}
 
 	public getShoot() {
-		return this.shoot && (this.localPlayer.inventory[this.localPlayer.heldItemIndex]?.durability ?? 0) > 0; // only shoot if item has durability
+		return !this.mappingModeEnabled && this.shoot &&
+			(this.localPlayer.inventory[this.localPlayer.heldItemIndex]?.durability ?? 0) > 0; // only shoot if item has durability
 	}
 
 	public getAim() {
-		return this.aim;
+		return !this.mappingModeEnabled && this.aim;
 	}
 
 	public getGamepadInputs(): GamepadInputs {

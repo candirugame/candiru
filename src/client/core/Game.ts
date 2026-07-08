@@ -12,6 +12,7 @@ import { SettingsManager } from './SettingsManager.ts';
 import { Player } from '../../shared/Player.ts';
 import { ShotHandler } from './ShotHandler.ts';
 import * as THREE from 'three';
+import { MappingMode } from './MappingMode.ts';
 
 export class Game {
 	private localPlayer: Player;
@@ -24,6 +25,7 @@ export class Game {
 	private shotHandler: ShotHandler;
 	private inventoryManager: Inventory;
 	private mapLoader: MapLoader;
+	private mappingMode: MappingMode;
 	private healthIndicator: HealthIndicator;
 	private remoteItemRenderer: RemoteItemRenderer;
 	private gameIndex: number;
@@ -65,11 +67,13 @@ export class Game {
 		this.chatOverlay.setNetworking(this.networking);
 		this.chatOverlay.setInputHandler(this.inputHandler);
 		this.mapLoader = new MapLoader(this.renderer);
+		this.mappingMode = new MappingMode(this.renderer, this.inputHandler, this.localPlayer, this.mapLoader);
 		this.healthIndicator = new HealthIndicator(this.renderer, this.localPlayer, this.networking);
 		this.remoteItemRenderer = new RemoteItemRenderer(this.networking, this.renderer, this.shotHandler);
 	}
 
 	init() {
+		this.mappingMode.initFromLocation();
 		this.inventoryManager.init();
 		this.healthIndicator.init();
 	}
@@ -95,7 +99,11 @@ export class Game {
 		mark('inputs');
 		this.touchInputHandler.onFrame();
 		mark('touch');
-		this.collisionManager.collisionPeriodic(this.localPlayer);
+		this.mappingMode.onFrame(deltaTime);
+		mark('mapping');
+		if (!this.mappingMode.isNoClipEnabled()) {
+			this.collisionManager.collisionPeriodic(this.localPlayer);
+		}
 		mark('collision');
 		this.networking.updatePlayerData();
 		mark('netUpdate');
@@ -145,6 +153,7 @@ export class Game {
 		this.chatOverlay.destroy();
 		this.inputHandler.destroy();
 		this.touchInputHandler.destroy();
+		this.mappingMode.destroy();
 		this.renderer.destroy();
 		this.inventoryManager.destroy();
 		this.mapLoader.destroy();
