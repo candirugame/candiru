@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+.nx
+.run
+
+node_modules
+dist
+
+.env
+.DS_Store
+servers.txt
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
