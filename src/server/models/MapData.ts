@@ -68,6 +68,7 @@ interface MapJSON {
 	itemRespawnPoints?: ItemRespawnPointJSON[];
 	capturePoints?: CapturePointJSON[];
 	props?: PropSpawnJSON[];
+	staticPropExclusions?: string[];
 }
 
 export class MapData {
@@ -77,6 +78,7 @@ export class MapData {
 		public itemRespawnPoints: ItemRespawnPoint[],
 		public capturePoints: CapturePoint[] = [],
 		public props: PropSpawn[] = [],
+		public staticPropExclusions: string[] = [],
 	) {}
 
 	static fromJSON(json: MapJSON): MapData {
@@ -121,6 +123,13 @@ export class MapData {
 				: undefined,
 		}));
 
-		return new MapData(json.name, respawnPoints, itemRespawnPoints, capturePoints, props);
+		return new MapData(
+			json.name,
+			respawnPoints,
+			itemRespawnPoints,
+			capturePoints,
+			props,
+			json.staticPropExclusions ?? [],
+		);
 	}
 }
